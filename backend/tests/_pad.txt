@@ -1,0 +1,9 @@
+H = {"Authorization": f"Bearer {tok}"}
+
+# Re-query quests after all the activity; claim the first completed one.
+qs = call("GET", "/api/quests/today", headers=H)
+print("  quests:", [(q["quest_type"], q["progress"], q["target"]) for q in qs])
+ready = [q for q in qs if q["completed"]]
+assert ready, "expected at least one completed quest after the journey"
+claimed = call("POST", f"/api/quests/{ready[0]['id']}/claim", headers=H)
+assert claimed["completed"] is True
