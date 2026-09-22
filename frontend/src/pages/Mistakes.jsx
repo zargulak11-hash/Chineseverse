@@ -1,20 +1,16 @@
-import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function Mistakes() {
-  const [mistakes, setMistakes] = useState([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/mistakes").then(setMistakes).catch((e) => setError(e.message));
-  }, []);
+  const { data, setData, error, setError } = useApi("/mistakes");
+  const mistakes = data || [];
 
   async function master(id) {
     try {
       const updated = await api.patch(`/mistakes/${id}`, { mastered: true });
-      setMistakes((ms) => ms.map((m) => (m.id === id ? updated : m)));
+      setData((ms) => (ms || []).map((m) => (m.id === id ? updated : m)));
     } catch (e) {
       setError(e.message);
     }

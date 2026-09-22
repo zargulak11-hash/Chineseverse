@@ -108,8 +108,10 @@ with TestClient(app) as client:
     check("duel create", r.status_code == 201 and len(r.json()["questions"]) == 5)
     duel_id = r.json()["id"]
     q0 = r.json()["questions"][0]
+    # "recognition"-type questions are voice-only and carry no options.
+    answer_value = q0["options"][0] if q0.get("options") else "placeholder"
     r = client.post(f"/api/duels/{duel_id}/answer", json={
-        "index": 0, "answer": q0["options"][0], "response_time_ms": 1200,
+        "index": 0, "answer": answer_value, "response_time_ms": 1200,
     }, headers=h)
     check("duel answer", r.status_code == 200 and "my_score" in r.json())
     r = client.post(f"/api/duels/{duel_id}/finish", headers=h)

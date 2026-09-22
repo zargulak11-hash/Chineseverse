@@ -214,3 +214,76 @@ def chat_reply(messages: List[dict], companion: str, user_name: str) -> str:
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:
     """Graceful degradation when the live AI call fails mid-flight."""
     return _offline_evaluate(prompt, transcript, expected_keywords or [])
+
+
+def evaluate_case_solution(
+    case_context: str,
+    conclusion: str,
+    solution_keywords: List[str],
+    hint: str = "",
+) -> dict:
+    """Grade a Chinese Cases verdict.
+
+    With a live AI key this actually reasons about whether the player's
+    free-text conclusion matches the case's solution, instead of only
+    checking whether a magic keyword substring appears somewhere in it.
+    Always falls back to the deterministic keyword check so cases still
+    work with no API key configured.
+    """
+    provider = _active_provider()
+    if provider == "openai" and conclusion:
+        try:
+            system = (
+                "你是中文侦探解谜游戏的裁判。根据案情背景、正确答案的关键线索和玩家的结论，"
+                "判断玩家是否正确破案（不要求逐字匹配，只要结论的意思正确）。"
+                '返回JSON，格式为 {"solved": true 或 false, "feedback": "一句简短反馈"}。'
+            )
+            user = (
+                f"案情：{case_context}\n关键线索：{solution_keywords}\n提示：{hint}\n"
+                f"玩家的结论：{conclusion}"
+            )
+            text = _openai_chat(
+                [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                settings.ai_model,
+            )
+            data = json.loads(text)
+            return {
+                "solved": bool(data.get("solved")),
+                "feedback": str(data.get("feedback") or ""),
+            }
+        except (KeyError, ValueError, httpx.HTTPError):
+            pass  # fall through to the deterministic check below
+    solved = _contain(conclusion, *solution_keywords)
+    return {"solved": solved, "feedback": ""}
+
+
+def evaluate_pet_teacher_explanation(
+    mistake_summary: str,
+    explanation: str,
+    keywords: List[str],
+) -> dict:
+    """Judge whether the learner's explanation of a grammar rule shows real
+    understanding, not just a lucky correction. Offline mode falls back to
+    checking whether the explanation touches one of the rule's keywords."""
+    provider = _active_provider()
+    if provider == "openai" and explanation:
+        try:
+            system = (
+                "你是中文语法老师。学习者需要解释一个语法规则为什么正确。"
+                "判断他们的解释是否体现真正理解（不要求完美措辞）。"
+                '返回JSON: {"understood": true 或 false, "feedback": "一句简短反馈"}。'
+            )
+            user = f"规则：{mistake_summary}\n关键词：{keywords}\n学习者的解释：{explanation}"
+            text = _openai_chat(
+                [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                settings.ai_model,
+            )
+            data = json.loads(text)
+            return {
+                "understood": bool(data.get("understood")),
+                "feedback": str(data.get("feedback") or ""),
+            }
+        except (KeyError, ValueError, httpx.HTTPError):
+            pass
+    understood = _contain(explanation, *keywords)
+    return {"understood": understood, "feedback": ""}

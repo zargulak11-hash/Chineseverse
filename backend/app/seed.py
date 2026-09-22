@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.seed_data import ANIMALS, HSK_LEVELS, SKILLS
 from app.seed_learning import GRAMMAR, LESSONS, VOCAB
+from app.seed_pet_teacher import PET_TEACHER_CASES
 from app.seed_world import ACHIEVEMENTS, LOCATIONS, MISSIONS, NPCS, SCENARIOS
 
 logger = logging.getLogger(__name__)
@@ -273,6 +274,30 @@ def seed_lessons(db: Session) -> None:
                 lesson.skills.append(skill)
 
 
+def seed_pet_teacher_cases(db: Session) -> None:
+    db.flush()
+    levels = {h.level: h.id for h in db.query(models.HSKLevel).all()}
+    topics = {t.title: t.id for t in db.query(models.GrammarTopic).all()}
+    for (hsk, topic_title, wrong, correct, summary, keywords, hint, order) in PET_TEACHER_CASES:
+        level_id = levels.get(hsk)
+        if not level_id:
+            continue
+        if db.query(models.PetTeacherCase).filter_by(wrong_sentence=wrong).first():
+            continue
+        db.add(
+            models.PetTeacherCase(
+                grammar_topic_id=topics.get(topic_title),
+                hsk_level_id=level_id,
+                wrong_sentence=wrong,
+                correct_sentence=correct,
+                mistake_summary=summary,
+                explanation_keywords=keywords,
+                hint=hint,
+                order_index=order,
+            )
+        )
+
+
 def seed_achievements(db: Session) -> None:
     for code, title, desc, icon, category, criteria in ACHIEVEMENTS:
         if db.query(models.Achievement).filter_by(code=code).first():
@@ -295,6 +320,7 @@ def seed_all(db: Session) -> None:
     seed_missions(db)
     seed_vocabulary(db)
     seed_grammar(db)
+    seed_pet_teacher_cases(db)
     seed_lessons(db)
     seed_achievements(db)
     db.commit()

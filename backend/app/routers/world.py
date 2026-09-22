@@ -4,7 +4,16 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_user_or_none
-from app.services.gamification import ensure_bond, ensure_user_skills, progress_quests, user_rank
+from app.services import ai_client
+from app.services.gamification import (
+    ensure_bond,
+    ensure_user_skills,
+    progress_missions,
+    progress_quests,
+    record_mistake,
+    reinforce_mistake,
+    user_rank,
+)
 
 router = APIRouter(prefix="/api/world", tags=["world"])
 
@@ -107,12 +116,28 @@ def solve_case(
         raise HTTPException(status_code=404, detail="Case scenario not found")
     case_data = scenario.case_data or {}
     solution_kws = case_data.get("solution_kws", [])
-    conclusion = (payload.conclusion or "").lower()
-    solved = any(kw.lower() in conclusion for kw in solution_kws)
+    verdict = ai_client.evaluate_case_solution(
+        scenario.description or scenario.title,
+        payload.conclusion or "",
+        solution_kws,
+        case_data.get("hint", ""),
+    )
+    solved = verdict["solved"]
     progress_quests(db, user, "case" if solved else "case")
+    if solved:
+        progress_missions(db, user, "case", scenario_id=scenario.id)
+        reinforce_mistake(db, user, "grammar", scenario.slug)
+    else:
+        record_mistake(
+            db, user, "grammar", scenario.slug,
+            question_text=case_data.get("prompt") or scenario.title,
+            answer_given=payload.conclusion,
+            correct_answer=case_data.get("hint", ""),
+        )
+    db.commit()
     return {
         "solved": solved,
         "correct_answer": case_data.get("hint", ""),
-        "feedback": "You cracked it!" if solved else "Keep investigating the clues.",
+        "feedback": verdict["feedback"] or ("You cracked it!" if solved else "Keep investigating the clues."),
         "xp_reward": 50 if solved else 5,
     }

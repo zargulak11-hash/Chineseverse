@@ -12,11 +12,36 @@ from app.services.dna import apply_voice_to_skills
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
+    progress_missions,
     progress_quests,
+    record_mistake,
+    reinforce_mistake,
     touch_streak,
 )
 
+MISTAKE_WEAK_THRESHOLD = 70.0
+
 router = APIRouter(prefix="/api/voice", tags=["voice"])
+
+
+def _track_mistake(db: Session, user: models.User, prompt_text: str | None, result: dict) -> None:
+    """Feed the weakest skill signal from this attempt into the mistake memory."""
+    scored = {
+        "pinyin": result["pronunciation"],
+        "tone": result["tones"],
+        "grammar": result["grammar"],
+        "word": result["relevance"],
+    }
+    mistake_type, worst = min(scored.items(), key=lambda kv: kv[1])
+    reference = prompt_text or result.get("prompt_text") or result.get("transcript") or "practice"
+    if worst < MISTAKE_WEAK_THRESHOLD:
+        record_mistake(
+            db, user, mistake_type, reference,
+            question_text=prompt_text or result.get("prompt_text"),
+            answer_given=result.get("transcript"),
+        )
+    else:
+        reinforce_mistake(db, user, mistake_type, reference)
 
 
 class SimpleEvaluate(BaseModel):
@@ -71,6 +96,11 @@ def submit_attempt(
 
     apply_voice_to_skills(user, attempt)
     progress_quests(db, user, "speaking", amount=1)
+    progress_missions(db, user, "listening")
+    if payload.scenario_id:
+        progress_missions(db, user, "speak", scenario_id=payload.scenario_id)
+        progress_missions(db, user, "conversation", scenario_id=payload.scenario_id)
+    _track_mistake(db, user, payload.prompt_text, result)
     if user.streak:
         touch_streak(user)
 
@@ -112,7 +142,12 @@ def evaluate_turn(
     )
     return ReactionResponse(
         reaction=result["reaction"] or "很好！",
-        evaluation=result["feedback"],
+        evaluation={
+            "feedback": result["feedback"],
+            "prompt": result["prompt_text"],
+            "transcript": result["transcript"],
+            "is_correct": result["is_correct"],
+        },
         scores={
             "pronunciation": result["pronunciation"],
             "tones": result["tones"],

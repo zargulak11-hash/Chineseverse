@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
-import { animalFace } from "../components/AnimalEmoji.jsx";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 
 export default function AnimalSelect() {
@@ -53,11 +53,18 @@ export default function AnimalSelect() {
           <div
             key={a.id}
             className={`card hover animal${picked === a.id ? " picked" : ""}`}
-            style={{ borderColor: picked === a.id ? a.accent_color || "#f59e0b" : undefined }}
+            style={
+              picked === a.id
+                ? {
+                    borderColor: a.accent_color || "#f59e0b",
+                    boxShadow: `var(--shadow), 0 0 28px -6px ${a.accent_color || "#f59e0b"}`,
+                  }
+                : undefined
+            }
             onClick={() => !busy && choose(a.id)}
           >
-            <div className="face" style={{ color: a.accent_color }}>
-              {animalFace(a.slug)}
+            <div className="face">
+              <AnimalAvatar slug={a.slug} accentColor={a.accent_color} size={76} />
             </div>
             <div className="name">{a.name}</div>
             <div className="species">{a.species}</div>

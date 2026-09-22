@@ -1,20 +1,14 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function LocationDetail() {
   const { slug } = useParams();
-  const [loc, setLoc] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get(`/world/locations/${slug}`).then(setLoc).catch((e) => setError(e.message));
-  }, [slug]);
+  const { data: loc, error } = useApi(`/world/locations/${slug}`);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!loc) return <Layout><Empty>Entering…</Empty></Layout>;
+  if (!loc) return <Layout><Loading>Entering…</Loading></Layout>;
 
   return (
     <Layout>
@@ -50,8 +44,7 @@ export default function LocationDetail() {
           <h2 className="h2">Conversations</h2>
           <div className="col">
             {loc.scenarios.map((s) => (
-              <div key={s.id} className="card hover"
-                onClick={() => (s.is_case ? null : null)} style={{ cursor: "default" }}>
+              <div key={s.id} className="card">
                 <div className="row spread">
                   <div className="row">
                     <span style={{ fontSize: 22 }}>{s.is_case ? "🕵️" : "💬"}</span>

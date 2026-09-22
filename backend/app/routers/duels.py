@@ -1,3 +1,4 @@
+import random
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -6,14 +7,79 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
-from app.services.gamification import check_achievements, progress_quests
+from app.services.dna import bump_skill, compute_dna
+from app.services.gamification import (
+    check_achievements,
+    ensure_user_skills,
+    progress_missions,
+    progress_quests,
+    record_mistake,
+    reinforce_mistake,
+    user_rank,
+)
 
 router = APIRouter(prefix="/api/duels", tags=["duels"])
 
 QUESTION_COUNT = 5
 
+# Which Learning DNA skill and LearningMistake bucket each duel question
+# type feeds — this is what makes a duel a Learning-DNA activity instead of
+# an isolated vocab quiz.
+TYPE_SKILL = {
+    "pinyin": "vocabulary",
+    "meaning": "vocabulary",
+    "translate": "vocabulary",
+    "recognition": "speaking",
+    "tone": "tones",
+    "character": "reading",
+    "memory": "memory",
+    "listening": "listening",
+    "reaction": "reaction_speed",
+}
+TYPE_MISTAKE = {
+    "pinyin": "pinyin",
+    "tone": "tone",
+    "character": "character",
+}
 
-def _build_questions(db: Session, level_id: int | None, word_pool=None) -> list[dict]:
+# The inverse of TYPE_SKILL, picking one representative duel type per
+# skill — used to auto-focus a duel on whichever skill is currently weakest
+# when the player doesn't request a specific challenge type.
+SKILL_TO_FOCUS = {
+    "tones": "tone",
+    "listening": "listening",
+    "memory": "memory",
+    "reaction_speed": "reaction",
+    "speaking": "recognition",
+    "reading": "character",
+    "vocabulary": "meaning",
+    "grammar": "translate",
+    "writing": "translate",
+}
+
+TONE_LABELS = {1: "1st tone", 2: "2nd tone", 3: "3rd tone", 4: "4th tone", 5: "neutral tone"}
+_TONE_MARKS = {1: "āēīōūǖ", 2: "áéíóúǘ", 3: "ǎěǐǒǔǚ", 4: "àèìòùǜ"}
+
+
+def _tone_of(pinyin: str) -> int:
+    for ch in pinyin or "":
+        for tone, marks in _TONE_MARKS.items():
+            if ch in marks:
+                return tone
+    return 5
+
+
+def _meaning_of(word: models.VocabularyWord) -> str:
+    return (word.meanings or word.simplified).split(",")[0].strip()
+
+
+VALID_FOCUS_TYPES = {"pinyin", "meaning", "translate", "recognition", "tone", "character", "listening", "reaction"}
+FOCUS_HIT_RATE = 0.7  # a "focused" duel is mostly-but-not-only that type, so it doesn't feel monotonous
+
+
+def _build_questions(
+    db: Session, level_id: int | None, word_pool=None, focus_type: str | None = None
+) -> list[dict]:
     if word_pool is None:
         query = db.query(models.VocabularyWord)
         if level_id is not None:
@@ -24,26 +90,53 @@ def _build_questions(db: Session, level_id: int | None, word_pool=None) -> list[
     if not words:
         words = db.query(models.VocabularyWord).all()
 
-    import random
     chosen = random.sample(words, k=min(QUESTION_COUNT, len(words)))
+    single_char = [w for w in chosen if len(w.simplified) == 1]
+
+    base_types = ["pinyin", "meaning", "translate", "recognition", "tone", "listening", "reaction"]
     questions = []
     for i, word in enumerate(chosen):
-        qtype = random.choice(["pinyin", "meaning", "translate"])
-        if qtype == "pinyin":
-            prompt = word.simplified
-            answer = word.pinyin
-        elif qtype == "meaning":
-            prompt = word.simplified
-            answer = (word.meanings or word.simplified).split(",")[0].strip()
+        pool = list(base_types)
+        if word in single_char and len(single_char) >= 2:
+            pool.append("character")
+        if focus_type and focus_type in pool and random.random() < FOCUS_HIT_RATE:
+            qtype = focus_type
         else:
-            prompt = (word.meanings or word.simplified).split(",")[0].strip() + " → Chinese"
-            answer = word.simplified
-        distractors = [w for w in chosen if w.id != word.id][:3]
-        options = [answer] + random.sample(
-            [w.simplified if qtype != "pinyin" else w.pinyin for w in distractors],
-            k=min(3, len(distractors)),
-        )
-        random.shuffle(options)
+            qtype = random.choice(pool)
+
+        meaning = _meaning_of(word)
+        others = [w for w in chosen if w.id != word.id]
+        options = None
+        tts_text = None
+
+        if qtype == "pinyin":
+            prompt, answer = word.simplified, word.pinyin
+            options = [answer] + random.sample([w.pinyin for w in others], k=min(3, len(others)))
+        elif qtype in ("meaning", "reaction"):
+            prompt, answer = word.simplified, meaning
+            options = [answer] + random.sample([_meaning_of(w) for w in others], k=min(3, len(others)))
+        elif qtype == "translate":
+            prompt, answer = f"{meaning} → Chinese", word.simplified
+            options = [answer] + random.sample([w.simplified for w in others], k=min(3, len(others)))
+        elif qtype == "recognition":
+            prompt, answer = meaning, word.simplified  # no options — spoken aloud
+        elif qtype == "tone":
+            tone = _tone_of(word.pinyin)
+            prompt, answer = f"What tone is 「{word.simplified}」 ({word.pinyin})?", TONE_LABELS[tone]
+            other_labels = [v for k, v in TONE_LABELS.items() if k != tone]
+            options = [answer] + random.sample(other_labels, k=min(3, len(other_labels)))
+        elif qtype == "character":
+            prompt, answer = f'Which character means "{meaning}"?', word.simplified
+            other_chars = [w.simplified for w in single_char if w.id != word.id]
+            options = [answer] + random.sample(other_chars, k=min(3, len(other_chars)))
+        else:  # listening
+            prompt, answer = "🔊 Listen, then choose the meaning", meaning
+            tts_text = word.simplified
+            options = [answer] + random.sample([_meaning_of(w) for w in others], k=min(3, len(others)))
+
+        if options is not None:
+            random.shuffle(options)
+
         questions.append(
             {
                 "index": i,
@@ -51,9 +144,47 @@ def _build_questions(db: Session, level_id: int | None, word_pool=None) -> list[
                 "prompt": prompt,
                 "options": options,
                 "answer": answer,
+                "tts_text": tts_text,
             }
         )
+
+    # One question (if there's a "previous" one to reference) becomes a
+    # short-term-recall check instead of a fresh vocabulary lookup — a
+    # genuinely different mechanic, not just another vocab quiz dressed up.
+    if len(questions) >= 2:
+        mem_idx = random.randint(1, len(questions) - 1)
+        prev_word = chosen[mem_idx - 1]
+        prev_meaning = _meaning_of(prev_word)
+        distractors = [_meaning_of(w) for w in chosen if w.id != prev_word.id]
+        mem_options = [prev_meaning] + random.sample(distractors, k=min(3, len(distractors)))
+        random.shuffle(mem_options)
+        questions[mem_idx] = {
+            "index": mem_idx,
+            "type": "memory",
+            "prompt": f"What did the PREVIOUS word 「{prev_word.simplified}」 mean?",
+            "options": mem_options,
+            "answer": prev_meaning,
+            "tts_text": None,
+        }
+
     return questions
+
+
+def _personalized_word_pool(db: Session, user: models.User, level: int) -> list[models.VocabularyWord]:
+    """Bias the duel toward the challenger's own weak/unseen vocabulary at
+    their current HSK level — this is what makes a duel a Learning-DNA
+    challenge instead of a generic quiz everyone gets the same version of."""
+    level_obj = db.query(models.HSKLevel).filter_by(level=level).first()
+    query = db.query(models.VocabularyWord)
+    if level_obj is not None:
+        query = query.filter(models.VocabularyWord.hsk_level_id == level_obj.id)
+    words = query.all()
+    if not words:
+        words = db.query(models.VocabularyWord).all()
+
+    mastery_by_word = {uv.word_id: uv.mastery for uv in user.user_vocabulary}
+    words.sort(key=lambda w: mastery_by_word.get(w.id, 0.0))
+    return words[:40] or words
 
 
 def _buddy(db: Session) -> models.User:
@@ -84,12 +215,22 @@ def create_duel(
     if payload.opponent_username.lower() == "buddy" or opponent is None:
         opponent = None
 
-    level_obj = db.query(models.HSKLevel).filter_by(level=1).first()
-    questions = _build_questions(db, level_obj.id if level_obj else None)
+    ensure_user_skills(db, user)
+    level, _mastery = user_rank(db, user)
+    word_pool = _personalized_word_pool(db, user, level)
+
+    focus_type = payload.challenge_type if payload.challenge_type in VALID_FOCUS_TYPES else None
+    challenge_label = payload.challenge_type
+    if focus_type is None:
+        weakest = compute_dna(user).get("weakest_skill")
+        focus_type = SKILL_TO_FOCUS.get(weakest)
+        challenge_label = f"weakest strand · {weakest}" if weakest else None
+
+    questions = _build_questions(db, None, word_pool=word_pool, focus_type=focus_type)
 
     duel = models.Duel(
         status="active",
-        challenge_type=payload.challenge_type,
+        challenge_type=challenge_label,
         question_data={"questions": questions},
     )
     db.add(duel)
@@ -189,13 +330,36 @@ def answer_question(
         raise HTTPException(status_code=400, detail="Question index out of range")
 
     q = questions[payload.index]
+    qtype = q.get("type", "meaning")
     correct = (payload.answer or "").strip().lower() == (q.get("answer") or "").strip().lower()
+
+    ensure_user_skills(db, user)
     if correct:
-        me.score += 10
+        base = 10
+        if qtype == "reaction":
+            # Reward speed on top of correctness — the whole point of this type.
+            speed_bonus = round(max(0.0, 1 - payload.response_time_ms / 6000) * 8)
+            base += speed_bonus
+        me.score += base
         me.correct_count += 1
+        bump_skill(user, TYPE_SKILL.get(qtype, "vocabulary"), 2.0)
     else:
         me.score += 2
+        bump_skill(user, TYPE_SKILL.get(qtype, "vocabulary"), -0.3)
     me.answered += 1
+
+    mistake_type = TYPE_MISTAKE.get(qtype)
+    if mistake_type:
+        reference = q.get("prompt") or (q.get("answer") or "")[:300]
+        if correct:
+            reinforce_mistake(db, user, mistake_type, reference)
+        else:
+            record_mistake(
+                db, user, mistake_type, reference,
+                question_text=q.get("prompt"), answer_given=payload.answer,
+                correct_answer=q.get("answer"),
+            )
+
     db.commit()
 
     return {
@@ -223,14 +387,19 @@ def finish_duel(
     if me is None:
         raise HTTPException(status_code=403, detail="Not your duel")
 
-    # Opponent (or Buddy) answers the rest at ~70% accuracy.
+    # Buddy (or an unanswered opponent) plays out the remaining questions.
+    # Accuracy rubber-bands around the challenger's own performance (55-85%)
+    # so the duel feels competitive instead of a fixed pushover/wall.
     total = len((duel.question_data or {}).get("questions", []))
-    if opp:
-        seed = (opp.score if opp else 0) or 0
-        opp.score = round(total * 7)
+    if opp and opp.answered == 0:
+        my_accuracy = (me.correct_count / me.answered) if me and me.answered else 0.7
+        target_accuracy = max(0.55, min(0.85, my_accuracy + random.uniform(-0.1, 0.1)))
+        opp_correct = round(total * target_accuracy)
+        opp.score = opp_correct * 10 + (total - opp_correct) * 2
+        opp.correct_count = opp_correct
         opp.answered = total
-        if opp.user_id == user.id:
-            opp = None
+    if opp and opp.user_id == user.id:
+        opp = None
 
     duel.status = "finished"
     duel.finished_at = datetime.now(timezone.utc)
@@ -245,6 +414,7 @@ def finish_duel(
 
     if winner is not None and winner.user_id == user.id:
         progress_quests(db, user, "duel", amount=1)
+        progress_missions(db, user, "duel")
         check_achievements(db, user)
         db.commit()
 

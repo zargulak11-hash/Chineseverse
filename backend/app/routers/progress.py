@@ -1,11 +1,10 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.crud import apply_updates, get_or_404
+from app.crud import apply_updates, commit_or_409, get_or_404
 from app.database import get_db
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
@@ -58,14 +57,7 @@ def create_progress(payload: schemas.ProgressCreate, db: Session = Depends(get_d
     item = models.Progress(**payload.model_dump())
     _sync_completed_at(item)
     db.add(item)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail="Progress already exists for this user and lesson",
-        )
+    commit_or_409(db, "Progress already exists for this user and lesson")
     db.refresh(item)
     return item
 

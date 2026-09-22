@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, clearSession, getSavedUser, getToken } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
+import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -17,10 +18,12 @@ import LocationDetail from "./pages/LocationDetail.jsx";
 import Conversation from "./pages/Conversation.jsx";
 import CaseSolve from "./pages/CaseSolve.jsx";
 import Quests from "./pages/Quests.jsx";
+import Missions from "./pages/Missions.jsx";
 import Duels from "./pages/Duels.jsx";
 import DuelBattle from "./pages/DuelBattle.jsx";
 import Achievements from "./pages/Achievements.jsx";
 import Companion from "./pages/Companion.jsx";
+import PetTeacher from "./pages/PetTeacher.jsx";
 import Mistakes from "./pages/Mistakes.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -84,6 +87,7 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, setCurrentUser, logout }}>
+      <DashboardProvider>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -185,6 +189,14 @@ export default function App() {
           }
         />
         <Route
+          path="/missions"
+          element={
+            <RequireAuth>
+              <Missions />
+            </RequireAuth>
+          }
+        />
+        <Route
           path="/duels"
           element={
             <RequireAuth>
@@ -213,6 +225,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Companion />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/pet-teacher"
+          element={
+            <RequireAuth>
+              <PetTeacher />
             </RequireAuth>
           }
         />
@@ -250,6 +270,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </DashboardProvider>
     </AuthContext.Provider>
   );
 }

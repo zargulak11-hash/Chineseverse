@@ -20,6 +20,58 @@
   box-sizing: border-box;
 }
 
+/* ---------- Motion system ----------
+   A small, deliberate set of keyframes reused everywhere instead of
+   bespoke per-page animations, so motion feels like one system. */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes floatGlow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-2%, 3%) scale(1.06);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 html,
 body,
 #root {
@@ -127,15 +179,17 @@ a {
   border-radius: 11px;
   font-size: 14px;
   font-weight: 700;
-  transition: transform 0.06s ease, background 0.15s ease;
+  transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn:hover {
   background: #252c52;
+  transform: translateY(-1px);
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 0.05s;
 }
 
 .btn.primary {
@@ -146,6 +200,12 @@ a {
 
 .btn.primary:hover {
   filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .btn.ghost {
@@ -171,13 +231,14 @@ a {
 
 /* ---------- Layout ---------- */
 .page {
-  max-width: 1040px;
+  max-width: min(1240px, 94vw);
   margin: 0 auto;
   padding: 26px 20px 70px;
+  animation: fadeInUp 0.35s ease both;
 }
 
 .page.wide {
-  max-width: 1240px;
+  max-width: min(1440px, 96vw);
 }
 
 .grid {
@@ -187,6 +248,42 @@ a {
 
 .grid.cards {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+/* Cards animate in as they're inserted (route change or data finishing a
+   load) and stagger by position so a grid feels alive instead of popping
+   in all at once. Capped at 10 explicit delays — anything past that just
+   uses the last stagger step, which is imperceptible in practice. */
+.grid > .card,
+.mapgrid > .spot,
+.col > .card {
+  animation: fadeInUp 0.4s ease both;
+}
+
+.grid > .card:nth-child(2),
+.mapgrid > .spot:nth-child(2),
+.col > .card:nth-child(2) {
+  animation-delay: 0.04s;
+}
+.grid > .card:nth-child(3),
+.mapgrid > .spot:nth-child(3),
+.col > .card:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.grid > .card:nth-child(4),
+.mapgrid > .spot:nth-child(4),
+.col > .card:nth-child(4) {
+  animation-delay: 0.12s;
+}
+.grid > .card:nth-child(5),
+.mapgrid > .spot:nth-child(5),
+.col > .card:nth-child(5) {
+  animation-delay: 0.16s;
+}
+.grid > .card:nth-child(n + 6),
+.mapgrid > .spot:nth-child(n + 6),
+.col > .card:nth-child(n + 6) {
+  animation-delay: 0.2s;
 }
 
 .row {
@@ -242,12 +339,13 @@ a {
 
 .card.hover {
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .card.hover:hover {
   border-color: var(--accent);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(245, 158, 11, 0.25), 0 10px 30px rgba(245, 158, 11, 0.12);
 }
 
 .card.flat {
@@ -367,6 +465,24 @@ select.input {
   margin: 4px 0 10px;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* ---------- Animals ---------- */
 .animal {
   position: relative;
@@ -438,30 +554,99 @@ select.input {
   border-radius: 999px;
   padding: 3px 8px;
   font-weight: 800;
+  animation: scaleIn 0.25s ease both;
 }
 
-/* ---------- World map ---------- */
-.mapgrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 14px;
+
+.animal.hover:hover .face {
+  transform: scale(1.12) rotate(-3deg);
 }
 
-.spot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 18px 14px;
-  text-align: center;
+.animal .face {
+  transition: transform 0.2s ease;
 }
 
-.spot .ic {
-  font-size: 44px;
+/* ---------- World map (real SVG canvas, driven by Location.position_x/y) ---------- */
+.worldmap-wrap {
+  position: relative;
+  width: min(880px, 100%);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  animation: fadeInUp 0.4s ease both;
 }
 
-.spot.locked {
-  opacity: 0.45;
+.worldmap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wm-node {
+  cursor: pointer;
+}
+
+/* Scale the children, not the <g> itself — the <g> already carries a
+   positional transform (translate to the location's x/y); a CSS transform
+   on the same element would replace that positioning outright instead of
+   combining with it. The circle/text are drawn at local (0,0), which is
+   already their visual center, so scaling them directly is safe. */
+.wm-node .wm-dot,
+.wm-node .wm-icon {
+  transition: transform 0.15s ease, filter 0.15s ease;
+  transform-origin: center;
+}
+
+.wm-node:hover .wm-dot,
+.wm-node:hover .wm-icon {
+  transform: scale(1.15);
+  filter: brightness(1.15);
+}
+
+.wm-node.locked .wm-icon {
+  opacity: 0.7;
+}
+
+.wm-node .wm-label {
+  fill: var(--muted);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 0.6px;
+}
+
+.wm-pulse {
+  animation: wmPulse 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes wmPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+}
+
+.wm-tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  width: 200px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  z-index: 5;
+  animation: fadeInUp 0.15s ease both;
 }
 
 /* ---------- Chat ---------- */
@@ -558,6 +743,11 @@ select.input {
   animation: pulse 1s infinite;
 }
 
+.micbtn:hover:not(:disabled) {
+  transform: scale(1.06);
+  border-color: var(--accent2);
+}
+
 .micbtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -592,6 +782,7 @@ select.input {
 
 .modal .card {
   width: min(480px, 92vw);
+  animation: scaleIn 0.2s ease both;
 }
 
 .scores {
@@ -678,6 +869,7 @@ table.data td {
   font-size: 26px;
   font-weight: 900;
   color: var(--bad);
+  text-shadow: 0 0 18px rgba(248, 113, 113, 0.5);
 }
 
 .timerbar {
@@ -690,7 +882,20 @@ table.data td {
 .timerbar > div {
   height: 100%;
   background: var(--accent2);
-  transition: width 0.1s linear;
+  transition: width 0.1s linear, background 0.2s ease;
+}
+
+.timerbar.low > div {
+  background: var(--bad);
+  animation: pulse 0.6s infinite;
+}
+
+.reveal {
+  animation: scaleIn 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.reveal-icon {
+  animation: scaleIn 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.1s both;
 }
 
 .option {
@@ -726,8 +931,40 @@ a.navlink.active {
 }
 
 .hero {
+  position: relative;
   padding: 64px 20px;
   text-align: center;
+  overflow: hidden;
+}
+
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  z-index: -1;
+  animation: floatGlow 10s ease-in-out infinite;
+}
+
+.hero::before {
+  top: -120px;
+  left: 8%;
+  background: var(--accent);
+}
+
+.hero::after {
+  top: -60px;
+  right: 8%;
+  background: var(--accent2);
+  animation-delay: -5s;
+}
+
+.hero > * {
+  animation: fadeInUp 0.5s ease both;
 }
 
 .hero h1 {
@@ -754,8 +991,42 @@ a.navlink.active {
   margin-top: 34px;
 }
 
+.features > .card {
+  animation: fadeInUp 0.4s ease both;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.features > .card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.features > .card:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.features > .card:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.features > .card:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.features > .card:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.features > .card:nth-child(6) {
+  animation-delay: 0.25s;
+}
+
 .feat {
   padding: 20px;
+}
+
+.feat .ic {
+  transition: transform 0.2s ease;
+}
+
+.features > .card:hover .ic {
+  transform: scale(1.15) rotate(-4deg);
 }
 
 .feat .ic {
@@ -797,4 +1068,37 @@ a.navlink.active {
   text-align: center;
   padding: 40px 16px;
   color: var(--muted);
+  animation: fadeInUp 0.3s ease both;
+}
+
+/* ---------- Loading ---------- */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 54px 16px;
+  color: var(--muted);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--panel2) 25%,
+    var(--border) 50%,
+    var(--panel2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
 }

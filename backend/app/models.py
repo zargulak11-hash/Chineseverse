@@ -32,6 +32,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
+    total_xp = Column(Integer, default=0)
+    coins = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     animal = relationship("Animal", back_populates="users")
@@ -48,6 +50,7 @@ class User(Base):
     user_vocabulary = relationship("UserVocabulary", back_populates="user", cascade="all, delete-orphan")
     voice_attempts = relationship("VoiceAttempt", back_populates="user", cascade="all, delete-orphan")
     learning_mistakes = relationship("LearningMistake", back_populates="user", cascade="all, delete-orphan")
+    taught_facts = relationship("UserTaughtFact", back_populates="user", cascade="all, delete-orphan")
     user_missions = relationship("UserMission", back_populates="user", cascade="all, delete-orphan")
     user_achievements = relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
     daily_quests = relationship("DailyQuest", back_populates="user", cascade="all, delete-orphan")
@@ -279,6 +282,48 @@ class GrammarTopic(Base):
     order_index = Column(Integer, default=0)
 
     level = relationship("HSKLevel", back_populates="grammar")
+
+
+# ---------------------------------------------------------------------------
+# Pet Teacher Mode — the animal deliberately gets a grammar point wrong and
+# the learner has to catch it, correct it, and explain the rule.
+# ---------------------------------------------------------------------------
+
+
+class PetTeacherCase(Base):
+    __tablename__ = "pet_teacher_cases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    grammar_topic_id = Column(Integer, ForeignKey("grammar_topics.id"), nullable=True, index=True)
+    hsk_level_id = Column(Integer, ForeignKey("hsk_levels.id"), nullable=False, index=True)
+    wrong_sentence = Column(String(300), nullable=False)
+    correct_sentence = Column(String(300), nullable=False)
+    mistake_summary = Column(String(300), nullable=True)
+    explanation_keywords = Column(JSON, nullable=True)  # what a correct explanation should mention
+    hint = Column(String(300), nullable=True)
+    order_index = Column(Integer, default=0)
+
+    grammar_topic = relationship("GrammarTopic")
+    level = relationship("HSKLevel")
+
+    @property
+    def hsk_level(self):
+        return self.level.level if self.level else None
+
+
+class UserTaughtFact(Base):
+    __tablename__ = "user_taught_facts"
+    __table_args__ = (
+        UniqueConstraint("user_id", "case_id", name="uq_user_case_taught"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey("pet_teacher_cases.id"), nullable=False, index=True)
+    taught_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="taught_facts")
+    case = relationship("PetTeacherCase")
 
 
 # ---------------------------------------------------------------------------
@@ -558,6 +603,7 @@ class DailyQuest(Base):
     target = Column(Integer, default=1)
     progress = Column(Integer, default=0)
     completed = Column(Boolean, default=False)
+    claimed = Column(Boolean, default=False)
     reward_xp = Column(Integer, default=50)
     reward_coins = Column(Integer, default=0)
     flavor = Column(Text, nullable=True)

@@ -1,34 +1,47 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
-import { animalFace } from "../components/AnimalEmoji.jsx";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
+import { useApi } from "../hooks/useApi.js";
+
+const CHALLENGE_TYPES = [
+  { value: "", label: "Auto — my weakest strand" },
+  { value: "meaning", label: "Vocabulary" },
+  { value: "tone", label: "Tones" },
+  { value: "character", label: "Characters" },
+  { value: "memory", label: "Memory" },
+  { value: "listening", label: "Listening" },
+  { value: "reaction", label: "Reaction speed" },
+  { value: "recognition", label: "Speaking" },
+];
 
 export default function Duels() {
   const navigate = useNavigate();
-  const [duels, setDuels] = useState([]);
+  const { data, error } = useApi("/duels");
+  const duels = data || [];
+  const { dashboard: my } = useDashboard();
   const [open, setOpen] = useState(false);
   const [opponent, setOpponent] = useState("Buddy");
-  const [my, setMy] = useState(null);
-  const [error, setError] = useState("");
+  const [challengeType, setChallengeType] = useState("");
   const [starting, setStarting] = useState(false);
+  const [formError, setFormError] = useState("");
 
-  useEffect(() => {
-    api.get("/duels").then(setDuels).catch((e) => setError(e.message));
-    api.get("/dashboard").then(setMy).catch(() => {});
-  }, []);
+  if (error) return <Layout><Empty>{error}</Empty></Layout>;
 
   async function start() {
-    setError("");
+    setFormError("");
     setStarting(true);
     try {
       const d = await api.post("/duels", {
         opponent_username: opponent === "Buddy" ? "Buddy" : opponent,
+        challenge_type: challengeType || null,
       });
       navigate(`/duels/${d.id}`);
     } catch (e) {
-      setError(e.message);
+      setFormError(e.message);
     } finally {
       setStarting(false);
     }
@@ -61,7 +74,19 @@ export default function Duels() {
                 placeholder="Buddy or a friend's username"
               />
             </div>
-            {error && <p className="formerr">{error}</p>}
+            <div className="field">
+              <label>Challenge focus</label>
+              <select
+                className="input"
+                value={challengeType}
+                onChange={(e) => setChallengeType(e.target.value)}
+              >
+                {CHALLENGE_TYPES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            {formError && <p className="formerr">{formError}</p>}
             <div className="row">
               <button className="btn primary" onClick={start} disabled={starting}>
                 {starting ? "Creating…" : "Start"}
@@ -77,13 +102,17 @@ export default function Duels() {
           <div key={d.id} className="card">
             <div className="duelbanner" style={{ padding: "0 0 14px" }}>
               <div className="row">
-                <span style={{ fontSize: 40 }}>{mySlug ? animalFace(mySlug) : "🐾"}</span>
+                {mySlug ? (
+                  <AnimalAvatar slug={mySlug} accentColor={my?.animal?.accent_color} size={48} />
+                ) : (
+                  <span style={{ fontSize: 40 }}>🐾</span>
+                )}
                 <div className="col" style={{ gap: 2 }}>
                   <b>You</b>
                   <span className="ilb">{d.my_score ?? 0}</span>
                 </div>
               </div>
-              <span className="ilb">vs</span>
+              <span className="vs">VS</span>
               <div className="row">
                 <div className="col" style={{ gap: 2 }}>
                   <b>{d.opponent}</b>

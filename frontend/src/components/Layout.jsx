@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { api } from "../api.js";
 import { useAuth } from "../auth.js";
-import { animalFace } from "./AnimalEmoji.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
+import AnimalAvatar from "./AnimalAvatar.jsx";
 
 const LINKS = [
   ["/dashboard", "Home"],
@@ -12,22 +11,17 @@ const LINKS = [
   ["/dna", "DNA"],
   ["/roadmap", "HSK"],
   ["/quests", "Quests"],
+  ["/missions", "Missions"],
   ["/duels", "Duels"],
   ["/companion", "Companion"],
+  ["/pet-teacher", "Teach"],
   ["/achievements", "Badges"],
 ];
 
-export default function Layout({ children, hero = false }) {
+export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [dashboard, setDashboard] = useState(null);
-
-  useEffect(() => {
-    api
-      .get("/dashboard")
-      .then(setDashboard)
-      .catch(() => {});
-  }, []);
+  const { dashboard } = useDashboard();
 
   function handleLogout() {
     logout();
@@ -60,10 +54,11 @@ export default function Layout({ children, hero = false }) {
         <span className="spacer" />
         <span className="chip">🔥 {streak} day</span>
         <span className="chip">HSK {hsk} · {mastery.toFixed(0)}%</span>
+        <span className="chip">🪙 {dashboard?.user?.coins ?? 0}</span>
         {animalSlug && (
           <Link to="/companion" title="My companion">
             <span className="chip" style={{ borderColor: accent }}>
-              {animalFace(animalSlug)}
+              <AnimalAvatar slug={animalSlug} accentColor={accent} size={20} />
               <b>{dashboard?.animal?.name}</b>
             </span>
           </Link>
@@ -78,7 +73,7 @@ export default function Layout({ children, hero = false }) {
           Log out
         </button>
       </header>
-      <main className={`page${hero ? "" : ""}`}>{children}</main>
+      <main className="page">{children}</main>
     </>
   );
 }

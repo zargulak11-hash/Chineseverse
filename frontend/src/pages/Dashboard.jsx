@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../api.js";
-import { animalFace } from "../components/AnimalEmoji.jsx";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
-import { Bar, Badge, Empty, Ring, Stat } from "../components/ui.jsx";
+import { Bar, Badge, Empty, Loading, Ring, Stat } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [d, setD] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/dashboard").then(setD).catch((e) => setError(e.message));
-  }, []);
+  const { dashboard: d, error } = useDashboard();
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!d) return <Layout><Empty>Loading your world…</Empty></Layout>;
+  if (!d) return <Layout><Loading>Loading your world…</Loading></Layout>;
 
   const skillAnchor = (code) => navigate(`/dna?focus=${code}`);
 
@@ -39,7 +33,7 @@ export default function Dashboard() {
           <div className="row">
             {d.animal ? (
               <>
-                <span style={{ fontSize: 56 }}>{animalFace(d.animal.slug)}</span>
+                <AnimalAvatar slug={d.animal.slug} accentColor={d.animal.accent_color} size={64} />
                 <div>
                   <h2 className="h2">{d.animal.name}</h2>
                   <p className="sub">{d.animal.species}</p>
@@ -119,15 +113,13 @@ export default function Dashboard() {
         <div className="card">
           <h2 className="h2">Recommended mission</h2>
           {d.recommended_mission ? (
-            <>
-              <p className="sub">{d.recommended_mission.title}</p>
-              <Link to={`/world/${d.next_location?.slug || ""}`}>
-                <button className="btn small">Start it</button>
-              </Link>
-            </>
+            <p className="sub">{d.recommended_mission.title}</p>
           ) : (
             <p className="sub">Youre on a roll — keep talking.</p>
           )}
+          <Link to="/missions">
+            <button className="btn small">View all missions</button>
+          </Link>
         </div>
       </div>
 

@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import MicRecorder from "../components/MicRecorder.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 
 export default function Conversation() {
   const { scenarioId } = useParams();
@@ -10,7 +11,6 @@ export default function Conversation() {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [text, setText] = useState("");
-  const [starting, setStarting] = useState(false);
   const [result, setResult] = useState(null);
   const [sent, setSent] = useState(false);
   const scrollRef = useRef(null);
@@ -24,7 +24,7 @@ export default function Conversation() {
   }, [step, result]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!sc) return <Layout><Empty>Entering conversation…</Empty></Layout>;
+  if (!sc) return <Layout><Loading>Entering conversation…</Loading></Layout>;
 
   const dialogues = sc.dialogues || [];
   const current = dialogues[step];
@@ -91,12 +91,13 @@ export default function Conversation() {
                 </div>
                 {d.requires_voice && isCurrent && (
                   <div className="microw">
+                    <MicRecorder onTranscript={(t) => setText(t)} disabled={sent} />
                     <div style={{ flex: 1, minWidth: 280 }}>
                       <p className="sub" style={{ marginBottom: 6 }}>{d.prompt}</p>
                       <textarea
                         className="input"
                         rows={2}
-                        placeholder="Type what you would say in Chinese…"
+                        placeholder="Tap the mic and speak, or type what you would say in Chinese…"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                       />

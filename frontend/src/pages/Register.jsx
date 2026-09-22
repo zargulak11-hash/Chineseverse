@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api.js";
+import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Register() {
@@ -14,6 +15,11 @@ export default function Register() {
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  function afterAuth(user) {
+    setCurrentUser(user);
+    navigate("/animals", { replace: true });
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -29,8 +35,7 @@ export default function Register() {
         email: form.email,
         password: form.password,
       });
-      setCurrentUser(user);
-      navigate("/animals", { replace: true });
+      afterAuth(user);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -90,6 +95,8 @@ export default function Register() {
             {busy ? "Creating…" : "Create account"}
           </button>
         </form>
+        <div className="divider" style={{ margin: "18px 0" }}>or</div>
+        <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
           Already have an account? <Link to="/login">Log in</Link>
         </p>

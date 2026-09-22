@@ -23,6 +23,10 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(min_length=10)
+
+
 # --------------------------------------------------------------------------- User
 class UserCreate(BaseModel):
     username: str = Field(min_length=3, max_length=50)
@@ -50,6 +54,8 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     animal_id: Optional[int]
+    total_xp: int = 0
+    coins: int = 0
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -347,6 +353,32 @@ class GrammarTopicResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --------------------------------------------------------------------------- Pet Teacher
+class PetTeacherCaseResponse(BaseModel):
+    id: int
+    wrong_sentence: str
+    hint: Optional[str] = None
+    hsk_level: Optional[int] = None
+    already_taught: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PetTeacherAnswerRequest(BaseModel):
+    correction: str = Field(min_length=1, max_length=300)
+    explanation: str = Field(min_length=1, max_length=500)
+
+
+class PetTeacherResultResponse(BaseModel):
+    correct_fix: bool
+    understood: bool
+    success: bool
+    correct_sentence: str
+    mistake_summary: Optional[str] = None
+    feedback: str
+    taught_count: int
+
+
 # --------------------------------------------------------------------------- World
 class LocationResponse(BaseModel):
     id: int
@@ -533,6 +565,7 @@ class DuelQuestion(BaseModel):
     type: str
     prompt: str
     options: Optional[list] = None
+    tts_text: Optional[str] = None
 
 
 class DuelResponse(BaseModel):
@@ -571,6 +604,7 @@ class QuestResponse(BaseModel):
     target: int
     progress: int
     completed: bool
+    claimed: bool = False
     reward_xp: int
     reward_coins: int
     flavor: Optional[str]

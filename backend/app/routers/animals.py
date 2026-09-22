@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.crud import apply_updates, get_or_404
+from app.crud import apply_updates, commit_or_409, get_or_404
 from app.database import get_db
 
 router = APIRouter(prefix="/api/animals", tags=["animals"])
@@ -18,13 +17,7 @@ def list_animals(db: Session = Depends(get_db)):
 def create_animal(payload: schemas.AnimalCreate, db: Session = Depends(get_db)):
     animal = models.Animal(**payload.model_dump())
     db.add(animal)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=409, detail=f"Animal name '{payload.name}' already exists"
-        )
+    commit_or_409(db, f"Animal name '{payload.name}' already exists")
     db.refresh(animal)
     return animal
 
@@ -40,13 +33,7 @@ def update_animal(
 ):
     animal = get_or_404(db, models.Animal, animal_id)
     apply_updates(animal, payload.model_dump())
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=409, detail=f"Animal name '{payload.name}' already exists"
-        )
+    commit_or_409(db, f"Animal name '{payload.name}' already exists")
     db.refresh(animal)
     return animal
 
@@ -57,11 +44,7 @@ def patch_animal(
 ):
     animal = get_or_404(db, models.Animal, animal_id)
     apply_updates(animal, payload.model_dump(exclude_unset=True))
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=409, detail="Animal name already exists")
+    commit_or_409(db, "Animal name already exists")
     db.refresh(animal)
     return animal
 

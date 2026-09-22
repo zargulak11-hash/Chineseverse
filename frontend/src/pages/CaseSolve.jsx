@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 
 export default function CaseSolve() {
   const { scenarioId } = useParams();
@@ -18,7 +18,7 @@ export default function CaseSolve() {
   }, [scenarioId]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!sc) return <Layout><Empty>Opening the file…</Empty></Layout>;
+  if (!sc) return <Layout><Loading>Opening the file…</Loading></Layout>;
 
   const dialogs = sc.dialogues || [];
 

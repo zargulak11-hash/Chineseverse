@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 
 export default function LessonDetail() {
   const { lessonId } = useParams();
@@ -46,7 +46,7 @@ export default function LessonDetail() {
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!lesson) return <Layout><Empty>Loading…</Empty></Layout>;
+  if (!lesson) return <Layout><Loading /></Layout>;
 
   return (
     <Layout>

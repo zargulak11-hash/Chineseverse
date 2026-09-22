@@ -1,19 +1,13 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function Roadmap() {
-  const [r, setR] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/hsk/roadmap").then(setR).catch((e) => setError(e.message));
-  }, []);
+  const { data: r, error } = useApi("/hsk/roadmap");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!r) return <Layout><Empty>Loading roadmap…</Empty></Layout>;
+  if (!r) return <Layout><Loading>Loading roadmap…</Loading></Layout>;
 
   const stateIcon = (s) =>
     s === "locked" ? "🔒" : s === "current" ? "⭐" : "✅";
@@ -30,7 +24,7 @@ export default function Roadmap() {
 
       <div className="grid" style={{ marginTop: 20 }}>
         {r.levels.map((lvl) => (
-          <div key={lvl.level} className={`card${lvl.status === "locked" ? "" : ""}`}
+          <div key={lvl.level} className="card"
             style={lvl.status === "locked" ? { opacity: 0.6 } : {}}>
             <div className="row spread">
               <div className="row">

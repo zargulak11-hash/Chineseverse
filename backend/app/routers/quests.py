@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
-from app.services.gamification import generate_daily_quests
+from app.services.gamification import add_bond_points, check_achievements, generate_daily_quests
 
 router = APIRouter(prefix="/api/quests", tags=["quests"])
 
@@ -32,4 +32,14 @@ def claim_quest(
         raise HTTPException(status_code=404, detail="Quest not found")
     if not quest.completed:
         raise HTTPException(status_code=409, detail="Quest not completed yet")
+    if quest.claimed:
+        raise HTTPException(status_code=409, detail="Quest already claimed")
+
+    quest.claimed = True
+    user.total_xp += quest.reward_xp
+    user.coins += quest.reward_coins
+    add_bond_points(user, points=2)
+    check_achievements(db, user)
+    db.commit()
+    db.refresh(quest)
     return quest

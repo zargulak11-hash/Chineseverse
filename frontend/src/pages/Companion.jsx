@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
-import { animalFace } from "../components/AnimalEmoji.jsx";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty, Stat } from "../components/ui.jsx";
+import MicRecorder from "../components/MicRecorder.jsx";
+import { Bar, Empty, Loading, Stat } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
 
 const PHRASES = [
   "你好，加油！",
@@ -15,17 +17,12 @@ const PHRASES = [
 ];
 
 export default function Companion() {
-  const [dashboard, setDashboard] = useState(null);
+  const { dashboard, error } = useDashboard();
   const [chat, setChat] = useState([]);
   const [msg, setMsg] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/dashboard").then(setDashboard).catch((e) => setError(e.message));
-  }, []);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!dashboard) return <Layout><Empty>Waking your companion…</Empty></Layout>;
+  if (!dashboard) return <Layout><Loading>Waking your companion…</Loading></Layout>;
 
   const animal = dashboard.animal;
   if (!animal) {
@@ -63,8 +60,8 @@ export default function Companion() {
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
         <div className="card center">
-          <div style={{ fontSize: 84, color: animal.accent_color, filter: "drop-shadow(0 8px 18px rgba(0,0,0,.45))" }}>
-            {animalFace(animal.slug)}
+          <div style={{ filter: "drop-shadow(0 8px 18px rgba(0,0,0,.45))" }}>
+            <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={104} />
           </div>
           <div className="h2" style={{ marginTop: 4 }}>{animal.name}</div>
           <div className="sub">{animal.species}</div>
@@ -80,6 +77,11 @@ export default function Companion() {
           <p className="sub" style={{ marginTop: 12 }}>✨ {animal.special_ability}</p>
           <p className="sub">🎭 {animal.tone_style}</p>
           <p className="sub">🎯 {animal.preferred_mechanics}</p>
+          <Link to="/pet-teacher">
+            <button className="btn small ghost" style={{ marginTop: 10 }}>
+              🧑‍🏫 {animal.name} wants you to catch its mistake
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -94,17 +96,20 @@ export default function Companion() {
               <div key={i} className="bubble me">{c.text}</div>
             ) : (
               <div key={i} className="bubble npc">
-                <span className="speaker">{animalFace(animal.slug)} {animal.name}</span>
+                <span className="speaker" style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={16} /> {animal.name}
+                </span>
                 {c.reaction} · {c.note}
               </div>
             )
           )}
         </div>
         <div className="row" style={{ marginTop: 14, alignItems: "stretch" }}>
+          <MicRecorder onTranscript={(t) => send(t)} />
           <input
             className="input"
             style={{ flex: 1 }}
-            placeholder="Type in pinyin or Chinese…"
+            placeholder="Tap the mic and speak, or type in Chinese…"
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
@@ -131,7 +136,7 @@ function VoiceHistory() {
   useEffect(() => {
     api.get("/voice/history").then(setRows).catch(() => setRows([]));
   }, []);
-  if (!rows) return <Empty>Loading…</Empty>;
+  if (!rows) return <Loading />;
   if (rows.length === 0) return <Empty>No sessions yet.</Empty>;
   return (
     <div className="col">

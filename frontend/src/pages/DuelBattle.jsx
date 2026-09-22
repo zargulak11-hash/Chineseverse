@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import MicRecorder from "../components/MicRecorder.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
+
+const TYPE_LABEL = {
+  pinyin: "Pinyin", meaning: "Meaning", translate: "Translate",
+  recognition: "Speak it", tone: "Tone", character: "Character",
+  memory: "Memory", listening: "Listening", reaction: "Reaction speed",
+};
 
 export default function DuelBattle() {
   const { duelId } = useParams();
@@ -27,10 +34,28 @@ export default function DuelBattle() {
     return () => clearInterval(t);
   }, [duel, idx]);
 
-  if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!duel) return <Layout><Empty>Loading duel…</Empty></Layout>;
+  const q = duel?.questions?.[idx];
 
-  const q = duel.questions?.[idx];
+  useEffect(() => {
+    if (q?.type === "listening" && q.tts_text && window.speechSynthesis) {
+      const utter = new SpeechSynthesisUtterance(q.tts_text);
+      utter.lang = "zh-CN";
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+  }, [idx, q?.type, q?.tts_text]);
+
+  if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!duel) return <Layout><Loading>Loading duel…</Loading></Layout>;
+
+  function replay() {
+    if (q?.tts_text && window.speechSynthesis) {
+      const utter = new SpeechSynthesisUtterance(q.tts_text);
+      utter.lang = "zh-CN";
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
+    }
+  }
 
   async function answer(option) {
     if (busy || !q) return;
@@ -68,8 +93,8 @@ export default function DuelBattle() {
     const meWon = duel.winner && duel.winner !== duel.opponent && duel.opponent !== "__buddy_ai__";
     return (
       <Layout>
-        <div className="card center" style={{ maxWidth: 520, margin: "40px auto" }}>
-          <div style={{ fontSize: 52 }}>{meWon == null ? "🤝" : meWon ? "🏆" : "😤"}</div>
+        <div className="card center reveal" style={{ maxWidth: 520, margin: "40px auto" }}>
+          <div className="reveal-icon" style={{ fontSize: 52 }}>{meWon == null ? "🤝" : meWon ? "🏆" : "😤"}</div>
           <h1 className="h1">{meWon == null ? "It was a draw!" : meWon ? "Victory" : duel.opponent + " won"}</h1>
           <p className="sub">You {duel.my_score ?? 0} · {duel.opponent} {duel.opp_score ?? 0}</p>
           <Link to="/duels">
@@ -88,7 +113,7 @@ export default function DuelBattle() {
           <span className="badge accent">{duel.challenge_type || "weakest strand"}</span>
           <span className="muted">Your score · {score}</span>
         </div>
-        <div className="timerbar" style={{ marginTop: 12 }}>
+        <div className={`timerbar${timer < 30 ? " low" : ""}`} style={{ marginTop: 12 }}>
           <div style={{ width: `${timer}%` }} />
         </div>
       </div>
@@ -97,12 +122,20 @@ export default function DuelBattle() {
         <div className="card" style={{ marginTop: 16 }}>
           <div className="row spread">
             <span className="ilb">Round {idx + 1}/{duel.questions.length}</span>
-            <span className="ilb">{q.type}</span>
+            <span className="ilb">{TYPE_LABEL[q.type] || q.type}</span>
           </div>
           <h2 className="h2" style={{ marginTop: 14, fontSize: 22 }}>{q.prompt}</h2>
+          {q.type === "listening" && (
+            <button className="btn small ghost" style={{ marginTop: 8 }} onClick={replay}>
+              🔊 Replay
+            </button>
+          )}
 
           {feedback && (
-            <p className={`sub ${feedback.correct ? "" : ""}`} style={{ marginTop: 10 }}>
+            <p
+              className="sub"
+              style={{ marginTop: 10, color: feedback.correct ? "var(--good)" : "var(--bad)", fontWeight: 700 }}
+            >
               {feedback.correct ? "✅ Correct" : "❌ Wrong answer"}
             </p>
           )}
@@ -120,9 +153,15 @@ export default function DuelBattle() {
                 {opt}
               </button>
             ))}
-            {!q.options && (
+            {!q.options && q.type === "recognition" && !feedback && (
+              <div className="row center" style={{ justifyContent: "center" }}>
+                <MicRecorder onTranscript={(t) => answer(t)} disabled={busy} />
+                <span className="muted" style={{ fontSize: 12 }}>Say it out loud</span>
+              </div>
+            )}
+            {!q.options && q.type !== "recognition" && (
               <button className="option" onClick={() => answer("")} disabled={busy || !!feedback}>
-                {q.type === "recognition" ? "Say it" : "Submit guess"}
+                Submit guess
               </button>
             )}
           </div>

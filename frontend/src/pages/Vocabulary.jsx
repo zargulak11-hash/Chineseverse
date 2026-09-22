@@ -1,17 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function Vocabulary() {
-  const [words, setWords] = useState([]);
+  const { data, setData, error } = useApi("/vocab");
+  const words = data || [];
   const [level, setLevel] = useState(1);
-  const [error, setError] = useState("");
   const [flash, setFlash] = useState(null);
-
-  useEffect(() => {
-    api.get("/vocab").then(setWords).catch((e) => setError(e.message));
-  }, []);
 
   useEffect(() => {
     if (!flash) return;
@@ -25,10 +22,11 @@ export default function Vocabulary() {
     try {
       const res = await api.post(`/vocab/${w.id}/review`, { correct: true });
       setFlash({ word: w.simplified, mastery: res.mastery, status: res.status });
-      const next = words.map((x) =>
-        x.id === w.id ? { ...x, mastery: res.mastery, status: res.status } : x
+      setData((ws) =>
+        (ws || []).map((x) =>
+          x.id === w.id ? { ...x, mastery: res.mastery, status: res.status } : x
+        )
       );
-      setWords(next);
     } catch (e) {
       setFlash({ word: w.simplified, mastery: null, status: e.message });
     }

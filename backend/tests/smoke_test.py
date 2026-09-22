@@ -22,11 +22,11 @@ def expect(client, method, url, expected, **kwargs):
 
 with TestClient(app) as client:
     # Health
-    expect(client, "get", "/api/health", 200)
+    expect(client, "get", "/health", 200)
 
     # Animals: seeded on startup
     animals = client.get("/api/animals").json()
-    assert len(animals) == 4, animals
+    assert len(animals) == 16, animals
     panda = next(a for a in animals if a["name"] == "Panda")
 
     # Animal CRUD
@@ -35,7 +35,7 @@ with TestClient(app) as client:
         "post",
         "/api/animals",
         201,
-        json={"name": "Turtle", "species": "Testudo", "description": "Slow but steady"},
+        json={"slug": "turtle", "name": "Turtle", "species": "Testudo", "description": "Slow but steady"},
     ).json()
     aid = created["id"]
     expect(client, "get", f"/api/animals/{aid}", 200)
@@ -45,7 +45,7 @@ with TestClient(app) as client:
         "put",
         f"/api/animals/{aid}",
         200,
-        json={"name": "Turtle", "species": "Geochelone", "description": "Updated", "image_url": ""},
+        json={"slug": "turtle", "name": "Turtle", "species": "Geochelone", "description": "Updated", "image_url": ""},
     )
     patched = expect(
         client,
@@ -55,7 +55,10 @@ with TestClient(app) as client:
         json={"description": "Patched"},
     ).json()
     assert patched["description"] == "Patched"
-    expect(client, "post", "/api/animals", 409, json={"name": "Panda", "species": "x", "description": "dup"})
+    expect(
+        client, "post", "/api/animals", 409,
+        json={"slug": "panda-2", "name": "Panda", "species": "x", "description": "dup"},
+    )
     expect(client, "delete", f"/api/animals/{aid}", 204)
     expect(client, "get", f"/api/animals/{aid}", 404)
 
@@ -100,6 +103,7 @@ with TestClient(app) as client:
     expect(client, "post", "/api/auth/login", 401, json={"username": "nobody", "password": "secret1"})
 
     # Lesson CRUD + validation
+    baseline_hsk1 = len(client.get("/api/lessons", params={"hsk_level": 1}).json())
     expect(client, "post", "/api/lessons", 422, json={"title": "A", "hsk_level": 9})
     lesson = expect(
         client,
@@ -111,7 +115,7 @@ with TestClient(app) as client:
     lid = lesson["id"]
     expect(client, "post", "/api/lessons", 201, json={"title": "Numbers", "content": "一二三", "hsk_level": 1, "order_index": 1})
     expect(client, "post", "/api/lessons", 201, json={"title": "Family", "content": "家", "hsk_level": 2, "order_index": 0})
-    assert len(client.get("/api/lessons", params={"hsk_level": 1}).json()) == 2
+    assert len(client.get("/api/lessons", params={"hsk_level": 1}).json()) == baseline_hsk1 + 2
     expect(client, "get", f"/api/lessons/{lid}", 200)
     expect(client, "get", "/api/lessons/999999", 404)
     result = expect(
@@ -119,7 +123,7 @@ with TestClient(app) as client:
         "put",
         f"/api/lessons/{lid}",
         200,
-        json={"title": "Hello!", "content": "你好", "hsk_level": 1, "order_index": 0},
+        json={"title": "Hello!", "content": "你好", "hsk_level": 1, "order_index": 0, "lesson_type": "lesson"},
     ).json()
     assert result["title"] == "Hello!"
     expect(client, "patch", f"/api/lessons/{lid}", 200, json={"hsk_level": 2})

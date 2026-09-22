@@ -1,27 +1,27 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api.js";
-import { animalFace } from "../components/AnimalEmoji.jsx";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function Profile() {
-  const [me, setMe] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/me").then(setMe).catch((e) => setError(e.message));
-  }, []);
+  const { data: me, error } = useApi("/me");
+  const { dashboard } = useDashboard();
+  const animal = dashboard?.animal;
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!me) return <Layout><Empty>Loading…</Empty></Layout>;
+  if (!me) return <Layout><Loading /></Layout>;
 
   return (
     <Layout>
       <div className="row spread">
-        <div>
-          <h1 className="h1">@{me.user.username}</h1>
-          <p className="sub">{me.user.email} · joined {new Date(me.user.created_at).toLocaleDateString()}</p>
+        <div className="row">
+          {animal && <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={56} />}
+          <div>
+            <h1 className="h1">@{me.user.username}</h1>
+            <p className="sub">{me.user.email} · joined {new Date(me.user.created_at).toLocaleDateString()}</p>
+          </div>
         </div>
         <Link to="/animals">
           <button className="btn ghost">Change companion</button>
@@ -68,6 +68,11 @@ export default function Profile() {
           {me.streak.last_active_date && (
             <p className="sub" style={{ marginTop: 10 }}>Last active: {me.streak.last_active_date}</p>
           )}
+          <h2 className="h2" style={{ marginTop: 18 }}>Rewards earned</h2>
+          <div className="scores" style={{ marginTop: 10 }}>
+            <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.user.total_xp}</div><div className="lbl">total xp</div></div>
+            <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}>🪙 {me.user.coins}</div><div className="lbl">coins</div></div>
+          </div>
         </div>
       </div>
     </Layout>

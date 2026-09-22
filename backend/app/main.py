@@ -1,13 +1,18 @@
+import logging
 from contextlib import asynccontextmanager
 from logging.config import dictConfig
+from pathlib import Path
 
+from alembic import command
+from alembic.config import Config as AlembicConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
 
 from app.config import settings
-from app.database import Base, SessionLocal, engine
+from app.database import SessionLocal
 from app.seed import needs_seed, seed_all
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 dictConfig(
     {
@@ -28,50 +33,24 @@ dictConfig(
     }
 )
 
-ALWAYS_MISSING_COLUMNS = [
-    ("animals", "slug", "VARCHAR(50)"),
-    ("animals", "accent_color", "VARCHAR(20)"),
-    ("animals", "personality", "VARCHAR(300)"),
-    ("animals", "tone_style", "TEXT"),
-    ("animals", "preferred_mechanics", "TEXT"),
-    ("animals", "special_ability", "VARCHAR(300)"),
-    ("users", "is_active", "BOOLEAN DEFAULT true"),
-    ("lessons", "summary", "VARCHAR(300)"),
-    ("lessons", "lesson_type", "VARCHAR(30)"),
-    ("lessons", "hsk_level_id", "INTEGER"),
-]
+def _run_migrations() -> None:
+    """Bring the database schema up to date via Alembic.
 
-# Columns removed from the current models that used to exist in V1 tables.
-OBSOLETE_COLUMNS = [
-    ("lessons", "hsk_level"),
-]
-
-
-def _ensure_schema() -> None:
-    """Bring a pre-existing database up to the current model (idempotent)."""
-    dialect = engine.url.get_backend_name()
-    with engine.begin() as conn:
-        for table, column, column_type in ALWAYS_MISSING_COLUMNS:
-            if dialect == "postgresql":
-                conn.execute(
-                    text(
-                        f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {column_type}"
-                    )
-                )
-        for table, column in OBSOLETE_COLUMNS:
-            if dialect == "postgresql":
-                conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS {column}"))
+    This replaces an earlier ad-hoc ALTER TABLE patch list that only
+    understood Postgres and had to be hand-maintained per column. Schema
+    changes now go through `alembic revision --autogenerate` + a migration
+    file in alembic/versions/, and this just applies whatever is pending —
+    including creating every table from scratch on a brand-new database.
+    """
+    cfg = AlembicConfig(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    command.upgrade(cfg, "head")
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    try:
-        _ensure_schema()
-    except Exception as exc:  # non-postgres dialects
-        import logging
-
-        logging.getLogger("app").warning("Schema ensure skipped: %s", exc)
+    _run_migrations()
+    logging.getLogger("app").info("Database migrations applied.")
     with SessionLocal() as db:
         if needs_seed(db):
             seed_all(db)
@@ -104,6 +83,7 @@ from app.routers import (  # noqa: E402
     me,
     missions,
     mistakes,
+    pet_teacher,
     progress,
     quests,
     users,
@@ -129,6 +109,7 @@ for module in (
     quests,
     achievements,
     mistakes,
+    pet_teacher,
     dashboard,
 ):
     app.include_router(module.router)

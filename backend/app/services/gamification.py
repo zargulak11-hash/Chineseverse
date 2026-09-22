@@ -3,7 +3,7 @@ and small progression helpers shared between routers."""
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -115,6 +115,45 @@ def progress_quests(db: Session, user: models.User, quest_type: str, amount: int
     return quests
 
 
+def progress_missions(
+    db: Session, user: models.User, kind: str, scenario_id: int | None = None, amount: int = 1
+) -> list[models.Mission]:
+    """Auto-advance any mission of this kind the learner is eligible for.
+
+    A mission tied to a specific scenario (scenario_id is not None) only
+    advances when that exact scenario was just used; a kind-only mission
+    (e.g. the generic "listening" drill) advances on any qualifying action.
+    Rewards are granted immediately the moment a mission completes — no
+    separate claim step, unlike daily quests.
+    """
+    missions = db.query(models.Mission).filter(models.Mission.kind == kind).all()
+    completed_now = []
+    for mission in missions:
+        if mission.scenario_id is not None and mission.scenario_id != scenario_id:
+            continue
+        entry = (
+            db.query(models.UserMission)
+            .filter_by(user_id=user.id, mission_id=mission.id)
+            .first()
+        )
+        if entry is None:
+            entry = models.UserMission(user_id=user.id, mission_id=mission.id, status="active", progress=0)
+            db.add(entry)
+            db.flush()
+        if entry.status == "completed":
+            continue
+        entry.status = "active"
+        entry.progress = min(mission.target_count, entry.progress + amount)
+        if entry.progress >= mission.target_count:
+            entry.status = "completed"
+            entry.completed_at = datetime.utcnow()
+            user.total_xp += mission.reward_xp
+            user.coins += mission.reward_coins
+            add_bond_points(user, points=3)
+            completed_now.append(mission)
+    return completed_now
+
+
 def _count(db: Session, user: models.User, criteria: dict):
     ctype = criteria.get("type")
     target = criteria.get("target")
@@ -153,6 +192,10 @@ def _count(db: Session, user: models.User, criteria: dict):
         return 1
     if ctype == "mission_count":
         return len([m for m in user.user_missions if m.status in ("completed", "active")])
+    if ctype == "taught_count":
+        return len(user.taught_facts)
+    if ctype == "total_xp":
+        return user.total_xp
     return 0
 
 
@@ -185,6 +228,67 @@ def add_bond_points(user: models.User, points: int = 1) -> None:
         level = user.user_animal.bond_level
         if user.user_animal.bond_points >= level * 20:
             user.user_animal.bond_level = min(5, level + 1)
+
+
+def record_mistake(
+    db: Session,
+    user: models.User,
+    mistake_type: str,
+    reference: str,
+    *,
+    question_text: str | None = None,
+    answer_given: str | None = None,
+    correct_answer: str | None = None,
+) -> models.LearningMistake:
+    """Log or reinforce a recurring learner mistake so the world can bring it back later."""
+    reference = (reference or "").strip()[:300] or "unspecified"
+    row = (
+        db.query(models.LearningMistake)
+        .filter_by(user_id=user.id, mistake_type=mistake_type, reference=reference)
+        .first()
+    )
+    now = datetime.utcnow()
+    if row is None:
+        row = models.LearningMistake(
+            user_id=user.id,
+            mistake_type=mistake_type,
+            reference=reference,
+            question_text=question_text,
+            answer_given=answer_given,
+            correct_answer=correct_answer,
+            priority=1,
+            occurrences=1,
+            mastered=False,
+            last_seen_at=now,
+        )
+        db.add(row)
+    else:
+        row.occurrences += 1
+        row.priority = min(5, row.priority + 1)
+        row.mastered = False
+        row.mastered_at = None
+        row.question_text = question_text or row.question_text
+        row.answer_given = answer_given or row.answer_given
+        row.correct_answer = correct_answer or row.correct_answer
+        row.last_seen_at = now
+    return row
+
+
+def reinforce_mistake(db: Session, user: models.User, mistake_type: str, reference: str) -> None:
+    """Called when the learner gets it right — cools the mistake down toward mastery."""
+    reference = (reference or "").strip()[:300] or "unspecified"
+    row = (
+        db.query(models.LearningMistake)
+        .filter_by(user_id=user.id, mistake_type=mistake_type, reference=reference)
+        .first()
+    )
+    if row is None or row.mastered:
+        return
+    row.priority = max(0, row.priority - 1)
+    row.last_seen_at = datetime.utcnow()
+    if row.priority == 0:
+        row.mastered = True
+        row.mastered_at = datetime.utcnow()
 
 
 def user_rank(db: Session, user: models.User) -> tuple[int, float]:

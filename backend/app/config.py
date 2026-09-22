@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
 
+    # Google Sign-In (Google Identity Services ID-token flow).
+    # Only the client ID is required to verify tokens; the secret is reserved
+    # for a future server-side authorization-code flow and unused today.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+
     # AI (never hardcode values here — always via .env)
     ai_provider: str = "auto"  # "openai" | "offline" | "auto"
     ai_api_key: str | None = None

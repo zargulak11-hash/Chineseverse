@@ -35,6 +35,15 @@ export function Empty({ children }) {
   return <div className="empty">{children}</div>;
 }
 
+export function Loading({ children = "Loading…" }) {
+  return (
+    <div className="loading">
+      <div className="spinner" />
+      <p className="sub">{children}</p>
+    </div>
+  );
+}
+
 export function Puff({ show, children }) {
   return show && <div className="modal">{children}</div>;
 }

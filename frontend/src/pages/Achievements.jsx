@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 const CAT_ICON = {
   voice: "🎙️",
@@ -12,12 +11,8 @@ const CAT_ICON = {
 };
 
 export default function Achievements() {
-  const [badges, setBadges] = useState([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/achievements").then(setBadges).catch((e) => setError(e.message));
-  }, []);
+  const { data, error } = useApi("/achievements");
+  const badges = data || [];
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
 
@@ -32,8 +27,12 @@ export default function Achievements() {
 
       <div className="grid cards" style={{ marginTop: 18 }}>
         {badges.map((b) => (
-          <div key={b.id} className={`card hover${b.unlocked ? "" : ""}`}
-            style={b.unlocked ? { borderColor: "var(--accent)" } : { opacity: 0.55 }}>
+          <div key={b.id} className="card hover"
+            style={
+              b.unlocked
+                ? { borderColor: "var(--accent)", boxShadow: "var(--shadow), 0 0 22px -6px var(--accent)" }
+                : { opacity: 0.55 }
+            }>
             <div style={{ fontSize: 30 }}>{b.unlocked ? (CAT_ICON[b.category] || "🏅") : "🔒"}</div>
             <b style={{ display: "block", marginTop: 6 }}>{b.title}</b>
             <p className="sub" style={{ fontSize: 12, marginTop: 4 }}>{b.description}</p>

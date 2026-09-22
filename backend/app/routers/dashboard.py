@@ -86,7 +86,10 @@ def dashboard(
         recommended_mission=next_mission,
         recent_mistakes=(
             db.query(models.LearningMistake)
-            .filter(models.LearningMistake.user_id == user.id)
+            .filter(
+                models.LearningMistake.user_id == user.id,
+                models.LearningMistake.mastered.is_(False),
+            )
             .order_by(models.LearningMistake.priority.desc())
             .limit(5)
             .all()

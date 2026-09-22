@@ -93,6 +93,17 @@ def niche_factor(user: models.User) -> float:
 WEIGHTS = (("speaking", 0.5), ("listening", 0.2), ("tones", 0.3))
 
 
+def bump_skill(user: models.User, code: str, delta: float) -> None:
+    """Nudge a single skill's mastery/xp from a discrete correct/incorrect
+    signal (a DNA Duel answer, Pet Teacher success, ...) — the same idea as
+    apply_voice_to_skills but for actions that aren't a VoiceAttempt."""
+    us = next((s for s in user.user_skills if s.skill and s.skill.code == code), None)
+    if us is None:
+        return
+    us.mastery = round(max(0.0, min(100.0, us.mastery + delta)), 1)
+    us.xp += max(0, int(abs(delta) * 10))
+
+
 def apply_voice_to_skills(user: models.User, attempt: models.VoiceAttempt) -> None:
     for code, weight in WEIGHTS:
         us = next((s for s in user.user_skills if s.skill and s.skill.code == code), None)

@@ -89,9 +89,18 @@ print(f"  OK reviewed '{words[0]['simplified']}'")
 print("\n== World (locations + scenario detail) ==")
 locs = call("GET", "/api/world/locations", headers=H)
 assert len(locs) == 9
+assert all("position_x" in l and "position_y" in l for l in locs), "map needs real coordinates for every location"
+assert any(l["status"] in ("locked", "next") for l in locs), "a brand-new user should have some locations still locked"
 rest = call("GET", "/api/world/locations/restaurant", headers=H)
 assert rest["scenarios"], "restaurant should have scenarios"
-print(f"  OK {len(locs)} locations, restaurant has {len(rest['scenarios'])} conversations")
+print(f"  OK {len(locs)} locations (all with map coordinates), restaurant has {len(rest['scenarios'])} conversations")
+
+print("\n== Missions (GET /api/missions, auto-progress, no manual /progress call) ==")
+missions = call("GET", "/api/missions", headers=H)
+assert len(missions) >= 10
+kinds = {m["mission"]["kind"] for m in missions}
+assert {"speak", "conversation", "case", "listening", "duel", "vocab", "teach"} <= kinds
+print(f"  OK {len(missions)} missions across kinds: {sorted(kinds)}")
 
 print("\n== Conversation: voice attempt (POST /api/voice/attempt) ==")
 sc = call("GET", "/api/world/scenarios/ordering-noodles", headers=H)
@@ -125,15 +134,43 @@ fin = call("POST", f"/api/duels/{d['id']}/finish", headers=H)
 assert fin["finished"] is True and fin["opponent"] == "Buddy"
 print("  OK duel finished, winner:", fin["winner"])
 
-print("\n== Quests + claim ==")
+print("\n== Quests + claim (guaranteed-completable path) ==")
 qs = call("GET", "/api/quests/today", headers=H)
-call("POST", f"/api/quests/{qs[0]['id']}/claim", headers=H)
-print(f"  OK claimed quest '{qs[0]['title']}'")
+ready = [q for q in qs if q["completed"]]
+
+# If the random daily trio left nothing complete, drive the VOCAB quest
+# (reviewing words always feeds it) to completion, then claim it.
+if not ready:
+    vq = next(q for q in qs if q["quest_type"] == "vocab")
+    words = call("GET", "/api/vocab?hsk_level=1", headers=H)
+    i = 0
+    while not ready:
+        w = words[i % len(words)]
+        call("POST", f"/api/vocab/{w['id']}/review", {"correct": True}, headers=H)
+        i += 1
+        q = call("GET", "/api/quests/today", headers=H)
+        vq = next(x for x in q if x["quest_type"] == "vocab")
+        if vq["completed"]:
+            ready = [vq]
+
+claimed = call("POST", f"/api/quests/{ready[0]['id']}/claim", headers=H)
+assert claimed["completed"] is True and claimed["reward_xp"] > 0
+print(f"  OK claimed '{claimed['title']}' (+{claimed['reward_xp']}xp, +{claimed['reward_coins']} coins)")
 
 print("\n== Companion free chat (POST /api/voice/evaluate) ==")
 ev = call("POST", "/api/voice/evaluate", {"prompt_text": "", "spoken_text": "你好", "expected_keywords": []}, headers=H)
 assert ev["reaction"] and ev["scores"]
 print(f"  OK reaction='{ev['reaction']}'")
+
+print("\n== Pet Teacher Mode (GET lesson, POST correction+explanation) ==")
+lesson = call("GET", "/api/pet-teacher/lesson", headers=H)
+taught = call(
+    "POST", f"/api/pet-teacher/lesson/{lesson['id']}/answer",
+    {"correction": "placeholder wrong on purpose", "explanation": "just guessing"},
+    headers=H,
+)
+assert taught["success"] is False
+print(f"  OK wrong attempt correctly rejected: {taught['feedback'][:40]}")
 
 print("\n== Mistakes (GET /api/mistakes) ==")
 mist = call("GET", "/api/mistakes", headers=H)
@@ -141,7 +178,7 @@ print(f"  OK {len(mist)} mistakes (includes case blunders)")
 
 print("\n== Achievements (GET /api/achievements) ==")
 ach = call("GET", "/api/achievements", headers=H)
-assert len(ach) == 12
+assert len(ach) == 14
 print(f"  OK {len(ach)} badges, {sum(1 for b in ach if b['unlocked'])} unlocked")
 
 print("\n== Profile (GET /api/me + PATCH /api/me/profile) ==")

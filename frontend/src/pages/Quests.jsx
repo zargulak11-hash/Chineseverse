@@ -1,22 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function Quests() {
-  const [quests, setQuests] = useState([]);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/quests/today").then(setQuests).catch((e) => setError(e.message));
-  }, []);
+  const { data, setData, error } = useApi("/quests/today");
+  const quests = data || [];
+  const [claimError, setClaimError] = useState("");
 
   async function claim(q) {
+    setClaimError("");
     try {
       const updated = await api.post(`/quests/${q.id}/claim`);
-      setQuests((qs) => qs.map((x) => (x.id === q.id ? updated : x)));
+      setData((qs) => (qs || []).map((x) => (x.id === q.id ? updated : x)));
     } catch (e) {
-      setError(e.message);
+      setClaimError(e.message);
     }
   }
 
@@ -28,6 +27,7 @@ export default function Quests() {
       <p className="sub">
         Generated from your DNA every day. Complete them to feed your companion.
       </p>
+      {claimError && <p className="formerr">{claimError}</p>}
 
       <div className="col" style={{ marginTop: 18 }}>
         {quests.map((q) => (
@@ -52,10 +52,13 @@ export default function Quests() {
               </span>
               <Bar value={q.progress} max={q.target} />
             </div>
-            {q.completed && (
+            {q.completed && !q.claimed && (
               <button className="btn primary small" style={{ marginTop: 12 }} onClick={() => claim(q)}>
                 Claim reward
               </button>
+            )}
+            {q.claimed && (
+              <span className="badge good" style={{ marginTop: 12 }}>✓ Claimed</span>
             )}
           </div>
         ))}

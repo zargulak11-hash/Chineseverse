@@ -1,9 +1,11 @@
 """Full CRUD verification against a LIVE backend on http://localhost:8000.
 Does not mutate customer data assumptions; expects a fresh database."""
 
+import os
+
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+BASE = os.environ.get("LIVE_CRUD_BASE", "http://127.0.0.1:8000")
 c = httpx.Client(base_url=BASE, timeout=10)
 passed = 0
 
@@ -22,19 +24,20 @@ def status(method, path, body=None):
 
 # ---------- ANIMALS (CRUD) ----------
 print("== ANIMALS ==")
-s, _ = status("GET", "/api/animals")
-check("GET list (seeded 4)", s == 200)
-s, animal = status("POST", "/api/animals", {"name": "Tiger", "species": "Panthera tigris", "description": "Bold hunter"})
+s, animals_before = status("GET", "/api/animals")
+check("GET list (seeded)", s == 200)
+baseline_animals = len(animals_before)
+s, animal = status("POST", "/api/animals", {"slug": "test-critter", "name": "TestCritter", "species": "Panthera testa", "description": "Bold hunter"})
 check("POST create -> 201", s == 201)
 aid = animal["id"]
-check("GET list now 5", status("GET", "/api/animals")[0] == 200)
-s, a2 = status("PUT", f"/api/animals/{aid}", {"name": "Tiger", "species": "Panthera tigris altaica", "description": "Updated", "image_url": ""})
-check("PUT update -> 200", s == 200 and a2["species"] == "Panthera tigris altaica")
+check("GET list grew by 1", len(status("GET", "/api/animals")[1]) == baseline_animals + 1)
+s, a2 = status("PUT", f"/api/animals/{aid}", {"slug": "test-critter", "name": "TestCritter", "species": "Panthera testa altaica", "description": "Updated", "image_url": ""})
+check("PUT update -> 200", s == 200 and a2["species"] == "Panthera testa altaica")
 s, a3 = status("PATCH", f"/api/animals/{aid}", {"description": "Patched"})
 check("PATCH -> 200 + field", s == 200 and a3["description"] == "Patched")
 check("GET one -> 200", status("GET", f"/api/animals/{aid}")[0] == 200)
 check("GET missing -> 404", status("GET", "/api/animals/999999")[0] == 404)
-check("POST duplicate name -> 409", status("POST", "/api/animals", {"name": "Panda", "species": "x", "description": "d"})[0] == 409)
+check("POST duplicate name -> 409", status("POST", "/api/animals", {"slug": "panda-2", "name": "Panda", "species": "x", "description": "d"})[0] == 409)
 check("DELETE -> 204", status("DELETE", f"/api/animals/{aid}")[0] == 204)
 check("GET deleted -> 404", status("GET", f"/api/animals/{aid}")[0] == 404)
 
@@ -70,13 +73,13 @@ check("POST hsk_level 7 -> 422", status("POST", "/api/lessons", {"title": "X", "
 s, l1 = status("POST", "/api/lessons", {"title": "Greet", "content": "\u4f60\u597d", "hsk_level": 1, "order_index": 0})
 check("POST create -> 201", s == 201)
 lid = l1["id"]
+baseline_hsk2 = len(c.get("/api/lessons", params={"hsk_level": 2}).json())
 status("POST", "/api/lessons", {"title": "Count", "content": "1,2,3", "hsk_level": 2, "order_index": 0})
 s, lst = status("GET", "/api/lessons")
 check("GET list -> 200", s == 200)
-s, flt = status("GET", "/api/lessons", {"hsk_level": 2})
 hmm = c.get("/api/lessons", params={"hsk_level": 2})
-check("GET filter hsk_level=2 -> 1 row", hmm.status_code == 200 and len(hmm.json()) == 1)
-s, l2 = status("PUT", f"/api/lessons/{lid}", {"title": "Greet!", "content": "hello", "hsk_level": 1, "order_index": 5})
+check("GET filter hsk_level=2 grew by 1", hmm.status_code == 200 and len(hmm.json()) == baseline_hsk2 + 1)
+s, l2 = status("PUT", f"/api/lessons/{lid}", {"title": "Greet!", "content": "hello", "hsk_level": 1, "order_index": 5, "lesson_type": "lesson"})
 check("PUT update -> 200", s == 200 and l2["order_index"] == 5)
 s, l3 = status("PATCH", f"/api/lessons/{lid}", {"hsk_level": 2})
 check("PATCH -> 200", s == 200 and l3["hsk_level"] == 2)

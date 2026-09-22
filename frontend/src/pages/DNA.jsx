@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 const CATS = {
   listening: "👂",
@@ -16,15 +15,10 @@ const CATS = {
 export default function DNA() {
   const [params] = useSearchParams();
   const focus = params.get("focus");
-  const [dna, setDna] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/dna").then(setDna).catch((e) => setError(e.message));
-  }, []);
+  const { data: dna, error } = useApi("/dna");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!dna) return <Layout><Empty>Sequencing your DNA…</Empty></Layout>;
+  if (!dna) return <Layout><Loading>Sequencing your DNA…</Loading></Layout>;
 
   return (
     <Layout>
@@ -53,7 +47,7 @@ export default function DNA() {
           return (
             <div
               key={s.code}
-              className={`card${focus === s.code ? "" : ""}`}
+              className="card"
               style={
                 focus === s.code
                   ? { borderColor: "var(--accent)", boxShadow: "0 0 0 2px rgba(245,158,11,.25)" }

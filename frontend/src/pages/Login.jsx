@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { api } from "../api.js";
 import { login } from "../api.js";
+import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Login() {
@@ -12,6 +12,13 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  function afterAuth(user) {
+    setCurrentUser(user);
+    let dest = location.state?.from?.pathname;
+    if (!dest || dest === "/login") dest = "/dashboard";
+    navigate(dest, { replace: true });
+  }
+
   async function submit(e) {
     e.preventDefault();
     setError("");
@@ -21,11 +28,7 @@ export default function Login() {
         username: form.username,
         password: form.password,
       });
-      setCurrentUser(user);
-      let dest = location.state?.from?.pathname;
-      // Skip onboarding gates on fresh login: /dashboard is the hub.
-      if (!dest || dest === "/login") dest = "/dashboard";
-      navigate(dest, { replace: true });
+      afterAuth(user);
     } catch (err) {
       setError(err.message);
       setBusy(false);
@@ -62,6 +65,8 @@ export default function Login() {
             {busy ? "Logging in…" : "Log in"}
           </button>
         </form>
+        <div className="divider" style={{ margin: "18px 0" }}>or</div>
+        <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
           New here? <Link to="/register">Create an account</Link>
         </p>

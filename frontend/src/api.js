@@ -74,3 +74,10 @@ export async function login(payload) {
   saveUser(data.user);
   return data.user;
 }
+
+export async function loginWithGoogle(credential) {
+  const data = await request("POST", "/auth/google", { credential });
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}

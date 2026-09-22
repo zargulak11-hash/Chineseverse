@@ -232,6 +232,16 @@ MISSIONS = [
      2, 100, 25, 1, "the-missing-bill"),
     ("listen-drill", "listening", "Listen Quick", "Complete 3 voice listening turns today.",
      1, 40, 5, 3, None),
+    ("first-duel", "duel", "Prove Yourself", "Win your first DNA Duel.",
+     1, 45, 10, 1, None),
+    ("word-collector", "vocab", "Word Collector", "Review 10 vocabulary cards.",
+     1, 55, 10, 10, None),
+    ("teach-your-friend", "teach", "Turn the Tables", "Catch and correct your companion's mistake in Pet Teacher Mode.",
+     1, 50, 10, 1, None),
+    ("directions-master", "conversation", "Getting Around", "Complete 'Asking Directions' as a full conversation.",
+     1, 60, 10, 1, "asking-directions"),
+    ("case-streak", "case", "Repeat Detective", "Solve 2 Chinese Cases.",
+     2, 120, 30, 2, None),
 ]
 
 ACHIEVEMENTS = [
@@ -247,4 +257,6 @@ ACHIEVEMENTS = [
     ("mistakes_10", "Mistake Hunter", "Master 10 recorded mistakes.", "🎯", "habit", {"type": "mistakes_mastered", "target": 10}),
     ("world_4", "City Explorer", "Unlock 4 locations.", "🗺️", "world", {"type": "locations_unlocked", "target": 4}),
     ("first_mission", "First Mission", "Complete your first mission.", "📜", "general", {"type": "mission_count", "target": 1}),
+    ("pet_teacher_5", "Patient Teacher", "Teach your companion 5 grammar rules.", "🧑‍🏫", "animal", {"type": "taught_count", "target": 5}),
+    ("xp_500", "Rising Star", "Earn 500 total XP from quests and missions.", "⭐", "general", {"type": "total_xp", "target": 500}),
 ]
