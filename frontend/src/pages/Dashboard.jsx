@@ -1,13 +1,44 @@
-import { motion } from "framer-motion";
+import { animate, stagger } from "animejs";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
+import { prefersReducedMotion } from "../anime.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Badge, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
-import { staggerContainer, staggerItem } from "../motion.js";
+
+// Elastic, staggered card entrance for a grid/list of small elements — used
+// by the quick-action cards, the stat grid and the today's-quests rows.
+// Opts its container out of Layout's page-level reveal via
+// data-self-animate so the two animations don't stack on the same block.
+function useCardStagger(deps) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const targets = Array.from(root.children);
+    if (targets.length === 0) return;
+    if (prefersReducedMotion()) {
+      targets.forEach((el) => {
+        el.style.opacity = 1;
+      });
+      return;
+    }
+    animate(targets, {
+      opacity: [0, 1],
+      translateY: [26, 0],
+      scale: [0.9, 1],
+      duration: 620,
+      delay: stagger(65),
+      ease: "outElastic(1, .7)",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return ref;
+}
 
 const QUICK_ACTIONS = [
   ["/world", "dashboard.exploreWorld", "world", "linear-gradient(135deg, #2b6f93, #4fc3f7)"],
@@ -20,6 +51,13 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { dashboard: d, error } = useDashboard();
+
+  // Hooks must run unconditionally on every render — including while `d`
+  // is still loading — so these are called before the early returns below,
+  // with safe fallbacks for the dependency that isn't ready yet.
+  const quickActionsRef = useCardStagger([]);
+  const statGridRef = useCardStagger([]);
+  const questsListRef = useCardStagger([d?.quests_today?.length ?? 0]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!d) return <Layout><Loading>{t("common.loadingWorld")}</Loading></Layout>;
@@ -70,42 +108,40 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <motion.div className="quick-actions" variants={staggerContainer} initial="initial" animate="animate">
+      <div className="quick-actions" ref={quickActionsRef} data-self-animate="true">
         {QUICK_ACTIONS.map(([to, labelKey, icon, gradient]) => (
-          <motion.div key={to} variants={staggerItem} whileHover={{ y: -4 }} whileTap={{ scale: 0.97 }}>
-            <Link to={to} className="quick-action" style={{ background: gradient }}>
-              <div className="qa-top">
-                <span className="ic"><Icon name={icon} size={19} /></span>
-                <Icon name="arrowRight" size={17} className="arrow" />
-              </div>
-              <span className="label">{t(labelKey)}</span>
-            </Link>
-          </motion.div>
+          <Link to={to} key={to} className="quick-action" style={{ background: gradient }}>
+            <div className="qa-top">
+              <span className="ic"><Icon name={icon} size={19} /></span>
+              <Icon name="arrowRight" size={17} className="arrow" />
+            </div>
+            <span className="label">{t(labelKey)}</span>
+          </Link>
         ))}
-      </motion.div>
+      </div>
 
-      <motion.div className="stat-grid" variants={staggerContainer} initial="initial" animate="animate">
-        <motion.div className="stat-card" variants={staggerItem} style={{ "--stat-color": "#ff8a3d" }}>
+      <div className="stat-grid" ref={statGridRef} data-self-animate="true">
+        <div className="stat-card" style={{ "--stat-color": "#ff8a3d" }}>
           <span className="ic"><Icon name="flame" size={18} /></span>
           <div className="num">{d.streak.current_streak}</div>
           <div className="lbl">{t("dashboard.dayStreak")}</div>
-        </motion.div>
-        <motion.div className="stat-card" variants={staggerItem} style={{ "--stat-color": "var(--accent)" }}>
+        </div>
+        <div className="stat-card" style={{ "--stat-color": "var(--accent)" }}>
           <span className="ic"><Icon name="coin" size={18} /></span>
           <div className="num">{d.user.coins}</div>
           <div className="lbl">{t("dashboard.coinsEarned")}</div>
-        </motion.div>
-        <motion.div className="stat-card" variants={staggerItem} style={{ "--stat-color": "#3fb6a8" }}>
+        </div>
+        <div className="stat-card" style={{ "--stat-color": "#3fb6a8" }}>
           <span className="ic"><Icon name="dna" size={18} /></span>
           <div className="num">{d.mastery.toFixed(0)}%</div>
           <div className="lbl">{t("dashboard.hskMastery")}</div>
-        </motion.div>
-        <motion.div className="stat-card" variants={staggerItem} style={{ "--stat-color": "#9b6fe0" }}>
+        </div>
+        <div className="stat-card" style={{ "--stat-color": "#9b6fe0" }}>
           <span className="ic"><Icon name="award" size={18} /></span>
           <div className="num">{badgesUnlocked}</div>
           <div className="lbl">{t("nav.achievements")}</div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
 
       <div className="bento" style={{ marginTop: 16 }}>
         <div className="card bento-2">
@@ -135,7 +171,7 @@ export default function Dashboard() {
         <div className="card bento-3">
           <h2 className="h2">{t("dashboard.todaysQuests")}</h2>
           {d.quests_today.length === 0 && <Empty>No quests today — go explore.</Empty>}
-          <div className="col">
+          <div className="col" ref={questsListRef} data-self-animate="true">
             {d.quests_today.map((q) => (
               <div key={q.id} className="hbar">
                 <span className="ic" style={{ width: 30, height: 30 }}>

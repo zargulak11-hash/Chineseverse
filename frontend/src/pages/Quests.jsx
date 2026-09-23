@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { animate, stagger } from "animejs";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api.js";
+import { prefersReducedMotion } from "../anime.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
@@ -9,6 +11,27 @@ export default function Quests() {
   const { data, setData, error } = useApi("/quests/today");
   const quests = data || [];
   const [claimError, setClaimError] = useState("");
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    const root = listRef.current;
+    if (!root || quests.length === 0) return;
+    const targets = Array.from(root.children);
+    if (prefersReducedMotion()) {
+      targets.forEach((el) => {
+        el.style.opacity = 1;
+      });
+      return;
+    }
+    animate(targets, {
+      opacity: [0, 1],
+      translateY: [22, 0],
+      duration: 560,
+      delay: stagger(55),
+      ease: "outElastic(1, .75)",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quests.length]);
 
   async function claim(q) {
     setClaimError("");
@@ -30,7 +53,7 @@ export default function Quests() {
       </p>
       {claimError && <p className="formerr">{claimError}</p>}
 
-      <div className="col" style={{ marginTop: 18 }}>
+      <div className="col" style={{ marginTop: 18 }} ref={listRef} data-self-animate="true">
         {quests.map((q) => (
           <div key={q.id} className="card" style={{ borderColor: q.completed ? "var(--good)" : undefined }}>
             <div className="row spread">

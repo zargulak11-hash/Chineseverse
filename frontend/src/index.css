@@ -117,7 +117,6 @@
   /* ---- Motion ---- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.22, 1.4, 0.36, 1);
-  --ease-ink: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 0.12s;
   --dur-base: 0.22s;
   --dur-slow: 0.42s;
@@ -560,8 +559,9 @@ a.navlink.active::after {
   max-width: min(1360px, 94vw);
   margin: 0 auto;
   padding: 36px 24px 90px;
-  /* Enter/exit motion is now driven by Framer Motion (see motion.js
-     pageVariants, applied in Layout.jsx) instead of this CSS keyframe. */
+  /* Enter motion is now a staggered Anime.js reveal of this element's own
+     direct children (see Layout.jsx's PageReveal) instead of a CSS keyframe
+     on the whole page at once. */
 }
 
 .page.wide {
@@ -1580,42 +1580,14 @@ table.data td {
   flex-shrink: 0;
 }
 
-/* ---------- Route transitions: an ink-brush wipe, not a fade ----------
-   A brass/gold panel with a deliberately irregular, brush-like trailing
-   edge covers the incoming page, then sweeps off to the right — the page
-   content underneath is doing its own fadeInUp (from .page) at the same
-   time, so the two motions layer instead of just crossfading. */
-.route-ink-wipe {
+/* ---------- Route transitions ----------
+   One single transition, applied consistently on every route change: a
+   staggered fade + slight upward slide of the page's own content (see
+   Layout.jsx's PageReveal, driven by Anime.js). No separate overlay/wipe
+   layered on top of it anymore — that used to run at the same time as this
+   fade and read as messy, competing motion. */
+.route-reveal {
   position: relative;
-  overflow-x: clip;
-}
-
-.route-ink-wipe::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  background: linear-gradient(115deg, var(--accent-soft), var(--accent-strong) 45%, var(--accent) 100%);
-  clip-path: polygon(
-    0% 0%, 92% 0%, 96% 8%, 90% 15%, 98% 24%, 89% 34%, 100% 45%,
-    91% 58%, 97% 70%, 88% 82%, 95% 92%, 85% 100%, 0% 100%
-  );
-  animation: inkWipe 0.65s var(--ease-ink) both;
-}
-
-@keyframes inkWipe {
-  0% {
-    transform: translateX(0%);
-    opacity: 1;
-  }
-  65% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(115%);
-    opacity: 0.9;
-  }
 }
 
 /* ---------- Bento grid ----------
@@ -1729,12 +1701,6 @@ table.data td {
   letter-spacing: 0.12em;
   color: var(--text-faint);
   margin-top: 2px;
-}
-
-@keyframes ringRotate {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @keyframes ringGlowPulse {
@@ -2622,6 +2588,31 @@ table.data td {
 .celebration-icon {
   font-size: 52px;
   line-height: 1;
+}
+
+.celebration-count {
+  position: relative;
+  margin: 14px 0 2px;
+}
+
+.celebration-count span:first-child {
+  font-family: var(--font-display);
+  font-size: 46px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.celebration-count-label {
+  display: block;
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
 }
 
 /* ---------- Voice feedback: mentor-style card ---------- */

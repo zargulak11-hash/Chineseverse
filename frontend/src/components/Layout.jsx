@@ -9,12 +9,15 @@ import Topbar from "./Topbar.jsx";
 
 const COLLAPSE_KEY = "chineseverse_sidebar_collapsed";
 
-// A dynamic, staggered reveal for each route's content instead of one flat
-// fade: every direct child of `.page` (hero banner, bento rows, cards...)
-// slides/fades in with a real per-element timing offset. Sections that run
-// their own finer-grained entrance (Dashboard's quick actions/stat grid,
-// Achievements' badge grid, ...) opt out via data-self-animate so the two
-// animations don't stack on the same element.
+// The one, single route transition, used on every page: a clean staggered
+// fade + slight upward slide of the page's own content (hero banner, bento
+// rows, cards...), each with a small per-element timing offset instead of
+// everything appearing at once. Nothing else runs on top of it — there used
+// to be a separate ink-wipe overlay animating at the same time, which read
+// as messy competing motion; it's gone now, this is the only transition.
+// Sections that run their own finer-grained entrance (Dashboard's quick
+// actions/stat grid, Achievements' badge grid, ...) opt out via
+// data-self-animate so the two animations don't stack on the same element.
 function PageReveal({ children }) {
   const ref = useRef(null);
 
@@ -40,15 +43,15 @@ function PageReveal({ children }) {
 
     animate(targets, {
       opacity: [0, 1],
-      translateY: [24, 0],
-      duration: 620,
-      delay: stagger(80, { start: 40 }),
-      ease: "outExpo",
+      translateY: [14, 0],
+      duration: 420,
+      delay: stagger(45, { start: 10 }),
+      ease: "outCubic",
     });
   }, []);
 
   return (
-    <main ref={ref} className="page route-ink-wipe">
+    <main ref={ref} className="page route-reveal">
       {children}
     </main>
   );

@@ -1,4 +1,4 @@
-import { animate, cleanInlineStyles } from "animejs";
+import { animate } from "animejs";
 import { prefersReducedMotion } from "./anime.js";
 
 // Satisfying press/hover feedback for every button-like element in the app,
@@ -29,7 +29,15 @@ export function initButtonFX() {
       boxShadow: [GLOW_LIT, GLOW],
       duration: 460,
       ease: "outElastic(1, .65)",
-      onComplete: () => cleanInlineStyles(el),
+      // Hand style control back to CSS once settled, rather than leaving an
+      // inline transform/boxShadow that would permanently shadow the
+      // stylesheet's own :hover rules. (cleanInlineStyles() is anime.js's
+      // built-in for this, but it throws on plain DOM targets in this
+      // build — a direct reset is simpler and avoids the bug entirely.)
+      onComplete: () => {
+        el.style.transform = "";
+        el.style.boxShadow = "";
+      },
     });
   }
 

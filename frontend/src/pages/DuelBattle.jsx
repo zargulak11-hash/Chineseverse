@@ -132,7 +132,9 @@ export default function DuelBattle() {
           show={celebrating}
           icon="🏆"
           title={t("pages.duelBattle.victory")}
-          subtitle={`You ${duel.my_score ?? 0} · ${duel.opponent} ${duel.opp_score ?? 0}`}
+          subtitle={`vs ${duel.opponent} · they scored ${duel.opp_score ?? 0}`}
+          countTo={duel.my_score ?? 0}
+          countLabel="your score"
           onClose={() => setCelebrating(false)}
           actionLabel="Nice!"
         />
