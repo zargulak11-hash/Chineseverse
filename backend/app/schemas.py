@@ -66,6 +66,7 @@ class UserProfileResponse(BaseModel):
     goal_text: Optional[str] = None
     daily_goal_minutes: int
     avatar_color: str
+    avatar_url: Optional[str] = None
     bio: Optional[str] = None
     level_test_score: Optional[int] = None
 
@@ -85,6 +86,21 @@ class MeResponse(BaseModel):
     user: UserResponse
     profile: UserProfileResponse
     streak: StreakResponse
+
+
+class PublicUserResponse(BaseModel):
+    id: int
+    username: str
+    animal_id: Optional[int]
+    total_xp: int = 0
+    avatar_url: Optional[str] = None
+    created_at: datetime
+    followers_count: int = 0
+    following_count: int = 0
+    is_following: bool = False
+    is_self: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --------------------------------------------------------------------------- Token
@@ -646,8 +662,38 @@ class CaseSummary(BaseModel):
     case_data: Optional[dict] = None
 
 
+# --------------------------------------------------------------------------- Activity analytics
+class ActivityDayResponse(BaseModel):
+    date: date
+    minutes: float
+    actions: int
+
+
+class SectionBreakdownResponse(BaseModel):
+    section: str
+    label: str
+    minutes: float
+    percent: float
+
+
+class ActivityAnalyticsResponse(BaseModel):
+    total_minutes: float
+    today_minutes: float
+    today_actions: int
+    week_minutes: float
+    week_actions: int
+    last_week_minutes: float
+    last_week_actions: int
+    streak: StreakResponse
+    best_streak_past_year: int
+    total_actions_past_year: int
+    sections: list[SectionBreakdownResponse]
+    days: list[ActivityDayResponse]
+
+
 class DashboardResponse(BaseModel):
     user: UserResponse
+    avatar_url: Optional[str] = None
     animal: Optional[AnimalResponse] = None
     hsk_level: int
     mastery: float

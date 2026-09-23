@@ -5,9 +5,13 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
+import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
 
 export default function Conversation() {
   const { scenarioId } = useParams();
+  const { dashboard } = useDashboard() || {};
+  const companion = dashboard?.animal;
   const [sc, setSc] = useState(null);
   const [turnIndex, setTurnIndex] = useState(0);
   const [history, setHistory] = useState([0]); // turn_index values actually visited, in order
@@ -201,9 +205,12 @@ export default function Conversation() {
                       <div className="bubble me">
                         {text}
                       </div>
-                      <div className="bubble reaction">
-                        {result.reaction} · {result.attempt.overall.toFixed(0)}/100
-                      </div>
+                      <VoiceFeedbackCard
+                        attempt={result.attempt}
+                        reaction={result.reaction}
+                        companionSlug={companion?.slug}
+                        companionName={companion?.name}
+                      />
                       {result.improvement && (
                         <div className="bubble reaction" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
                           ✨ {result.improvement}

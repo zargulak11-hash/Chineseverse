@@ -7,6 +7,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services import ai_client
+from app.services.activity import log_activity
 from app.services.gamification import (
     add_bond_points,
     check_achievements,
@@ -87,6 +88,7 @@ def answer_lesson(
             topic = db.get(models.GrammarTopic, case.grammar_topic_id)
             if topic:
                 reinforce_mistake(db, user, "grammar", topic.title)
+    log_activity(db, user, "pet_teacher_answer")
     db.commit()
 
     taught_count = db.query(models.UserTaughtFact).filter_by(user_id=user.id).count()

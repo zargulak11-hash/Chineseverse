@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -9,6 +12,12 @@ export default function Profile() {
   const { data: me, error } = useApi("/me");
   const { dashboard } = useDashboard();
   const animal = dashboard?.animal;
+  const [social, setSocial] = useState(null);
+
+  useEffect(() => {
+    if (!me) return;
+    api.get(`/users/${me.user.id}/public`).then(setSocial).catch(() => setSocial(null));
+  }, [me]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!me) return <Layout><Loading /></Layout>;
@@ -17,15 +26,24 @@ export default function Profile() {
     <Layout>
       <div className="row spread">
         <div className="row">
-          {animal && <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={56} />}
+          {dashboard?.avatar_url ? (
+            <img src={dashboard.avatar_url} alt="" className="avatar-preview" style={{ width: 56, height: 56 }} />
+          ) : (
+            animal && <AnimalAvatar slug={animal.slug} size={56} />
+          )}
           <div>
             <h1 className="h1">@{me.user.username}</h1>
             <p className="sub">{me.user.email} · joined {new Date(me.user.created_at).toLocaleDateString()}</p>
           </div>
         </div>
-        <Link to="/animals">
-          <button className="btn ghost">Change companion</button>
-        </Link>
+        <div className="row">
+          <Link to="/community">
+            <button className="btn ghost"><Icon name="users" size={13} /> Find people</button>
+          </Link>
+          <Link to="/animals">
+            <button className="btn ghost">Change companion</button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
@@ -73,6 +91,23 @@ export default function Profile() {
             <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.user.total_xp}</div><div className="lbl">total xp</div></div>
             <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}>🪙 {me.user.coins}</div><div className="lbl">coins</div></div>
           </div>
+        </div>
+
+        <div className="card">
+          <h2 className="h2">Community</h2>
+          {social ? (
+            <Link to={`/u/${me.user.id}`}>
+              <div className="scores" style={{ marginTop: 10 }}>
+                <div className="scorecard"><div className="num">{social.followers_count}</div><div className="lbl">followers</div></div>
+                <div className="scorecard"><div className="num">{social.following_count}</div><div className="lbl">following</div></div>
+              </div>
+            </Link>
+          ) : (
+            <p className="sub" style={{ marginTop: 10 }}>—</p>
+          )}
+          <Link to="/community">
+            <button className="btn small ghost" style={{ marginTop: 12 }}>Find people to follow</button>
+          </Link>
         </div>
       </div>
     </Layout>

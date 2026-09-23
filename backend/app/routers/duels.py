@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
+from app.services.activity import log_activity
 from app.services.dna import bump_skill, compute_dna
 from app.services.gamification import (
     animal_bias,
@@ -461,6 +462,7 @@ def finish_duel(
         winner = me
     if winner is not None and winner.user_id > 0:
         duel.winner_id = winner.user_id
+    log_activity(db, user, "duel_finish")
     db.commit()
 
     if winner is not None and winner.user_id == user.id:

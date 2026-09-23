@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import HeroCarousel from "../components/HeroCarousel.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import { useTheme } from "../theme.jsx";
@@ -12,17 +14,18 @@ import { useTheme } from "../theme.jsx";
 // Companions has no span class, so it defaults to the full 6 — a
 // banner leading straight into the animal showcase below it.
 const FEATURES = [
-  ["world", "Chinese World", "Roam the streets, restaurants and train stations of a living city. Talk to NPCs and survive real situations.", "#4FC3F7", "feat-span-4"],
-  ["mic", "Voice-first", "Speak out loud. Your companion reacts to your tones, words and pace — no typing required.", "#C58AF2", "feat-span-2"],
-  ["dna", "Learning DNA", "Nine live skills build a profile of how you learn, with daily missions that target your weak spots.", "#4CC26B", "feat-span-2"],
-  ["search", "Chinese Cases", "Solve detective cases in Chinese: listen to witnesses, spot the contradiction, name the culprit.", "#FF7A45", "feat-span-2"],
-  ["swords", "DNA Duels", "Battle friends or the Buddy AI on rapid-fire word challenges.", "#FF8A3D", "feat-span-2"],
-  ["paw", "16 Companions", "From Zen capybaras to fierce dragons — each one teaches with a different style and voice.", "#FFC24B", ""],
+  ["world", "featWorldTitle", "featWorldDesc", "#4FC3F7", "feat-span-4"],
+  ["mic", "featVoiceTitle", "featVoiceDesc", "#C58AF2", "feat-span-2"],
+  ["dna", "featDnaTitle", "featDnaDesc", "#4CC26B", "feat-span-2"],
+  ["search", "featCasesTitle", "featCasesDesc", "#FF7A45", "feat-span-2"],
+  ["swords", "featDuelsTitle", "featDuelsDesc", "#FF8A3D", "feat-span-2"],
+  ["paw", "featCompanionsTitle", "featCompanionsDesc", "#FFC24B", ""],
 ];
 
 const SHOWCASE = ["fox", "wolf", "snake", "cheetah", "cat", "phoenix", "golden-dragon", "panda"];
 
 export default function Landing() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   return (
@@ -45,15 +48,15 @@ export default function Landing() {
           </button>
           {user ? (
             <Link to="/dashboard">
-              <button className="btn primary">Open your dashboard</button>
+              <button className="btn primary">{t("landing.openDashboard")}</button>
             </Link>
           ) : (
             <>
               <Link to="/login">
-                <button className="btn ghost">Log in</button>
+                <button className="btn ghost">{t("landing.logIn")}</button>
               </Link>
               <Link to="/register">
-                <button className="btn primary">Start free</button>
+                <button className="btn primary">{t("landing.startFree")}</button>
               </Link>
             </>
           )}
@@ -62,24 +65,22 @@ export default function Landing() {
       <div className="page">
 
       <section className="hero">
+        <HeroCarousel />
         <InkBrush variant="hero" />
-        <span className="ilb">Learn Chinese by living it</span>
+        <span className="ilb">{t("landing.kicker")}</span>
         <h1>中 ChineseVerse</h1>
-        <p className="tagline">
-          Talk your way through a Chinese city with a companion by your side.
-          Every conversation is practice; every practice grows your DNA.
-        </p>
+        <p className="tagline">{t("landing.tagline")}</p>
         <div className="row center" style={{ justifyContent: "center" }}>
           {user ? (
             <Link to="/dashboard">
               <button className="btn primary" style={{ fontSize: 16, padding: "13px 26px" }}>
-                Continue learning →
+                {t("landing.continueLearning")}
               </button>
             </Link>
           ) : (
             <Link to="/register">
               <button className="btn primary" style={{ fontSize: 16, padding: "13px 26px" }}>
-                Create your account
+                {t("landing.createAccount")}
               </button>
             </Link>
           )}
@@ -87,16 +88,16 @@ export default function Landing() {
       </section>
 
       <section className="features">
-        {FEATURES.map(([ic, t, d, color, span]) => (
-          <div className={`card feat ${span}`} key={t} style={{ "--feat-color": color }}>
+        {FEATURES.map(([ic, titleKey, descKey, color, span]) => (
+          <div className={`card feat ${span}`} key={titleKey} style={{ "--feat-color": color }}>
             <div className="ic">
               <Icon name={ic} size={19} />
             </div>
             <h3 className="h2" style={{ marginTop: 8 }}>
-              {t}
+              {t(`landing.${titleKey}`)}
             </h3>
             <p className="sub" style={{ fontSize: 13.5 }}>
-              {d}
+              {t(`landing.${descKey}`)}
             </p>
           </div>
         ))}
@@ -104,7 +105,7 @@ export default function Landing() {
 
       <section className="center" style={{ marginTop: 56, position: "relative" }}>
         <InkBrush variant="corner" />
-        <p className="scrollhint">Sixteen companions, one art style</p>
+        <p className="scrollhint">{t("landing.showcase")}</p>
         <div className="row center" style={{ justifyContent: "center", marginTop: 16, gap: 18 }}>
           {SHOWCASE.map((slug) => (
             <div key={slug} className="col" style={{ alignItems: "center", gap: 6 }}>
@@ -117,12 +118,11 @@ export default function Landing() {
       <section className="center" style={{ marginTop: 46 }}>
         <Link to="/register">
           <button className="btn primary" style={{ padding: "13px 28px", fontSize: 15 }}>
-            Meet your companion
+            {t("landing.meetCompanion")}
           </button>
         </Link>
         <p className="muted" style={{ marginTop: 12, fontSize: 12 }}>
-          No affiliation with the official HSK exam — ChineseVerse only estimates
-          your preparation readiness.
+          {t("landing.hskDisclaimer")}
         </p>
       </section>
       </div>

@@ -1,11 +1,58 @@
-import { useEffect, useState } from "react";
+import { animate, stagger } from "animejs";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { prefersReducedMotion } from "../anime.js";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Topbar from "./Topbar.jsx";
 
 const COLLAPSE_KEY = "chineseverse_sidebar_collapsed";
+
+// A dynamic, staggered reveal for each route's content instead of one flat
+// fade: every direct child of `.page` (hero banner, bento rows, cards...)
+// slides/fades in with a real per-element timing offset. Sections that run
+// their own finer-grained entrance (Dashboard's quick actions/stat grid,
+// Achievements' badge grid, ...) opt out via data-self-animate so the two
+// animations don't stack on the same element.
+function PageReveal({ children }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const all = Array.from(root.children);
+    if (all.length === 0) return;
+
+    if (prefersReducedMotion()) {
+      all.forEach((el) => {
+        el.style.opacity = 1;
+      });
+      return;
+    }
+
+    const selfAnimated = all.filter((el) => el.dataset.selfAnimate === "true");
+    const targets = all.filter((el) => el.dataset.selfAnimate !== "true");
+    selfAnimated.forEach((el) => {
+      el.style.opacity = 1;
+    });
+    if (targets.length === 0) return;
+
+    animate(targets, {
+      opacity: [0, 1],
+      translateY: [24, 0],
+      duration: 620,
+      delay: stagger(80, { start: 40 }),
+      ease: "outExpo",
+    });
+  }, []);
+
+  return (
+    <main ref={ref} className="page route-ink-wipe">
+      {children}
+    </main>
+  );
+}
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
@@ -55,9 +102,7 @@ export default function Layout({ children }) {
       />
       <div className="shell-main">
         <Topbar user={user} dashboard={dashboard} onOpenMobileSidebar={() => setMobileOpen(true)} />
-        <main className="page route-ink-wipe" key={location.pathname}>
-          {children}
-        </main>
+        <PageReveal key={location.pathname}>{children}</PageReveal>
       </div>
     </div>
   );

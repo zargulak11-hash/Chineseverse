@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
-import { Empty, Loading } from "../components/ui.jsx";
+import { Celebration, Empty, Loading } from "../components/ui.jsx";
+import { usePrefs } from "../prefs.jsx";
 
 const TYPE_LABEL = {
   pinyin: "Pinyin", meaning: "Meaning", translate: "Translate",
@@ -13,7 +15,9 @@ const TYPE_LABEL = {
 };
 
 export default function DuelBattle() {
+  const { t } = useTranslation();
   const { duelId } = useParams();
+  const { soundEnabled } = usePrefs() || {};
   const [duel, setDuel] = useState(null);
   const [idx, setIdx] = useState(0);
   const [feedback, setFeedback] = useState(null);
@@ -21,6 +25,8 @@ export default function DuelBattle() {
   const [timer, setTimer] = useState(100);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const celebratedRef = useRef(false);
   const answered = useRef(0);
 
   useEffect(() => {
@@ -38,19 +44,28 @@ export default function DuelBattle() {
   const q = duel?.questions?.[idx];
 
   useEffect(() => {
-    if (q?.type === "listening" && q.tts_text && window.speechSynthesis) {
+    if (soundEnabled && q?.type === "listening" && q.tts_text && window.speechSynthesis) {
       const utter = new SpeechSynthesisUtterance(q.tts_text);
       utter.lang = "zh-CN";
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
     }
-  }, [idx, q?.type, q?.tts_text]);
+  }, [idx, q?.type, q?.tts_text, soundEnabled]);
+
+  useEffect(() => {
+    if (!duel?.finished || duel.awaiting_opponent || celebratedRef.current) return;
+    const meWon = (duel.my_score ?? 0) > (duel.opp_score ?? 0);
+    if (meWon) {
+      celebratedRef.current = true;
+      setCelebrating(true);
+    }
+  }, [duel]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!duel) return <Layout><Loading>Loading duel…</Loading></Layout>;
 
   function replay() {
-    if (q?.tts_text && window.speechSynthesis) {
+    if (soundEnabled && q?.tts_text && window.speechSynthesis) {
       const utter = new SpeechSynthesisUtterance(q.tts_text);
       utter.lang = "zh-CN";
       window.speechSynthesis.cancel();
@@ -95,13 +110,13 @@ export default function DuelBattle() {
       <Layout>
         <div className="card center reveal" style={{ maxWidth: 520, margin: "40px auto" }}>
           <div className="reveal-icon" style={{ fontSize: 52 }}>⏳</div>
-          <h1 className="h1">Waiting for {duel.opponent}</h1>
+          <h1 className="h1">{t("pages.duelBattle.waitingFor", { name: duel.opponent })}</h1>
           <p className="sub">
             You scored {duel.my_score ?? 0}. This is a real opponent, so nothing gets
             decided until they actually play their turn — check back once they have.
           </p>
           <Link to="/duels">
-            <button className="btn primary" style={{ marginTop: 14 }}>Back to duels</button>
+            <button className="btn primary" style={{ marginTop: 14 }}>{t("pages.duelBattle.backToDuels")}</button>
           </Link>
         </div>
       </Layout>
@@ -113,15 +128,23 @@ export default function DuelBattle() {
     const meWon = !draw && (duel.my_score ?? 0) > (duel.opp_score ?? 0);
     return (
       <Layout>
+        <Celebration
+          show={celebrating}
+          icon="🏆"
+          title={t("pages.duelBattle.victory")}
+          subtitle={`You ${duel.my_score ?? 0} · ${duel.opponent} ${duel.opp_score ?? 0}`}
+          onClose={() => setCelebrating(false)}
+          actionLabel="Nice!"
+        />
         <div className={`card center reveal${meWon ? " burst" : ""}`} style={{ maxWidth: 520, margin: "40px auto" }}>
           {duel.is_ai_opponent && (
-            <span className="badge accent" style={{ marginBottom: 10 }}>Practice mode · vs AI</span>
+            <span className="badge accent" style={{ marginBottom: 10 }}>{t("pages.duelBattle.practiceMode")}</span>
           )}
           <div className="reveal-icon" style={{ fontSize: 52 }}>{draw ? "🤝" : meWon ? "🏆" : "😤"}</div>
-          <h1 className="h1">{draw ? "It was a draw!" : meWon ? "Victory" : duel.opponent + " won"}</h1>
+          <h1 className="h1">{draw ? t("pages.duelBattle.draw") : meWon ? t("pages.duelBattle.victory") : t("pages.duelBattle.lost", { name: duel.opponent })}</h1>
           <p className="sub">You {duel.my_score ?? 0} · {duel.opponent} {duel.opp_score ?? 0}</p>
           <Link to="/duels">
-            <button className="btn primary" style={{ marginTop: 14 }}>Back to duels</button>
+            <button className="btn primary" style={{ marginTop: 14 }}>{t("pages.duelBattle.backToDuels")}</button>
           </Link>
         </div>
       </Layout>

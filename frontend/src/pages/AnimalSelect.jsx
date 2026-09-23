@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
@@ -7,6 +8,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 
 export default function AnimalSelect() {
+  const { t } = useTranslation();
   const { user, setCurrentUser } = useAuth();
   const navigate = useNavigate();
   const [animals, setAnimals] = useState([]);
@@ -41,11 +43,8 @@ export default function AnimalSelect() {
     <Layout>
       <div className="row spread">
         <div>
-          <h1 className="h1">Choose your companion</h1>
-          <p className="sub">
-            Each one teaches with a different style. You can change later —
-            {user?.username || "friend"}.
-          </p>
+          <h1 className="h1">{t("pages.animalSelect.title")}</h1>
+          <p className="sub">{t("pages.animalSelect.subtitle", { name: user?.username || "friend" })}</p>
         </div>
       </div>
       {error && <p className="formerr">{error}</p>}

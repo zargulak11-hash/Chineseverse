@@ -8,6 +8,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services import voice_eval
+from app.services.activity import log_activity
 from app.services.dna import apply_voice_to_skills
 from app.services.gamification import (
     check_achievements,
@@ -103,6 +104,7 @@ def submit_attempt(
     _track_mistake(db, user, payload.prompt_text, result)
     if user.streak:
         touch_streak(user)
+    log_activity(db, user, "voice_attempt")
 
     db.commit()
     db.refresh(attempt)

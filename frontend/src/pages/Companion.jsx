@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Bar, Empty, Loading, Stat } from "../components/ui.jsx";
+import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 
 const PHRASES = [
@@ -47,9 +48,16 @@ export default function Companion() {
         spoken_text: trimmed,
         expected_keywords: [],
       });
-      setChat((c) => [...c, { from: "npc", reaction: r.reaction, note: typeof r.evaluation === "string" ? r.evaluation : JSON.stringify(r.scores) }]);
+      setChat((c) => [
+        ...c,
+        {
+          from: "npc",
+          reaction: r.reaction,
+          attempt: { ...r.scores, feedback: r.evaluation?.feedback },
+        },
+      ]);
     } catch (e) {
-      setChat((c) => [...c, { from: "npc", reaction: "…", note: e.message }]);
+      setChat((c) => [...c, { from: "npc", reaction: "…", error: e.message }]);
     }
   }
 
@@ -61,7 +69,7 @@ export default function Companion() {
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
         <div className="card center">
           <div style={{ filter: "drop-shadow(0 8px 18px rgba(0,0,0,.45))" }}>
-            <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={104} />
+            <AnimalAvatar slug={animal.slug} size={104} />
           </div>
           <div className="h2" style={{ marginTop: 4 }}>{animal.name}</div>
           <div className="sub">{animal.species}</div>
@@ -94,13 +102,16 @@ export default function Companion() {
           {chat.map((c, i) =>
             c.from === "me" ? (
               <div key={i} className="bubble me">{c.text}</div>
+            ) : c.error ? (
+              <div key={i} className="bubble reaction">⚠️ {c.error}</div>
             ) : (
-              <div key={i} className="bubble npc">
-                <span className="speaker" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={16} /> {animal.name}
-                </span>
-                {c.reaction} · {c.note}
-              </div>
+              <VoiceFeedbackCard
+                key={i}
+                attempt={c.attempt}
+                reaction={c.reaction}
+                companionSlug={animal.slug}
+                companionName={animal.name}
+              />
             )
           )}
         </div>

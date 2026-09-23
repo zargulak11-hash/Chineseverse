@@ -61,6 +61,7 @@ def dashboard(
 
     return schemas.DashboardResponse(
         user=user,
+        avatar_url=user.profile.avatar_url if user.profile else None,
         animal=schemas.AnimalResponse.model_validate(animal) if animal else None,
         hsk_level=current,
         mastery=mastery,

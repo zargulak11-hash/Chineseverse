@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.crud import apply_updates, commit_or_409, get_or_404
 from app.database import get_db
+from app.services.activity import log_activity
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
 
@@ -57,6 +58,10 @@ def create_progress(payload: schemas.ProgressCreate, db: Session = Depends(get_d
     item = models.Progress(**payload.model_dump())
     _sync_completed_at(item)
     db.add(item)
+    if item.status == "completed":
+        user = db.get(models.User, item.user_id)
+        if user:
+            log_activity(db, user, "lesson_complete")
     commit_or_409(db, "Progress already exists for this user and lesson")
     db.refresh(item)
     return item
@@ -67,14 +72,23 @@ def get_progress(progress_id: int, db: Session = Depends(get_db)):
     return get_or_404(db, models.Progress, progress_id)
 
 
+def _log_if_newly_completed(db: Session, item: models.Progress, was_completed: bool) -> None:
+    if item.status == "completed" and not was_completed:
+        user = db.get(models.User, item.user_id)
+        if user:
+            log_activity(db, user, "lesson_complete")
+
+
 @router.put("/{progress_id}", response_model=schemas.ProgressResponse)
 def update_progress(
     progress_id: int, payload: schemas.ProgressUpdate, db: Session = Depends(get_db)
 ):
     item = get_or_404(db, models.Progress, progress_id)
+    was_completed = item.status == "completed"
     item.status = payload.status
     item.score = payload.score
     _sync_completed_at(item)
+    _log_if_newly_completed(db, item, was_completed)
     db.commit()
     db.refresh(item)
     return item
@@ -85,8 +99,10 @@ def patch_progress(
     progress_id: int, payload: schemas.ProgressPatch, db: Session = Depends(get_db)
 ):
     item = get_or_404(db, models.Progress, progress_id)
+    was_completed = item.status == "completed"
     apply_updates(item, payload.model_dump(exclude_unset=True))
     _sync_completed_at(item)
+    _log_if_newly_completed(db, item, was_completed)
     db.commit()
     db.refresh(item)
     return item

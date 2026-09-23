@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
@@ -20,6 +21,7 @@ const STATUS_LABEL = {
 };
 
 export default function WorldMap() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data, error } = useApi("/world/locations");
   const [hovered, setHovered] = useState(null);
@@ -37,11 +39,8 @@ export default function WorldMap() {
 
   return (
     <Layout>
-      <h1 className="h1">Chinese World</h1>
-      <p className="sub">
-        A living city. Walk into a place, meet an NPC, and hold a real
-        conversation. Everything unlocks with HSK progress.
-      </p>
+      <h1 className="h1">{t("pages.world.title")}</h1>
+      <p className="sub">{t("pages.world.subtitle")}</p>
 
       <div className="worldmap-wrap" style={{ marginTop: 18 }}>
         <svg viewBox="0 0 100 100" className="worldmap-svg" preserveAspectRatio="xMidYMid meet">
@@ -108,7 +107,7 @@ export default function WorldMap() {
           </div>
         )}
       </div>
-      <p className="scrollhint center" style={{ marginTop: 10 }}>Tap a location to enter it</p>
+      <p className="scrollhint center" style={{ marginTop: 10 }}>{t("pages.world.tapToEnter")}</p>
     </Layout>
   );
 }

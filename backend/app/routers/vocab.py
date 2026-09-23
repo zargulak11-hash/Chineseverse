@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
+from app.services.activity import log_activity
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
@@ -137,6 +138,7 @@ def review_word(
         1, streak.total_active_days if streak.total_active_days else 1
     )
 
+    log_activity(db, user, "vocab_review")
     db.commit()
     db.refresh(rec)
     check_achievements(db, user)

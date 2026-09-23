@@ -257,6 +257,100 @@ def evaluate_case_solution(
     return {"solved": solved, "feedback": ""}
 
 
+# ---------------------------------------------------------------------------
+# In-app study assistant — scoped to ChineseVerse + Chinese learning only.
+# Reuses the same provider plumbing as everything else in this module
+# (chat_reply, evaluate_speech, ...) instead of a separate AI integration.
+# ---------------------------------------------------------------------------
+
+ASSISTANT_SYSTEM_TEMPLATE = (
+    "You are the in-app study assistant for ChineseVerse, a gamified Mandarin "
+    "Chinese learning app. You ONLY help with: this app's own features (World, "
+    "Lessons, Vocabulary, Learning DNA, Duels, Missions, Quests, Pet Teacher "
+    "mode, the HSK roadmap, streaks, coins/XP), Chinese grammar/vocabulary/"
+    "pronunciation questions, and this learner's own progress. If asked about "
+    "anything else, politely decline in one sentence and steer back to Chinese "
+    "learning or the app. Keep answers short (2-4 sentences), concrete and "
+    "encouraging — never a generic wall of text.\n\n"
+    "This learner: username={username}, HSK level={hsk_level}, overall "
+    "mastery={mastery}%, current streak={streak} day(s), weakest skills="
+    "{weak_skills}, companion={companion}."
+)
+
+
+def _offtopic_reply() -> str:
+    return (
+        "I can only help with ChineseVerse and Chinese learning — try asking "
+        "about a grammar point (like 了/吗/的), your HSK progress, your weakest "
+        "skill, or what to practice next."
+    )
+
+
+def _offline_assistant_reply(messages: List[dict], context: dict) -> str:
+    last = messages[-1]["content"] if messages else ""
+    q = _normalize(last)
+    name = context.get("username") or "there"
+
+    if not q:
+        return f"Hi {name}! Ask me about a grammar point, your HSK progress, or what to practice next."
+    if _contain(q, "hsk", "level", "progress"):
+        return (
+            f"You're at HSK {context['hsk_level']} with {context['mastery']}% overall mastery. "
+            "Keep reviewing Vocabulary and Lessons daily — the HSK Roadmap page shows exactly "
+            "what's left to unlock the next level."
+        )
+    if _contain(q, "streak"):
+        return (
+            f"Your current streak is {context['streak']} day(s). Do at least one review, lesson "
+            "or conversation today to keep it alive."
+        )
+    if _contain(q, "weak", "improve", "focus", "struggl"):
+        weak = ", ".join(context.get("weak_skills") or []) or "a bit of everything so far"
+        return (
+            f"Your weakest skill right now looks like {weak}. A Mission or Duel that targets it "
+            "is the fastest way to move the needle — check your DNA page for the exact numbers."
+        )
+    if "了" in last:
+        return (
+            "了 (le) usually marks a completed action or a change of state — e.g. 我吃了 (I ate) "
+            "vs 我在吃 (I'm eating). Try it in a Lesson or a Pet Teacher case to see it corrected live."
+        )
+    if "吗" in last:
+        return "吗 (ma) turns a statement into a yes/no question — 你好吗？ = \"Are you well?\" Just add it to the end of a sentence."
+    if "的" in last:
+        return "的 (de) is the all-purpose possessive/descriptive particle — 我的书 = \"my book\". It links a modifier to the noun after it."
+    if _contain(q, "xp", "coin", "reward"):
+        return "You earn XP and coins from voice attempts, quests, missions and duels — the Quests page usually has today's easiest wins."
+    if _contain(q, "companion", "animal"):
+        comp = context.get("companion") or "no companion chosen yet"
+        return f"Your companion is {comp}. Each one biases your daily quests and missions toward its own specialty — see the Companion page."
+    if _contain(q, "duel"):
+        return "Duels test your weakest strand under a timer. Start one from the Duels page — losing still counts as practice."
+    return _offtopic_reply()
+
+
+def assistant_reply(messages: List[dict], context: dict) -> str:
+    """Reply to one turn of the in-app study assistant. `context` carries the
+    learner's own stats (HSK level, mastery, streak, weak skills, companion)
+    so answers about "how am I doing" are grounded in real data, not
+    hallucinated. Always scoped to ChineseVerse/Chinese-learning topics."""
+    provider = _active_provider()
+    if provider == "openai" and messages:
+        try:
+            system = ASSISTANT_SYSTEM_TEMPLATE.format(
+                username=context.get("username", "learner"),
+                hsk_level=context.get("hsk_level", 1),
+                mastery=context.get("mastery", 0),
+                streak=context.get("streak", 0),
+                weak_skills=", ".join(context.get("weak_skills") or []) or "none tracked yet",
+                companion=context.get("companion") or "none chosen yet",
+            )
+            return _openai_chat([{"role": "system", "content": system}] + messages, settings.ai_model)
+        except httpx.HTTPError:
+            pass
+    return _offline_assistant_reply(messages, context)
+
+
 def evaluate_pet_teacher_explanation(
     mistake_summary: str,
     explanation: str,

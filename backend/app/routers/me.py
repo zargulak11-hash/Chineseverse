@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -8,6 +11,19 @@ from app.deps import get_current_user
 from app.services.gamification import touch_streak
 
 router = APIRouter(prefix="/api/me", tags=["me"])
+
+# Local static storage for uploaded profile pictures — no cloud storage
+# integration exists anywhere else in this project, so this doesn't invent
+# one. Files are served back out via the /static mount in main.py.
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+AVATAR_DIR = BACKEND_DIR / "static" / "uploads" / "avatars"
+AVATAR_CONTENT_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+MAX_AVATAR_BYTES = 3 * 1024 * 1024
+
+
+def _delete_existing_avatar(avatar_url: str | None) -> None:
+    if avatar_url and avatar_url.startswith("/static/uploads/avatars/"):
+        (BACKEND_DIR / avatar_url.lstrip("/")).unlink(missing_ok=True)
 
 
 class AnimalChoice(BaseModel):
@@ -20,6 +36,10 @@ class ProfilePatch(BaseModel):
     daily_goal_minutes: int | None = Field(default=None, ge=5, le=240)
     avatar_color: str | None = Field(default=None, max_length=20)
     bio: str | None = None
+
+
+class AccountPatch(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
 
 
 class PingResponse(BaseModel):
@@ -87,6 +107,71 @@ def update_profile(
     data = payload.model_dump(exclude_unset=True)
     for key, value in data.items():
         setattr(profile, key, value)
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.patch("/account", response_model=schemas.UserResponse)
+def update_account(
+    payload: AccountPatch,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    conflict = (
+        db.query(models.User)
+        .filter(models.User.username == payload.username, models.User.id != user.id)
+        .first()
+    )
+    if conflict is not None:
+        raise HTTPException(status_code=409, detail="username already taken")
+    user.username = payload.username
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/avatar", response_model=schemas.UserProfileResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ext = AVATAR_CONTENT_TYPES.get(file.content_type)
+    if ext is None:
+        raise HTTPException(status_code=415, detail="Only JPG, PNG or WEBP images are allowed")
+    data = await file.read()
+    if len(data) > MAX_AVATAR_BYTES:
+        raise HTTPException(status_code=413, detail="Image must be 3 MB or smaller")
+
+    profile = user.profile
+    if profile is None:
+        profile = models.UserProfile(user_id=user.id)
+        db.add(profile)
+        db.flush()
+
+    _delete_existing_avatar(profile.avatar_url)
+    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"user{user.id}_{uuid.uuid4().hex[:10]}.{ext}"
+    (AVATAR_DIR / filename).write_bytes(data)
+    profile.avatar_url = f"/static/uploads/avatars/{filename}"
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+@router.delete("/avatar", response_model=schemas.UserProfileResponse)
+def remove_avatar(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    profile = user.profile
+    if profile is None:
+        profile = models.UserProfile(user_id=user.id)
+        db.add(profile)
+    else:
+        _delete_existing_avatar(profile.avatar_url)
+        profile.avatar_url = None
     db.commit()
     db.refresh(profile)
     return profile

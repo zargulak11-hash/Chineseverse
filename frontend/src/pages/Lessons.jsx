@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
@@ -6,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
 
 export default function Lessons() {
+  const { t } = useTranslation();
   const [lessons, setLessons] = useState([]);
   const [progress, setProgress] = useState([]);
   const [error, setError] = useState("");
@@ -39,8 +41,8 @@ export default function Lessons() {
 
   return (
     <Layout>
-      <h1 className="h1">Lessons</h1>
-      <p className="sub">Structured lessons to build the grammar behind every conversation.</p>
+      <h1 className="h1">{t("pages.lessons.title")}</h1>
+      <p className="sub">{t("pages.lessons.subtitle")}</p>
       {levels.map((lvl) => (
         <div key={lvl} style={{ marginTop: 18 }}>
           <h2 className="h2">HSK {lvl}</h2>
@@ -69,7 +71,7 @@ export default function Lessons() {
           </div>
         </div>
       ))}
-      {lessons.length === 0 && <Empty>No lessons yet.</Empty>}
+      {lessons.length === 0 && <Empty>{t("pages.lessons.empty")}</Empty>}
     </Layout>
   );
 }

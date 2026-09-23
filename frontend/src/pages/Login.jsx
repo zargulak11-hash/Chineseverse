@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../api.js";
 import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Login() {
+  const { t } = useTranslation();
   const { setCurrentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,11 +40,11 @@ export default function Login() {
   return (
     <div className="page">
       <div className="card formcard">
-        <h1 className="h1">Welcome back</h1>
-        <p className="sub">Your companion missed you.</p>
+        <h1 className="h1">{t("auth.welcomeBack")}</h1>
+        <p className="sub">{t("auth.welcomeBackSub")}</p>
         <form onSubmit={submit}>
           <div className="field">
-            <label>Username</label>
+            <label>{t("auth.username")}</label>
             <input
               className="input"
               value={form.username}
@@ -51,7 +53,7 @@ export default function Login() {
             />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t("auth.password")}</label>
             <input
               className="input"
               type="password"
@@ -62,13 +64,13 @@ export default function Login() {
           </div>
           {error && <p className="formerr">{error}</p>}
           <button className="btn primary" style={{ width: "100%" }} disabled={busy}>
-            {busy ? "Logging in…" : "Log in"}
+            {busy ? "…" : t("auth.logIn")}
           </button>
         </form>
-        <div className="divider" style={{ margin: "18px 0" }}>or</div>
+        <div className="divider" style={{ margin: "18px 0" }}>{t("auth.or")}</div>
         <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
-          New here? <Link to="/register">Create an account</Link>
+          {t("auth.newHere")} <Link to="/register">{t("auth.createAccount")}</Link>
         </p>
       </div>
     </div>

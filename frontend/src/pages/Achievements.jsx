@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
@@ -12,6 +13,7 @@ const CAT_ICON = {
 };
 
 export default function Achievements() {
+  const { t } = useTranslation();
   const { data, error } = useApi("/achievements");
   const badges = data || [];
 
@@ -21,9 +23,9 @@ export default function Achievements() {
 
   return (
     <Layout>
-      <h1 className="h1">Achievements</h1>
+      <h1 className="h1">{t("pages.achievements.title")}</h1>
       <p className="sub">
-        {unlocked.length}/{badges.length} earned
+        {t("pages.achievements.earned", { unlocked: unlocked.length, total: badges.length })}
       </p>
 
       <div className="grid cards" style={{ marginTop: 18 }}>

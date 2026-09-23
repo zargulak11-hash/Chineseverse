@@ -67,6 +67,7 @@ class UserProfile(Base):
     goal_text = Column(String(300), nullable=True)
     daily_goal_minutes = Column(Integer, default=10)
     avatar_color = Column(String(20), default="#6366f1")
+    avatar_url = Column(String(500), nullable=True)
     bio = Column(Text, nullable=True)
     level_test_score = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -85,6 +86,36 @@ class UserStreak(Base):
     last_active_date = Column(Date, nullable=True)
 
     user = relationship("User", back_populates="streak")
+
+
+class ActivityEvent(Base):
+    """One real, timestamped user action — the ground truth the Progress
+    page's "Learning Rhythm" stats, streak-by-section breakdown and activity
+    heatmap are all computed from (see services/activity.py). `minutes` is
+    an estimated duration weight per action type (there's no active-focus
+    timer in this app), not a fabricated number: it's assigned once, up
+    front, per action type, the same way for every user."""
+
+    __tablename__ = "activity_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    section = Column(String(30), nullable=False)
+    action_type = Column(String(40), nullable=False)
+    minutes = Column(Float, nullable=False, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Follow(Base):
+    __tablename__ = "follows"
+    __table_args__ = (
+        UniqueConstraint("follower_id", "following_id", name="uq_follow_pair"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    following_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 # ---------------------------------------------------------------------------

@@ -7,12 +7,15 @@ from alembic import command
 from alembic.config import Config as AlembicConfig
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import SessionLocal
 from app.seed import seed_all
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BACKEND_DIR / "static"
+(STATIC_DIR / "uploads" / "avatars").mkdir(parents=True, exist_ok=True)
 
 dictConfig(
     {
@@ -78,6 +81,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Uploaded profile pictures (see routers/me.py: POST /api/me/avatar) — a
+# plain local static directory, not a cloud storage integration, since
+# nothing in this project already talks to one.
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 
 @app.middleware("http")
 async def crash_logger(request, call_next):
@@ -100,7 +108,9 @@ async def crash_logger(request, call_next):
 
 from app.routers import (  # noqa: E402
     achievements,
+    analytics,
     animals,
+    assistant,
     auth,
     dashboard,
     dna,
@@ -113,6 +123,7 @@ from app.routers import (  # noqa: E402
     pet_teacher,
     progress,
     quests,
+    social,
     users,
     vocab,
     voice,
@@ -121,6 +132,10 @@ from app.routers import (  # noqa: E402
 
 for module in (
     auth,
+    # social must precede users: both share the /api/users prefix, and
+    # social's literal /api/users/search path needs to win route matching
+    # over users.py's catch-all GET /api/users/{user_id} (see social.py).
+    social,
     users,
     animals,
     lessons,
@@ -138,6 +153,8 @@ for module in (
     mistakes,
     pet_teacher,
     dashboard,
+    assistant,
+    analytics,
 ):
     app.include_router(module.router)
 

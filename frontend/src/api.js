@@ -53,12 +53,37 @@ async function request(method, path, body) {
   return data;
 }
 
+async function upload(method, path, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const token = getToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    const detail = data && data.detail;
+    throw new Error(typeof detail === "string" ? detail : `Upload failed (${res.status})`);
+  }
+  return data;
+}
+
 export const api = {
   get: (path) => request("GET", path),
   post: (path, body) => request("POST", path, body),
   put: (path, body) => request("PUT", path, body),
   patch: (path, body) => request("PATCH", path, body),
   del: (path) => request("DELETE", path),
+  // multipart/form-data upload — deliberately not funneled through
+  // request() above, which always JSON-encodes the body.
+  upload: (path, file) => upload("POST", path, file),
 };
 
 export async function register(payload) {

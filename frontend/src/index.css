@@ -560,7 +560,8 @@ a.navlink.active::after {
   max-width: min(1360px, 94vw);
   margin: 0 auto;
   padding: 36px 24px 90px;
-  animation: fadeInUp var(--dur-slow) var(--ease-out) both;
+  /* Enter/exit motion is now driven by Framer Motion (see motion.js
+     pageVariants, applied in Layout.jsx) instead of this CSS keyframe. */
 }
 
 .page.wide {
@@ -1187,28 +1188,38 @@ select.input {
   margin-top: 2px;
 }
 
+/* A real SVG ring (see components/ui.jsx's <Ring>) — the foreground stroke
+   is drawn in by Anime.js, not an instant conic-gradient fill. */
 .ring {
-  --p: 0;
+  position: relative;
   width: 132px;
   height: 132px;
-  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--surface-2) 0);
-  transition: background 0.6s var(--ease-out);
 }
 
-.ring::before {
-  content: "";
-  grid-area: 1/1;
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  background: var(--surface-1);
+.ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.ring > div {
-  grid-area: 1/1;
+.ring-track-bg {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 14;
+}
+
+.ring-track-fg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+
+.ring-center {
+  position: relative;
   z-index: 1;
   font-size: var(--text-xl);
   font-weight: 800;
@@ -1344,6 +1355,44 @@ table.data td {
 
 .hero > * {
   animation: fadeInUp var(--dur-slow) var(--ease-out) both;
+}
+
+/* ---------- Hero background carousel ----------
+   Original SVG-illustrated scenes (see HeroCarousel.jsx), not photography —
+   crossfaded by Framer Motion. This sits behind the hero copy, with a veil
+   gradient on top so the headline/CTA stay legible over busy art and the
+   scene fades into the page background at the edges instead of a hard
+   rectangle. */
+.hero-carousel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.hero-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-scene-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-carousel-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, var(--bg) 0%, transparent 16%, transparent 72%, var(--bg) 100%),
+    radial-gradient(60% 55% at 50% 42%, transparent 0%, var(--bg) 92%);
+  opacity: 0.94;
+}
+
+[data-theme="paper"] .hero-carousel {
+  opacity: 0.5;
 }
 
 .hero h1 {
@@ -1628,12 +1677,27 @@ table.data td {
   animation: ringGlowPulse 3.4s ease-in-out infinite;
 }
 
-.ring-hero .ring-track {
+/* A real SVG ring (see components/ui.jsx's <RingHero>) — the gradient
+   stroke draws in once via Anime.js instead of perpetually rotating a
+   conic-gradient. */
+.ring-hero-svg {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, var(--accent-soft), var(--accent-strong) calc(var(--p) * 1%), var(--surface-3) 0);
-  animation: ringRotate 16s linear infinite;
+  width: 100%;
+  height: 100%;
+}
+
+.ring-hero-track-bg {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 12;
+}
+
+.ring-hero-track-fg {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(201, 151, 74, 0.45));
 }
 
 .ring-hero .ring-face {
@@ -1801,7 +1865,7 @@ table.data td {
   display: flex;
   flex-direction: column;
   z-index: 45;
-  transition: width var(--dur-base) var(--ease-out);
+  transition: width var(--dur-base) var(--ease-out), transform var(--dur-slow) var(--ease-out);
 }
 
 .sidebar.collapsed {
@@ -1857,6 +1921,7 @@ table.data td {
 }
 
 .sidebar-nav {
+  position: relative;
   flex: 1;
   overflow-y: auto;
   padding: 10px 12px 14px;
@@ -1902,9 +1967,16 @@ table.data td {
 }
 
 .sidebar-link svg {
+  position: relative;
+  z-index: 1;
   flex-shrink: 0;
   opacity: 0.8;
   transition: opacity var(--dur-fast) ease;
+}
+
+.sidebar-link .label {
+  position: relative;
+  z-index: 1;
 }
 
 .sidebar-link:hover {
@@ -1917,13 +1989,24 @@ table.data td {
 }
 
 .sidebar-link.active {
-  background: var(--accent-dim);
   color: var(--accent-strong);
 }
 
 .sidebar-link.active svg {
   opacity: 1;
   color: var(--accent);
+}
+
+/* A single shared pill, positioned/sized via inline style computed in
+   Sidebar.jsx and animated between nav items with Anime.js (a manual FLIP:
+   measure the newly-active link's rect, tween left/top/width/height) —
+   smoother and simpler than swapping a pill in and out of each link. */
+.sidebar-active-pill {
+  position: absolute;
+  z-index: 0;
+  background: var(--accent-dim);
+  border-radius: var(--radius-md);
+  pointer-events: none;
 }
 
 .sidebar.collapsed .sidebar-link {
@@ -2502,4 +2585,499 @@ table.data td {
   font-size: var(--text-xs);
   color: var(--text-dim);
   margin-top: 2px;
+}
+
+/* ---------- Celebration overlay (Framer Motion drives the actual motion;
+   this just styles the card/backdrop/spark it renders into) ---------- */
+.celebration-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 4, 5, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.celebration-card {
+  position: relative;
+  width: min(420px, 90vw);
+  padding: 36px 28px;
+  text-align: center;
+  background: var(--surface-1);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), var(--accent-glow);
+  overflow: visible;
+}
+
+.celebration-card.tone-good {
+  border-color: rgba(107, 207, 143, 0.45);
+}
+
+.celebration-card.tone-bad {
+  border-color: rgba(238, 106, 103, 0.35);
+}
+
+.celebration-icon {
+  font-size: 52px;
+  line-height: 1;
+}
+
+/* ---------- Voice feedback: mentor-style card ---------- */
+.voice-feedback {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  max-width: 520px;
+  align-self: center;
+  width: 100%;
+}
+
+.voice-feedback-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.voice-feedback-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.voice-feedback-overall {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.voice-feedback-overall small {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  color: var(--text-faint);
+}
+
+.voice-feedback-reaction {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  background: var(--surface-1);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+
+.voice-feedback-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.voice-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-faint);
+}
+
+.voice-score-row .lbl {
+  width: 82px;
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.voice-score-row .bar {
+  flex: 1;
+  margin-top: 0;
+}
+
+.voice-score-row .val {
+  width: 28px;
+  text-align: right;
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.voice-score-row.weakest .lbl,
+.voice-score-row.weakest .val {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.voice-score-row.weakest .bar > div {
+  background: var(--accent);
+}
+
+.voice-feedback-tip {
+  margin: 12px 0 0;
+  font-size: var(--text-xs);
+  color: var(--accent-strong);
+}
+
+/* ---------- Progress / activity analytics ---------- */
+.rhythm-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .rhythm-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rhythm-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-top: 16px;
+}
+
+.rhythm-stat {
+  --stat-color: var(--accent);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.rhythm-stat .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--stat-color) 18%, var(--surface-1));
+  color: var(--stat-color);
+  margin-bottom: 10px;
+}
+
+.rhythm-stat .num {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.rhythm-stat .lbl {
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.rhythm-stat .sub-count {
+  font-size: var(--text-2xs);
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.streak-card-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.streak-flame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: color-mix(in srgb, #ff8a3d 18%, var(--surface-2));
+  color: #ff8a3d;
+  flex-shrink: 0;
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.donut {
+  --p: 0;
+  position: relative;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--donut-gradient, var(--surface-2));
+}
+
+.donut::before {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  background: var(--surface-1);
+}
+
+.donut-center {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.donut-center .num {
+  font-size: var(--text-md);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.donut-center .lbl {
+  font-size: 9px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.donut-legend {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.donut-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-xs);
+}
+
+.donut-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend-row .name {
+  flex: 1;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donut-legend-row .pct {
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmap-wrap {
+  margin-top: 14px;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.heatmap-months {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 4px;
+  min-width: max-content;
+}
+
+.heatmap-month {
+  font-size: 10px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.heatmap-grid {
+  display: grid;
+  gap: 3px;
+  min-width: max-content;
+}
+
+.heatmap-col {
+  display: grid;
+  grid-template-rows: repeat(7, 11px);
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--surface-2);
+}
+
+.heatmap-cell.empty {
+  background: transparent;
+}
+
+.heatmap-cell.level-1 {
+  background: color-mix(in srgb, var(--accent) 28%, var(--surface-2));
+}
+.heatmap-cell.level-2 {
+  background: color-mix(in srgb, var(--accent) 52%, var(--surface-2));
+}
+.heatmap-cell.level-3 {
+  background: color-mix(in srgb, var(--accent) 76%, var(--surface-2));
+}
+.heatmap-cell.level-4 {
+  background: var(--accent);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.activity-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ---------- Assistant chat ---------- */
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  height: min(64vh, 640px);
+  padding: 18px;
+}
+
+.assistant-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 6px;
+}
+
+.assistant-empty {
+  margin: auto;
+  text-align: center;
+  max-width: 360px;
+  color: var(--text-dim);
+}
+
+.assistant-thinking {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  align-self: flex-start;
+  padding: 14px 16px;
+}
+
+.assistant-thinking .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  animation: assistantDot 1.1s ease-in-out infinite;
+}
+
+.assistant-thinking .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.assistant-thinking .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes assistantDot {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.assistant-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.assistant-input-row .input {
+  flex: 1;
+}
+
+/* ---------- Settings: toggle switch + avatar preview ---------- */
+.toggle-row {
+  gap: 14px;
+}
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.switch.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.switch.on .switch-knob {
+  transform: translateX(18px);
+}
+
+.avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-strong);
+  flex-shrink: 0;
+}
+
+.celebration-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  pointer-events: none;
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, clearSession, getSavedUser, getToken } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
+import { initButtonFX } from "./buttonFx.js";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -28,6 +29,9 @@ import Mistakes from "./pages/Mistakes.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
+import Assistant from "./pages/Assistant.jsx";
+import Community from "./pages/Community.jsx";
+import PublicProfile from "./pages/PublicProfile.jsx";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -65,6 +69,10 @@ export default function App() {
         setUser(null);
       })
       .finally(() => setBooted(true));
+  }, []);
+
+  useEffect(() => {
+    initButtonFX();
   }, []);
 
   function saveSelf(u) {
@@ -265,6 +273,30 @@ export default function App() {
           element={
             <RequireAuth>
               <Settings />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/assistant"
+          element={
+            <RequireAuth>
+              <Assistant />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/community"
+          element={
+            <RequireAuth>
+              <Community />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/u/:userId"
+          element={
+            <RequireAuth>
+              <PublicProfile />
             </RequireAuth>
           }
         />

@@ -5,6 +5,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_user_or_none
 from app.services import ai_client
+from app.services.activity import log_activity
 from app.services.gamification import (
     ensure_bond,
     ensure_user_skills,
@@ -134,6 +135,7 @@ def solve_case(
             answer_given=payload.conclusion,
             correct_answer=case_data.get("hint", ""),
         )
+    log_activity(db, user, "case_solve")
     db.commit()
     return {
         "solved": solved,

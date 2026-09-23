@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api.js";
 import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Register() {
+  const { t } = useTranslation();
   const { setCurrentUser } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -45,11 +47,11 @@ export default function Register() {
   return (
     <div className="page">
       <div className="card formcard">
-        <h1 className="h1">Create your account</h1>
-        <p className="sub">Then choose the companion who will teach you.</p>
+        <h1 className="h1">{t("auth.register")}</h1>
+        <p className="sub">{t("auth.registerSub")}</p>
         <form onSubmit={submit}>
           <div className="field">
-            <label>Username</label>
+            <label>{t("auth.username")}</label>
             <input
               className="input"
               value={form.username}
@@ -59,7 +61,7 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>Email</label>
+            <label>{t("auth.email")}</label>
             <input
               className="input"
               type="email"
@@ -69,7 +71,7 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t("auth.password")}</label>
             <input
               className="input"
               type="password"
@@ -80,7 +82,7 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>Confirm password</label>
+            <label>{t("auth.confirmPassword")}</label>
             <input
               className="input"
               type="password"
@@ -92,13 +94,13 @@ export default function Register() {
           </div>
           {error && <p className="formerr">{error}</p>}
           <button className="btn primary" style={{ width: "100%" }} disabled={busy}>
-            {busy ? "Creating…" : "Create account"}
+            {busy ? "…" : t("auth.register")}
           </button>
         </form>
-        <div className="divider" style={{ margin: "18px 0" }}>or</div>
+        <div className="divider" style={{ margin: "18px 0" }}>{t("auth.or")}</div>
         <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
-          Already have an account? <Link to="/login">Log in</Link>
+          {t("auth.haveAccount")} <Link to="/login">{t("auth.logIn")}</Link>
         </p>
       </div>
     </div>
