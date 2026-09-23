@@ -157,6 +157,27 @@
     "progress": { "title": "Your progress" },
     "profile": { "title": "Profile", "changeCompanion": "Change companion", "editProfile": "Edit profile", "streak": "Streak", "rewardsEarned": "Rewards earned", "followers": "Followers", "following": "Following", "follow": "Follow", "unfollow": "Unfollow" },
     "animalSelect": { "title": "Choose your companion", "subtitle": "Each one teaches with a different style. You can change later — {{name}}." },
+    "onboarding": {
+      "loading": "Setting things up…",
+      "saving": "Saving…",
+      "motivationTitle": "Why are you learning Chinese?",
+      "motivationSubtitle": "This helps us tailor what we show you first.",
+      "motivation": { "travel": "Travel", "work": "Work or business", "culture": "Culture or personal interest", "exam": "HSK exam prep", "family": "Family or heritage", "other": "Other" },
+      "discoveryTitle": "How did you find ChineseVerse?",
+      "source": { "friend": "A friend told me", "social": "Social media", "school": "SoftClub / a school", "search": "Search engine", "other": "Other" },
+      "otherPlaceholder": "Tell us more…",
+      "next": "Next",
+      "testIntroTitle": "Quick placement test",
+      "testIntroBody": "A short test (vocabulary and basic grammar, HSK1 through HSK4) so we can start you at the right level. It's not graded — there's no way to fail.",
+      "startTest": "Start the placement test",
+      "skipTest": "I'm a complete beginner — skip to HSK1",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "sayItAloud": "Say it out loud",
+      "resultTitle": "You're all set!",
+      "resultLevel": "Starting level: HSK{{level}}",
+      "resultScore": "{{correct}}/{{total}} correct on the placement test",
+      "continueToDashboard": "Continue to dashboard"
+    },
     "assistant": { "title": "Study Assistant", "subtitle": "Ask about grammar, your progress, or what to study next.", "placeholder": "Ask your companion anything about learning Chinese…", "send": "Send", "thinking": "Thinking…", "scopeHint": "Scoped to ChineseVerse and your Chinese learning." }
   }
 }

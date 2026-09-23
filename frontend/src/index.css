@@ -1320,6 +1320,11 @@ table.data td {
   animation: shake 0.4s var(--ease-out);
 }
 
+.option.picked {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .hero {
   position: relative;
   padding: 96px 20px 72px;
@@ -1903,12 +1908,26 @@ table.data td {
 }
 
 .sidebar-group-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--text-faint);
   padding: 0 10px 6px;
+}
+
+/* A single brush flick standing in for the usual section-header rule —
+   the same accent gradient as the 中 seal mark, tapered rather than a flat
+   bar, so even the group labels read as painted, not just typed. */
+.sidebar-group-mark {
+  width: 12px;
+  height: 3px;
+  flex-shrink: 0;
+  background: var(--accent-gradient);
+  clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);
 }
 
 .sidebar.collapsed .sidebar-group-label {
@@ -1923,12 +1942,14 @@ table.data td {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 18px;
   margin-bottom: 2px;
   border-radius: var(--radius-md);
   color: var(--text-dim);
   font-size: var(--text-sm);
   font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: 0.005em;
   transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
@@ -1963,16 +1984,42 @@ table.data td {
   color: var(--accent);
 }
 
-/* A single shared pill, positioned/sized via inline style computed in
-   Sidebar.jsx and animated between nav items with Anime.js (a manual FLIP:
-   measure the newly-active link's rect, tween left/top/width/height) —
-   smoother and simpler than swapping a pill in and out of each link. */
-.sidebar-active-pill {
+/* The brush-tip mark: a tapered stroke — wide at the top where the brush
+   sets down, narrowing to a point where it lifts off — standing in for the
+   usual flat "active" bar. Painted in with a scale, not faded in. */
+.sidebar-link-brush {
+  position: absolute;
+  z-index: 1;
+  left: 4px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: var(--accent-gradient);
+  clip-path: polygon(0 0, 100% 0, 65% 100%, 35% 100%);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.sidebar-link.active .sidebar-link-brush {
+  transform: scaleY(1);
+}
+
+/* The active indicator isn't a pill — it's ink that just landed on rice
+   paper: an irregular (not rectangular) blob with a soft diffused edge,
+   positioned/sized via inline style computed in Sidebar.jsx and animated
+   between nav items with Anime.js (a manual FLIP, with a blur+opacity
+   "bleed" as it travels — see moveInk in Sidebar.jsx). */
+.sidebar-ink-blob {
   position: absolute;
   z-index: 0;
-  background: var(--accent-dim);
-  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at 35% 30%, var(--accent-dim) 0%, var(--accent-dim) 45%, transparent 88%);
+  border-radius: 61% 39% 52% 48% / 44% 41% 59% 56%;
   pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-ink-blob {
+  border-radius: 50%;
 }
 
 .sidebar.collapsed .sidebar-link {
@@ -2451,11 +2498,17 @@ table.data td {
   opacity: 0.75;
 }
 
-/* ---------- Quick action cards ---------- */
+/* ---------- Quick action cards ----------
+   Deliberately not a 4-up grid of identical boxes: World (the core loop) is
+   a large featured tile on the left with its own decorative globe motif and
+   a folded ticket-stub corner; DNA/Duels/Missions form a smaller stack next
+   to it, each a few degrees off-square like hand-placed cards, straightening
+   on hover. */
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  gap: var(--space-3) var(--space-4);
   margin-top: 22px;
 }
 
@@ -2464,22 +2517,81 @@ table.data td {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 30px;
-  min-height: 118px;
-  padding: 20px;
+  gap: 16px;
+  min-height: 84px;
+  padding: 16px 18px;
   border-radius: var(--radius-lg);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--shadow-sm);
-  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) ease;
+  overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) ease;
+}
+
+.quick-action:nth-of-type(2) {
+  grid-column: 2;
+  grid-row: 1;
+  transform: rotate(-3deg);
+}
+.quick-action:nth-of-type(3) {
+  grid-column: 2;
+  grid-row: 2;
+  transform: rotate(3.4deg) translateX(6px);
+}
+.quick-action:nth-of-type(4) {
+  grid-column: 2;
+  grid-row: 3;
+  transform: rotate(-2.4deg);
 }
 
 .quick-action:hover {
-  transform: translateY(-3px);
+  transform: translateY(-3px) rotate(0deg);
   box-shadow: var(--shadow-md);
+  z-index: 2;
+}
+
+.quick-action.featured {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  padding: 24px 24px 22px;
+  gap: 46px;
+  min-height: 0;
+}
+
+.quick-action.featured:hover {
+  transform: translateY(-3px);
+}
+
+/* A faint globe sketched into the featured tile's corner — its own
+   decorative motif, not a plain color fill. */
+.qa-globe {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 150px;
+  height: 150px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.1;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+/* A folded ticket-stub corner on the featured tile — "your pass into the
+   world," not a decoration borrowed from a generic template. */
+.quick-action.featured::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  background: rgba(255, 255, 255, 0.16);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 
 .quick-action .qa-top {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2489,10 +2601,15 @@ table.data td {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.2);
+}
+
+.quick-action.featured .ic {
+  width: 48px;
+  height: 48px;
 }
 
 .quick-action .arrow {
@@ -2505,8 +2622,35 @@ table.data td {
 }
 
 .quick-action .label {
+  position: relative;
   font-weight: 800;
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
+}
+
+.quick-action.featured .label {
+  font-size: var(--text-xl);
+}
+
+@media (max-width: 720px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+
+  .quick-action,
+  .quick-action:nth-of-type(2),
+  .quick-action:nth-of-type(3),
+  .quick-action:nth-of-type(4) {
+    grid-column: 1;
+    grid-row: auto;
+    transform: none;
+    min-height: 96px;
+  }
+
+  .quick-action.featured {
+    padding: 22px;
+    gap: 30px;
+  }
 }
 
 /* ---------- Stat card grid ---------- */

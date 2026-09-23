@@ -34,17 +34,31 @@ function useCardStagger(deps) {
       duration: 620,
       delay: stagger(65),
       ease: "outElastic(1, .7)",
+      // The entrance animation writes opacity/transform as inline styles,
+      // which would permanently shadow any CSS transform a card wants at
+      // rest (e.g. the quick-action stack's hand-placed rotation) — hand
+      // control back to CSS once settled instead of leaving them behind.
+      onComplete: () => {
+        targets.forEach((el) => {
+          el.style.opacity = "";
+          el.style.transform = "";
+        });
+      },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return ref;
 }
 
+// World is the core gameplay loop — the one action a learner reaches for
+// most — so it gets the large "featured" slot; the other three are a
+// smaller, deliberately hand-placed stack next to it (each a few degrees
+// off-square, straightening on hover) instead of four identical boxes.
 const QUICK_ACTIONS = [
-  ["/world", "dashboard.exploreWorld", "world", "linear-gradient(135deg, #2b6f93, #4fc3f7)"],
-  ["/dna", "dashboard.viewDna", "dna", "linear-gradient(135deg, #2f7a4c, #4cc26b)"],
-  ["/duels", "dashboard.startDuel", "swords", "linear-gradient(135deg, #b1501c, #ff8a3d)"],
-  ["/missions", "dashboard.pickMission", "flag", "linear-gradient(135deg, var(--accent-soft), var(--accent-strong))"],
+  { to: "/world", labelKey: "dashboard.exploreWorld", icon: "world", gradient: "linear-gradient(135deg, #1f5b7a, #4fc3f7)", featured: true },
+  { to: "/dna", labelKey: "dashboard.viewDna", icon: "dna", gradient: "linear-gradient(135deg, #2f7a4c, #4cc26b)" },
+  { to: "/duels", labelKey: "dashboard.startDuel", icon: "swords", gradient: "linear-gradient(135deg, #b1501c, #ff8a3d)" },
+  { to: "/missions", labelKey: "dashboard.pickMission", icon: "flag", gradient: "linear-gradient(135deg, var(--accent-soft), var(--accent-strong))" },
 ];
 
 export default function Dashboard() {
@@ -109,11 +123,24 @@ export default function Dashboard() {
       </div>
 
       <div className="quick-actions" ref={quickActionsRef} data-self-animate="true">
-        {QUICK_ACTIONS.map(([to, labelKey, icon, gradient]) => (
-          <Link to={to} key={to} className="quick-action" style={{ background: gradient }}>
+        {QUICK_ACTIONS.map(({ to, labelKey, icon, gradient, featured }) => (
+          <Link
+            to={to}
+            key={to}
+            className={`quick-action${featured ? " featured" : ""}`}
+            style={{ background: gradient }}
+          >
+            {featured && (
+              <svg className="qa-globe" viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="46" />
+                <ellipse cx="60" cy="60" rx="46" ry="17" />
+                <ellipse cx="60" cy="60" rx="17" ry="46" />
+                <line x1="14" y1="60" x2="106" y2="60" />
+              </svg>
+            )}
             <div className="qa-top">
-              <span className="ic"><Icon name={icon} size={19} /></span>
-              <Icon name="arrowRight" size={17} className="arrow" />
+              <span className="ic"><Icon name={icon} size={featured ? 25 : 18} /></span>
+              <Icon name="arrowRight" size={featured ? 19 : 15} className="arrow" />
             </div>
             <span className="label">{t(labelKey)}</span>
           </Link>

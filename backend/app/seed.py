@@ -208,6 +208,61 @@ def seed_missions(db: Session) -> None:
         )
 
 
+# One-time correction from the HSK accuracy audit: these two words were
+# seeded at HSK2 but belong at HSK1 in the official old-standard word list.
+# Moves the existing row (preserving its id / any FK references) rather
+# than deleting and re-adding — idempotent, only acts while still wrong.
+VOCAB_LEVEL_FIXES = [
+    ("商店", 2, 1),
+    ("医院", 2, 1),
+]
+
+
+def fix_vocab_word_errors(db: Session) -> None:
+    """谢 alone isn't the graded HSK1 vocabulary item — the real word is 谢谢
+    (xièxie). Renames the existing row in place (its seed_learning.py tuple
+    already reflects this) instead of relying on seed_vocabulary's
+    insert-only dedup, which would otherwise leave the old row orphaned and
+    add a second "谢谢" row alongside it."""
+    hsk1 = db.query(models.HSKLevel).filter_by(level=1).first()
+    if not hsk1:
+        return
+    old = db.query(models.VocabularyWord).filter_by(hsk_level_id=hsk1.id, simplified="谢").first()
+    if old is None:
+        return
+    dup = db.query(models.VocabularyWord).filter_by(hsk_level_id=hsk1.id, simplified="谢谢").first()
+    if dup is not None:
+        db.delete(old)
+        return
+    old.simplified = "谢谢"
+    old.pinyin = "xièxie"
+    old.meanings = "thank you"
+
+
+def fix_vocab_placements(db: Session) -> None:
+    levels = {h.level: h.id for h in db.query(models.HSKLevel).all()}
+    for simplified, wrong_level, correct_level in VOCAB_LEVEL_FIXES:
+        wrong_id = levels.get(wrong_level)
+        correct_id = levels.get(correct_level)
+        if not wrong_id or not correct_id:
+            continue
+        row = (
+            db.query(models.VocabularyWord)
+            .filter_by(hsk_level_id=wrong_id, simplified=simplified)
+            .first()
+        )
+        if row is None:
+            continue
+        dup = (
+            db.query(models.VocabularyWord)
+            .filter_by(hsk_level_id=correct_id, simplified=simplified)
+            .first()
+        )
+        if dup is not None:
+            continue
+        row.hsk_level_id = correct_id
+
+
 def seed_vocabulary(db: Session) -> None:
     db.flush()
     levels = {h.level: h.id for h in db.query(models.HSKLevel).all()}
@@ -318,6 +373,8 @@ def seed_all(db: Session) -> None:
     seed_npcs(db)
     seed_scenarios(db)
     seed_missions(db)
+    fix_vocab_word_errors(db)
+    fix_vocab_placements(db)
     seed_vocabulary(db)
     seed_grammar(db)
     seed_pet_teacher_cases(db)

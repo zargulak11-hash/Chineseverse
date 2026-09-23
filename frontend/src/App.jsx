@@ -8,6 +8,7 @@ import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import AnimalSelect from "./pages/AnimalSelect.jsx";
+import Onboarding from "./pages/Onboarding.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import DNA from "./pages/DNA.jsx";
 import Roadmap from "./pages/Roadmap.jsx";
@@ -105,6 +106,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AnimalSelect />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <RequireAuth>
+              <Onboarding />
             </RequireAuth>
           }
         />

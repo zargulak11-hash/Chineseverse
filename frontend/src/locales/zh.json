@@ -156,6 +156,27 @@
     "progress": { "title": "你的进度" },
     "profile": { "title": "个人资料", "changeCompanion": "更换伙伴", "editProfile": "编辑资料", "streak": "连续天数", "rewardsEarned": "已获奖励", "followers": "粉丝", "following": "关注中", "follow": "关注", "unfollow": "取消关注" },
     "animalSelect": { "title": "选择你的伙伴", "subtitle": "每一个都有自己独特的教学风格，{{name}}，你之后也可以更换。" },
+    "onboarding": {
+      "loading": "正在准备…",
+      "saving": "保存中…",
+      "motivationTitle": "你为什么学习中文？",
+      "motivationSubtitle": "这能帮助我们为你定制学习内容。",
+      "motivation": { "travel": "旅行", "work": "工作或商务", "culture": "文化或个人兴趣", "exam": "备考HSK", "family": "家庭或文化传承", "other": "其他" },
+      "discoveryTitle": "你是怎么找到ChineseVerse的？",
+      "source": { "friend": "朋友介绍", "social": "社交媒体", "school": "SoftClub / 学校", "search": "搜索引擎", "other": "其他" },
+      "otherPlaceholder": "请告诉我们更多…",
+      "next": "下一步",
+      "testIntroTitle": "快速水平测试",
+      "testIntroBody": "一个简短的测试（词汇和基础语法，涵盖HSK1到HSK4），帮助我们从合适的水平开始。不计分——不存在不及格。",
+      "startTest": "开始水平测试",
+      "skipTest": "我是完全的初学者——直接从HSK1开始",
+      "questionProgress": "第{{current}}题，共{{total}}题",
+      "sayItAloud": "请大声说出来",
+      "resultTitle": "一切准备就绪！",
+      "resultLevel": "起始水平：HSK{{level}}",
+      "resultScore": "水平测试中答对{{correct}}/{{total}}题",
+      "continueToDashboard": "前往仪表盘"
+    },
     "assistant": { "title": "学习助手", "subtitle": "询问语法、你的学习进度，或接下来该学什么。", "placeholder": "向助手询问任何关于中文学习的问题…", "send": "发送", "thinking": "思考中…", "scopeHint": "仅回答关于 ChineseVerse 和中文学习的问题。" }
   }
 }

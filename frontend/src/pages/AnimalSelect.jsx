@@ -31,7 +31,7 @@ export default function AnimalSelect() {
       setPicked(id);
       const me = await api.get("/me");
       setCurrentUser(me.user);
-      navigate("/dashboard", { replace: true });
+      navigate(me.profile.onboarding_completed ? "/dashboard" : "/onboarding", { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

@@ -70,9 +70,33 @@ class UserProfile(Base):
     avatar_url = Column(String(500), nullable=True)
     bio = Column(Text, nullable=True)
     level_test_score = Column(Integer, nullable=True)
+    learning_motivation = Column(String(30), nullable=True)
+    learning_motivation_other = Column(String(200), nullable=True)
+    discovery_source = Column(String(30), nullable=True)
+    discovery_source_other = Column(String(200), nullable=True)
+    onboarding_completed = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="profile")
+
+
+class PlacementAttempt(Base):
+    """Onboarding placement test. Mirrors Duel's question_data pattern: the
+    full generated question set (including answers) lives server-side only
+    and is never sent back to the client as-is."""
+
+    __tablename__ = "placement_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String(20), default="active")  # active|finished|skipped
+    question_data = Column(JSON, nullable=True)
+    correct_count = Column(Integer, nullable=True)
+    total_count = Column(Integer, nullable=True)
+    placed_level = Column(Integer, nullable=True)
+    overall_mastery = Column(Float, nullable=True)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
 
 
 class UserStreak(Base):

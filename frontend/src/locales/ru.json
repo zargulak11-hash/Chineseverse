@@ -159,6 +159,27 @@
     "progress": { "title": "Ваш прогресс" },
     "profile": { "title": "Профиль", "changeCompanion": "Сменить компаньона", "editProfile": "Редактировать профиль", "streak": "Серия", "rewardsEarned": "Заработанные награды", "followers": "Подписчики", "following": "Подписки", "follow": "Подписаться", "unfollow": "Отписаться" },
     "animalSelect": { "title": "Выберите компаньона", "subtitle": "У каждого свой стиль обучения. Сменить можно позже — {{name}}." },
+    "onboarding": {
+      "loading": "Секунду, всё готовим…",
+      "saving": "Сохраняем…",
+      "motivationTitle": "Зачем вы изучаете китайский?",
+      "motivationSubtitle": "Это поможет нам подобрать материал именно для вас.",
+      "motivation": { "travel": "Путешествия", "work": "Работа или бизнес", "culture": "Культура и личный интерес", "exam": "Подготовка к HSK", "family": "Семья или происхождение", "other": "Другое" },
+      "discoveryTitle": "Как вы узнали о ChineseVerse?",
+      "source": { "friend": "Рассказал друг", "social": "Соцсети", "school": "SoftClub / школа", "search": "Поисковик", "other": "Другое" },
+      "otherPlaceholder": "Расскажите подробнее…",
+      "next": "Далее",
+      "testIntroTitle": "Небольшой тест на уровень",
+      "testIntroBody": "Короткий тест (лексика и базовая грамматика, от HSK1 до HSK4), чтобы начать с подходящего уровня. Он не оценивается — провалить его нельзя.",
+      "startTest": "Начать тест на уровень",
+      "skipTest": "Я совсем начинающий — сразу к HSK1",
+      "questionProgress": "Вопрос {{current}} из {{total}}",
+      "sayItAloud": "Произнесите вслух",
+      "resultTitle": "Всё готово!",
+      "resultLevel": "Стартовый уровень: HSK{{level}}",
+      "resultScore": "{{correct}}/{{total}} верно в тесте на уровень",
+      "continueToDashboard": "Перейти к панели"
+    },
     "assistant": { "title": "Учебный помощник", "subtitle": "Спросите о грамматике, своём прогрессе или что учить дальше.", "placeholder": "Спросите компаньона о чём угодно, связанном с китайским…", "send": "Отправить", "thinking": "Думаю…", "scopeHint": "Отвечает только по ChineseVerse и изучению китайского." }
   }
 }

@@ -36,6 +36,10 @@ class ProfilePatch(BaseModel):
     daily_goal_minutes: int | None = Field(default=None, ge=5, le=240)
     avatar_color: str | None = Field(default=None, max_length=20)
     bio: str | None = None
+    learning_motivation: str | None = Field(default=None, max_length=30)
+    learning_motivation_other: str | None = Field(default=None, max_length=200)
+    discovery_source: str | None = Field(default=None, max_length=30)
+    discovery_source_other: str | None = Field(default=None, max_length=200)
 
 
 class AccountPatch(BaseModel):

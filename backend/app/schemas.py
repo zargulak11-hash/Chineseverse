@@ -69,6 +69,11 @@ class UserProfileResponse(BaseModel):
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     level_test_score: Optional[int] = None
+    learning_motivation: Optional[str] = None
+    learning_motivation_other: Optional[str] = None
+    discovery_source: Optional[str] = None
+    discovery_source_other: Optional[str] = None
+    onboarding_completed: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -600,6 +605,37 @@ class DuelQuestion(BaseModel):
     prompt: str
     options: Optional[list] = None
     tts_text: Optional[str] = None
+
+
+class PlacementQuestion(BaseModel):
+    index: int
+    level: int
+    type: str
+    prompt: str
+    options: Optional[list] = None
+    tts_text: Optional[str] = None
+
+
+class PlacementStartResponse(BaseModel):
+    attempt_id: int
+    questions: list[PlacementQuestion] = []
+
+
+class PlacementAnswer(BaseModel):
+    index: int = Field(ge=0)
+    answer: str = Field(min_length=1, max_length=200)
+
+
+class PlacementSubmitRequest(BaseModel):
+    answers: list[PlacementAnswer]
+
+
+class PlacementResultResponse(BaseModel):
+    attempt_id: int
+    correct_count: int
+    total_count: int
+    placed_level: int
+    overall_mastery: float
 
 
 class DuelResponse(BaseModel):
