@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import SessionLocal
-from app.seed import needs_seed, seed_all
+from app.seed import seed_all
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +29,8 @@ dictConfig(
         "loggers": {
             "app": {"level": "INFO", "handlers": ["console"], "propagate": False},
             "uvicorn": {"level": "INFO", "handlers": ["console"], "propagate": False},
+            "uvicorn.error": {"level": "INFO", "handlers": ["console"], "propagate": False},
+            "uvicorn.access": {"level": "INFO", "handlers": ["console"], "propagate": False},
         },
     }
 )
@@ -52,8 +54,13 @@ async def lifespan(_app: FastAPI):
     _run_migrations()
     logging.getLogger("app").info("Database migrations applied.")
     with SessionLocal() as db:
-        if needs_seed(db):
-            seed_all(db)
+        # Every seed_* function guards against duplicates by checking for an
+        # existing row before inserting, so this is safe (and cheap) to run
+        # on every startup. It used to be gated behind needs_seed() (only
+        # HSKLevel.count() == 0), which meant a seed function added after
+        # the DB was first seeded — e.g. seed_pet_teacher_cases — silently
+        # never ran on existing databases.
+        seed_all(db)
     yield
 
 
@@ -70,6 +77,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def crash_logger(request, call_next):
+    # Temporary diagnostic: the logging module setup in this process isn't
+    # reliably surfacing uvicorn access/error logs to the console (root
+    # cause still under investigation), so unhandled exceptions were
+    # invisible. This writes a plain-file traceback for any 500, bypassing
+    # the logging module entirely, so real crashes can be seen and this can
+    # be removed once that's resolved.
+    import traceback as _traceback
+
+    try:
+        return await call_next(request)
+    except Exception:
+        with open(BACKEND_DIR / "crash.log", "a", encoding="utf-8") as f:
+            f.write(f"\n=== {request.method} {request.url.path} ===\n")
+            f.write(_traceback.format_exc())
+            f.write("\n")
+        raise
 
 from app.routers import (  # noqa: E402
     achievements,

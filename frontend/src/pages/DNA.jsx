@@ -1,15 +1,19 @@
 import { useSearchParams } from "react-router-dom";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 const CATS = {
-  listening: "👂",
-  speaking: "🗣️",
-  reading: "👀",
-  writing: "✍️",
-  grammar_usage: "🧩",
-  vocabulary_retention: "📚",
+  listening: "ear",
+  speaking: "mic",
+  reading: "eye",
+  writing: "pen",
+  grammar: "book",
+  vocabulary: "type",
+  tones: "chat",
+  memory: "search",
+  reaction_speed: "trending",
 };
 
 export default function DNA() {
@@ -43,20 +47,18 @@ export default function DNA() {
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
         {dna.skills.map((s) => {
-          const cat = CATS[s.code] || "🧬";
+          const cat = CATS[s.code] || "dna";
           return (
             <div
               key={s.code}
               className="card"
-              style={
-                focus === s.code
-                  ? { borderColor: "var(--accent)", boxShadow: "0 0 0 2px rgba(245,158,11,.25)" }
-                  : {}
-              }
+              style={focus === s.code ? { borderColor: "var(--accent-border)", boxShadow: "var(--ring-accent)" } : {}}
             >
               <div className="row spread">
                 <div className="row">
-                  <span style={{ fontSize: 22 }}>{cat}</span>
+                  <span className="ic">
+                    <Icon name={cat} size={17} />
+                  </span>
                   <div>
                     <b>{s.name}</b>
                     <div className="muted" style={{ fontSize: 11.5 }}>

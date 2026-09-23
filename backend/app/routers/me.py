@@ -30,8 +30,22 @@ class PingResponse(BaseModel):
 @router.get("", response_model=schemas.MeResponse)
 def get_me(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     db.refresh(user)
-    profile = user.profile or models.UserProfile(user_id=user.id)
-    streak = user.streak or models.UserStreak(user_id=user.id)
+    profile = user.profile
+    if profile is None:
+        # A transient (never-flushed) UserProfile() would leave every column
+        # at Python's bare None instead of the model's default=, since
+        # SQLAlchemy only applies Column(default=...) during an actual
+        # INSERT. Persist it so the row — and its real defaults — exist for
+        # this and every future request.
+        profile = models.UserProfile(user_id=user.id)
+        db.add(profile)
+    streak = user.streak
+    if streak is None:
+        streak = models.UserStreak(user_id=user.id)
+        db.add(streak)
+    db.commit()
+    db.refresh(profile)
+    db.refresh(streak)
     return schemas.MeResponse(user=user, profile=profile, streak=streak)
 
 

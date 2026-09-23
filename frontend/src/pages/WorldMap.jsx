@@ -47,8 +47,8 @@ export default function WorldMap() {
         <svg viewBox="0 0 100 100" className="worldmap-svg" preserveAspectRatio="xMidYMid meet">
           <defs>
             <radialGradient id="wm-bg" cx="50%" cy="30%" r="80%">
-              <stop offset="0%" stopColor="#1b2142" />
-              <stop offset="100%" stopColor="#0b0e1a" />
+              <stop offset="0%" stopColor="#18181b" />
+              <stop offset="100%" stopColor="#09090b" />
             </radialGradient>
           </defs>
           <rect x="0" y="0" width="100" height="100" rx="3" fill="url(#wm-bg)" />
@@ -56,7 +56,7 @@ export default function WorldMap() {
             <path
               d={roadPath}
               fill="none"
-              stroke="#2a3157"
+              stroke="#2a2a2e"
               strokeWidth="1.4"
               strokeDasharray="2.6 2.2"
               strokeLinecap="round"
@@ -74,12 +74,12 @@ export default function WorldMap() {
               aria-label={`${loc.name} — ${STATUS_LABEL[loc.status] || ""}`}
             >
               {loc.status === "next" && (
-                <circle r="6.6" fill="none" stroke={loc.accent || "#f59e0b"} strokeWidth="0.6" className="wm-pulse" />
+                <circle r="6.6" fill="none" stroke="#eab244" strokeWidth="0.6" className="wm-pulse" />
               )}
               <circle
                 r="5.6"
-                fill={loc.status === "locked" ? "#1e2440" : loc.accent || "#f59e0b"}
-                stroke="#0b0e1a"
+                fill={loc.status === "locked" ? "#1c1c1f" : loc.status === "next" ? "#eab244" : "#e9e6df"}
+                stroke="#09090b"
                 strokeWidth="0.7"
                 className="wm-dot"
               />

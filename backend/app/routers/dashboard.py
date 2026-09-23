@@ -23,6 +23,12 @@ def dashboard(
 ):
     ensure_user_skills(db, user)
     ensure_bond(db, user)
+    if user.streak is None:
+        # A transient (never-flushed) UserStreak() would leave every column
+        # at Python's bare None instead of the model's default=, since
+        # SQLAlchemy only applies Column(default=...) during an actual
+        # INSERT. Persist it so the row — and its real defaults — exist.
+        db.add(models.UserStreak(user_id=user.id))
     db.commit()
     db.refresh(user)
 

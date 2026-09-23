@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -34,7 +35,9 @@ export default function Quests() {
           <div key={q.id} className="card" style={{ borderColor: q.completed ? "var(--good)" : undefined }}>
             <div className="row spread">
               <div className="row">
-                <span style={{ fontSize: 22 }}>{q.completed ? "✅" : "🎯"}</span>
+                <span className="ic">
+                  <Icon name={q.completed ? "check" : "target"} size={17} />
+                </span>
                 <div>
                   <b>{q.title}</b>
                   <p className="sub" style={{ fontSize: 12 }}>{q.description}</p>
@@ -43,7 +46,10 @@ export default function Quests() {
               </div>
               <div className="row">
                 <span className="ilb">+{q.reward_xp} xp</span>
-                <span className="ilb">🪙 {q.reward_coins}</span>
+                <span className="ilb">
+                  <Icon name="coin" size={11} style={{ verticalAlign: -1, marginRight: 3 }} />
+                  {q.reward_coins}
+                </span>
               </div>
             </div>
             <div className="hbar" style={{ marginTop: 10 }}>
@@ -58,7 +64,9 @@ export default function Quests() {
               </button>
             )}
             {q.claimed && (
-              <span className="badge good" style={{ marginTop: 12 }}>✓ Claimed</span>
+              <span className="badge good" style={{ marginTop: 12 }}>
+                <Icon name="check" size={10} /> Claimed
+              </span>
             )}
           </div>
         ))}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
 
@@ -47,11 +48,13 @@ export default function Lessons() {
             {grouped[lvl].map((l) => {
               const s = statusFor(l.id);
               const icon =
-                s === "completed" ? "✅" : s === "in_progress" ? "📖" : "📘";
+                s === "completed" ? "check" : s === "in_progress" ? "book" : "book";
               return (
                 <Link to={`/lessons/${l.id}`} key={l.id}>
                   <div className="card hover" style={{ minHeight: 130 }}>
-                    <div style={{ fontSize: 26 }}>{icon}</div>
+                    <div className="ic">
+                      <Icon name={icon} size={17} />
+                    </div>
                     <b style={{ display: "block", marginTop: 6 }}>{l.title}</b>
                     {l.summary && (
                       <p className="sub" style={{ fontSize: 12, marginTop: 6 }}>

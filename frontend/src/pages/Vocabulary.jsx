@@ -60,9 +60,25 @@ export default function Vocabulary() {
         </div>
       )}
 
+      {filtered.some((w) => w.due_for_review) && (
+        <p className="sub" style={{ marginTop: 14 }}>
+          ⏰ {filtered.filter((w) => w.due_for_review).length} word(s) due for review — surfaced first below.
+        </p>
+      )}
+
       <div className="grid cards" style={{ marginTop: 16 }}>
         {filtered.map((w) => (
-          <button key={w.id} className="card hover animal" style={{ border: 0, textAlign: "center" }} onClick={() => review(w)}>
+          <button
+            key={w.id}
+            className="card hover animal"
+            style={{ border: w.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative" }}
+            onClick={() => review(w)}
+          >
+            {w.due_for_review && (
+              <span className="badge accent" style={{ position: "absolute", top: 8, right: 8, fontSize: 10 }}>
+                due
+              </span>
+            )}
             <div style={{ fontSize: 24, fontWeight: 800 }}>{w.simplified}</div>
             {w.traditional && w.traditional !== w.simplified && (
               <div className="muted" style={{ fontSize: 13 }}>{w.traditional}</div>

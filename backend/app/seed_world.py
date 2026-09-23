@@ -121,8 +121,13 @@ SCENARIOS = [
              "reaction_incorrect": "服务员：嗯？我没听清。"},
         ],
         "choices": [
+            # Genuinely different paths: haggling gets a discount and the
+            # transaction is already settled by the response_text, so it
+            # skips straight past the separate "pay" turn (3) to the end —
+            # the polite full-price choice continues into that turn as
+            # normal. Same NPC line, two different next conversations.
             {"turn": 2, "label": "太贵了，便宜一点吗？", "response_text": "老板：行吧，给你二十块！",
-             "is_best": False, "feedback": "Politely asking to lower the price. Try it next time.", "next_turn": 3},
+             "is_best": False, "feedback": "Politely asking to lower the price. Try it next time.", "next_turn": 4},
             {"turn": 2, "label": "好的，给你钱。", "response_text": "服务员：谢谢！",
              "is_best": True, "feedback": "Simple and correct. Well done.", "next_turn": 3},
         ],
@@ -197,6 +202,7 @@ SCENARIOS = [
                 "服务员说：我听到顾客说“多少钱？”，老板说“二十五元”。",
                 "收银机里有十块、一块和五块的零钱。",
             ],
+            "contradiction_text": "老板说只收了十块钱，但顾客和服务员都说是二十五块——两边对不上。",
             "solution_kws": ["二十五", "25", "customer", "顾客", "老板错"],
             "hint": "Compare what the waitress heard with what the owner claims.",
         },

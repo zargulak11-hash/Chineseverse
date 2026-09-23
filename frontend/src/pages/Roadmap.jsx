@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -10,7 +11,7 @@ export default function Roadmap() {
   if (!r) return <Layout><Loading>Loading roadmap…</Loading></Layout>;
 
   const stateIcon = (s) =>
-    s === "locked" ? "🔒" : s === "current" ? "⭐" : "✅";
+    s === "locked" ? "lock" : s === "current" ? "star" : "check";
 
   return (
     <Layout>
@@ -28,7 +29,9 @@ export default function Roadmap() {
             style={lvl.status === "locked" ? { opacity: 0.6 } : {}}>
             <div className="row spread">
               <div className="row">
-                <span style={{ fontSize: 22 }}>{stateIcon(lvl.status)}</span>
+                <span className="ic">
+                  <Icon name={stateIcon(lvl.status)} size={16} />
+                </span>
                 <h2 className="h2">HSK {lvl.level}</h2>
                 <span className={`badge ${lvl.status === "current" ? "accent" : ""}`}>
                   {lvl.status}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
@@ -89,13 +90,35 @@ export default function DuelBattle() {
     }
   }
 
-  if (duel.finished) {
-    const meWon = duel.winner && duel.winner !== duel.opponent && duel.opponent !== "__buddy_ai__";
+  if (duel.awaiting_opponent) {
     return (
       <Layout>
         <div className="card center reveal" style={{ maxWidth: 520, margin: "40px auto" }}>
-          <div className="reveal-icon" style={{ fontSize: 52 }}>{meWon == null ? "🤝" : meWon ? "🏆" : "😤"}</div>
-          <h1 className="h1">{meWon == null ? "It was a draw!" : meWon ? "Victory" : duel.opponent + " won"}</h1>
+          <div className="reveal-icon" style={{ fontSize: 52 }}>⏳</div>
+          <h1 className="h1">Waiting for {duel.opponent}</h1>
+          <p className="sub">
+            You scored {duel.my_score ?? 0}. This is a real opponent, so nothing gets
+            decided until they actually play their turn — check back once they have.
+          </p>
+          <Link to="/duels">
+            <button className="btn primary" style={{ marginTop: 14 }}>Back to duels</button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (duel.finished) {
+    const draw = (duel.my_score ?? 0) === (duel.opp_score ?? 0);
+    const meWon = !draw && (duel.my_score ?? 0) > (duel.opp_score ?? 0);
+    return (
+      <Layout>
+        <div className="card center reveal" style={{ maxWidth: 520, margin: "40px auto" }}>
+          {duel.is_ai_opponent && (
+            <span className="badge accent" style={{ marginBottom: 10 }}>Practice mode · vs AI</span>
+          )}
+          <div className="reveal-icon" style={{ fontSize: 52 }}>{draw ? "🤝" : meWon ? "🏆" : "😤"}</div>
+          <h1 className="h1">{draw ? "It was a draw!" : meWon ? "Victory" : duel.opponent + " won"}</h1>
           <p className="sub">You {duel.my_score ?? 0} · {duel.opponent} {duel.opp_score ?? 0}</p>
           <Link to="/duels">
             <button className="btn primary" style={{ marginTop: 14 }}>Back to duels</button>
@@ -136,7 +159,8 @@ export default function DuelBattle() {
               className="sub"
               style={{ marginTop: 10, color: feedback.correct ? "var(--good)" : "var(--bad)", fontWeight: 700 }}
             >
-              {feedback.correct ? "✅ Correct" : "❌ Wrong answer"}
+              <Icon name={feedback.correct ? "check" : "x"} size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
+              {feedback.correct ? "Correct" : "Wrong answer"}
             </p>
           )}
 

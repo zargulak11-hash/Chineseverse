@@ -340,6 +340,7 @@ class WordResponse(BaseModel):
 class WordWithStatus(WordResponse):
     status: Optional[str] = None
     mastery: Optional[float] = None
+    due_for_review: bool = False
 
 
 class GrammarTopicResponse(BaseModel):
@@ -414,6 +415,7 @@ class DialogueChoiceResponse(BaseModel):
     response_text: Optional[str]
     is_best: bool
     feedback: Optional[str]
+    next_turn: Optional[int]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -429,8 +431,17 @@ class DialogueResponse(BaseModel):
     expected_keywords: Optional[list]
     requires_voice: bool
     reactions: Optional[dict] = None
+    choices: list[DialogueChoiceResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CaseDataResponse(BaseModel):
+    # Deliberately excludes solution_kws/hint from Scenario.case_data —
+    # those are the answer, not evidence, and stay server-side until
+    # /world/scenarios/{slug}/solve reveals a hint on an actual attempt.
+    clues: list[str] = []
+    contradiction_text: Optional[str] = None
 
 
 class ScenarioResponse(BaseModel):
@@ -445,6 +456,7 @@ class ScenarioResponse(BaseModel):
     requires_voice: bool
     order_index: int
     dialogues: list[DialogueResponse] = []
+    case_data: Optional[CaseDataResponse] = None
     status: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -540,12 +552,18 @@ class MistakeResponse(BaseModel):
     mastered: bool
     mastered_at: Optional[datetime]
     last_seen_at: Optional[datetime]
+    next_review_at: Optional[datetime] = None
+    due_for_review: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class MistakePatch(BaseModel):
-    mastered: Optional[bool] = None
+    # No client-settable `mastered` — mastery is only ever earned by
+    # reinforce_mistake() (answering correctly again via voice/vocab/duel/
+    # case), never by a direct PATCH. This just lets the learner bump an
+    # item to the front of their review queue.
+    request_retest: Optional[bool] = None
 
 
 # --------------------------------------------------------------------------- DNA / HSK derived
@@ -574,9 +592,14 @@ class DuelResponse(BaseModel):
     challenge_type: Optional[str]
     questions: list[DuelQuestion] = []
     opponent: Optional[str] = None
+    is_ai_opponent: bool = True
     my_score: Optional[int] = None
     opp_score: Optional[int] = None
     finished: bool = False
+    # True once you've finished your side but a REAL (non-AI) opponent
+    # hasn't played yet — the duel stays "active" and unscored for them
+    # rather than inventing a result. See duels.py:finish_duel.
+    awaiting_opponent: bool = False
     winner: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

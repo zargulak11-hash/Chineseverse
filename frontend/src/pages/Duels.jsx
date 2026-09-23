@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -58,7 +59,9 @@ export default function Duels() {
             Rapid-fire word battles. The questions are picked from your weakest strand.
           </p>
         </div>
-        <button className="btn primary" onClick={() => setOpen(true)}>⚔️ New duel</button>
+        <button className="btn primary" onClick={() => setOpen(true)}>
+          <Icon name="swords" size={14} /> New duel
+        </button>
       </div>
 
       {open && (
@@ -116,14 +119,22 @@ export default function Duels() {
               <div className="row">
                 <div className="col" style={{ gap: 2 }}>
                   <b>{d.opponent}</b>
-                  <span className="ilb">{d.opp_score ?? 0}</span>
+                  <span className="ilb">{d.opp_score ?? (d.awaiting_opponent ? "—" : 0)}</span>
                 </div>
-                <span style={{ fontSize: 40 }}>🤖</span>
+                <span className="ic" style={{ width: 44, height: 44 }}>
+                  <Icon name={d.is_ai_opponent ? "sparkles" : "user"} size={20} />
+                </span>
               </div>
             </div>
             <div className="row spread">
               <span className={`badge ${d.finished ? "good" : "accent"}`}>
-                {d.finished ? (d.winner === d.opponent ? "Opponent won" : d.winner ? "You won 🎉" : "Draw") : "In progress"}
+                {d.finished
+                  ? (d.winner === d.opponent ? "Opponent won" : d.winner ? "You won 🎉" : "Draw")
+                  : d.awaiting_opponent
+                  ? `Waiting for ${d.opponent}`
+                  : d.is_ai_opponent
+                  ? "Practice vs AI · in progress"
+                  : "In progress"}
               </span>
               <Link to={`/duels/${d.id}`}>
                 <button className="btn small">Open</button>

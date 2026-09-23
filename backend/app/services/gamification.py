@@ -3,6 +3,7 @@ and small progression helpers shared between routers."""
 
 from __future__ import annotations
 
+import random
 from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -23,6 +24,70 @@ QUEST_TEMPLATES = [
     ("duel", "Friendly duel", "Finish 1 duel.",
      1, 45, 10, "A duel wakes up your reaction speed."),
 ]
+
+# Each animal's preferred quest_type(s) / Mission.kind(s) / duel focus_type,
+# read directly off its seeded `preferred_mechanics` text (see seed.py's
+# ANIMALS list) rather than invented lore. quest_type and mission "kind" use
+# slightly different vocabularies in the schema (quests: speaking/vocab/
+# lesson/case/listening/duel; missions: speak/listen/vocab/case/world/duel)
+# so each animal maps to both. An animal with no strong signal in its own
+# text (panda: "Balanced practice") intentionally gets an empty/neutral
+# entry rather than a forced bias. `duel_focus` must be a key `duels.py`
+# already recognizes as a real DuelQuestion type (see VALID_FOCUS_TYPES).
+#
+# Mission.kind's real seeded vocabulary is {speak, listening, conversation,
+# case, vocab, duel, teach} — the model's inline comment (speak|listen|
+# vocab|case|world|duel) is stale, so this table uses the values actually
+# in the data, confirmed against the live DB, not the comment.
+ANIMAL_BIAS: dict[str, dict] = {
+    "bird":         {"quests": ["speaking"],         "mission_kinds": ["speak"],              "duel_focus": "tone"},
+    "capybara":     {"quests": ["lesson"],            "mission_kinds": ["conversation"],       "duel_focus": None},
+    "panther":      {"quests": ["case"],              "mission_kinds": ["case"],               "duel_focus": "translate"},
+    "sheep":        {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "meaning"},
+    "fox":          {"quests": ["vocab", "duel"],     "mission_kinds": ["vocab", "duel"],      "duel_focus": "reaction"},
+    "wolf":         {"quests": ["duel"],              "mission_kinds": ["duel", "conversation"], "duel_focus": "character"},
+    "snake":        {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "memory"},
+    "cheetah":      {"quests": ["duel"],              "mission_kinds": ["duel"],               "duel_focus": "reaction"},
+    "cat":          {"quests": ["listening"],         "mission_kinds": ["listening"],          "duel_focus": "listening"},
+    "dog":          {"quests": ["vocab", "lesson"],   "mission_kinds": ["vocab"],              "duel_focus": "meaning"},
+    "tiger":        {"quests": ["duel", "case"],      "mission_kinds": ["duel", "case"],       "duel_focus": "translate"},
+    "rabbit":       {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "pinyin"},
+    "panda":        {"quests": [],                    "mission_kinds": [],                     "duel_focus": None},
+    "red-panda":    {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "meaning"},
+    "phoenix":      {"quests": ["vocab"],             "mission_kinds": ["case"],               "duel_focus": "character"},
+    "golden-dragon": {"quests": ["duel", "case"],     "mission_kinds": ["duel"],               "duel_focus": "translate"},
+}
+
+_NEUTRAL_BIAS = {"quests": [], "mission_kinds": [], "duel_focus": None}
+
+# How much more likely a preferred quest_type is to be picked for the daily
+# trio, relative to a non-preferred one (weight, not a guarantee — the daily
+# quests should still feel varied, not monoculture).
+PREFERRED_QUEST_WEIGHT = 4
+
+
+def animal_bias(user: models.User) -> dict:
+    """This user's animal-driven content bias, or a neutral no-op bias if
+    they haven't chosen a companion yet."""
+    animal = user.animal
+    if animal is None or animal.slug not in ANIMAL_BIAS:
+        return _NEUTRAL_BIAS
+    return ANIMAL_BIAS[animal.slug]
+
+
+def _pick_quest_templates(preferred_types: list[str], k: int = 3) -> list[tuple]:
+    """Weighted sample of QUEST_TEMPLATES, without replacement, biased
+    toward `preferred_types`. Pure function (no DB) so it's directly
+    testable for distribution."""
+    pool = list(QUEST_TEMPLATES)
+    weights = [PREFERRED_QUEST_WEIGHT if t[0] in preferred_types else 1 for t in pool]
+    chosen = []
+    for _ in range(min(k, len(pool))):
+        picked = random.choices(pool, weights=weights, k=1)[0]
+        idx = pool.index(picked)
+        chosen.append(pool.pop(idx))
+        weights.pop(idx)
+    return chosen
 
 
 def touch_streak(user: models.User) -> bool:
@@ -76,9 +141,8 @@ def generate_daily_quests(db: Session, user: models.User, force: bool = False) -
     if existing and not force:
         return existing
 
-    import random
     if not existing:
-        chosen = random.sample(QUEST_TEMPLATES, k=3)
+        chosen = _pick_quest_templates(animal_bias(user)["quests"], k=3)
         for qtype, title, desc, target, xp, coins, flavor in chosen:
             db.add(
                 models.DailyQuest(
@@ -230,6 +294,27 @@ def add_bond_points(user: models.User, points: int = 1) -> None:
             user.user_animal.bond_level = min(5, level + 1)
 
 
+# Spaced-repetition base intervals, keyed by how urgent the item still is
+# (LearningMistake.priority, 0-5: 0 = mastered, 5 = repeatedly missed).
+# A fresh failure always resets to the shortest cycle; a success schedules
+# the NEXT review further out the lower the remaining priority is — a
+# simple exponential-backoff-on-success / reset-on-failure scheme.
+_FAILURE_INTERVAL = timedelta(hours=6)
+_SUCCESS_INTERVAL_BY_PRIORITY = {
+    5: timedelta(hours=12), 4: timedelta(days=1), 3: timedelta(days=2),
+    2: timedelta(days=4), 1: timedelta(days=8), 0: timedelta(days=16),
+}
+
+
+def memory_multiplier(user: models.User) -> float:
+    """Snake's seeded special_ability is literally 'Memory Coil:
+    spaced-repetition intervals improve 2x' — the one animal bonus with an
+    unambiguous, already-written mechanical meaning, so it's wired in here
+    rather than left as unread flavor text."""
+    animal = user.animal
+    return 2.0 if animal and animal.slug == "snake" else 1.0
+
+
 def record_mistake(
     db: Session,
     user: models.User,
@@ -260,6 +345,7 @@ def record_mistake(
             occurrences=1,
             mastered=False,
             last_seen_at=now,
+            next_review_at=now + _FAILURE_INTERVAL,
         )
         db.add(row)
     else:
@@ -271,11 +357,13 @@ def record_mistake(
         row.answer_given = answer_given or row.answer_given
         row.correct_answer = correct_answer or row.correct_answer
         row.last_seen_at = now
+        row.next_review_at = now + _FAILURE_INTERVAL
     return row
 
 
 def reinforce_mistake(db: Session, user: models.User, mistake_type: str, reference: str) -> None:
-    """Called when the learner gets it right — cools the mistake down toward mastery."""
+    """Called when the learner gets it right — cools the mistake down toward
+    mastery and pushes its next review further out (spaced repetition)."""
     reference = (reference or "").strip()[:300] or "unspecified"
     row = (
         db.query(models.LearningMistake)
@@ -285,10 +373,15 @@ def reinforce_mistake(db: Session, user: models.User, mistake_type: str, referen
     if row is None or row.mastered:
         return
     row.priority = max(0, row.priority - 1)
-    row.last_seen_at = datetime.utcnow()
+    now = datetime.utcnow()
+    row.last_seen_at = now
     if row.priority == 0:
         row.mastered = True
-        row.mastered_at = datetime.utcnow()
+        row.mastered_at = now
+        row.next_review_at = None
+    else:
+        base = _SUCCESS_INTERVAL_BY_PRIORITY[row.priority]
+        row.next_review_at = now + base * memory_multiplier(user)
 
 
 def user_rank(db: Session, user: models.User) -> tuple[int, float]:

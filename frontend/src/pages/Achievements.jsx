@@ -1,13 +1,14 @@
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 const CAT_ICON = {
-  voice: "🎙️",
-  social: "⚔️",
-  progress: "📈",
-  case_skill: "🕵️",
-  default: "🏅",
+  voice: "mic",
+  social: "swords",
+  progress: "trending",
+  case_skill: "search",
+  default: "award",
 };
 
 export default function Achievements() {
@@ -30,11 +31,16 @@ export default function Achievements() {
           <div key={b.id} className="card hover"
             style={
               b.unlocked
-                ? { borderColor: "var(--accent)", boxShadow: "var(--shadow), 0 0 22px -6px var(--accent)" }
+                ? { borderColor: "var(--accent-border)", boxShadow: "var(--ring-accent)" }
                 : { opacity: 0.55 }
             }>
-            <div style={{ fontSize: 30 }}>{b.unlocked ? (CAT_ICON[b.category] || "🏅") : "🔒"}</div>
-            <b style={{ display: "block", marginTop: 6 }}>{b.title}</b>
+            <div
+              className="ic"
+              style={{ background: b.unlocked ? "var(--accent-dim)" : "var(--surface-2)", color: b.unlocked ? "var(--accent)" : "var(--text-faint)" }}
+            >
+              <Icon name={b.unlocked ? (CAT_ICON[b.category] || CAT_ICON.default) : "lock"} size={19} />
+            </div>
+            <b style={{ display: "block", marginTop: 10 }}>{b.title}</b>
             <p className="sub" style={{ fontSize: 12, marginTop: 4 }}>{b.description}</p>
             <span className={`badge ${b.unlocked ? "good" : ""}`}>
               {b.unlocked ? "Unlocked" : b.category || "hidden"}

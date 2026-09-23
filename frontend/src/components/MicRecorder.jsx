@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Icon from "./Icon.jsx";
 
 const SpeechRecognitionImpl =
   typeof window !== "undefined"
@@ -53,7 +54,7 @@ export default function MicRecorder({ onTranscript, lang = "zh-CN", disabled }) 
       disabled={disabled}
       title={state === "listening" ? "Listening… click to stop" : "Click to speak"}
     >
-      {state === "listening" ? "⏹" : "🎤"}
+      <Icon name={state === "listening" ? "stop" : "mic"} size={22} />
     </button>
   );
 }

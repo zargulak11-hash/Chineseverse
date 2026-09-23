@@ -9,6 +9,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.services.dna import bump_skill, compute_dna
 from app.services.gamification import (
+    animal_bias,
     check_achievements,
     ensure_user_skills,
     progress_missions,
@@ -73,7 +74,7 @@ def _meaning_of(word: models.VocabularyWord) -> str:
     return (word.meanings or word.simplified).split(",")[0].strip()
 
 
-VALID_FOCUS_TYPES = {"pinyin", "meaning", "translate", "recognition", "tone", "character", "listening", "reaction"}
+VALID_FOCUS_TYPES = {"pinyin", "meaning", "translate", "recognition", "tone", "character", "listening", "reaction", "memory"}
 FOCUS_HIT_RATE = 0.7  # a "focused" duel is mostly-but-not-only that type, so it doesn't feel monotonous
 
 
@@ -148,24 +149,31 @@ def _build_questions(
             }
         )
 
-    # One question (if there's a "previous" one to reference) becomes a
-    # short-term-recall check instead of a fresh vocabulary lookup — a
-    # genuinely different mechanic, not just another vocab quiz dressed up.
+    # At least one question (if there's a "previous" one to reference)
+    # becomes a short-term-recall check instead of a fresh vocabulary
+    # lookup — a genuinely different mechanic, not just another vocab quiz
+    # dressed up. A "memory"-focused duel (Snake's preferred mechanic)
+    # converts most eligible questions this way instead of just one.
     if len(questions) >= 2:
-        mem_idx = random.randint(1, len(questions) - 1)
-        prev_word = chosen[mem_idx - 1]
-        prev_meaning = _meaning_of(prev_word)
-        distractors = [_meaning_of(w) for w in chosen if w.id != prev_word.id]
-        mem_options = [prev_meaning] + random.sample(distractors, k=min(3, len(distractors)))
-        random.shuffle(mem_options)
-        questions[mem_idx] = {
-            "index": mem_idx,
-            "type": "memory",
-            "prompt": f"What did the PREVIOUS word 「{prev_word.simplified}」 mean?",
-            "options": mem_options,
-            "answer": prev_meaning,
-            "tts_text": None,
-        }
+        eligible = list(range(1, len(questions)))
+        if focus_type == "memory":
+            mem_indices = [i for i in eligible if random.random() < FOCUS_HIT_RATE] or [random.choice(eligible)]
+        else:
+            mem_indices = [random.choice(eligible)]
+        for mem_idx in mem_indices:
+            prev_word = chosen[mem_idx - 1]
+            prev_meaning = _meaning_of(prev_word)
+            distractors = [_meaning_of(w) for w in chosen if w.id != prev_word.id]
+            mem_options = [prev_meaning] + random.sample(distractors, k=min(3, len(distractors)))
+            random.shuffle(mem_options)
+            questions[mem_idx] = {
+                "index": mem_idx,
+                "type": "memory",
+                "prompt": f"What did the PREVIOUS word 「{prev_word.simplified}」 mean?",
+                "options": mem_options,
+                "answer": prev_meaning,
+                "tts_text": None,
+            }
 
     return questions
 
@@ -173,7 +181,10 @@ def _build_questions(
 def _personalized_word_pool(db: Session, user: models.User, level: int) -> list[models.VocabularyWord]:
     """Bias the duel toward the challenger's own weak/unseen vocabulary at
     their current HSK level — this is what makes a duel a Learning-DNA
-    challenge instead of a generic quiz everyone gets the same version of."""
+    challenge instead of a generic quiz everyone gets the same version of.
+    Words whose spaced-repetition schedule says they're due for review are
+    surfaced first (Memory of the World actually resurfacing things), then
+    the rest by weakest mastery as before."""
     level_obj = db.query(models.HSKLevel).filter_by(level=level).first()
     query = db.query(models.VocabularyWord)
     if level_obj is not None:
@@ -182,8 +193,15 @@ def _personalized_word_pool(db: Session, user: models.User, level: int) -> list[
     if not words:
         words = db.query(models.VocabularyWord).all()
 
-    mastery_by_word = {uv.word_id: uv.mastery for uv in user.user_vocabulary}
-    words.sort(key=lambda w: mastery_by_word.get(w.id, 0.0))
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    uv_by_word = {uv.word_id: uv for uv in user.user_vocabulary}
+    mastery_by_word = {wid: uv.mastery for wid, uv in uv_by_word.items()}
+
+    def is_due(w):
+        uv = uv_by_word.get(w.id)
+        return bool(uv and uv.next_review_at and uv.next_review_at <= now)
+
+    words.sort(key=lambda w: (not is_due(w), mastery_by_word.get(w.id, 0.0)))
     return words[:40] or words
 
 
@@ -222,9 +240,19 @@ def create_duel(
     focus_type = payload.challenge_type if payload.challenge_type in VALID_FOCUS_TYPES else None
     challenge_label = payload.challenge_type
     if focus_type is None:
-        weakest = compute_dna(user).get("weakest_skill")
-        focus_type = SKILL_TO_FOCUS.get(weakest)
-        challenge_label = f"weakest strand · {weakest}" if weakest else None
+        # An explicit request always wins. Otherwise prefer the companion's
+        # own mechanic (Fox -> reaction, Snake -> memory, ...) so different
+        # animals produce observably different duels even at equal DNA;
+        # DNA-weakest is still the fallback for animals with no strong
+        # signal (e.g. Panda, or none chosen yet).
+        animal_focus = animal_bias(user)["duel_focus"]
+        if animal_focus:
+            focus_type = animal_focus
+            challenge_label = f"{user.animal.name}'s favorite · {animal_focus}" if user.animal else animal_focus
+        else:
+            weakest = compute_dna(user).get("weakest_skill")
+            focus_type = SKILL_TO_FOCUS.get(weakest)
+            challenge_label = f"weakest strand · {weakest}" if weakest else None
 
     questions = _build_questions(db, None, word_pool=word_pool, focus_type=focus_type)
 
@@ -244,12 +272,7 @@ def create_duel(
         db.add(models.DuelParticipant(duel_id=duel.id, user_id=buddy.id, role="opponent"))
 
     db.commit()
-    return schemas.DuelResponse(
-        id=duel.id, status=duel.status, challenge_type=duel.challenge_type,
-        questions=[schemas.DuelQuestion(**q) for q in questions],
-        opponent=opponent.username if opponent else "Buddy",
-        my_score=0, opp_score=0,
-    )
+    return _serialize(db, duel, user)
 
 
 @router.get("", response_model=list[schemas.DuelResponse])
@@ -279,16 +302,17 @@ def get_duel(
     return _serialize(db, duel, user)
 
 
+def _is_ai(opp_user: models.User | None) -> bool:
+    return opp_user is None or opp_user.username == "__buddy_ai__"
+
+
 def _serialize(db: Session, duel: models.Duel, user: models.User) -> schemas.DuelResponse:
     questions = (duel.question_data or {}).get("questions", [])
     me = next((p for p in duel.participants if p.user_id == user.id), None)
     opp = next((p for p in duel.participants if p.user_id != user.id), None)
-    opp_user = None
-    if opp and opp.user_id > 0:
-        opp_user = db.get(models.User, opp.user_id)
-    opp_name = "Buddy"
-    if opp_user and opp_user.username != "__buddy_ai__":
-        opp_name = opp_user.username
+    opp_user = db.get(models.User, opp.user_id) if opp else None
+    is_ai = _is_ai(opp_user)
+    opp_name = "Buddy" if is_ai else opp_user.username
     winner = None
     if duel.status == "finished" and duel.winner_id:
         winner_user = db.get(models.User, duel.winner_id)
@@ -298,13 +322,21 @@ def _serialize(db: Session, duel: models.Duel, user: models.User) -> schemas.Due
                 if winner_user.username == "__buddy_ai__"
                 else winner_user.username
             )
+    awaiting_opponent = (
+        duel.status != "finished"
+        and not is_ai
+        and bool(me and me.finished)
+        and not bool(opp and opp.finished)
+    )
     return schemas.DuelResponse(
         id=duel.id, status=duel.status, challenge_type=duel.challenge_type,
         questions=[schemas.DuelQuestion(**q) for q in questions],
         opponent=opp_name,
+        is_ai_opponent=is_ai,
         my_score=me.score if me else None,
-        opp_score=opp.score if opp else None,
+        opp_score=(opp.score if opp else None) if (is_ai or (opp and opp.finished)) else None,
         finished=duel.status == "finished",
+        awaiting_opponent=awaiting_opponent,
         winner=winner,
     )
 
@@ -387,25 +419,44 @@ def finish_duel(
     if me is None:
         raise HTTPException(status_code=403, detail="Not your duel")
 
-    # Buddy (or an unanswered opponent) plays out the remaining questions.
-    # Accuracy rubber-bands around the challenger's own performance (55-85%)
-    # so the duel feels competitive instead of a fixed pushover/wall.
-    total = len((duel.question_data or {}).get("questions", []))
-    if opp and opp.answered == 0:
-        my_accuracy = (me.correct_count / me.answered) if me and me.answered else 0.7
-        target_accuracy = max(0.55, min(0.85, my_accuracy + random.uniform(-0.1, 0.1)))
-        opp_correct = round(total * target_accuracy)
-        opp.score = opp_correct * 10 + (total - opp_correct) * 2
-        opp.correct_count = opp_correct
-        opp.answered = total
-    if opp and opp.user_id == user.id:
-        opp = None
+    me.finished = True
+    opp_user = db.get(models.User, opp.user_id) if opp else None
+
+    if _is_ai(opp_user):
+        # Buddy is an explicit, always-labeled AI opponent (see opponent /
+        # is_ai_opponent in the response) — simulating its play is honest
+        # practice, not a fabricated human result. Accuracy rubber-bands
+        # around the challenger's own performance (55-85%) so the duel
+        # feels competitive instead of a fixed pushover/wall.
+        total = len((duel.question_data or {}).get("questions", []))
+        if opp and opp.answered == 0:
+            my_accuracy = (me.correct_count / me.answered) if me.answered else 0.7
+            target_accuracy = max(0.55, min(0.85, my_accuracy + random.uniform(-0.1, 0.1)))
+            opp_correct = round(total * target_accuracy)
+            opp.score = opp_correct * 10 + (total - opp_correct) * 2
+            opp.correct_count = opp_correct
+            opp.answered = total
+        if opp:
+            opp.finished = True
+    elif opp and not opp.finished:
+        # A REAL opponent who hasn't played yet: never invent a score for
+        # them. The duel simply stays active — whoever they are can still
+        # open it later, answer, and call /finish themselves; scoring only
+        # happens once here, below, once both sides have actually finished.
+        db.commit()
+        db.refresh(duel)
+        return _serialize(db, duel, user)
 
     duel.status = "finished"
     duel.finished_at = datetime.now(timezone.utc)
     winner = None
     if me and opp:
-        winner = me if me.score >= opp.score else opp
+        if me.score > opp.score:
+            winner = me
+        elif opp.score > me.score:
+            winner = opp
+        # else: a genuine tie stays a draw (winner=None), regardless of
+        # which side happened to call /finish last.
     elif me and me.score > 0:
         winner = me
     if winner is not None and winner.user_id > 0:

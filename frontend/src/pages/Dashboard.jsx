@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Badge, Empty, Loading, Ring, Stat } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -60,7 +61,9 @@ export default function Dashboard() {
           <div className="col">
             {d.quests_today.map((q) => (
               <div key={q.id} className="hbar">
-                <span style={{ fontSize: 20 }}>{q.completed ? "✅" : "🎯"}</span>
+                <span className="ic" style={{ width: 30, height: 30 }}>
+                  <Icon name={q.completed ? "check" : "target"} size={14} />
+                </span>
                 <div style={{ flex: 1 }}>
                   <div className="row spread" style={{ margin: 0 }}>
                     <b>{q.title}</b>

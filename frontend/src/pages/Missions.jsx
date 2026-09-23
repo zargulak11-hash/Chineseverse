@@ -1,17 +1,18 @@
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 const KIND_ICON = {
-  speak: "🗣️",
-  conversation: "💬",
-  case: "🕵️",
-  listening: "👂",
-  duel: "⚔️",
-  vocab: "📚",
-  teach: "🧑‍🏫",
-  world: "🗺️",
+  speak: "mic",
+  conversation: "chat",
+  case: "search",
+  listening: "ear",
+  duel: "swords",
+  vocab: "type",
+  teach: "teach",
+  world: "world",
 };
 
 export default function Missions() {
@@ -42,7 +43,9 @@ export default function Missions() {
           <div key={m.id} className="card">
             <div className="row spread">
               <div className="row">
-                <span style={{ fontSize: 22 }}>{KIND_ICON[m.mission.kind] || "📜"}</span>
+                <span className="ic">
+                  <Icon name={KIND_ICON[m.mission.kind] || "flag"} size={17} />
+                </span>
                 <div>
                   <b>{m.mission.title}</b>
                   <p className="sub" style={{ fontSize: 12 }}>{m.mission.objective}</p>
@@ -51,7 +54,12 @@ export default function Missions() {
               <div className="row">
                 <span className="ilb">HSK {m.mission.min_hsk_level}+</span>
                 <span className="ilb">+{m.mission.reward_xp} xp</span>
-                {m.mission.reward_coins > 0 && <span className="ilb">🪙 {m.mission.reward_coins}</span>}
+                {m.mission.reward_coins > 0 && (
+                  <span className="ilb">
+                    <Icon name="coin" size={11} style={{ verticalAlign: -1, marginRight: 3 }} />
+                    {m.mission.reward_coins}
+                  </span>
+                )}
               </div>
             </div>
             {m.status === "available" ? (
@@ -77,10 +85,10 @@ export default function Missions() {
             {done.map((m) => (
               <div key={m.id} className="card" style={{ opacity: 0.8, borderColor: "var(--good)" }}>
                 <span className="badge good">
-                  ✓ {KIND_ICON[m.mission.kind] || ""} {m.mission.title}
+                  <Icon name="check" size={11} /> {m.mission.title}
                 </span>
                 <p className="sub" style={{ marginTop: 8 }}>
-                  +{m.mission.reward_xp} xp{m.mission.reward_coins > 0 ? ` · 🪙 ${m.mission.reward_coins}` : ""}
+                  +{m.mission.reward_xp} xp{m.mission.reward_coins > 0 ? ` · ${m.mission.reward_coins} coins` : ""}
                 </p>
               </div>
             ))}

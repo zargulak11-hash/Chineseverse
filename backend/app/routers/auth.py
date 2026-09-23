@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -13,8 +14,6 @@ from app.database import get_db
 from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-_google_request = google_requests.Request()
 
 
 def _create_user_from_email(db: Session, email: str, display_name: str | None = None) -> models.User:
@@ -112,8 +111,11 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
             ),
         )
     try:
+        # A fresh Request/session per call, not a long-lived module-level one:
+        # a pooled keep-alive connection left idle between logins gets closed
+        # server-side and the next reuse fails with a connection reset.
         claims = google_id_token.verify_oauth2_token(
-            payload.credential, _google_request, settings.google_client_id
+            payload.credential, google_requests.Request(), settings.google_client_id
         )
     except ValueError as exc:
         # Covers a malformed, expired, tampered, or wrong-audience token.
@@ -131,9 +133,21 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
 
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
-        user = _create_user_from_email(db, email, display_name=claims.get("name"))
-
-    db.commit()
+        try:
+            user = _create_user_from_email(db, email, display_name=claims.get("name"))
+            db.commit()
+        except IntegrityError:
+            # Google's Identity Services widget can fire its callback twice
+            # for one click, so two requests can both see "no user yet" and
+            # race to insert the same email. _create_user_from_email's own
+            # flush() is where the unique-constraint hit lands; the loser
+            # falls back to the row the winner just created.
+            db.rollback()
+            user = db.query(models.User).filter(models.User.email == email).first()
+            if user is None:
+                raise
+    else:
+        db.commit()
     db.refresh(user)
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)

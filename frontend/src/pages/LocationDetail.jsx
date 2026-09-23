@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -47,7 +48,9 @@ export default function LocationDetail() {
               <div key={s.id} className="card">
                 <div className="row spread">
                   <div className="row">
-                    <span style={{ fontSize: 22 }}>{s.is_case ? "🕵️" : "💬"}</span>
+                    <span className="ic">
+                      <Icon name={s.is_case ? "search" : "chat"} size={16} />
+                    </span>
                     <div>
                       <b>{s.title}</b>
                       <p className="sub" style={{ fontSize: 12 }}>{s.description}</p>

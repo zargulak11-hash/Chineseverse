@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
-from app.services.gamification import check_achievements
+from app.services.gamification import animal_bias, check_achievements
 
 router = APIRouter(prefix="/api/missions", tags=["missions"])
 
@@ -30,6 +30,12 @@ def list_missions(
     db: Session = Depends(get_db),
 ):
     missions = db.query(models.Mission).order_by(models.Mission.sort_order).all()
+    # Surface missions matching the user's animal's preferred mechanic first
+    # (e.g. Wolf's "missions, hard challenges, streaks" -> duel/world kinds),
+    # without hiding or reordering anything beyond that front-loading.
+    preferred_kinds = animal_bias(user)["mission_kinds"]
+    if preferred_kinds:
+        missions = sorted(missions, key=lambda m: (0 if m.kind in preferred_kinds else 1, m.sort_order))
     out = []
     for mission in missions:
         entry = _link(db, user, mission)

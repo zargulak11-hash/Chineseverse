@@ -325,7 +325,3 @@ def seed_all(db: Session) -> None:
     seed_achievements(db)
     db.commit()
     logger.info("Database seeded.")
-
-
-def needs_seed(db: Session) -> bool:
-    return db.query(models.HSKLevel).count() == 0

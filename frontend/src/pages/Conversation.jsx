@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
@@ -8,26 +9,44 @@ import { Empty, Loading } from "../components/ui.jsx";
 export default function Conversation() {
   const { scenarioId } = useParams();
   const [sc, setSc] = useState(null);
-  const [step, setStep] = useState(0);
+  const [turnIndex, setTurnIndex] = useState(0);
+  const [history, setHistory] = useState([0]); // turn_index values actually visited, in order
   const [error, setError] = useState("");
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
+  const [chosen, setChosen] = useState(null); // the DialogueChoice the user picked at the current turn
   const [sent, setSent] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    api.get(`/world/scenarios/${scenarioId}`).then(setSc).catch((e) => setError(e.message));
+    api.get(`/world/scenarios/${scenarioId}`).then((data) => {
+      setSc(data);
+      setTurnIndex(0);
+      setHistory([0]);
+    }).catch((e) => setError(e.message));
   }, [scenarioId]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [step, result]);
+  }, [turnIndex, result, chosen]);
+
+  const dialogues = sc?.dialogues || [];
+  // Branching means the next turn isn't necessarily "index + 1 in the
+  // array" — a DialogueChoice's next_turn can jump anywhere (or past the
+  // end, ending the conversation early), so turns are looked up by their
+  // real turn_index, and the visited path is tracked separately from the
+  // authored array order.
+  const dialoguesByTurn = useMemo(() => {
+    const map = {};
+    for (const d of dialogues) map[d.turn_index] = d;
+    return map;
+  }, [dialogues]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!sc) return <Layout><Loading>Entering conversation…</Loading></Layout>;
 
-  const dialogues = sc.dialogues || [];
-  const current = dialogues[step];
+  const current = dialoguesByTurn[turnIndex];
+  const done = !current;
 
   async function submit() {
     if (!text.trim() || sent) return;
@@ -50,20 +69,27 @@ export default function Conversation() {
     }
   }
 
-  function advance() {
+  function advanceTo(nextTurn) {
     setResult(null);
+    setChosen(null);
     setText("");
-    setStep((s) => s + 1);
+    setTurnIndex(nextTurn);
+    setHistory((h) => [...h, nextTurn]);
   }
 
-  const done = step >= dialogues.length;
+  function pickChoice(choice) {
+    setChosen(choice);
+  }
 
   return (
     <Layout>
       <Link to="/world" className="sub">← Leave {sc.scenario_type === "case" ? "the case" : "the conversation"}</Link>
       <div className="row spread" style={{ marginTop: 10 }}>
         <div>
-          <h1 className="h1">{sc.is_case ? "🕵️ " : "💬 "}{sc.title}</h1>
+          <h1 className="h1">
+            <Icon name={sc.is_case ? "search" : "chat"} size={20} style={{ verticalAlign: -3, marginRight: 6 }} />
+            {sc.title}
+          </h1>
           <p className="sub">{sc.description}</p>
         </div>
         <span className="ilb">HSK {sc.min_hsk_level} · ★{sc.difficulty}</span>
@@ -79,8 +105,11 @@ export default function Conversation() {
         </div>
       ) : (
         <div className="chat" style={{ marginTop: 18 }}>
-          {dialogues.slice(0, step + 1).map((d, i) => {
-            const isCurrent = i === step;
+          {history.map((turn, i) => {
+            const d = dialoguesByTurn[turn];
+            if (!d) return null;
+            const isCurrent = turn === turnIndex;
+            const hasChoices = d.choices && d.choices.length > 0;
             return (
               <div key={d.id}>
                 <div className="bubble npc">
@@ -89,7 +118,46 @@ export default function Conversation() {
                   {d.pinyin && <span className="pinyin">{d.pinyin}</span>}
                   {d.english && <span className="english">{d.english}</span>}
                 </div>
-                {d.requires_voice && isCurrent && (
+
+                {hasChoices && isCurrent && !chosen && (
+                  <div className="col" style={{ marginTop: 10, gap: 8 }}>
+                    <p className="sub">What do you say?</p>
+                    {d.choices.map((c) => (
+                      <button key={c.id} className="option" onClick={() => pickChoice(c)}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {hasChoices && isCurrent && chosen && (
+                  <>
+                    <div className="bubble me">{chosen.label}</div>
+                    {chosen.response_text && (
+                      <div className="bubble npc">{chosen.response_text}</div>
+                    )}
+                    <div
+                      className="bubble reaction"
+                      style={
+                        chosen.is_best
+                          ? { borderColor: "var(--good)", color: "var(--good)" }
+                          : undefined
+                      }
+                    >
+                      <Icon name={chosen.is_best ? "check" : "chat"} size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
+                      {chosen.feedback}
+                    </div>
+                    <div className="row center" style={{ justifyContent: "center" }}>
+                      <button
+                        className="btn"
+                        onClick={() => advanceTo(chosen.next_turn ?? d.turn_index + 1)}
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {!hasChoices && d.requires_voice && isCurrent && !result && (
                   <div className="microw">
                     <MicRecorder onTranscript={(t) => setText(t)} disabled={sent} />
                     <div style={{ flex: 1, minWidth: 280 }}>
@@ -105,7 +173,7 @@ export default function Conversation() {
                         <button className="btn primary" onClick={submit} disabled={sent || !text.trim()}>
                           {sent ? "Checking…" : "Speak"}
                         </button>
-                        <button className="btn ghost" onClick={advance}>
+                        <button className="btn ghost" onClick={() => advanceTo(d.turn_index + 1)}>
                           Skip for now
                         </button>
                           {d.expected_keywords?.length > 0 && (
@@ -117,15 +185,15 @@ export default function Conversation() {
                     </div>
                   </div>
                 )}
-                {d.requires_voice && !isCurrent && <div className="bubble me" />}
-                {!d.requires_voice && isCurrent && (
+                {!hasChoices && d.requires_voice && !isCurrent && <div className="bubble me" />}
+                {!hasChoices && !d.requires_voice && isCurrent && (
                   <div className="microw">
-                    <button className="btn primary" onClick={advance}>
+                    <button className="btn primary" onClick={() => advanceTo(d.turn_index + 1)}>
                       Continue
                     </button>
                   </div>
                 )}
-                {isCurrent && result && (
+                {!hasChoices && isCurrent && result && (
                   result.error ? (
                     <div className="bubble reaction">⚠️ {result.error}</div>
                   ) : (
@@ -142,7 +210,7 @@ export default function Conversation() {
                         </div>
                       )}
                       <div className="row center" style={{ justifyContent: "center" }}>
-                        <button className="btn" onClick={advance}>Continue</button>
+                        <button className="btn" onClick={() => advanceTo(d.turn_index + 1)}>Continue</button>
                       </div>
                     </>
                   )

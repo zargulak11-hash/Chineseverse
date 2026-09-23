@@ -1,14 +1,18 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth.js";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 
 const FEATURES = [
-  ["🗺️", "Chinese World", "Roam the streets, restaurants and train stations of a living city. Talk to NPCs and survive real situations."],
-  ["🎙️", "Voice-first", "Speak out loud. Your companion reacts to your tones, words and pace — no typing required."],
-  ["🧬", "Learning DNA", "Nine live skills build a profile of how you learn, with daily missions that target your weak spots."],
-  ["🕵️", "Chinese Cases", "Solve detective cases in Chinese: listen to witnesses, spot the contradiction, name the culprit."],
-  ["⚔️", "DNA Duels", "Battle friends or the Buddy AI on rapid-fire word challenges."],
-  ["🐼", "16 Companions", "From Zen capybaras to fierce dragons — each one teaches with a different style and voice."],
+  ["world", "Chinese World", "Roam the streets, restaurants and train stations of a living city. Talk to NPCs and survive real situations."],
+  ["mic", "Voice-first", "Speak out loud. Your companion reacts to your tones, words and pace — no typing required."],
+  ["dna", "Learning DNA", "Nine live skills build a profile of how you learn, with daily missions that target your weak spots."],
+  ["search", "Chinese Cases", "Solve detective cases in Chinese: listen to witnesses, spot the contradiction, name the culprit."],
+  ["swords", "DNA Duels", "Battle friends or the Buddy AI on rapid-fire word challenges."],
+  ["paw", "16 Companions", "From Zen capybaras to fierce dragons — each one teaches with a different style and voice."],
 ];
+
+const SHOWCASE = ["fox", "wolf", "snake", "cheetah", "cat", "phoenix", "golden-dragon", "panda"];
 
 export default function Landing() {
   const { user } = useAuth();
@@ -16,7 +20,10 @@ export default function Landing() {
     <div className="page">
       <header className="appbar" style={{ position: "static" }}>
         <span className="brand">
-          <span className="logomark">🐉</span> LinguaVerse
+          <span className="logomark">
+            <Icon name="paw" size={16} />
+          </span>
+          LinguaVerse
         </span>
         <span className="spacer" />
         {user ? (
@@ -62,7 +69,9 @@ export default function Landing() {
       <section className="features">
         {FEATURES.map(([ic, t, d]) => (
           <div className="card feat" key={t}>
-            <div className="ic">{ic}</div>
+            <div className="ic">
+              <Icon name={ic} size={19} />
+            </div>
             <h3 className="h2" style={{ marginTop: 8 }}>
               {t}
             </h3>
@@ -71,6 +80,17 @@ export default function Landing() {
             </p>
           </div>
         ))}
+      </section>
+
+      <section className="center" style={{ marginTop: 56 }}>
+        <p className="scrollhint">Sixteen companions, one art style</p>
+        <div className="row center" style={{ justifyContent: "center", marginTop: 16, gap: 18 }}>
+          {SHOWCASE.map((slug) => (
+            <div key={slug} className="col" style={{ alignItems: "center", gap: 6 }}>
+              <AnimalAvatar slug={slug} size={54} />
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="center" style={{ marginTop: 46 }}>

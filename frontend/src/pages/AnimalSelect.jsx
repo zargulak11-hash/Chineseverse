@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 
 export default function AnimalSelect() {
@@ -53,23 +54,18 @@ export default function AnimalSelect() {
           <div
             key={a.id}
             className={`card hover animal${picked === a.id ? " picked" : ""}`}
-            style={
-              picked === a.id
-                ? {
-                    borderColor: a.accent_color || "#f59e0b",
-                    boxShadow: `var(--shadow), 0 0 28px -6px ${a.accent_color || "#f59e0b"}`,
-                  }
-                : undefined
-            }
             onClick={() => !busy && choose(a.id)}
           >
             <div className="face">
-              <AnimalAvatar slug={a.slug} accentColor={a.accent_color} size={76} />
+              <AnimalAvatar slug={a.slug} size={76} />
             </div>
             <div className="name">{a.name}</div>
             <div className="species">{a.species}</div>
             <div className="desc">{a.description}</div>
-            <div className="ability">✨ {a.special_ability}</div>
+            <div className="ability">
+              <Icon name="sparkles" size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
+              {a.special_ability}
+            </div>
             <div className="statsrow">
               {a.personality && <span className="statpill">{a.personality}</span>}
               {a.tone_style && <span className="statpill">{a.tone_style}</span>}

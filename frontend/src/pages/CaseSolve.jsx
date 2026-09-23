@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 
@@ -41,11 +42,29 @@ export default function CaseSolve() {
       <button className="btn ghost small" onClick={() => navigate(-1)}>← Back</button>
       <div className="row spread" style={{ marginTop: 10 }}>
         <div>
-          <h1 className="h1">🕵️ {sc.title}</h1>
+          <h1 className="h1"><Icon name="search" size={20} style={{ verticalAlign: -3, marginRight: 6 }} />{sc.title}</h1>
           <p className="sub">{sc.description}</p>
         </div>
         <span className="ilb">Case file</span>
       </div>
+
+      {sc.case_data?.clues?.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 className="h2">🔍 Clues</h2>
+          <ul style={{ marginTop: 8, paddingLeft: 18 }}>
+            {sc.case_data.clues.map((clue, i) => (
+              <li key={i} className="sub" style={{ marginTop: 4 }}>{clue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {sc.case_data?.contradiction_text && (
+        <div className="card" style={{ marginTop: 16, borderColor: "var(--bad)" }}>
+          <h2 className="h2" style={{ color: "var(--bad)" }}>⚠️ Contradiction</h2>
+          <p className="sub" style={{ marginTop: 8 }}>{sc.case_data.contradiction_text}</p>
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: 16 }}>
         <h2 className="h2">Witness statements</h2>
@@ -78,7 +97,8 @@ export default function CaseSolve() {
       {result && (
         <div className="card" style={{ marginTop: 16, borderColor: result.solved ? "var(--good)" : "var(--bad)" }}>
           <b className="sub" style={{ color: result.solved ? "var(--good)" : "var(--bad)" }}>
-            {result.solved ? "✅ CASE SOLVED" : "❌ Not quite right"}
+            <Icon name={result.solved ? "check" : "x"} size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
+            {result.solved ? "CASE SOLVED" : "Not quite right"}
           </b>
           <p className="sub" style={{ marginTop: 8, whiteSpace: "pre-wrap" }}>
             {typeof result.feedback === "string" ? result.feedback : JSON.stringify(result.feedback)}

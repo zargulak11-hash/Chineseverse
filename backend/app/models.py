@@ -32,8 +32,8 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
-    total_xp = Column(Integer, default=0)
-    coins = Column(Integer, default=0)
+    total_xp = Column(Integer, nullable=False, server_default="0", default=0)
+    coins = Column(Integer, nullable=False, server_default="0", default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     animal = relationship("Animal", back_populates="users")
@@ -437,7 +437,7 @@ class Mission(Base):
     slug = Column(String(80), unique=True, nullable=False, index=True)
     title = Column(String(200), nullable=False)
     objective = Column(Text, nullable=True)
-    kind = Column(String(30), default="world")  # speak|listen|vocab|case|world|duel
+    kind = Column(String(30), default="world")  # speak|listening|conversation|vocab|case|duel|teach
     min_hsk_level = Column(Integer, default=1)
     reward_xp = Column(Integer, default=50)
     reward_coins = Column(Integer, default=0)
@@ -508,6 +508,10 @@ class LearningMistake(Base):
     correct_answer = Column(String(300), nullable=True)
     priority = Column(Integer, default=1)
     occurrences = Column(Integer, default=1)
+    # Spaced-repetition schedule (mirrors UserVocabulary.next_review_at,
+    # which was already written by vocab.py but never had an equivalent
+    # here) — set by record_mistake()/reinforce_mistake() in gamification.py.
+    next_review_at = Column(DateTime, nullable=True)
     mastered = Column(Boolean, default=False)
     mastered_at = Column(DateTime, nullable=True)
     last_seen_at = Column(DateTime, default=datetime.utcnow)
@@ -603,7 +607,7 @@ class DailyQuest(Base):
     target = Column(Integer, default=1)
     progress = Column(Integer, default=0)
     completed = Column(Boolean, default=False)
-    claimed = Column(Boolean, default=False)
+    claimed = Column(Boolean, nullable=False, server_default="false", default=False)
     reward_xp = Column(Integer, default=50)
     reward_coins = Column(Integer, default=0)
     flavor = Column(Text, nullable=True)

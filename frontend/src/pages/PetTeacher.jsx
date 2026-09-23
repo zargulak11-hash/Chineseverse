@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
@@ -124,11 +125,11 @@ export default function PetTeacher() {
                 className="bubble reaction"
                 style={
                   !result.success
-                    ? { borderColor: "var(--bad)", color: "var(--bad)", background: "rgba(248,113,113,.1)" }
+                    ? { borderColor: "var(--bad)", color: "var(--bad)", background: "var(--bad-dim)" }
                     : undefined
                 }
               >
-                {result.success ? "✅ " : "❌ "}
+                <Icon name={result.success ? "check" : "x"} size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
                 {result.feedback}
               </div>
               {!result.success && (
