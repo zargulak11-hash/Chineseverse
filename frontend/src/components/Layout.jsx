@@ -18,36 +18,69 @@ const COLLAPSE_KEY = "chineseverse_sidebar_collapsed";
 // Sections that run their own finer-grained entrance (Dashboard's quick
 // actions/stat grid, Achievements' badge grid, ...) opt out via
 // data-self-animate so the two animations don't stack on the same element.
+//
+// Most pages render a <Loading> spinner first and swap in their real
+// content once a fetch resolves (same `<main>` DOM node throughout, since
+// the route hasn't changed) — animating once on mount would just reveal the
+// spinner, then let the real content pop in untouched afterwards. A
+// MutationObserver waits for that swap and reveals whichever children are
+// actually the real content, not a transient placeholder.
 function PageReveal({ children }) {
   const ref = useRef(null);
 
   useEffect(() => {
     const root = ref.current;
-    if (!root) return;
-    const all = Array.from(root.children);
-    if (all.length === 0) return;
+    if (!root) return undefined;
+    let done = false;
+    let inFlight = null;
 
-    if (prefersReducedMotion()) {
-      all.forEach((el) => {
-        el.style.opacity = 1;
-      });
-      return;
+    function isPlaceholderOnly() {
+      const kids = root.children;
+      return kids.length === 1 && kids[0].classList.contains("loading");
     }
 
-    const selfAnimated = all.filter((el) => el.dataset.selfAnimate === "true");
-    const targets = all.filter((el) => el.dataset.selfAnimate !== "true");
-    selfAnimated.forEach((el) => {
-      el.style.opacity = 1;
-    });
-    if (targets.length === 0) return;
+    function reveal() {
+      if (done || root.children.length === 0 || isPlaceholderOnly()) return;
+      done = true;
+      observer.disconnect();
 
-    animate(targets, {
-      opacity: [0, 1],
-      translateY: [14, 0],
-      duration: 420,
-      delay: stagger(45, { start: 10 }),
-      ease: "outCubic",
-    });
+      const all = Array.from(root.children);
+      if (prefersReducedMotion()) {
+        all.forEach((el) => {
+          el.style.opacity = 1;
+        });
+        return;
+      }
+
+      const selfAnimated = all.filter((el) => el.dataset.selfAnimate === "true");
+      const targets = all.filter((el) => el.dataset.selfAnimate !== "true");
+      selfAnimated.forEach((el) => {
+        el.style.opacity = 1;
+      });
+      if (targets.length === 0) return;
+
+      inFlight = animate(targets, {
+        opacity: [0, 1],
+        translateY: [16, 0],
+        duration: 550,
+        delay: stagger(55, { start: 20 }),
+        ease: "outSine",
+      });
+    }
+
+    const observer = new MutationObserver(reveal);
+    observer.observe(root, { childList: true });
+    reveal();
+
+    // React (StrictMode, concurrent features) can mount/cleanup/remount this
+    // effect in quick succession — cancel any in-flight reveal from a prior
+    // instance instead of leaving two animations racing on the same
+    // elements' opacity (the visible symptom was opacity flickering up and
+    // down instead of climbing smoothly to 1).
+    return () => {
+      observer.disconnect();
+      inFlight?.revert();
+    };
   }, []);
 
   return (
