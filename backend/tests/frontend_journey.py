@@ -30,7 +30,7 @@ def call(method, path, body=None, headers=None, expected=(200, 201)):
 
 print("== Landing: public pages ==")
 r = c.get("/")
-assert "<title>LinguaVerse</title>" in r.text
+assert "<title>中 ChineseVerse</title>" in r.text
 print("  OK SPA root served")
 animals = call("GET", "/api/animals")
 assert len(animals) == 16, f"expected 16 animals, got {len(animals)}"

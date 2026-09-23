@@ -1,60 +1,97 @@
 /* =========================================================================
-   LinguaVerse design system
-   Monochrome-driven, dark, high-contrast — one accent color, used sparingly.
-   Differentiation between content (animals, locations, question types) comes
-   from shape, type and state, not from a rainbow of brand colors.
+   ChineseVerse design system — "Ink & Jade"
+   Two crafted themes, not a dark-mode-only template: Ink (深墨, warm
+   charcoal) and Rice Paper (宣纸, warm parchment). Both share one accent —
+   an aged-brass-to-imperial-gold gradient — used sparingly for primary
+   actions and key numbers, plus a jade-green success tone and a cinnabar
+   (朱砂, seal-ink red) error/stamp tone. Differentiation between content
+   (animals, locations, question types) comes from shape and type, not a
+   rainbow of brand colors.
    ========================================================================= */
 
+:root,
+[data-theme="ink"] {
+  /* ---- Surfaces: warm charcoal, not flat black ---- */
+  --bg: #16130e;
+  --bg-radial-1: rgba(201, 151, 74, 0.09);
+  --bg-radial-2: rgba(255, 255, 255, 0.03);
+  --surface-1: #1e1a13;
+  --surface-2: #282219;
+  --surface-3: #332c20;
+  --border: #392f21;
+  --border-strong: #4d422e;
+  --text: #f3ecdb;
+  --text-dim: #b2a68d;
+  --text-faint: #79705c;
+  --glass-bg: rgba(22, 19, 14, 0.66);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 12px 34px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="paper"] {
+  /* ---- Surfaces: warm parchment, ink-black text ---- */
+  --bg: #f2ead4;
+  --bg-radial-1: rgba(201, 151, 74, 0.12);
+  --bg-radial-2: rgba(40, 28, 8, 0.035);
+  --surface-1: #faf5e7;
+  --surface-2: #efe5cb;
+  --surface-3: #e3d5ae;
+  --border: #dccca0;
+  --border-strong: #c7b381;
+  --text: #251d10;
+  --text-dim: #6b5f42;
+  --text-faint: #94875f;
+  --glass-bg: rgba(250, 245, 231, 0.72);
+  --shadow-sm: 0 2px 8px rgba(90, 66, 20, 0.1);
+  --shadow-md: 0 14px 30px rgba(90, 66, 20, 0.16);
+  --shadow-lg: 0 26px 60px rgba(90, 66, 20, 0.22);
+}
+
 :root {
-  /* ---- Surfaces (near-black, warm-neutral, not pure gray) ---- */
-  --bg: #09090b;
-  --bg-glow: #131316;
-  --surface-1: #131315;
-  --surface-2: #1c1c1f;
-  --surface-3: #26262a;
-  --border: #2a2a2e;
-  --border-strong: #3a3a40;
+  /* ---- The one accent: aged brass → imperial gold. A gradient, not a
+     flat fill — used for primary actions, active state, key numbers and
+     the signature glow bloom, never as plain decoration. ---- */
+  --accent: #c9974a;
+  --accent-strong: #e8c373;
+  --accent-soft: #a97c3a;
+  --accent-gradient: linear-gradient(135deg, var(--accent-soft) 0%, var(--accent-strong) 55%, var(--accent) 100%);
+  --accent-dim: rgba(201, 151, 74, 0.15);
+  --accent-border: rgba(201, 151, 74, 0.45);
+  --on-accent: #1c1409;
+  --accent-glow: 0 0 2px rgba(232, 195, 115, 0.8), 0 0 36px -4px rgba(201, 151, 74, 0.6);
 
-  /* ---- Text ---- */
-  --text: #f6f6f4;
-  --text-dim: #a6a6ac;
-  --text-faint: #6c6c73;
-  --on-accent: #17130a;
-
-  /* ---- The one accent: warm, precise gold. Used for primary actions,
-     active state, key numbers — never as decoration. ---- */
-  --accent: #eab244;
-  --accent-strong: #ffc85c;
-  --accent-dim: rgba(234, 178, 68, 0.14);
-  --accent-border: rgba(234, 178, 68, 0.4);
-
-  /* ---- Semantic feedback (muted, not neon — reads as "part of this
-     system" rather than a second and third brand color) ---- */
-  --good: #6bcf8f;
-  --good-dim: rgba(107, 207, 143, 0.13);
-  --bad: #ee6a67;
-  --bad-dim: rgba(238, 106, 103, 0.13);
+  /* ---- Semantic feedback: jade (success) and cinnabar/seal-ink (error) —
+     named tones from the same world as the accent, not generic UI red/green. ---- */
+  --good: #4f9d75;
+  --good-dim: rgba(79, 157, 117, 0.15);
+  --bad: #c1443a;
+  --bad-dim: rgba(193, 68, 58, 0.15);
+  --seal: #b83227;
 
   /* ---- Back-compat aliases: older per-page code still references these
      names (accent2/indigo/warn) — keep them defined so nothing breaks,
-     but resolve them into the monochrome+gold system instead of the old
+     but resolve them into the Ink & Jade system instead of the old
      multi-hue palette. ---- */
   --accent2: var(--text-dim);
   --indigo: var(--surface-3);
   --warn: var(--accent);
 
-  /* ---- Type scale ---- */
+  /* ---- Type scale: Noto Serif SC pairs CJK and Latin in one face — "你好"
+     and "Zarina" read as one considered typographic choice, not a Western
+     serif bolted onto system-font Chinese fallback. ---- */
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Newsreader", Georgia, serif;
-  --text-2xs: 11px;
-  --text-xs: 12.5px;
-  --text-sm: 13.5px;
-  --text-base: 15px;
-  --text-md: 17px;
-  --text-lg: 20px;
-  --text-xl: 26px;
-  --text-2xl: 34px;
-  --text-3xl: clamp(38px, 6vw, 60px);
+  --font-display: "Noto Serif SC", "Songti SC", "Noto Serif", Georgia, serif;
+  --text-2xs: 11.5px;
+  --text-xs: 13px;
+  --text-sm: 14.5px;
+  --text-base: 16px;
+  --text-md: 18.5px;
+  --text-lg: 22px;
+  --text-xl: 29px;
+  --text-2xl: 38px;
+  --text-3xl: clamp(42px, 6.5vw, 66px);
+  --text-hero: clamp(48px, 8.5vw, 92px);
 
   /* ---- Spacing scale ---- */
   --space-1: 4px;
@@ -74,18 +111,28 @@
   --radius: var(--radius-md); /* back-compat alias */
 
   /* ---- Elevation ---- */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
   --shadow: var(--shadow-md); /* back-compat alias */
-  --ring-accent: 0 0 0 1px var(--accent-border), 0 8px 28px -8px rgba(234, 178, 68, 0.35);
+  --ring-accent: 0 0 0 1px var(--accent-border), 0 8px 28px -8px rgba(201, 151, 74, 0.4);
 
   /* ---- Motion ---- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.22, 1.4, 0.36, 1);
+  --ease-ink: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-fast: 0.12s;
   --dur-base: 0.22s;
   --dur-slow: 0.42s;
+}
+
+/* Smooth, deliberate theme swap instead of a hard cut — everything that
+   reads a --token repaints together. */
+body,
+.card,
+.appbar,
+.btn,
+.input,
+.chip,
+.badge {
+  transition: background-color var(--dur-slow) ease, border-color var(--dur-slow) ease, color var(--dur-slow) ease;
 }
 
 * {
@@ -179,8 +226,8 @@ body,
 
 body {
   background:
-    radial-gradient(900px 560px at 15% -8%, rgba(234, 178, 68, 0.07) 0%, transparent 60%),
-    radial-gradient(700px 500px at 100% 0%, rgba(255, 255, 255, 0.035) 0%, transparent 55%),
+    radial-gradient(900px 560px at 15% -8%, var(--bg-radial-1) 0%, transparent 60%),
+    radial-gradient(700px 500px at 100% 0%, var(--bg-radial-2) 0%, transparent 55%),
     var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
@@ -210,47 +257,93 @@ a {
   color: var(--text-faint);
 }
 
-/* ---------- Shell ---------- */
-.appbar {
+/* ---------- Shell: a clean bar flush with the viewport top and both
+   sides — the glass/blur/glow live on this full-width wrap, so there's no
+   transparent gap for scrolling content to bleed through at a rounded
+   corner (that gap was the previous bug: a padded, background-less
+   sticky wrapper around a separately-rounded pill let page content show
+   through right at the corners while scrolling). .appbar itself now only
+   handles content width/centering, nothing visual. ---- */
+.appbar-wrap {
   position: sticky;
   top: 0;
   z-index: 50;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.appbar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: 12px 22px;
-  background: rgba(9, 9, 11, 0.78);
-  backdrop-filter: blur(14px) saturate(1.4);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-5);
+  padding: 14px 28px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.appbar-wrap::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -14px;
+  height: 20px;
+  background: radial-gradient(50% 100% at 50% 0%, var(--accent-dim) 0%, transparent 75%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.appbar-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 .brand {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 16.5px;
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   white-space: nowrap;
   color: var(--text);
+  font-family: var(--font-display);
 }
 
+/* The 中 seal — a crafted mark, not a generic icon: a chop-stamp square
+   with the character itself, engraved by a soft inset shadow, brass on
+   ink. This is the one place the accent gradient fills a solid shape. */
 .brand .logomark {
   display: inline-flex;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--accent-gradient);
   align-items: center;
   justify-content: center;
-  color: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  box-shadow: var(--accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.25);
 }
 
 .appbar .nav {
   display: flex;
   gap: 2px;
-  margin-left: 6px;
+  margin-left: 10px;
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: none;
@@ -261,41 +354,105 @@ a {
 }
 
 .navlink {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 11px;
+  padding: 8px 11px;
   border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-size: var(--text-xs);
   font-weight: 600;
-  transition: color var(--dur-fast) ease, background var(--dur-fast) ease;
+  transition: color var(--dur-fast) ease;
 }
 
 .navlink svg {
-  opacity: 0.85;
+  opacity: 0.75;
+  transition: opacity var(--dur-fast) ease, transform var(--dur-base) var(--ease-spring);
+}
+
+/* The active/hover signal is a growing underline + a lifted icon, not a
+   flat background chip — motion carries the state instead of a box. */
+.navlink::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  right: 11px;
+  bottom: 2px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-fast) ease;
 }
 
 .navlink:hover {
   color: var(--text);
-  background: var(--surface-2);
+}
+
+.navlink:hover svg {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.navlink:hover::after {
+  opacity: 0.5;
+  transform: scaleX(0.6);
 }
 
 a.navlink.active {
-  color: var(--on-accent);
-  background: var(--accent);
+  color: var(--text);
 }
 
 a.navlink.active svg {
   opacity: 1;
+  color: var(--accent);
+}
+
+a.navlink.active::after {
+  opacity: 1;
+  transform: scaleX(1);
+  box-shadow: 0 0 8px -1px rgba(201, 151, 74, 0.7);
 }
 
 .spacer {
   flex: 1;
 }
 
+/* ---------- Theme toggle: an ink drop that fills as brass gold when Rice
+   Paper (light) is active — a small, specific object, not a generic switch. ---- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-spring);
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.theme-toggle svg {
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+
+[data-theme="paper"] .theme-toggle svg {
+  transform: rotate(180deg);
+}
+
 .chip {
-  padding: 5px 11px;
+  padding: 6px 12px;
   border-radius: var(--radius-full);
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -305,6 +462,7 @@ a.navlink.active svg {
   align-items: center;
   gap: 6px;
   font-weight: 600;
+  white-space: nowrap;
   transition: border-color var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 
@@ -399,14 +557,14 @@ a.navlink.active svg {
 
 /* ---------- Layout ---------- */
 .page {
-  max-width: min(1240px, 94vw);
+  max-width: min(1360px, 94vw);
   margin: 0 auto;
-  padding: 30px 20px 80px;
+  padding: 36px 24px 90px;
   animation: fadeInUp var(--dur-slow) var(--ease-out) both;
 }
 
 .page.wide {
-  max-width: min(1440px, 96vw);
+  max-width: min(1600px, 96vw);
 }
 
 .grid {
@@ -415,7 +573,7 @@ a.navlink.active svg {
 }
 
 .grid.cards {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
 }
 
 /* Cards animate in as they're inserted (route change or data finishing a
@@ -486,6 +644,23 @@ a.navlink.active svg {
   margin: 0;
 }
 
+/* The one large-scale editorial moment per page — the dashboard greeting,
+   not every h1. Noto Serif SC carries "你好" and the name in one face. */
+.hero-greeting {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+.dna-hero-card {
+  background: radial-gradient(120% 100% at 50% 0%, var(--accent-dim) 0%, transparent 60%), var(--surface-1);
+  padding: 28px 20px;
+}
+
 .h2 {
   font-size: var(--text-md);
   font-weight: 800;
@@ -503,7 +678,7 @@ a.navlink.active svg {
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 26px;
   box-shadow: var(--shadow-sm);
   transition: border-color var(--dur-base) ease, box-shadow var(--dur-base) ease;
 }
@@ -669,9 +844,10 @@ select.input {
 }
 
 /* ---------- Animals ----------
-   Differentiation across the 16 companions is entirely shape/pattern-
-   driven (see AnimalAvatar.jsx), not color — every avatar renders in the
-   same monochrome treatment so the system reads as one family. */
+   Vivid, cartoon-mascot style (see AnimalAvatar.jsx) — each of the 16
+   companions has its own bold, distinct color trio plus a shared shape/
+   pattern construction system, so they read as one family without being
+   monochrome. */
 .animal {
   position: relative;
   display: flex;
@@ -1135,7 +1311,7 @@ table.data td {
 
 .hero {
   position: relative;
-  padding: 72px 20px 56px;
+  padding: 96px 20px 72px;
   text-align: center;
   overflow: hidden;
 }
@@ -1187,11 +1363,28 @@ table.data td {
   margin: 0 auto 30px;
 }
 
+/* Asymmetric bento rhythm instead of N identical boxes in a row: a
+   featured wide card, a row of even ones, then a full-width banner —
+   real visual hierarchy, not a uniform grid. Reuses the same 6-column
+   base as .bento. */
 .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: var(--space-4);
   margin-top: 38px;
+}
+
+.features > * {
+  grid-column: span 6;
+}
+
+@media (min-width: 760px) {
+  .features .feat-span-2 {
+    grid-column: span 2;
+  }
+  .features .feat-span-4 {
+    grid-column: span 4;
+  }
 }
 
 .features > .card {
@@ -1221,23 +1414,50 @@ table.data td {
 }
 
 .feat {
-  padding: 22px 20px;
+  --feat-color: var(--accent);
+  position: relative;
+  padding: 26px 24px;
+  overflow: hidden;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* A distinct visual accent per feature, not a plain icon in a box: a
+   soft color wash bleeding from one corner, tinted to that feature's own
+   color (set via the inline --feat-color custom property). */
+.feat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(220px 160px at 100% 0%, color-mix(in srgb, var(--feat-color) 20%, transparent) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .feat .ic {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-dim);
-  color: var(--accent);
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--feat-color) 18%, var(--surface-2));
+  color: var(--feat-color);
   transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .features > .card:hover .ic {
   transform: scale(1.1) rotate(-4deg);
+}
+
+.feat h3 {
+  position: relative;
+}
+
+.feat p {
+  position: relative;
 }
 
 .ilb {
@@ -1311,7 +1531,975 @@ table.data td {
   flex-shrink: 0;
 }
 
-/* ---------- Route transitions ---------- */
-.route-enter {
-  animation: fadeInUp var(--dur-slow) var(--ease-out) both;
+/* ---------- Route transitions: an ink-brush wipe, not a fade ----------
+   A brass/gold panel with a deliberately irregular, brush-like trailing
+   edge covers the incoming page, then sweeps off to the right — the page
+   content underneath is doing its own fadeInUp (from .page) at the same
+   time, so the two motions layer instead of just crossfading. */
+.route-ink-wipe {
+  position: relative;
+  overflow-x: clip;
+}
+
+.route-ink-wipe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(115deg, var(--accent-soft), var(--accent-strong) 45%, var(--accent) 100%);
+  clip-path: polygon(
+    0% 0%, 92% 0%, 96% 8%, 90% 15%, 98% 24%, 89% 34%, 100% 45%,
+    91% 58%, 97% 70%, 88% 82%, 95% 92%, 85% 100%, 0% 100%
+  );
+  animation: inkWipe 0.65s var(--ease-ink) both;
+}
+
+@keyframes inkWipe {
+  0% {
+    transform: translateX(0%);
+    opacity: 1;
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(115%);
+    opacity: 0.9;
+  }
+}
+
+/* ---------- Bento grid ----------
+   Asymmetric panel sizing with real hierarchy — the signature element
+   (DNA ring, hero greeting) gets more room than a routine stat tile. */
+.bento {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-4);
+}
+
+.bento > * {
+  grid-column: span 6;
+}
+
+.bento-2 {
+  grid-column: span 6;
+}
+.bento-3 {
+  grid-column: span 6;
+}
+.bento-4 {
+  grid-column: span 6;
+}
+
+@media (min-width: 860px) {
+  .bento-2 {
+    grid-column: span 3;
+  }
+  .bento-3 {
+    grid-column: span 2;
+  }
+  .bento-4 {
+    grid-column: span 4;
+  }
+}
+
+/* ---------- DNA ring: hero treatment ----------
+   A larger ring with a slowly rotating gradient stroke and a soft drifting
+   glow behind it — the app's signature number, not a plain SVG arc. */
+.ring-hero {
+  --p: 0;
+  position: relative;
+  width: 176px;
+  height: 176px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.ring-hero::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--accent-dim), transparent 72%);
+  filter: blur(2px);
+  animation: ringGlowPulse 3.4s ease-in-out infinite;
+}
+
+.ring-hero .ring-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent-soft), var(--accent-strong) calc(var(--p) * 1%), var(--surface-3) 0);
+  animation: ringRotate 16s linear infinite;
+}
+
+.ring-hero .ring-face {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.ring-hero .ring-value {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ring-hero .ring-label {
+  font-size: var(--text-2xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+@keyframes ringRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ringGlowPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* ---------- Seal stamp ----------
+   For unlocked achievements / completion moments — a chop-stamp: cinnabar
+   ring, engraved character, a faint hand-stamped rotation so it never
+   reads as a perfectly regular UI icon. */
+.seal-stamp {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 9px;
+  border: 2px solid var(--seal);
+  color: var(--seal);
+  background: color-mix(in srgb, var(--seal) 10%, transparent);
+  transform: rotate(-4deg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--seal) 25%, transparent);
+}
+
+.seal-stamp::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--seal) 55%, transparent);
+  border-radius: 6px;
+}
+
+.seal-stamp.locked {
+  border-color: var(--border-strong);
+  color: var(--text-faint);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.seal-stamp.locked::before {
+  border-color: var(--border);
+}
+
+/* ---------- Celebration burst ----------
+   A small radiating spark burst for level-up / unlock moments — layered
+   with the existing scaleIn/pop keyframes, not a replacement for them. */
+.burst {
+  position: relative;
+}
+
+.burst::before,
+.burst::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-dim) 0%, transparent 60%);
+  animation: burstRing 0.9s var(--ease-out) both;
+  pointer-events: none;
+}
+
+.burst::after {
+  animation-delay: 0.12s;
+  inset: -20%;
+}
+
+@keyframes burstRing {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* ---------- Ink brushstroke background decoration ----------
+   Thin, low-opacity SVG strokes used as ambient texture behind hero
+   sections — rendered by <InkBrush />, styled here. */
+.ink-brush {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ink-brush svg {
+  position: absolute;
+  opacity: 0.5;
+}
+
+[data-theme="paper"] .ink-brush svg {
+  opacity: 0.35;
+}
+
+/* =========================================================================
+   App shell: left sidebar + top bar
+   Replaces the old top-only nav bar for every authenticated page. Landing's
+   own unauthenticated header still uses .appbar/.appbar-wrap above — this
+   is a separate, parallel shell, not a replacement of those rules.
+   ========================================================================= */
+.shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.sidebar {
+  width: 252px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 45;
+  transition: width var(--dur-base) var(--ease-out);
+}
+
+.sidebar.collapsed {
+  width: 78px;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-brand {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sidebar-brand .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-brand .label {
+  display: none;
+}
+
+.sidebar-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.sidebar-collapse-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+  scrollbar-width: thin;
+}
+
+.sidebar-group {
+  margin-top: 16px;
+}
+
+.sidebar-group:first-child {
+  margin-top: 8px;
+}
+
+.sidebar-group-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-faint);
+  padding: 0 10px 6px;
+}
+
+.sidebar.collapsed .sidebar-group-label {
+  opacity: 0;
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity var(--dur-fast) ease;
+}
+
+.sidebar-link:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.sidebar-link:hover svg {
+  opacity: 1;
+}
+
+.sidebar-link.active {
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+}
+
+.sidebar-link.active svg {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar.collapsed .sidebar-link .label {
+  display: none;
+}
+
+/* Tooltip on hover when collapsed — the label text moves from inline
+   content to a floating chip so a one-icon rail still communicates. */
+.sidebar.collapsed .sidebar-link::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.95);
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  transition: opacity var(--dur-fast) ease, transform var(--dur-fast) ease;
+  z-index: 60;
+}
+
+.sidebar.collapsed .sidebar-link:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-profile-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.sidebar-profile .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-profile .name {
+  font-weight: 800;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-profile .role {
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+}
+
+.sidebar.collapsed .sidebar-profile {
+  justify-content: center;
+  padding: 14px 8px;
+}
+
+.sidebar.collapsed .sidebar-profile .info {
+  display: none;
+}
+
+.sidebar-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+.sidebar-logout-btn:hover {
+  color: var(--bad);
+  border-color: rgba(238, 106, 103, 0.35);
+}
+
+.sidebar.collapsed .sidebar-logout-btn {
+  display: none;
+}
+
+.shell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 14px 28px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.topbar-greeting {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.topbar-greeting .hello {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-greeting .date {
+  font-size: var(--text-2xs);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.topbar-search {
+  flex: 1;
+  max-width: 420px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.topbar-search-ic {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.topbar-search .input {
+  padding-left: 38px;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 60;
+  animation: fadeInUp 0.12s ease both;
+}
+
+.search-results a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  font-size: var(--text-sm);
+  color: var(--text);
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+}
+
+.search-results a:first-child {
+  border-top: none;
+}
+
+.search-results a:hover {
+  background: var(--surface-2);
+}
+
+.search-results .kind {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.search-empty {
+  padding: 14px;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.notif-wrap {
+  position: relative;
+}
+
+.notif-btn {
+  position: relative;
+}
+
+.notif-btn .dot {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bad);
+  border: 2px solid var(--surface-1);
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 300px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 60;
+  animation: fadeInUp 0.12s ease both;
+}
+
+.notif-dropdown h4 {
+  margin: 0;
+  padding: 12px 14px 8px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.notif-item .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.topbar-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 2px solid var(--border-strong);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+@media (max-width: 980px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 44;
+    background: rgba(4, 4, 5, 0.55);
+    animation: fadeIn 0.15s ease;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .topbar-greeting .date {
+    display: none;
+  }
+
+  .topbar-search {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .topbar-actions .chip {
+    display: none;
+  }
+}
+
+/* ---------- Dashboard hero banner ---------- */
+.hero-banner {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  color: #f7f2e4;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--good) 38%, var(--bg)) 0%,
+    var(--bg) 48%,
+    color-mix(in srgb, var(--accent) 55%, var(--bg)) 100%
+  );
+}
+
+.hero-banner::before,
+.hero-banner::after {
+  content: "";
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  z-index: 0;
+  animation: floatGlow 14s ease-in-out infinite;
+}
+
+.hero-banner::before {
+  top: -120px;
+  left: -40px;
+  background: var(--good);
+}
+
+.hero-banner::after {
+  bottom: -140px;
+  right: -20px;
+  background: var(--accent);
+  animation-delay: -7s;
+}
+
+.hero-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-banner .kicker {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.hero-banner h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: #fff;
+}
+
+.hero-banner .sub {
+  color: rgba(247, 242, 228, 0.78);
+}
+
+.hero-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.hero-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.hero-stat-pill .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.hero-stat-pill .num {
+  font-weight: 800;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.hero-stat-pill .lbl {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+}
+
+/* ---------- Quick action cards ---------- */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-4);
+  margin-top: 22px;
+}
+
+.quick-action {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 30px;
+  min-height: 118px;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) ease;
+}
+
+.quick-action:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.quick-action .qa-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-action .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.quick-action .arrow {
+  opacity: 0.85;
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.quick-action:hover .arrow {
+  transform: translateX(4px);
+}
+
+.quick-action .label {
+  font-weight: 800;
+  font-size: var(--text-md);
+}
+
+/* ---------- Stat card grid ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-4);
+  margin-top: 22px;
+}
+
+.stat-card {
+  --stat-color: var(--accent);
+  position: relative;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--stat-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--stat-color) 16%, var(--surface-2));
+  color: var(--stat-color);
+  margin-bottom: 14px;
+}
+
+.stat-card .num {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card .lbl {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  margin-top: 2px;
 }

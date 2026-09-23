@@ -28,16 +28,13 @@ export default function Achievements() {
 
       <div className="grid cards" style={{ marginTop: 18 }}>
         {badges.map((b) => (
-          <div key={b.id} className="card hover"
+          <div key={b.id} className={`card hover${b.unlocked ? " burst" : ""}`}
             style={
               b.unlocked
                 ? { borderColor: "var(--accent-border)", boxShadow: "var(--ring-accent)" }
-                : { opacity: 0.55 }
+                : { opacity: 0.6 }
             }>
-            <div
-              className="ic"
-              style={{ background: b.unlocked ? "var(--accent-dim)" : "var(--surface-2)", color: b.unlocked ? "var(--accent)" : "var(--text-faint)" }}
-            >
+            <div className={`seal-stamp${b.unlocked ? "" : " locked"}`}>
               <Icon name={b.unlocked ? (CAT_ICON[b.category] || CAT_ICON.default) : "lock"} size={19} />
             </div>
             <b style={{ display: "block", marginTop: 10 }}>{b.title}</b>

@@ -3,14 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LinguaVerse</title>
+    <title>中 ChineseVerse</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Newsreader:ital@0;1&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Serif+SC:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      // Set the theme before first paint so switching themes doesn't flash
+      // the other one on reload — main.jsx/theme.js owns this key afterward.
+      try {
+        var t = localStorage.getItem("chineseverse_theme");
+        document.documentElement.setAttribute("data-theme", t === "paper" ? "paper" : "ink");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "ink");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

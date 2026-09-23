@@ -82,7 +82,7 @@ export default function App() {
   }
 
   if (!booted) {
-    return <div className="boot">LinguaVerse…</div>;
+    return <div className="boot">中 ChineseVerse…</div>;
   }
 
   return (

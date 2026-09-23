@@ -46,6 +46,10 @@ const PATHS = {
   eye: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
   star: "M12 2.5l2.8 6.2 6.7.6-5.1 4.5 1.6 6.6-6-3.6-6 3.6 1.6-6.6-5.1-4.5 6.7-.6L12 2.5Z",
   stop: "M6 6h12v12H6Z",
+  droplet: "M12 2.5s7 8 7 12.5a7 7 0 1 1-14 0c0-4.5 7-12.5 7-12.5Z",
+  seal: "M12 3 4 7v10l8 4 8-4V7l-8-4Z M12 8v8M8 12h8",
+  bell: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  menu: "M4 7h16M4 12h16M4 17h16",
 };
 
 export default function Icon({ name, size = 18, strokeWidth = 1.8, className = "", style }) {

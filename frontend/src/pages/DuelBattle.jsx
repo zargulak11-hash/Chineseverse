@@ -113,7 +113,7 @@ export default function DuelBattle() {
     const meWon = !draw && (duel.my_score ?? 0) > (duel.opp_score ?? 0);
     return (
       <Layout>
-        <div className="card center reveal" style={{ maxWidth: 520, margin: "40px auto" }}>
+        <div className={`card center reveal${meWon ? " burst" : ""}`} style={{ maxWidth: 520, margin: "40px auto" }}>
           {duel.is_ai_opponent && (
             <span className="badge accent" style={{ marginBottom: 10 }}>Practice mode · vs AI</span>
           )}
