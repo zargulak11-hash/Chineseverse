@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
+from app.services.localization import load_translations, tr
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
@@ -38,6 +39,7 @@ def list_words(
     hsk_level: int | None = None,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     ensure_user_skills(db, user)
     query = db.query(models.VocabularyWord)
@@ -46,11 +48,15 @@ def list_words(
         query = query.filter(models.HSKLevel.level == hsk_level)
     words = query.order_by(models.VocabularyWord.id).all()
 
+    # Only `meanings` is localized -- simplified/traditional/pinyin/example
+    # are the actual Chinese being taught and stay Chinese in every locale.
+    translations = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
     user_map = {w.word_id: w for w in user.user_vocabulary}
     now = datetime.utcnow()
     out = []
     for word in words:
         item = schemas.WordWithStatus.model_validate(word)
+        item.meanings = tr(translations, word.id, "meanings", item.meanings)
         rec = user_map.get(word.id)
         item.status = rec.status if rec else "new"
         item.mastery = rec.mastery if rec else 0.0
@@ -68,6 +74,7 @@ def review_word(
     payload: ReviewPayload,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     word = db.get(models.VocabularyWord, word_id)
     if word is None:
@@ -149,8 +156,11 @@ def review_word(
     db.commit()
     db.refresh(rec)
     check_achievements(db, user)
+    word_out = schemas.WordWithStatus.model_validate(word)
+    translations = load_translations(db, "vocab_word", [str(word.id)], locale)
+    word_out.meanings = tr(translations, word.id, "meanings", word_out.meanings)
     return ReviewResponse(
-        word=schemas.WordWithStatus.model_validate(word),
+        word=word_out,
         mastery=round(rec.mastery, 1),
         status=rec.status,
     )

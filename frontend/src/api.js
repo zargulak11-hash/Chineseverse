@@ -1,3 +1,5 @@
+import i18n from "./i18n.js";
+
 const API_BASE = "/api";
 const TOKEN_KEY = "linguaverse_token";
 const USER_KEY = "linguaverse_user";
@@ -31,6 +33,11 @@ async function request(method, path, body) {
   const options = { method, headers: {} };
   const token = getToken();
   if (token) options.headers["Authorization"] = `Bearer ${token}`;
+  // Lets the backend localize DB-driven content (lessons, vocab meanings,
+  // missions, ...) the same way the UI chrome already follows i18n.language
+  // — one header, every request, no per-call plumbing. "en" is the
+  // fallback default anyway, so it's harmless to always send it.
+  if (i18n.language) options.headers["X-Locale"] = i18n.language;
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);

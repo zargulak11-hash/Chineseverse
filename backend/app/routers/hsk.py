@@ -3,20 +3,37 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
 from app.services.gamification import ensure_user_skills, user_rank
+from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/hsk", tags=["hsk"])
 
 
 @router.get("/levels", response_model=list[schemas.HSKLevelResponse])
-def list_levels(db: Session = Depends(get_db)):
-    return db.query(models.HSKLevel).order_by(models.HSKLevel.level).all()
+def list_levels(db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    levels = db.query(models.HSKLevel).order_by(models.HSKLevel.level).all()
+    translations = load_translations(db, "hsk_level", [str(l.id) for l in levels], locale)
+    out = []
+    for lvl in levels:
+        item = schemas.HSKLevelResponse.model_validate(lvl)
+        item.title = tr(translations, lvl.id, "title", item.title)
+        item.description = tr(translations, lvl.id, "description", item.description)
+        out.append(item)
+    return out
 
 
 @router.get("/skills", response_model=list[schemas.SkillResponse])
-def list_skills(db: Session = Depends(get_db)):
-    return db.query(models.Skill).order_by(models.Skill.id).all()
+def list_skills(db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    skills = db.query(models.Skill).order_by(models.Skill.id).all()
+    translations = load_translations(db, "skill", [str(s.id) for s in skills], locale)
+    out = []
+    for skill in skills:
+        item = schemas.SkillResponse.model_validate(skill)
+        item.name = tr(translations, skill.id, "name", item.name)
+        item.description = tr(translations, skill.id, "description", item.description)
+        out.append(item)
+    return out
 
 
 @router.get("/roadmap", response_model=schemas.HSKRoadmapResponse)

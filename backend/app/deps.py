@@ -1,12 +1,24 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Header, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
 from app.security import decode_access_token
+from app.services.localization import SUPPORTED_LOCALES
 
 bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_locale(x_locale: str | None = Header(default=None)) -> str:
+    """The frontend sends its current i18next language on every request
+    (see api.js) so responses can localize DB-driven content the same way
+    the UI chrome already does. Anything not in SUPPORTED_LOCALES (English,
+    missing header, unrecognized value) just means "use the original
+    English column" -- routers never need to special-case "en" themselves."""
+    if x_locale and x_locale.lower() in SUPPORTED_LOCALES:
+        return x_locale.lower()
+    return "en"
 
 
 def get_current_user(

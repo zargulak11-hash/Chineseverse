@@ -4,8 +4,19 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.crud import apply_updates, get_or_404
 from app.database import get_db
+from app.deps import get_locale
+from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/lessons", tags=["lessons"])
+
+
+def _localize(lesson: models.Lesson, translations: dict) -> schemas.LessonResponse:
+    out = schemas.LessonResponse.model_validate(lesson)
+    key = str(lesson.id)
+    out.title = tr(translations, key, "title", out.title)
+    out.summary = tr(translations, key, "summary", out.summary)
+    out.content = tr(translations, key, "content", out.content)
+    return out
 
 
 def _level(db: Session, hsk_level: int) -> models.HSKLevel:
@@ -17,12 +28,16 @@ def _level(db: Session, hsk_level: int) -> models.HSKLevel:
 
 @router.get("", response_model=list[schemas.LessonResponse])
 def list_lessons(
-    hsk_level: int | None = None, db: Session = Depends(get_db)
+    hsk_level: int | None = None,
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     query = db.query(models.Lesson).join(models.HSKLevel, models.Lesson.hsk_level_id == models.HSKLevel.id)
     if hsk_level is not None:
         query = query.filter(models.HSKLevel.level == hsk_level)
-    return query.order_by(models.HSKLevel.level, models.Lesson.order_index).all()
+    lessons = query.order_by(models.HSKLevel.level, models.Lesson.order_index).all()
+    translations = load_translations(db, "lesson", [str(l.id) for l in lessons], locale)
+    return [_localize(l, translations) for l in lessons]
 
 
 @router.post("", response_model=schemas.LessonResponse, status_code=201)
@@ -43,8 +58,10 @@ def create_lesson(payload: schemas.LessonCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{lesson_id}", response_model=schemas.LessonResponse)
-def get_lesson(lesson_id: int, db: Session = Depends(get_db)):
-    return get_or_404(db, models.Lesson, lesson_id)
+def get_lesson(lesson_id: int, db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    lesson = get_or_404(db, models.Lesson, lesson_id)
+    translations = load_translations(db, "lesson", [str(lesson_id)], locale)
+    return _localize(lesson, translations)
 
 
 @router.put("/{lesson_id}", response_model=schemas.LessonResponse)

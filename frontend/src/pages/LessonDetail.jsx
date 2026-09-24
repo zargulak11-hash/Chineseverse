@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
@@ -6,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 
 export default function LessonDetail() {
+  const { t, i18n } = useTranslation();
   const { lessonId } = useParams();
   const { user } = useAuth();
   const [lesson, setLesson] = useState(null);
@@ -22,7 +24,7 @@ export default function LessonDetail() {
       const mine = ps.find((p) => p.lesson_id === l.id);
       setProgressId(mine?.id || null);
     }).catch((e) => setError(e.message));
-  }, [lessonId]);
+  }, [lessonId, i18n.language]);
 
   async function mark(status, score) {
     setFeedback("");
@@ -39,7 +41,7 @@ export default function LessonDetail() {
         });
         setProgressId(p.id);
       }
-      setFeedback("Saved — DNA updated.");
+      setFeedback(t("pages.lessonDetail.saved"));
     } catch (err) {
       setFeedback(err.message);
     }
@@ -50,7 +52,7 @@ export default function LessonDetail() {
 
   return (
     <Layout>
-      <Link to="/lessons" className="sub">← All lessons</Link>
+      <Link to="/lessons" className="sub">← {t("pages.lessonDetail.allLessons")}</Link>
       <div className="row spread" style={{ marginTop: 10 }}>
         <h1 className="h1">{lesson.title}</h1>
         <span className="badge accent">HSK {lesson.hsk_level}</span>
@@ -72,13 +74,13 @@ export default function LessonDetail() {
 
       <div className="row" style={{ marginTop: 18 }}>
         <button className="btn primary" onClick={() => mark("completed", 100)}>
-          Mark complete
+          {t("pages.lessonDetail.markComplete")}
         </button>
         <button className="btn" onClick={() => mark("in_progress", 50)}>
-          Keep practicing
+          {t("pages.lessonDetail.keepPracticing")}
         </button>
         <Link to="/world">
-          <button className="btn ghost">Try it in the world</button>
+          <button className="btn ghost">{t("pages.lessonDetail.tryInWorld")}</button>
         </Link>
       </div>
       {feedback && <p className="sub" style={{ marginTop: 10 }}>{feedback}</p>}
