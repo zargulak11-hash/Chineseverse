@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
@@ -6,6 +7,7 @@ import Layout from "../components/Layout.jsx";
 import { Empty, Loading, MotionButton } from "../components/ui.jsx";
 
 function FollowRow({ u }) {
+  const { t } = useTranslation();
   return (
     <Link to={`/u/${u.id}`} className="row spread" style={{ padding: "8px 0" }}>
       <span className="row" style={{ gap: 10 }}>
@@ -16,12 +18,13 @@ function FollowRow({ u }) {
         )}
         <b style={{ fontSize: 13.5 }}>{u.username}</b>
       </span>
-      <span className="muted" style={{ fontSize: 11.5 }}>{u.followers_count} followers</span>
+      <span className="muted" style={{ fontSize: 11.5 }}>{u.followers_count} {t("pages.profile.followers")}</span>
     </Link>
   );
 }
 
 export default function PublicProfile() {
+  const { t, i18n } = useTranslation();
   const { userId } = useParams();
   const [profile, setProfile] = useState(null);
   const [tab, setTab] = useState(null); // "followers" | "following" | null
@@ -33,7 +36,7 @@ export default function PublicProfile() {
     setProfile(null);
     setTab(null);
     api.get(`/users/${userId}/public`).then(setProfile).catch((e) => setError(e.message));
-  }, [userId]);
+  }, [userId, i18n.language]);
 
   useEffect(() => {
     if (!tab) {
@@ -73,7 +76,7 @@ export default function PublicProfile() {
             <div>
               <h1 className="h1">@{profile.username}</h1>
               <p className="sub">
-                {profile.total_xp} XP · joined {new Date(profile.created_at).toLocaleDateString()}
+                {profile.total_xp} XP · {t("pages.profile.joined")} {new Date(profile.created_at).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -84,7 +87,7 @@ export default function PublicProfile() {
               onClick={toggleFollow}
             >
               <Icon name={profile.is_following ? "check" : "userPlus"} size={14} />
-              {profile.is_following ? "Following" : "Follow"}
+              {profile.is_following ? t("pages.community.following") : t("pages.community.follow")}
             </MotionButton>
           )}
         </div>
@@ -97,7 +100,7 @@ export default function PublicProfile() {
             onClick={() => setTab(tab === "followers" ? null : "followers")}
           >
             <b style={{ fontSize: 18 }}>{profile.followers_count}</b>
-            <div className="sub" style={{ fontSize: 12 }}>Followers</div>
+            <div className="sub" style={{ fontSize: 12 }}>{t("pages.profile.followers")}</div>
           </button>
           <button
             type="button"
@@ -105,14 +108,14 @@ export default function PublicProfile() {
             onClick={() => setTab(tab === "following" ? null : "following")}
           >
             <b style={{ fontSize: 18 }}>{profile.following_count}</b>
-            <div className="sub" style={{ fontSize: 12 }}>Following</div>
+            <div className="sub" style={{ fontSize: 12 }}>{t("pages.profile.following")}</div>
           </button>
         </div>
 
         {tab && (
           <div className="col" style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
             {list === null && <Loading />}
-            {list && list.length === 0 && <Empty>Nobody here yet.</Empty>}
+            {list && list.length === 0 && <Empty>{t("pages.publicProfile.nobodyHere")}</Empty>}
             {list && list.map((u) => <FollowRow key={u.id} u={u} />)}
           </div>
         )}

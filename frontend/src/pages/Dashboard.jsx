@@ -197,7 +197,7 @@ export default function Dashboard() {
       <div className="bento" style={{ marginTop: 16 }}>
         <div className="card bento-3">
           <h2 className="h2">{t("dashboard.todaysQuests")}</h2>
-          {d.quests_today.length === 0 && <Empty>No quests today — go explore.</Empty>}
+          {d.quests_today.length === 0 && <Empty>{t("dashboard.noQuestsToday")}</Empty>}
           <div className="col" ref={questsListRef} data-self-animate="true">
             {d.quests_today.map((q) => (
               <div key={q.id} className="hbar">

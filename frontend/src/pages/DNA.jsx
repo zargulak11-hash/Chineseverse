@@ -61,7 +61,7 @@ export default function DNA() {
                   <div>
                     <b>{s.name}</b>
                     <div className="muted" style={{ fontSize: 11.5 }}>
-                      {s.code} · {s.xp} xp
+                      {s.code} · {s.xp} {t("common.xp")}
                     </div>
                   </div>
                 </div>
@@ -69,7 +69,7 @@ export default function DNA() {
               </div>
               <Bar value={s.mastery} alt={s.status === "weak"} />
               <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
-                {s.mastery.toFixed(0)}% · {s.status}
+                {s.mastery.toFixed(0)}% · {t(`pages.dna.status.${s.status}`)}
               </div>
             </div>
           );
@@ -80,6 +80,7 @@ export default function DNA() {
 }
 
 function BadgeTone({ s }) {
+  const { t } = useTranslation();
   const tone = s.status === "strong" ? "good" : s.status === "weak" ? "bad" : "accent";
-  return <span className={`badge ${tone}`}>{s.status}</span>;
+  return <span className={`badge ${tone}`}>{t(`pages.dna.status.${s.status}`)}</span>;
 }

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
@@ -13,6 +14,7 @@ const DashboardContext = createContext(null);
 export function DashboardProvider({ children }) {
   const { user } = useAuth();
   const location = useLocation();
+  const { i18n } = useTranslation();
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState("");
   const [version, setVersion] = useState(0);
@@ -29,7 +31,7 @@ export function DashboardProvider({ children }) {
       .get("/dashboard")
       .then(setDashboard)
       .catch((e) => setError(e.message));
-  }, [user, location.pathname, version]);
+  }, [user, location.pathname, version, i18n.language]);
 
   return (
     <DashboardContext.Provider value={{ dashboard, setDashboard, error, refresh }}>

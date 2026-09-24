@@ -14,20 +14,16 @@ const ROUTE_ORDER = [
   "shop", "university", "train-station", "hotel", "airport",
 ];
 
-const STATUS_LABEL = {
-  locked: "Locked",
-  next: "Almost there",
-  unlocked: "Open",
-};
-
 export default function WorldMap() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data, error } = useApi("/world/locations");
   const [hovered, setHovered] = useState(null);
+  const statusLabel = (s) =>
+    s === "locked" ? t("pages.world.locked") : s === "next" ? t("pages.world.almostThere") : t("pages.world.open");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!data) return <Layout><Loading>Drawing the map…</Loading></Layout>;
+  if (!data) return <Layout><Loading>{t("pages.world.drawingMap")}</Loading></Layout>;
 
   const locations = data;
   const bySlug = Object.fromEntries(locations.map((l) => [l.slug, l]));
@@ -70,7 +66,7 @@ export default function WorldMap() {
               onMouseLeave={() => setHovered((h) => (h === loc.slug ? null : h))}
               onClick={() => navigate(`/world/${loc.slug}`)}
               role="button"
-              aria-label={`${loc.name} — ${STATUS_LABEL[loc.status] || ""}`}
+              aria-label={`${loc.name} — ${statusLabel(loc.status)}`}
             >
               {loc.status === "next" && (
                 <circle r="6.6" fill="none" stroke="#eab244" strokeWidth="0.6" className="wm-pulse" />
@@ -100,10 +96,10 @@ export default function WorldMap() {
             <b>{hoveredLoc.icon} {hoveredLoc.name}</b>
             <p className="sub" style={{ fontSize: 12, margin: "4px 0" }}>{hoveredLoc.description}</p>
             {hoveredLoc.status === "locked" && (
-              <span className="badge bad">Unlocks HSK {hoveredLoc.unlock_level}</span>
+              <span className="badge bad">{t("pages.world.unlocksHsk", { level: hoveredLoc.unlock_level })}</span>
             )}
-            {hoveredLoc.status === "next" && <span className="badge warn">Almost there</span>}
-            {hoveredLoc.status === "unlocked" && <span className="badge good">Open — click to enter</span>}
+            {hoveredLoc.status === "next" && <span className="badge warn">{t("pages.world.almostThere")}</span>}
+            {hoveredLoc.status === "unlocked" && <span className="badge good">{t("pages.world.openClickToEnter")}</span>}
           </div>
         )}
       </div>

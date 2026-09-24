@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
@@ -7,6 +8,7 @@ import Layout from "../components/Layout.jsx";
 import { Empty, MotionButton } from "../components/ui.jsx";
 
 function FollowButton({ result, onChange }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   async function toggle() {
@@ -29,12 +31,13 @@ function FollowButton({ result, onChange }) {
       disabled={busy}
       onClick={toggle}
     >
-      {result.is_following ? "Unfollow" : "Follow"}
+      {result.is_following ? t("pages.community.unfollow") : t("pages.community.follow")}
     </MotionButton>
   );
 }
 
 export default function Community() {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const [results, setResults] = useState(null);
   const [error, setError] = useState("");
@@ -46,7 +49,7 @@ export default function Community() {
       return undefined;
     }
     let cancelled = false;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       api
         .get(`/users/search?q=${encodeURIComponent(query)}`)
         .then((r) => !cancelled && setResults(r))
@@ -54,7 +57,7 @@ export default function Community() {
     }, 300);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [q]);
 
@@ -64,22 +67,22 @@ export default function Community() {
 
   return (
     <Layout>
-      <h1 className="h1">Find people</h1>
-      <p className="sub">Search for other learners by username and follow the ones you want to keep up with.</p>
+      <h1 className="h1">{t("pages.community.title")}</h1>
+      <p className="sub">{t("pages.community.subtitle")}</p>
 
       <div className="field" style={{ maxWidth: 420, marginTop: 16 }}>
         <input
           className="input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by username…"
+          placeholder={t("pages.community.searchPlaceholder")}
           autoFocus
         />
       </div>
 
       {error && <p className="formerr">{error}</p>}
 
-      {results && results.length === 0 && <Empty>No learners match "{q}".</Empty>}
+      {results && results.length === 0 && <Empty>{t("pages.community.noMatch", { query: q })}</Empty>}
 
       <div className="col" style={{ marginTop: 16, maxWidth: 520 }}>
         {(results || []).map((r) => (
@@ -95,7 +98,7 @@ export default function Community() {
               <div>
                 <b>{r.username}</b>
                 <p className="sub" style={{ fontSize: 12, margin: 0 }}>
-                  {r.followers_count} followers · {r.total_xp} XP
+                  {r.followers_count} {t("pages.profile.followers")} · {r.total_xp} XP
                 </p>
               </div>
             </Link>

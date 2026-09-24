@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
@@ -8,18 +9,19 @@ import { Empty } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 
-const CHALLENGE_TYPES = [
-  { value: "", label: "Auto — my weakest strand" },
-  { value: "meaning", label: "Vocabulary" },
-  { value: "tone", label: "Tones" },
-  { value: "character", label: "Characters" },
-  { value: "memory", label: "Memory" },
-  { value: "listening", label: "Listening" },
-  { value: "reaction", label: "Reaction speed" },
-  { value: "recognition", label: "Speaking" },
+const CHALLENGE_TYPE_KEYS = [
+  { value: "", key: "auto" },
+  { value: "meaning", key: "vocabulary" },
+  { value: "tone", key: "tones" },
+  { value: "character", key: "characters" },
+  { value: "memory", key: "memory" },
+  { value: "listening", key: "listening" },
+  { value: "reaction", key: "reactionSpeed" },
+  { value: "recognition", key: "speaking" },
 ];
 
 export default function Duels() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data, error } = useApi("/duels");
   const duels = data || [];
@@ -54,47 +56,45 @@ export default function Duels() {
     <Layout>
       <div className="row spread">
         <div>
-          <h1 className="h1">DNA duels</h1>
-          <p className="sub">
-            Rapid-fire word battles. The questions are picked from your weakest strand.
-          </p>
+          <h1 className="h1">{t("pages.duels.title")}</h1>
+          <p className="sub">{t("pages.duels.subtitle")}</p>
         </div>
         <button className="btn primary" onClick={() => setOpen(true)}>
-          <Icon name="swords" size={14} /> New duel
+          <Icon name="swords" size={14} /> {t("pages.duels.newDuel")}
         </button>
       </div>
 
       {open && (
         <div className="modal">
           <div className="card">
-            <h2 className="h2">Challenge someone</h2>
+            <h2 className="h2">{t("pages.duels.challengeSomeone")}</h2>
             <div className="field" style={{ marginTop: 12 }}>
-              <label>Opponent</label>
+              <label>{t("pages.duels.opponent")}</label>
               <input
                 className="input"
                 value={opponent}
                 onChange={(e) => setOpponent(e.target.value)}
-                placeholder="Buddy or a friend's username"
+                placeholder={t("pages.duels.opponentPlaceholder")}
               />
             </div>
             <div className="field">
-              <label>Challenge focus</label>
+              <label>{t("pages.duels.challengeFocus")}</label>
               <select
                 className="input"
                 value={challengeType}
                 onChange={(e) => setChallengeType(e.target.value)}
               >
-                {CHALLENGE_TYPES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {CHALLENGE_TYPE_KEYS.map((c) => (
+                  <option key={c.value} value={c.value}>{t(`pages.duels.challengeType.${c.key}`)}</option>
                 ))}
               </select>
             </div>
             {formError && <p className="formerr">{formError}</p>}
             <div className="row">
               <button className="btn primary" onClick={start} disabled={starting}>
-                {starting ? "Creating…" : "Start"}
+                {starting ? t("pages.duels.creating") : t("pages.duels.start")}
               </button>
-              <button className="btn ghost" onClick={() => setOpen(false)}>Cancel</button>
+              <button className="btn ghost" onClick={() => setOpen(false)}>{t("common.cancel")}</button>
             </div>
           </div>
         </div>
@@ -111,11 +111,11 @@ export default function Duels() {
                   <span style={{ fontSize: 40 }}>🐾</span>
                 )}
                 <div className="col" style={{ gap: 2 }}>
-                  <b>You</b>
+                  <b>{t("pages.duels.you")}</b>
                   <span className="ilb">{d.my_score ?? 0}</span>
                 </div>
               </div>
-              <span className="vs">VS</span>
+              <span className="vs">{t("pages.duels.vs")}</span>
               <div className="row">
                 <div className="col" style={{ gap: 2 }}>
                   <b>{d.opponent}</b>
@@ -129,21 +129,21 @@ export default function Duels() {
             <div className="row spread">
               <span className={`badge ${d.finished ? "good" : "accent"}`}>
                 {d.finished
-                  ? (d.winner === d.opponent ? "Opponent won" : d.winner ? "You won 🎉" : "Draw")
+                  ? (d.winner === d.opponent ? t("pages.duels.opponentWon") : d.winner ? t("pages.duels.youWon") : t("pages.duels.draw"))
                   : d.awaiting_opponent
-                  ? `Waiting for ${d.opponent}`
+                  ? t("pages.duels.waitingFor", { opponent: d.opponent })
                   : d.is_ai_opponent
-                  ? "Practice vs AI · in progress"
-                  : "In progress"}
+                  ? t("pages.duels.practiceVsAi")
+                  : t("pages.duels.inProgress")}
               </span>
               <Link to={`/duels/${d.id}`}>
-                <button className="btn small">Open</button>
+                <button className="btn small">{t("pages.duels.open")}</button>
               </Link>
             </div>
           </div>
         ))}
       </div>
-      {duels.length === 0 && <Empty>No duels yet. Challenge the Buddy to a first battle.</Empty>}
+      {duels.length === 0 && <Empty>{t("pages.duels.empty")}</Empty>}
     </Layout>
   );
 }

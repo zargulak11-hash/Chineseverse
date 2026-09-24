@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
@@ -9,6 +10,7 @@ import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { data: me, error } = useApi("/me");
   const { dashboard } = useDashboard();
   const animal = dashboard?.animal;
@@ -33,80 +35,80 @@ export default function Profile() {
           )}
           <div>
             <h1 className="h1">@{me.user.username}</h1>
-            <p className="sub">{me.user.email} · joined {new Date(me.user.created_at).toLocaleDateString()}</p>
+            <p className="sub">{me.user.email} · {t("pages.profile.joined")} {new Date(me.user.created_at).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="row">
           <Link to="/community">
-            <button className="btn ghost"><Icon name="users" size={13} /> Find people</button>
+            <button className="btn ghost"><Icon name="users" size={13} /> {t("pages.profile.findPeople")}</button>
           </Link>
           <Link to="/animals">
-            <button className="btn ghost">Change companion</button>
+            <button className="btn ghost">{t("pages.profile.changeCompanion")}</button>
           </Link>
         </div>
       </div>
 
       <div className="grid grid-2" style={{ marginTop: 18 }}>
         <div className="card">
-          <h2 className="h2">Profile</h2>
+          <h2 className="h2">{t("pages.profile.title")}</h2>
           <div className="col" style={{ marginTop: 10 }}>
             <div className="hbar">
-              <span className="muted" style={{ width: 130 }}>Native language</span>
+              <span className="muted" style={{ width: 130 }}>{t("pages.profile.nativeLanguage")}</span>
               <span>{me.profile.native_language || "—"}</span>
             </div>
             <div className="hbar">
-              <span className="muted" style={{ width: 130 }}>Goal</span>
+              <span className="muted" style={{ width: 130 }}>{t("pages.profile.goal")}</span>
               <span>{me.profile.goal_text || "—"}</span>
             </div>
             <div className="hbar">
-              <span className="muted" style={{ width: 130 }}>Daily goal</span>
-              <span>{me.profile.daily_goal_minutes} min/day</span>
+              <span className="muted" style={{ width: 130 }}>{t("pages.profile.dailyGoal")}</span>
+              <span>{me.profile.daily_goal_minutes} {t("pages.profile.minPerDay")}</span>
             </div>
             <div className="hbar">
-              <span className="muted" style={{ width: 130 }}>Level test</span>
-              <span>{me.profile.level_test_score != null ? me.profile.level_test_score + " pts" : "not taken"}</span>
+              <span className="muted" style={{ width: 130 }}>{t("pages.profile.levelTest")}</span>
+              <span>{me.profile.level_test_score != null ? `${me.profile.level_test_score} ${t("pages.profile.pts")}` : t("pages.profile.notTaken")}</span>
             </div>
             <div className="hbar">
-              <span className="muted" style={{ width: 130 }}>Bio</span>
+              <span className="muted" style={{ width: 130 }}>{t("pages.profile.bio")}</span>
               <span>{me.profile.bio || "—"}</span>
             </div>
           </div>
           <Link to="/settings">
-            <button className="btn small" style={{ marginTop: 14 }}>Edit profile</button>
+            <button className="btn small" style={{ marginTop: 14 }}>{t("pages.profile.editProfile")}</button>
           </Link>
         </div>
 
         <div className="card">
-          <h2 className="h2">Streak</h2>
+          <h2 className="h2">{t("pages.profile.streak")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
-            <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.streak.current_streak}</div><div className="lbl">current</div></div>
-            <div className="scorecard"><div className="num">{me.streak.longest_streak}</div><div className="lbl">longest</div></div>
-            <div className="scorecard"><div className="num">{me.streak.total_active_days}</div><div className="lbl">active days</div></div>
+            <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.streak.current_streak}</div><div className="lbl">{t("pages.profile.current")}</div></div>
+            <div className="scorecard"><div className="num">{me.streak.longest_streak}</div><div className="lbl">{t("pages.profile.longest")}</div></div>
+            <div className="scorecard"><div className="num">{me.streak.total_active_days}</div><div className="lbl">{t("pages.profile.activeDays")}</div></div>
           </div>
           {me.streak.last_active_date && (
-            <p className="sub" style={{ marginTop: 10 }}>Last active: {me.streak.last_active_date}</p>
+            <p className="sub" style={{ marginTop: 10 }}>{t("pages.profile.lastActive")}: {me.streak.last_active_date}</p>
           )}
-          <h2 className="h2" style={{ marginTop: 18 }}>Rewards earned</h2>
+          <h2 className="h2" style={{ marginTop: 18 }}>{t("pages.profile.rewardsEarned")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
-            <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.user.total_xp}</div><div className="lbl">total xp</div></div>
-            <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}>🪙 {me.user.coins}</div><div className="lbl">coins</div></div>
+            <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.user.total_xp}</div><div className="lbl">{t("pages.profile.totalXp")}</div></div>
+            <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}>🪙 {me.user.coins}</div><div className="lbl">{t("common.coins")}</div></div>
           </div>
         </div>
 
         <div className="card">
-          <h2 className="h2">Community</h2>
+          <h2 className="h2">{t("pages.profile.community")}</h2>
           {social ? (
             <Link to={`/u/${me.user.id}`}>
               <div className="scores" style={{ marginTop: 10 }}>
-                <div className="scorecard"><div className="num">{social.followers_count}</div><div className="lbl">followers</div></div>
-                <div className="scorecard"><div className="num">{social.following_count}</div><div className="lbl">following</div></div>
+                <div className="scorecard"><div className="num">{social.followers_count}</div><div className="lbl">{t("pages.profile.followers")}</div></div>
+                <div className="scorecard"><div className="num">{social.following_count}</div><div className="lbl">{t("pages.profile.following")}</div></div>
               </div>
             </Link>
           ) : (
             <p className="sub" style={{ marginTop: 10 }}>—</p>
           )}
           <Link to="/community">
-            <button className="btn small ghost" style={{ marginTop: 12 }}>Find people to follow</button>
+            <button className="btn small ghost" style={{ marginTop: 12 }}>{t("pages.profile.findPeopleToFollow")}</button>
           </Link>
         </div>
       </div>

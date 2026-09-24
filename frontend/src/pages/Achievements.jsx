@@ -67,7 +67,9 @@ export default function Achievements() {
             <b style={{ display: "block", marginTop: 10 }}>{b.title}</b>
             <p className="sub" style={{ fontSize: 12, marginTop: 4 }}>{b.description}</p>
             <span className={`badge ${b.unlocked ? "good" : ""}`}>
-              {b.unlocked ? "Unlocked" : b.category || "hidden"}
+              {b.unlocked
+                ? t("pages.achievements.unlocked")
+                : t(`pages.achievements.category.${b.category}`, { defaultValue: b.category || t("pages.achievements.hidden") })}
             </span>
             {b.unlocked_at && (
               <p className="muted" style={{ fontSize: 11, marginTop: 8 }}>

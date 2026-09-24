@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
@@ -18,20 +19,21 @@ const PHRASES = [
 ];
 
 export default function Companion() {
+  const { t } = useTranslation();
   const { dashboard, error } = useDashboard();
   const [chat, setChat] = useState([]);
   const [msg, setMsg] = useState("");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!dashboard) return <Layout><Loading>Waking your companion…</Loading></Layout>;
+  if (!dashboard) return <Layout><Loading>{t("pages.companion.waking")}</Loading></Layout>;
 
   const animal = dashboard.animal;
   if (!animal) {
     return (
       <Layout>
         <Empty>
-          You need a companion first.{" "}
-          <Link to="/animals"><button className="btn primary">Choose one</button></Link>
+          {t("pages.companion.needCompanion")}{" "}
+          <Link to="/animals"><button className="btn primary">{t("pages.companion.chooseOne")}</button></Link>
         </Empty>
       </Layout>
     );
@@ -63,8 +65,8 @@ export default function Companion() {
 
   return (
     <Layout>
-      <h1 className="h1">Your companion</h1>
-      <p className="sub">Talk to {animal.name}. They react to how you speak their language.</p>
+      <h1 className="h1">{t("pages.companion.title")}</h1>
+      <p className="sub">{t("pages.companion.subtitle", { name: animal.name })}</p>
 
       <div className="grid grid-2" style={{ marginTop: 18 }}>
         <div className="card center">
@@ -76,10 +78,10 @@ export default function Companion() {
           <div className="ilb" style={{ marginTop: 8 }}>{animal.personality}</div>
         </div>
         <div className="card">
-          <h2 className="h2">Your rhythm</h2>
+          <h2 className="h2">{t("pages.companion.yourRhythm")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
-            <Stat label="Streak" value={`${dashboard.streak.current_streak}d`} tone="var(--accent)" />
-            <Stat label="Daily goal" value={`${dashboard.daily_goal.minutes ?? 20}m`} tone="var(--accent2)" />
+            <Stat label={t("pages.companion.streak")} value={`${dashboard.streak.current_streak}d`} tone="var(--accent)" />
+            <Stat label={t("pages.profile.dailyGoal")} value={`${dashboard.daily_goal.minutes ?? 20}m`} tone="var(--accent2)" />
             <Stat label="HSK" value={dashboard.hsk_level} />
           </div>
           <p className="sub" style={{ marginTop: 12 }}>✨ {animal.special_ability}</p>
@@ -87,17 +89,17 @@ export default function Companion() {
           <p className="sub">🎯 {animal.preferred_mechanics}</p>
           <Link to="/pet-teacher">
             <button className="btn small ghost" style={{ marginTop: 10 }}>
-              🧑‍🏫 {animal.name} wants you to catch its mistake
+              🧑‍🏫 {t("pages.companion.catchMistake", { name: animal.name })}
             </button>
           </Link>
         </div>
       </div>
 
       <div className="card" style={{ marginTop: 16 }}>
-        <h2 className="h2">Free chat</h2>
+        <h2 className="h2">{t("pages.companion.freeChat")}</h2>
         <div className="chat" style={{ marginTop: 8 }}>
           {chat.length === 0 && (
-            <p className="sub center">Say something in Chinese — try one of these:</p>
+            <p className="sub center">{t("pages.companion.sayInChinese")}</p>
           )}
           {chat.map((c, i) =>
             c.from === "me" ? (
@@ -116,16 +118,16 @@ export default function Companion() {
           )}
         </div>
         <div className="row" style={{ marginTop: 14, alignItems: "stretch" }}>
-          <MicRecorder onTranscript={(t) => send(t)} />
+          <MicRecorder onTranscript={(txt) => send(txt)} />
           <input
             className="input"
             style={{ flex: 1 }}
-            placeholder="Tap the mic and speak, or type in Chinese…"
+            placeholder={t("pages.conversation.micPlaceholder")}
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
           />
-          <button className="btn primary" onClick={() => send()}>Send</button>
+          <button className="btn primary" onClick={() => send()}>{t("pages.companion.send")}</button>
         </div>
         <div className="row" style={{ marginTop: 10 }}>
           {PHRASES.map((p) => (
@@ -135,7 +137,7 @@ export default function Companion() {
       </div>
 
       <div className="card" style={{ marginTop: 16 }}>
-        <h2 className="h2">Recent voice sessions</h2>
+        <h2 className="h2">{t("pages.companion.recentSessions")}</h2>
         <VoiceHistory />
       </div>
     </Layout>
@@ -143,12 +145,13 @@ export default function Companion() {
 }
 
 function VoiceHistory() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState(null);
   useEffect(() => {
     api.get("/voice/history").then(setRows).catch(() => setRows([]));
   }, []);
   if (!rows) return <Loading />;
-  if (rows.length === 0) return <Empty>No sessions yet.</Empty>;
+  if (rows.length === 0) return <Empty>{t("pages.companion.noSessions")}</Empty>;
   return (
     <div className="col">
       {rows.slice(0, 5).map((v) => (

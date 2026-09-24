@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
 from app.services import ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
@@ -16,6 +16,7 @@ from app.services.gamification import (
     reinforce_mistake,
     user_rank,
 )
+from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/pet-teacher", tags=["pet-teacher"])
 
@@ -28,6 +29,7 @@ def _normalize(text: str) -> str:
 def get_lesson(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     """The animal makes a deliberate mistake at (or below) the learner's
     current HSK level. Prefers a case not yet taught, so the loop keeps
@@ -52,6 +54,8 @@ def get_lesson(
 
     item = schemas.PetTeacherCaseResponse.model_validate(case)
     item.already_taught = case.id in taught_ids
+    case_tr = load_translations(db, "pet_teacher_case", [str(case.id)], locale)
+    item.hint = tr(case_tr, case.id, "hint", item.hint)
     return item
 
 
@@ -61,6 +65,7 @@ def answer_lesson(
     payload: schemas.PetTeacherAnswerRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     case = db.get(models.PetTeacherCase, case_id)
     if case is None:
@@ -94,23 +99,31 @@ def answer_lesson(
     taught_count = db.query(models.UserTaughtFact).filter_by(user_id=user.id).count()
     newly = check_achievements(db, user)
 
+    ui_tr = load_translations(db, "ui_string", ["pet_teacher"], locale)
     feedback = verdict["feedback"]
     if not feedback:
         if success:
-            feedback = "Perfect — you fixed it and explained why. Your companion just learned something!"
+            feedback = tr(ui_tr, "pet_teacher", "success",
+                           "Perfect — you fixed it and explained why. Your companion just learned something!")
         elif not correct_fix:
-            feedback = "The correction isn't quite right yet — look at the sentence again."
+            feedback = tr(ui_tr, "pet_teacher", "wrong_correction",
+                           "The correction isn't quite right yet — look at the sentence again.")
         else:
-            feedback = "The correction is right, but explain the rule a bit more so it really sticks."
+            feedback = tr(ui_tr, "pet_teacher", "needs_more_explanation",
+                           "The correction is right, but explain the rule a bit more so it really sticks.")
     if newly:
-        feedback += f" Unlocked: {', '.join(a.title for a in newly)}"
+        unlocked_label = tr(ui_tr, "pet_teacher", "unlocked", "Unlocked")
+        feedback += f" {unlocked_label}: {', '.join(a.title for a in newly)}"
+
+    case_tr = load_translations(db, "pet_teacher_case", [str(case.id)], locale)
+    mistake_summary = tr(case_tr, case.id, "mistake_summary", case.mistake_summary)
 
     return schemas.PetTeacherResultResponse(
         correct_fix=correct_fix,
         understood=understood,
         success=success,
         correct_sentence=case.correct_sentence,
-        mistake_summary=case.mistake_summary,
+        mistake_summary=mistake_summary,
         feedback=feedback,
         taught_count=taught_count,
     )

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
@@ -16,6 +17,7 @@ const PRACTICE_ROUTE = {
 };
 
 export default function Mistakes() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { data, setData, error, setError } = useApi("/mistakes");
   const mistakes = data || [];
@@ -37,14 +39,11 @@ export default function Mistakes() {
 
   return (
     <Layout>
-      <h1 className="h1">Mistakes lab</h1>
-      <p className="sub">
-        Every slip is data. Mastery is earned by getting it right again through
-        voice, vocab review, a case, or a duel — not by a click here.
-      </p>
+      <h1 className="h1">{t("pages.mistakes.title")}</h1>
+      <p className="sub">{t("pages.mistakes.subtitle")}</p>
 
       <div className="ranges" style={{ marginTop: 16 }}>
-        <h2 className="h2">Still working on ({open.length})</h2>
+        <h2 className="h2">{t("pages.mistakes.stillWorking")} ({open.length})</h2>
         <div className="col">
           {open.map((m) => (
             <div key={m.id} className="card">
@@ -52,16 +51,16 @@ export default function Mistakes() {
                 <div>
                   <b>{m.question_text || m.reference}</b>
                   <p className="sub" style={{ marginTop: 4, fontSize: 13 }}>
-                    You said: <em>{m.answer_given || "—"}</em>
-                    {m.correct_answer && <> · correct: <b>{m.correct_answer}</b></>}
+                    {t("pages.mistakes.youSaid")}: <em>{m.answer_given || "—"}</em>
+                    {m.correct_answer && <> · {t("pages.mistakes.correct")}: <b>{m.correct_answer}</b></>}
                   </p>
                 </div>
                 <div className="col" style={{ gap: 6, alignItems: "flex-end" }}>
                   <span className={`badge ${m.due_for_review ? "accent" : "bad"}`}>
-                    {m.due_for_review ? "due now" : `×${m.occurrences}`}
+                    {m.due_for_review ? t("pages.mistakes.dueNow") : `×${m.occurrences}`}
                   </span>
                   <button className="btn small" onClick={() => practice(m)}>
-                    Practice this →
+                    {t("pages.mistakes.practiceThis")} →
                   </button>
                 </div>
               </div>
@@ -72,18 +71,18 @@ export default function Mistakes() {
 
       {done.length > 0 && (
         <div style={{ marginTop: 20 }}>
-          <h2 className="h2">Mastered ({done.length})</h2>
+          <h2 className="h2">{t("pages.mistakes.mastered")} ({done.length})</h2>
           <div className="grid cards">
             {done.map((m) => (
               <div key={m.id} className="card" style={{ opacity: 0.7 }}>
-                <span className="badge good">✓ mastered</span>
+                <span className="badge good">✓ {t("pages.mistakes.masteredBadge")}</span>
                 <p className="sub" style={{ marginTop: 8 }}>{m.question_text || m.reference}</p>
               </div>
             ))}
           </div>
         </div>
       )}
-      {mistakes.length === 0 && <Empty>No mistakes recorded yet. Go make some.</Empty>}
+      {mistakes.length === 0 && <Empty>{t("pages.mistakes.empty")}</Empty>}
     </Layout>
   );
 }

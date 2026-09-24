@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
+from app.routers.animals import _localize_animal
 from app.routers.missions import _localize_mission
 from app.routers.quests import _localize_quest
 from app.services.dna import compute_dna
@@ -62,6 +63,7 @@ def dashboard(
     animal = None
     if user.animal_id:
         animal = db.get(models.Animal, user.animal_id)
+    animal_tr = load_translations(db, "animal", [str(animal.id)] if animal else [], locale)
 
     skill_rows = {s.skill.code: s.skill for s in user.user_skills if s.skill}
     skill_tr = load_translations(db, "skill", [str(s.id) for s in skill_rows.values()], locale)
@@ -91,7 +93,7 @@ def dashboard(
     return schemas.DashboardResponse(
         user=user,
         avatar_url=user.profile.avatar_url if user.profile else None,
-        animal=schemas.AnimalResponse.model_validate(animal) if animal else None,
+        animal=_localize_animal(animal, animal_tr) if animal else None,
         hsk_level=current,
         mastery=mastery,
         dna=schemas.DNASummaryResponse(

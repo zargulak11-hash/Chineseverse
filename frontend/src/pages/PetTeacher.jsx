@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
@@ -9,6 +10,7 @@ import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function PetTeacher() {
+  const { t } = useTranslation();
   const { dashboard } = useDashboard();
   const { data: lesson, error, reload } = useApi("/pet-teacher/lesson");
   const [correction, setCorrection] = useState("");
@@ -17,7 +19,7 @@ export default function PetTeacher() {
   const [busy, setBusy] = useState(false);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!lesson) return <Layout><Loading>Your companion is thinking of a mistake…</Loading></Layout>;
+  if (!lesson) return <Layout><Loading>{t("pages.petTeacher.thinking")}</Loading></Layout>;
 
   const animal = dashboard?.animal;
 
@@ -50,11 +52,9 @@ export default function PetTeacher() {
 
   return (
     <Layout>
-      <h1 className="h1">Pet Teacher Mode</h1>
+      <h1 className="h1">{t("pages.petTeacher.title")}</h1>
       <p className="sub">
-        {animal ? animal.name : "Your companion"} sometimes gets Chinese wrong on
-        purpose. Catch the mistake, fix it, and explain the rule — that's how it
-        actually learns.
+        {t("pages.petTeacher.subtitle", { name: animal ? animal.name : t("pages.petTeacher.yourCompanion") })}
       </p>
 
       <div className="chat" style={{ marginTop: 18 }}>
@@ -65,10 +65,10 @@ export default function PetTeacher() {
             ) : (
               "🐾"
             )}{" "}
-            {animal?.name || "Companion"}
+            {animal?.name || t("pages.petTeacher.yourCompanion")}
           </span>
           {lesson.wrong_sentence}
-          {lesson.hint && !result && <span className="english">hint: {lesson.hint}</span>}
+          {lesson.hint && !result && <span className="english">{t("pages.conversation.hint")}: {lesson.hint}</span>}
         </div>
 
         {!result && (
@@ -77,16 +77,16 @@ export default function PetTeacher() {
             style={{ flexDirection: "column", alignItems: "stretch", maxWidth: 520, margin: "0 auto" }}
           >
             <div className="field">
-              <label>Your correction</label>
+              <label>{t("pages.petTeacher.yourCorrection")}</label>
               <input
                 className="input"
                 value={correction}
                 onChange={(e) => setCorrection(e.target.value)}
-                placeholder="Rewrite the sentence correctly…"
+                placeholder={t("pages.petTeacher.correctionPlaceholder")}
               />
             </div>
             <div className="field">
-              <label>Explain the rule</label>
+              <label>{t("pages.petTeacher.explainRule")}</label>
               <div className="row" style={{ alignItems: "stretch" }}>
                 <textarea
                   className="input"
@@ -94,10 +94,10 @@ export default function PetTeacher() {
                   style={{ flex: 1 }}
                   value={explanation}
                   onChange={(e) => setExplanation(e.target.value)}
-                  placeholder="Why was it wrong? Tap the mic to speak your answer…"
+                  placeholder={t("pages.petTeacher.explanationPlaceholder")}
                 />
                 <MicRecorder
-                  onTranscript={(t) => setExplanation((prev) => (prev ? `${prev} ${t}` : t))}
+                  onTranscript={(txt) => setExplanation((prev) => (prev ? `${prev} ${txt}` : txt))}
                   disabled={busy}
                 />
               </div>
@@ -107,7 +107,7 @@ export default function PetTeacher() {
               onClick={submit}
               disabled={busy || !correction.trim() || !explanation.trim()}
             >
-              {busy ? "Checking…" : "Teach your companion"}
+              {busy ? t("pages.petTeacher.checking") : t("pages.petTeacher.teachCompanion")}
             </button>
           </div>
         )}
@@ -134,12 +134,12 @@ export default function PetTeacher() {
               </div>
               {!result.success && (
                 <p className="sub center">
-                  Correct sentence: <b>{result.correct_sentence}</b>
+                  {t("pages.petTeacher.correctSentence")}: <b>{result.correct_sentence}</b>
                 </p>
               )}
               <div className="row center" style={{ justifyContent: "center" }}>
                 <button className="btn primary" onClick={result.success ? next : retry}>
-                  {result.success ? "Teach another rule" : "Try again"}
+                  {result.success ? t("pages.petTeacher.teachAnother") : t("pages.petTeacher.tryAgain")}
                 </button>
               </div>
             </>
@@ -147,7 +147,7 @@ export default function PetTeacher() {
       </div>
 
       <p className="sub center" style={{ marginTop: 20 }}>
-        Rules taught so far: <b>{result?.taught_count ?? "—"}</b>
+        {t("pages.petTeacher.rulesTaught")}: <b>{result?.taught_count ?? "—"}</b>
       </p>
     </Layout>
   );
