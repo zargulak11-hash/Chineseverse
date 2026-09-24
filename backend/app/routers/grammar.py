@@ -51,8 +51,8 @@ def list_grammar(
             query = query.filter(models.GrammarTopic.id.in_(id_subset or [0]))
     topics = query.order_by(models.GrammarTopic.hsk_level_id, models.GrammarTopic.order_index).all()
 
-    # Only title/explanation/category are localized -- pattern and examples
-    # are the real Chinese being taught and stay Chinese in every locale.
+    # Only title/explanation/category/difficulty are localized -- pattern and
+    # examples are the real Chinese being taught and stay Chinese in every locale.
     translations = load_translations(db, "grammar_topic", [str(t.id) for t in topics], locale)
     user_map = {r.topic_id: r for r in user.user_grammar}
     now = datetime.utcnow()
@@ -62,6 +62,7 @@ def list_grammar(
         item.title = tr(translations, topic.id, "title", item.title)
         item.explanation = tr(translations, topic.id, "explanation", item.explanation)
         item.category = tr(translations, topic.id, "category", item.category)
+        item.difficulty = tr(translations, topic.id, "difficulty", item.difficulty)
         rec = user_map.get(topic.id)
         item.status = rec.status if rec else "new"
         item.mastery = rec.mastery if rec else 0.0
@@ -146,6 +147,7 @@ def practice_topic(
     topic_out.title = tr(translations, topic.id, "title", topic_out.title)
     topic_out.explanation = tr(translations, topic.id, "explanation", topic_out.explanation)
     topic_out.category = tr(translations, topic.id, "category", topic_out.category)
+    topic_out.difficulty = tr(translations, topic.id, "difficulty", topic_out.difficulty)
     topic_out.status = rec.status
     topic_out.mastery = rec.mastery
     return PracticeResponse(topic=topic_out, mastery=round(rec.mastery, 1), status=rec.status)
