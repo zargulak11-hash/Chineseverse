@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Vocabulary() {
+  const { t } = useTranslation();
   const [level, setLevel] = useState(1);
   const { data, setData, error } = useApi(`/vocab?hsk_level=${level}`);
   const { data: roadmap } = useApi("/hsk/roadmap");
@@ -40,8 +42,8 @@ export default function Vocabulary() {
 
   return (
     <Layout>
-      <h1 className="h1">Vocabulary</h1>
-      <p className="sub">Tap a card to self-review. Reviews feed your DNA and daily quests.</p>
+      <h1 className="h1">{t("pages.vocabulary.title")}</h1>
+      <p className="sub">{t("pages.vocabulary.subtitle")}</p>
 
       <div className="row" style={{ marginTop: 14 }}>
         {[1, 2, 3, 4, 5, 6].map((lv) => (
@@ -63,7 +65,7 @@ export default function Vocabulary() {
 
       {filtered.some((w) => w.due_for_review) && (
         <p className="sub" style={{ marginTop: 14 }}>
-          ⏰ {filtered.filter((w) => w.due_for_review).length} word(s) due for review — surfaced first below.
+          ⏰ {t("pages.vocabulary.dueForReview", { count: filtered.filter((w) => w.due_for_review).length })}
         </p>
       )}
 
@@ -77,7 +79,7 @@ export default function Vocabulary() {
           >
             {w.due_for_review && (
               <span className="badge accent" style={{ position: "absolute", top: 8, right: 8, fontSize: 10 }}>
-                due
+                {t("pages.vocabulary.due")}
               </span>
             )}
             <div style={{ fontSize: 24, fontWeight: 800 }}>{w.simplified}</div>
@@ -93,7 +95,7 @@ export default function Vocabulary() {
           </button>
         ))}
       </div>
-      {filtered.length === 0 && <Empty>No words at this level yet.</Empty>}
+      {filtered.length === 0 && <Empty>{t("pages.vocabulary.empty")}</Empty>}
     </Layout>
   );
 }

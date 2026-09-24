@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -16,10 +17,11 @@ const KIND_ICON = {
 };
 
 export default function Missions() {
+  const { t } = useTranslation();
   const { data, setData, error } = useApi("/missions");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!data) return <Layout><Loading>Gathering missions…</Loading></Layout>;
+  if (!data) return <Layout><Loading>{t("pages.missions.loading")}</Loading></Layout>;
 
   async function accept(missionId) {
     const updated = await api.post(`/missions/${missionId}/accept`);
@@ -31,12 +33,8 @@ export default function Missions() {
 
   return (
     <Layout>
-      <h1 className="h1">Missions</h1>
-      <p className="sub">
-        Real objectives across the world — speaking, listening, cases, duels and
-        more. Progress updates automatically as you play; rewards land the
-        moment you finish.
-      </p>
+      <h1 className="h1">{t("pages.missions.title")}</h1>
+      <p className="sub">{t("pages.missions.subtitle")}</p>
 
       <div className="col" style={{ marginTop: 18 }}>
         {active.map((m) => (
@@ -53,7 +51,7 @@ export default function Missions() {
               </div>
               <div className="row">
                 <span className="ilb">HSK {m.mission.min_hsk_level}+</span>
-                <span className="ilb">+{m.mission.reward_xp} xp</span>
+                <span className="ilb">+{m.mission.reward_xp} {t("common.xp")}</span>
                 {m.mission.reward_coins > 0 && (
                   <span className="ilb">
                     <Icon name="coin" size={11} style={{ verticalAlign: -1, marginRight: 3 }} />
@@ -64,7 +62,7 @@ export default function Missions() {
             </div>
             {m.status === "available" ? (
               <button className="btn primary small" style={{ marginTop: 10 }} onClick={() => accept(m.mission.id)}>
-                Accept mission
+                {t("pages.missions.accept")}
               </button>
             ) : (
               <div className="hbar" style={{ marginTop: 10 }}>
@@ -80,7 +78,7 @@ export default function Missions() {
 
       {done.length > 0 && (
         <div style={{ marginTop: 22 }}>
-          <h2 className="h2">Completed ({done.length})</h2>
+          <h2 className="h2">{t("pages.missions.completed")} ({done.length})</h2>
           <div className="grid cards">
             {done.map((m) => (
               <div key={m.id} className="card" style={{ opacity: 0.8, borderColor: "var(--good)" }}>
@@ -88,7 +86,7 @@ export default function Missions() {
                   <Icon name="check" size={11} /> {m.mission.title}
                 </span>
                 <p className="sub" style={{ marginTop: 8 }}>
-                  +{m.mission.reward_xp} xp{m.mission.reward_coins > 0 ? ` · ${m.mission.reward_coins} coins` : ""}
+                  +{m.mission.reward_xp} {t("common.xp")}{m.mission.reward_coins > 0 ? ` · ${m.mission.reward_coins} ${t("common.coins")}` : ""}
                 </p>
               </div>
             ))}
@@ -96,7 +94,7 @@ export default function Missions() {
         </div>
       )}
 
-      {data.length === 0 && <Empty>No missions yet.</Empty>}
+      {data.length === 0 && <Empty>{t("pages.missions.empty")}</Empty>}
     </Layout>
   );
 }

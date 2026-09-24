@@ -16,7 +16,9 @@
     "today": "Today",
     "thisWeek": "This week",
     "lastWeek": "Last week",
-    "loadingWorld": "Loading your world…"
+    "loadingWorld": "Loading your world…",
+    "xp": "xp",
+    "coins": "coins"
   },
   "nav": {
     "groupMain": "Main",
@@ -142,30 +144,110 @@
     "reviewMistakes": "Review mistakes"
   },
   "pages": {
-    "lessons": { "title": "Lessons", "subtitle": "Structured lessons to build the grammar behind every conversation.", "empty": "No lessons yet." },
-    "vocabulary": { "title": "Vocabulary", "subtitle": "Tap a card to self-review. Reviews feed your DNA and daily quests." },
-    "dna": { "title": "Learning DNA", "subtitle": "Nine live skills, tracked from everything you do." },
-    "roadmap": { "title": "HSK Roadmap" },
-    "quests": { "title": "Quests", "subtitle": "Today's short goals — claim rewards as you complete them." },
-    "missions": { "title": "Missions" },
-    "duels": { "title": "Duels", "subtitle": "Challenge a friend or the Buddy AI on your weakest strand." },
-    "duelBattle": { "victory": "Victory", "draw": "It was a draw!", "lost": "{{name}} won", "backToDuels": "Back to duels", "waitingFor": "Waiting for {{name}}", "practiceMode": "Practice mode · vs AI" },
-    "achievements": { "title": "Achievements", "earned": "{{unlocked}}/{{total}} earned" },
-    "companion": { "title": "Companion" },
-    "petTeacher": { "title": "Pet Teacher Mode" },
-    "world": { "title": "Chinese World", "subtitle": "A living city. Walk into a place, meet an NPC, and hold a real conversation. Everything unlocks with HSK progress.", "tapToEnter": "Tap a location to enter it" },
-    "mistakes": { "title": "Needs work", "subtitle": "Your recurring mistakes, brought back on a spaced schedule." },
-    "progress": { "title": "Your progress" },
-    "profile": { "title": "Profile", "changeCompanion": "Change companion", "editProfile": "Edit profile", "streak": "Streak", "rewardsEarned": "Rewards earned", "followers": "Followers", "following": "Following", "follow": "Follow", "unfollow": "Unfollow" },
-    "animalSelect": { "title": "Choose your companion", "subtitle": "Each one teaches with a different style. You can change later — {{name}}." },
+    "lessons": {
+      "title": "Lessons",
+      "subtitle": "Structured lessons to build the grammar behind every conversation.",
+      "empty": "No lessons yet."
+    },
+    "vocabulary": {
+      "title": "Vocabulary",
+      "subtitle": "Tap a card to self-review. Reviews feed your DNA and daily quests.",
+      "dueForReview": "{{count}} word(s) due for review — surfaced first below.",
+      "due": "due",
+      "empty": "No words at this level yet."
+    },
+    "dna": {
+      "title": "Learning DNA",
+      "subtitle": "Nine live skills, tracked from everything you do."
+    },
+    "roadmap": {
+      "title": "HSK Roadmap"
+    },
+    "quests": {
+      "title": "Daily quests",
+      "subtitle": "Generated from your DNA every day. Complete them to feed your companion.",
+      "claimReward": "Claim reward",
+      "claimed": "Claimed",
+      "empty": "Nothing today. Take a walk around the world."
+    },
+    "missions": {
+      "title": "Missions",
+      "loading": "Gathering missions…",
+      "subtitle": "Real objectives across the world — speaking, listening, cases, duels and more. Progress updates automatically as you play; rewards land the moment you finish.",
+      "accept": "Accept mission",
+      "completed": "Completed",
+      "empty": "No missions yet."
+    },
+    "duels": {
+      "title": "Duels",
+      "subtitle": "Challenge a friend or the Buddy AI on your weakest strand."
+    },
+    "duelBattle": {
+      "victory": "Victory",
+      "draw": "It was a draw!",
+      "lost": "{{name}} won",
+      "backToDuels": "Back to duels",
+      "waitingFor": "Waiting for {{name}}",
+      "practiceMode": "Practice mode · vs AI"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "earned": "{{unlocked}}/{{total}} earned"
+    },
+    "companion": {
+      "title": "Companion"
+    },
+    "petTeacher": {
+      "title": "Pet Teacher Mode"
+    },
+    "world": {
+      "title": "Chinese World",
+      "subtitle": "A living city. Walk into a place, meet an NPC, and hold a real conversation. Everything unlocks with HSK progress.",
+      "tapToEnter": "Tap a location to enter it"
+    },
+    "mistakes": {
+      "title": "Needs work",
+      "subtitle": "Your recurring mistakes, brought back on a spaced schedule."
+    },
+    "progress": {
+      "title": "Your progress"
+    },
+    "profile": {
+      "title": "Profile",
+      "changeCompanion": "Change companion",
+      "editProfile": "Edit profile",
+      "streak": "Streak",
+      "rewardsEarned": "Rewards earned",
+      "followers": "Followers",
+      "following": "Following",
+      "follow": "Follow",
+      "unfollow": "Unfollow"
+    },
+    "animalSelect": {
+      "title": "Choose your companion",
+      "subtitle": "Each one teaches with a different style. You can change later — {{name}}."
+    },
     "onboarding": {
       "loading": "Setting things up…",
       "saving": "Saving…",
       "motivationTitle": "Why are you learning Chinese?",
       "motivationSubtitle": "This helps us tailor what we show you first.",
-      "motivation": { "travel": "Travel", "work": "Work or business", "culture": "Culture or personal interest", "exam": "HSK exam prep", "family": "Family or heritage", "other": "Other" },
+      "motivation": {
+        "travel": "Travel",
+        "work": "Work or business",
+        "culture": "Culture or personal interest",
+        "exam": "HSK exam prep",
+        "family": "Family or heritage",
+        "other": "Other"
+      },
       "discoveryTitle": "How did you find ChineseVerse?",
-      "source": { "friend": "A friend told me", "social": "Social media", "school": "SoftClub / a school", "search": "Search engine", "other": "Other" },
+      "source": {
+        "friend": "A friend told me",
+        "social": "Social media",
+        "school": "SoftClub / a school",
+        "search": "Search engine",
+        "other": "Other"
+      },
       "otherPlaceholder": "Tell us more…",
       "next": "Next",
       "testIntroTitle": "Quick placement test",
@@ -179,6 +261,59 @@
       "resultScore": "{{correct}}/{{total}} correct on the placement test",
       "continueToDashboard": "Continue to dashboard"
     },
-    "assistant": { "title": "Study Assistant", "subtitle": "Ask about grammar, your progress, or what to study next.", "placeholder": "Ask your companion anything about learning Chinese…", "send": "Send", "thinking": "Thinking…", "scopeHint": "Scoped to ChineseVerse and your Chinese learning." }
+    "assistant": {
+      "title": "Study Assistant",
+      "subtitle": "Ask about grammar, your progress, or what to study next.",
+      "placeholder": "Ask your companion anything about learning Chinese…",
+      "send": "Send",
+      "thinking": "Thinking…",
+      "scopeHint": "Scoped to ChineseVerse and your Chinese learning."
+    },
+    "lessonDetail": {
+      "allLessons": "All lessons",
+      "saved": "Saved — DNA updated.",
+      "markComplete": "Mark complete",
+      "keepPracticing": "Keep practicing",
+      "tryInWorld": "Try it in the world"
+    },
+    "locationDetail": {
+      "entering": "Entering…",
+      "worldMap": "World map",
+      "almostThere": "Almost there — keep training to unlock this place.",
+      "stillLocked": "This place is still locked. Keep leveling up to reach it.",
+      "peopleHere": "People here",
+      "conversations": "Conversations",
+      "solveCase": "Solve case",
+      "talk": "Talk",
+      "usesVoice": "This conversation uses voice."
+    },
+    "conversation": {
+      "entering": "Entering conversation…",
+      "leaveCase": "Leave the case",
+      "leaveConversation": "Leave the conversation",
+      "completed": "You made it through the whole conversation. That counts toward your DNA.",
+      "backToWorld": "Back to the world",
+      "whatDoYouSay": "What do you say?",
+      "micPlaceholder": "Tap the mic and speak, or type what you would say in Chinese…",
+      "checking": "Checking…",
+      "speak": "Speak",
+      "skipForNow": "Skip for now",
+      "hint": "hint"
+    },
+    "caseSolve": {
+      "opening": "Opening the file…",
+      "caseFile": "Case file",
+      "clues": "Clues",
+      "contradiction": "Contradiction",
+      "witnessStatements": "Witness statements",
+      "noStatements": "No statements recorded.",
+      "yourVerdict": "Your verdict",
+      "verdictPrompt": "Who is responsible, and why? Write your answer in Chinese.",
+      "checking": "Checking…",
+      "submitVerdict": "Submit verdict",
+      "caseSolved": "CASE SOLVED",
+      "notQuiteRight": "Not quite right",
+      "hint": "Hint"
+    }
   }
 }

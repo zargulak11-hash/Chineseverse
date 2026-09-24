@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
@@ -9,6 +10,7 @@ import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 
 export default function Conversation() {
+  const { t, i18n } = useTranslation();
   const { scenarioId } = useParams();
   const { dashboard } = useDashboard() || {};
   const companion = dashboard?.animal;
@@ -28,7 +30,7 @@ export default function Conversation() {
       setTurnIndex(0);
       setHistory([0]);
     }).catch((e) => setError(e.message));
-  }, [scenarioId]);
+  }, [scenarioId, i18n.language]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -47,7 +49,7 @@ export default function Conversation() {
   }, [dialogues]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!sc) return <Layout><Loading>Entering conversation…</Loading></Layout>;
+  if (!sc) return <Layout><Loading>{t("pages.conversation.entering")}</Loading></Layout>;
 
   const current = dialoguesByTurn[turnIndex];
   const done = !current;
@@ -87,7 +89,9 @@ export default function Conversation() {
 
   return (
     <Layout>
-      <Link to="/world" className="sub">← Leave {sc.scenario_type === "case" ? "the case" : "the conversation"}</Link>
+      <Link to="/world" className="sub">
+        ← {sc.scenario_type === "case" ? t("pages.conversation.leaveCase") : t("pages.conversation.leaveConversation")}
+      </Link>
       <div className="row spread" style={{ marginTop: 10 }}>
         <div>
           <h1 className="h1">
@@ -102,9 +106,9 @@ export default function Conversation() {
       {done ? (
         <div className="card center" style={{ marginTop: 20 }}>
           <div style={{ fontSize: 40 }}>🎉</div>
-          <p>You made it through the whole conversation. That counts toward your DNA.</p>
+          <p>{t("pages.conversation.completed")}</p>
           <Link to={`/world/${sc.slug}`}>
-            <button className="btn primary">Back to the world</button>
+            <button className="btn primary">{t("pages.conversation.backToWorld")}</button>
           </Link>
         </div>
       ) : (
@@ -125,7 +129,7 @@ export default function Conversation() {
 
                 {hasChoices && isCurrent && !chosen && (
                   <div className="col" style={{ marginTop: 10, gap: 8 }}>
-                    <p className="sub">What do you say?</p>
+                    <p className="sub">{t("pages.conversation.whatDoYouSay")}</p>
                     {d.choices.map((c) => (
                       <button key={c.id} className="option" onClick={() => pickChoice(c)}>
                         {c.label}
@@ -155,7 +159,7 @@ export default function Conversation() {
                         className="btn"
                         onClick={() => advanceTo(chosen.next_turn ?? d.turn_index + 1)}
                       >
-                        Continue
+                        {t("common.continue")}
                       </button>
                     </div>
                   </>
@@ -169,20 +173,20 @@ export default function Conversation() {
                       <textarea
                         className="input"
                         rows={2}
-                        placeholder="Tap the mic and speak, or type what you would say in Chinese…"
+                        placeholder={t("pages.conversation.micPlaceholder")}
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                       />
                       <div className="row" style={{ marginTop: 8 }}>
                         <button className="btn primary" onClick={submit} disabled={sent || !text.trim()}>
-                          {sent ? "Checking…" : "Speak"}
+                          {sent ? t("pages.conversation.checking") : t("pages.conversation.speak")}
                         </button>
                         <button className="btn ghost" onClick={() => advanceTo(d.turn_index + 1)}>
-                          Skip for now
+                          {t("pages.conversation.skipForNow")}
                         </button>
                           {d.expected_keywords?.length > 0 && (
                             <span className="muted" style={{ fontSize: 11 }}>
-                              hint: {d.expected_keywords.join(" · ")}
+                              {t("pages.conversation.hint")}: {d.expected_keywords.join(" · ")}
                             </span>
                           )}
                       </div>
@@ -193,7 +197,7 @@ export default function Conversation() {
                 {!hasChoices && !d.requires_voice && isCurrent && (
                   <div className="microw">
                     <button className="btn primary" onClick={() => advanceTo(d.turn_index + 1)}>
-                      Continue
+                      {t("common.continue")}
                     </button>
                   </div>
                 )}
@@ -217,7 +221,7 @@ export default function Conversation() {
                         </div>
                       )}
                       <div className="row center" style={{ justifyContent: "center" }}>
-                        <button className="btn" onClick={() => advanceTo(d.turn_index + 1)}>Continue</button>
+                        <button className="btn" onClick={() => advanceTo(d.turn_index + 1)}>{t("common.continue")}</button>
                       </div>
                     </>
                   )

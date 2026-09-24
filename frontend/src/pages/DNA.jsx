@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -17,30 +18,28 @@ const CATS = {
 };
 
 export default function DNA() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const focus = params.get("focus");
   const { data: dna, error } = useApi("/dna");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!dna) return <Layout><Loading>Sequencing your DNA…</Loading></Layout>;
+  if (!dna) return <Layout><Loading>{t("pages.dna.loading")}</Loading></Layout>;
 
   return (
     <Layout>
-      <h1 className="h1">Your Learning DNA</h1>
-      <p className="sub">
-        Nine strands measured from every interaction. Build the weak ones —
-        daily quests and companions will adapt.
-      </p>
+      <h1 className="h1">{t("pages.dna.title")}</h1>
+      <p className="sub">{t("pages.dna.subtitle")}</p>
 
       <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
         <div className="h1" style={{ fontSize: 42 }}>{dna.overall.toFixed(1)}</div>
-        <p className="sub">overall</p>
+        <p className="sub">{t("pages.dna.overall")}</p>
         <div className="col" style={{ maxWidth: 520, margin: "0 auto" }}>
           <div className="hbar">
-            <span className="badge warn">Weak · {dna.weak_areas.join(", ") || "none"}</span>
+            <span className="badge warn">{t("pages.dna.weak")} · {dna.weak_areas.join(", ") || t("pages.dna.none")}</span>
           </div>
           <div className="hbar">
-            <span className="badge good">Strong · {dna.strong_areas.join(", ") || "none"}</span>
+            <span className="badge good">{t("pages.dna.strong")} · {dna.strong_areas.join(", ") || t("pages.dna.none")}</span>
           </div>
         </div>
       </div>

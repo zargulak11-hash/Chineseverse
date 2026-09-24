@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -5,20 +6,23 @@ import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Roadmap() {
+  const { t } = useTranslation();
   const { data: r, error } = useApi("/hsk/roadmap");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!r) return <Layout><Loading>Loading roadmap…</Loading></Layout>;
+  if (!r) return <Layout><Loading>{t("pages.roadmap.loading")}</Loading></Layout>;
 
   const stateIcon = (s) =>
     s === "locked" ? "lock" : s === "current" ? "star" : "check";
+  const stateLabel = (s) =>
+    s === "locked" ? t("pages.roadmap.locked") : s === "current" ? t("pages.roadmap.current") : t("pages.roadmap.unlocked");
 
   return (
     <Layout>
-      <h1 className="h1">HSK roadmap</h1>
+      <h1 className="h1">{t("pages.roadmap.title")}</h1>
       <p className="sub">{r.note}</p>
       <div className="hbar" style={{ marginTop: 14 }}>
-        <span className="muted">Overall</span>
+        <span className="muted">{t("pages.roadmap.overall")}</span>
         <Bar value={r.overall_mastery} />
         <span>{r.overall_mastery.toFixed(0)}%</span>
       </div>
@@ -34,29 +38,29 @@ export default function Roadmap() {
                 </span>
                 <h2 className="h2">HSK {lvl.level}</h2>
                 <span className={`badge ${lvl.status === "current" ? "accent" : ""}`}>
-                  {lvl.status}
+                  {stateLabel(lvl.status)}
                 </span>
               </div>
               <span className="muted">
-                {lvl.vocab_mastered}/{lvl.vocab_total} words
+                {lvl.vocab_mastered}/{lvl.vocab_total} {t("pages.roadmap.words")}
               </span>
             </div>
             <div className="hbar">
               <span className="muted" style={{ width: 90, fontSize: 12 }}>
-                Mastery
+                {t("pages.roadmap.mastery")}
               </span>
               <Bar value={lvl.mastery} max={100} />
               <span style={{ width: 40, textAlign: "right" }}>{lvl.mastery.toFixed(0)}%</span>
             </div>
             <div className="hbar" style={{ marginTop: 6 }}>
               <span className="muted" style={{ width: 90, fontSize: 12 }}>
-                Lessons
+                {t("pages.roadmap.lessons")}
               </span>
               <Bar value={lvl.lessons_completed} max={10} alt />
               <span style={{ width: 40, textAlign: "right" }}>{lvl.lessons_completed}</span>
             </div>
             {lvl.ready_for_next ? (
-              <BadgeOK>{lvl.level + 1 <= 6 ? "Ready for HSK " + (lvl.level + 1) : "Max level reached"}</BadgeOK>
+              <BadgeOK>{lvl.level + 1 <= 6 ? t("pages.roadmap.readyForNext", { level: lvl.level + 1 }) : t("pages.roadmap.maxLevel")}</BadgeOK>
             ) : (
               lvl.reason && <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{lvl.reason}</p>
             )}
@@ -64,7 +68,7 @@ export default function Roadmap() {
         ))}
       </div>
       <Link to="/vocabulary">
-        <button className="btn primary" style={{ marginTop: 18 }}>Practice vocabulary</button>
+        <button className="btn primary" style={{ marginTop: 18 }}>{t("pages.roadmap.practiceVocab")}</button>
       </Link>
     </Layout>
   );

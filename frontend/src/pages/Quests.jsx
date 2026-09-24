@@ -1,5 +1,6 @@
 import { animate, stagger } from "animejs";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import { prefersReducedMotion } from "../anime.js";
 import Icon from "../components/Icon.jsx";
@@ -8,6 +9,7 @@ import { Bar, Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Quests() {
+  const { t } = useTranslation();
   const { data, setData, error } = useApi("/quests/today");
   const quests = data || [];
   const [claimError, setClaimError] = useState("");
@@ -47,10 +49,8 @@ export default function Quests() {
 
   return (
     <Layout>
-      <h1 className="h1">Daily quests</h1>
-      <p className="sub">
-        Generated from your DNA every day. Complete them to feed your companion.
-      </p>
+      <h1 className="h1">{t("pages.quests.title")}</h1>
+      <p className="sub">{t("pages.quests.subtitle")}</p>
       {claimError && <p className="formerr">{claimError}</p>}
 
       <div className="col" style={{ marginTop: 18 }} ref={listRef} data-self-animate="true">
@@ -68,7 +68,7 @@ export default function Quests() {
                 </div>
               </div>
               <div className="row">
-                <span className="ilb">+{q.reward_xp} xp</span>
+                <span className="ilb">+{q.reward_xp} {t("common.xp")}</span>
                 <span className="ilb">
                   <Icon name="coin" size={11} style={{ verticalAlign: -1, marginRight: 3 }} />
                   {q.reward_coins}
@@ -83,18 +83,18 @@ export default function Quests() {
             </div>
             {q.completed && !q.claimed && (
               <button className="btn primary small" style={{ marginTop: 12 }} onClick={() => claim(q)}>
-                Claim reward
+                {t("pages.quests.claimReward")}
               </button>
             )}
             {q.claimed && (
               <span className="badge good" style={{ marginTop: 12 }}>
-                <Icon name="check" size={10} /> Claimed
+                <Icon name="check" size={10} /> {t("pages.quests.claimed")}
               </span>
             )}
           </div>
         ))}
       </div>
-      {quests.length === 0 && <Empty>Nothing today. Take a walk around the world.</Empty>}
+      {quests.length === 0 && <Empty>{t("pages.quests.empty")}</Empty>}
     </Layout>
   );
 }

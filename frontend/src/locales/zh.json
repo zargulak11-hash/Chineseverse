@@ -16,7 +16,9 @@
     "today": "今天",
     "thisWeek": "本周",
     "lastWeek": "上周",
-    "loadingWorld": "正在加载你的世界…"
+    "loadingWorld": "正在加载你的世界…",
+    "xp": "经验",
+    "coins": "金币"
   },
   "nav": {
     "groupMain": "主要",
@@ -141,30 +143,110 @@
     "reviewMistakes": "复习错题"
   },
   "pages": {
-    "lessons": { "title": "课程", "subtitle": "结构化的语法课程，支撑起每一次对话。", "empty": "暂无课程。" },
-    "vocabulary": { "title": "词汇", "subtitle": "点击卡片自我复习。复习会为你的DNA和每日任务提供数据。" },
-    "dna": { "title": "学习DNA", "subtitle": "九项实时技能，追踪你所做的一切。" },
-    "roadmap": { "title": "HSK 路线图" },
-    "quests": { "title": "任务", "subtitle": "今天的小目标 — 完成后即可领取奖励。" },
-    "missions": { "title": "使命" },
-    "duels": { "title": "对战", "subtitle": "在你最薄弱的方面挑战好友或AI伙伴。" },
-    "duelBattle": { "victory": "胜利", "draw": "平局！", "lost": "{{name}} 获胜", "backToDuels": "返回对战", "waitingFor": "等待 {{name}}", "practiceMode": "练习模式 · 对战AI" },
-    "achievements": { "title": "成就", "earned": "已获得 {{unlocked}}/{{total}}" },
-    "companion": { "title": "伙伴" },
-    "petTeacher": { "title": "教小伙伴模式" },
-    "world": { "title": "中文世界", "subtitle": "一座活生生的城市。走进一个地方，认识一个NPC，进行真实的对话。一切都会随着HSK进度解锁。", "tapToEnter": "点击地点即可进入" },
-    "mistakes": { "title": "需要加强", "subtitle": "你反复出现的错误，会按间隔复习计划重新出现。" },
-    "progress": { "title": "你的进度" },
-    "profile": { "title": "个人资料", "changeCompanion": "更换伙伴", "editProfile": "编辑资料", "streak": "连续天数", "rewardsEarned": "已获奖励", "followers": "粉丝", "following": "关注中", "follow": "关注", "unfollow": "取消关注" },
-    "animalSelect": { "title": "选择你的伙伴", "subtitle": "每一个都有自己独特的教学风格，{{name}}，你之后也可以更换。" },
+    "lessons": {
+      "title": "课程",
+      "subtitle": "结构化的语法课程，支撑起每一次对话。",
+      "empty": "暂无课程。"
+    },
+    "vocabulary": {
+      "title": "词汇",
+      "subtitle": "点击卡片进行自我复习。复习会影响你的DNA和每日任务。",
+      "dueForReview": "{{count}}个词语待复习——已置顶显示。",
+      "due": "待复习",
+      "empty": "该级别暂无词语。"
+    },
+    "dna": {
+      "title": "学习DNA",
+      "subtitle": "九项实时技能，追踪你所做的一切。"
+    },
+    "roadmap": {
+      "title": "HSK 路线图"
+    },
+    "quests": {
+      "title": "每日任务",
+      "subtitle": "每天根据你的DNA生成。完成它们来喂养你的伙伴。",
+      "claimReward": "领取奖励",
+      "claimed": "已领取",
+      "empty": "今天没有任务。去世界中逛逛吧。"
+    },
+    "missions": {
+      "title": "使命",
+      "loading": "正在收集任务…",
+      "subtitle": "遍布世界的真实目标——口语、听力、案件、对决等等。进度会在你游戏过程中自动更新；完成的瞬间即可获得奖励。",
+      "accept": "接受任务",
+      "completed": "已完成",
+      "empty": "暂无任务。"
+    },
+    "duels": {
+      "title": "对战",
+      "subtitle": "在你最薄弱的方面挑战好友或AI伙伴。"
+    },
+    "duelBattle": {
+      "victory": "胜利",
+      "draw": "平局！",
+      "lost": "{{name}} 获胜",
+      "backToDuels": "返回对战",
+      "waitingFor": "等待 {{name}}",
+      "practiceMode": "练习模式 · 对战AI"
+    },
+    "achievements": {
+      "title": "成就",
+      "earned": "已获得 {{unlocked}}/{{total}}"
+    },
+    "companion": {
+      "title": "伙伴"
+    },
+    "petTeacher": {
+      "title": "教小伙伴模式"
+    },
+    "world": {
+      "title": "中文世界",
+      "subtitle": "一座活生生的城市。走进一个地方，认识一个NPC，进行真实的对话。一切都会随着HSK进度解锁。",
+      "tapToEnter": "点击地点即可进入"
+    },
+    "mistakes": {
+      "title": "需要加强",
+      "subtitle": "你反复出现的错误，会按间隔复习计划重新出现。"
+    },
+    "progress": {
+      "title": "你的进度"
+    },
+    "profile": {
+      "title": "个人资料",
+      "changeCompanion": "更换伙伴",
+      "editProfile": "编辑资料",
+      "streak": "连续天数",
+      "rewardsEarned": "已获奖励",
+      "followers": "粉丝",
+      "following": "关注中",
+      "follow": "关注",
+      "unfollow": "取消关注"
+    },
+    "animalSelect": {
+      "title": "选择你的伙伴",
+      "subtitle": "每一个都有自己独特的教学风格，{{name}}，你之后也可以更换。"
+    },
     "onboarding": {
       "loading": "正在准备…",
       "saving": "保存中…",
       "motivationTitle": "你为什么学习中文？",
       "motivationSubtitle": "这能帮助我们为你定制学习内容。",
-      "motivation": { "travel": "旅行", "work": "工作或商务", "culture": "文化或个人兴趣", "exam": "备考HSK", "family": "家庭或文化传承", "other": "其他" },
+      "motivation": {
+        "travel": "旅行",
+        "work": "工作或商务",
+        "culture": "文化或个人兴趣",
+        "exam": "备考HSK",
+        "family": "家庭或文化传承",
+        "other": "其他"
+      },
       "discoveryTitle": "你是怎么找到ChineseVerse的？",
-      "source": { "friend": "朋友介绍", "social": "社交媒体", "school": "SoftClub / 学校", "search": "搜索引擎", "other": "其他" },
+      "source": {
+        "friend": "朋友介绍",
+        "social": "社交媒体",
+        "school": "SoftClub / 学校",
+        "search": "搜索引擎",
+        "other": "其他"
+      },
       "otherPlaceholder": "请告诉我们更多…",
       "next": "下一步",
       "testIntroTitle": "快速水平测试",
@@ -178,6 +260,59 @@
       "resultScore": "水平测试中答对{{correct}}/{{total}}题",
       "continueToDashboard": "前往仪表盘"
     },
-    "assistant": { "title": "学习助手", "subtitle": "询问语法、你的学习进度，或接下来该学什么。", "placeholder": "向助手询问任何关于中文学习的问题…", "send": "发送", "thinking": "思考中…", "scopeHint": "仅回答关于 ChineseVerse 和中文学习的问题。" }
+    "assistant": {
+      "title": "学习助手",
+      "subtitle": "询问语法、你的学习进度，或接下来该学什么。",
+      "placeholder": "向助手询问任何关于中文学习的问题…",
+      "send": "发送",
+      "thinking": "思考中…",
+      "scopeHint": "仅回答关于 ChineseVerse 和中文学习的问题。"
+    },
+    "lessonDetail": {
+      "allLessons": "所有课程",
+      "saved": "已保存——DNA已更新。",
+      "markComplete": "标记为已完成",
+      "keepPracticing": "继续练习",
+      "tryInWorld": "在世界中尝试"
+    },
+    "locationDetail": {
+      "entering": "正在进入…",
+      "worldMap": "世界地图",
+      "almostThere": "就快到了——继续练习即可解锁此地。",
+      "stillLocked": "此地尚未解锁。继续升级才能到达这里。",
+      "peopleHere": "这里的人物",
+      "conversations": "对话",
+      "solveCase": "破解案件",
+      "talk": "对话",
+      "usesVoice": "此对话需要使用语音。"
+    },
+    "conversation": {
+      "entering": "正在进入对话…",
+      "leaveCase": "离开案件",
+      "leaveConversation": "离开对话",
+      "completed": "你完成了整段对话，这会计入你的DNA。",
+      "backToWorld": "返回世界",
+      "whatDoYouSay": "你会怎么说？",
+      "micPlaceholder": "点击麦克风说话，或输入你想说的中文…",
+      "checking": "检查中…",
+      "speak": "开口说",
+      "skipForNow": "暂时跳过",
+      "hint": "提示"
+    },
+    "caseSolve": {
+      "opening": "正在打开卷宗…",
+      "caseFile": "案件档案",
+      "clues": "线索",
+      "contradiction": "矛盾之处",
+      "witnessStatements": "证人陈述",
+      "noStatements": "暂无记录的陈述。",
+      "yourVerdict": "你的裁定",
+      "verdictPrompt": "谁该负责，为什么？请用中文写出你的答案。",
+      "checking": "检查中…",
+      "submitVerdict": "提交裁定",
+      "caseSolved": "案件已破解",
+      "notQuiteRight": "还不太对",
+      "hint": "提示"
+    }
   }
 }
