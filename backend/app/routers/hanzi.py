@@ -1,0 +1,159 @@
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from app import models, schemas
+from app.database import get_db
+from app.deps import get_current_user, get_locale
+from app.services.activity import log_activity
+from app.services.dna import bump_skill
+from app.services.hsk_band import resolve_level_filter
+from app.services.localization import load_translations, tr
+from app.services.gamification import (
+    check_achievements,
+    ensure_user_skills,
+    memory_multiplier,
+    progress_missions,
+    progress_quests,
+    record_mistake,
+    reinforce_mistake,
+)
+
+router = APIRouter(prefix="/api/hanzi", tags=["hanzi"])
+
+
+class ReviewPayload(BaseModel):
+    correct: bool
+    delta: float = Field(default=10.0, ge=0, le=100)
+
+
+class ReviewResponse(BaseModel):
+    hanzi: schemas.HanziWithStatus
+    mastery: float
+    status: str
+
+
+@router.get("", response_model=list[schemas.HanziWithStatus])
+def list_hanzi(
+    hsk_level: int | None = None,
+    handwriting_only: bool = False,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Recognition-tracked Hanzi list. `handwriting_only` filters to
+    characters the real HSK 3.0 syllabus actually requires handwriting for --
+    it never implies a writing/tracing exercise exists yet (see Hanzi model)."""
+    ensure_user_skills(db, user)
+    query = db.query(models.Hanzi)
+    if hsk_level is not None:
+        level_id, id_subset = resolve_level_filter(db, models.Hanzi, models.Hanzi.hsk_level_id, hsk_level)
+        query = query.filter(models.Hanzi.hsk_level_id == (level_id or 0))
+        if id_subset is not None:
+            query = query.filter(models.Hanzi.id.in_(id_subset or [0]))
+    if handwriting_only:
+        query = query.filter(models.Hanzi.handwriting_tier.isnot(None))
+    items = query.order_by(models.Hanzi.hsk_level_id, models.Hanzi.order_index, models.Hanzi.id).all()
+
+    # Only `meaning` is localized -- the character and pinyin stay as-is.
+    translations = load_translations(db, "hanzi", [str(h.id) for h in items], locale)
+    user_map = {r.hanzi_id: r for r in user.user_hanzi}
+    now = datetime.utcnow()
+    out = []
+    for h in items:
+        item = schemas.HanziWithStatus.model_validate(h)
+        item.meaning = tr(translations, h.id, "meaning", item.meaning)
+        rec = user_map.get(h.id)
+        item.status = rec.status if rec else "new"
+        item.mastery = rec.mastery if rec else 0.0
+        item.due_for_review = bool(rec and rec.next_review_at and rec.next_review_at <= now)
+        out.append(item)
+    out.sort(key=lambda h: (not h.due_for_review, h.hsk_level_id, h.id))
+    return out
+
+
+@router.post("/{hanzi_id}/review", response_model=ReviewResponse)
+def review_hanzi(
+    hanzi_id: int,
+    payload: ReviewPayload,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Recognition review only (e.g. 'do you know this character's meaning /
+    pronunciation'). This never marks handwriting as practiced or mastered --
+    there is no stroke-tracing exercise wired up yet to earn that claim."""
+    h = db.get(models.Hanzi, hanzi_id)
+    if h is None:
+        raise HTTPException(status_code=404, detail="Hanzi not found")
+
+    rec = (
+        db.query(models.UserHanzi)
+        .filter_by(user_id=user.id, hanzi_id=hanzi_id)
+        .first()
+    )
+    if rec is None:
+        rec = models.UserHanzi(
+            user_id=user.id, hanzi_id=hanzi_id,
+            times_seen=0, times_missed=0, mastery=0.0, status="new",
+        )
+        db.add(rec)
+
+    rec.times_seen += 1
+    now = datetime.utcnow()
+    if payload.correct:
+        rec.mastery = min(100.0, rec.mastery + payload.delta)
+        multiplier = memory_multiplier(user)
+        prev_interval = (
+            rec.next_review_at - rec.last_reviewed_at
+            if rec.next_review_at and rec.last_reviewed_at
+            else None
+        )
+        prev_base = prev_interval / multiplier if prev_interval and prev_interval.total_seconds() > 0 else None
+        base = prev_base * 2 if prev_base else timedelta(days=1)
+        interval = min(timedelta(days=30), base)
+        rec.next_review_at = now + interval * multiplier
+    else:
+        rec.times_missed += 1
+        rec.mastery = max(0.0, rec.mastery - payload.delta * 0.5)
+        rec.next_review_at = now + timedelta(hours=6)
+
+    if rec.mastery >= 85:
+        rec.status = "mastered"
+    elif rec.mastery >= 55:
+        rec.status = "reviewing"
+    else:
+        rec.status = "learning"
+
+    rec.last_reviewed_at = now
+
+    ensure_user_skills(db, user)
+    # Character recognition is a reading/vocabulary-adjacent skill; there is
+    # no dedicated "hanzi" DNA skill (see Skill model), so this feeds
+    # "reading" -- the closest existing skill to character recognition,
+    # same convention as any other reading-comprehension activity.
+    bump_skill(user, "reading", 2.0 if payload.correct else -0.3)
+
+    if payload.correct:
+        progress_quests(db, user, "hanzi", amount=1)
+        progress_missions(db, user, "hanzi")
+        reinforce_mistake(db, user, "hanzi", h.character)
+    else:
+        record_mistake(
+            db, user, "hanzi", h.character,
+            question_text=h.meaning, correct_answer=h.pinyin,
+        )
+
+    log_activity(db, user, "hanzi_review")
+    db.commit()
+    db.refresh(rec)
+    check_achievements(db, user)
+
+    h_out = schemas.HanziWithStatus.model_validate(h)
+    translations = load_translations(db, "hanzi", [str(h.id)], locale)
+    h_out.meaning = tr(translations, h.id, "meaning", h_out.meaning)
+    h_out.status = rec.status
+    h_out.mastery = rec.mastery
+    return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status)

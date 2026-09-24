@@ -38,7 +38,9 @@
     "voiceCompanion": "Daily Voice",
     "achievements": "Achievements",
     "assistant": "Assistant",
-    "hskLearner": "HSK {{level}} learner"
+    "hskLearner": "HSK {{level}} learner",
+    "hanzi": "Hanzi",
+    "grammar": "Grammar"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -141,7 +143,8 @@
     "onARoll": "You're on a roll — keep talking.",
     "viewAllMissions": "View all missions",
     "needsWork": "Needs work",
-    "reviewMistakes": "Review mistakes"
+    "reviewMistakes": "Review mistakes",
+    "noQuestsToday": "No quests today — go explore."
   },
   "pages": {
     "lessons": {
@@ -157,11 +160,36 @@
       "empty": "No words at this level yet."
     },
     "dna": {
-      "title": "Learning DNA",
-      "subtitle": "Nine live skills, tracked from everything you do."
+      "title": "Your Learning DNA",
+      "subtitle": "Nine strands measured from every interaction. Build the weak ones — daily quests and companions will adapt.",
+      "loading": "Sequencing your DNA…",
+      "overall": "overall",
+      "weak": "Weak",
+      "strong": "Strong",
+      "none": "none",
+      "status": {
+        "weak": "weak",
+        "developing": "developing",
+        "strong": "strong"
+      }
     },
     "roadmap": {
-      "title": "HSK Roadmap"
+      "title": "HSK roadmap",
+      "loading": "Loading roadmap…",
+      "overall": "Overall",
+      "locked": "locked",
+      "current": "current",
+      "unlocked": "unlocked",
+      "words": "words",
+      "mastery": "Mastery",
+      "lessons": "Lessons",
+      "readyForNext": "Ready for HSK {{level}}",
+      "maxLevel": "Max level reached",
+      "practiceVocab": "Practice vocabulary",
+      "hanzi": "Hanzi",
+      "grammar": "Grammar",
+      "advancedStage": "shared advanced pool",
+      "advancedStageHint": "HSK 7/8/9 share one real advanced vocabulary/Hanzi/grammar pool, shown here as three progress stages."
     },
     "quests": {
       "title": "Daily quests",
@@ -179,8 +207,35 @@
       "empty": "No missions yet."
     },
     "duels": {
-      "title": "Duels",
-      "subtitle": "Challenge a friend or the Buddy AI on your weakest strand."
+      "title": "DNA duels",
+      "subtitle": "Rapid-fire word battles. The questions are picked from your weakest strand.",
+      "newDuel": "New duel",
+      "challengeSomeone": "Challenge someone",
+      "opponent": "Opponent",
+      "opponentPlaceholder": "Buddy or a friend's username",
+      "challengeFocus": "Challenge focus",
+      "challengeType": {
+        "auto": "Auto — my weakest strand",
+        "vocabulary": "Vocabulary",
+        "tones": "Tones",
+        "characters": "Characters",
+        "memory": "Memory",
+        "listening": "Listening",
+        "reactionSpeed": "Reaction speed",
+        "speaking": "Speaking"
+      },
+      "creating": "Creating…",
+      "start": "Start",
+      "vs": "VS",
+      "you": "You",
+      "opponentWon": "Opponent won",
+      "youWon": "You won 🎉",
+      "draw": "Draw",
+      "waitingFor": "Waiting for {{opponent}}",
+      "practiceVsAi": "Practice vs AI · in progress",
+      "inProgress": "In progress",
+      "open": "Open",
+      "empty": "No duels yet. Challenge the Buddy to a first battle."
     },
     "duelBattle": {
       "victory": "Victory",
@@ -192,25 +247,100 @@
     },
     "achievements": {
       "title": "Achievements",
-      "earned": "{{unlocked}}/{{total}} earned"
+      "earned": "{{unlocked}}/{{total}} earned",
+      "unlocked": "Unlocked",
+      "hidden": "hidden",
+      "category": {
+        "world": "world",
+        "habit": "habit",
+        "hsk": "HSK",
+        "animal": "companion",
+        "voice": "voice",
+        "general": "general",
+        "vocabulary": "vocabulary",
+        "social": "social"
+      }
     },
     "companion": {
-      "title": "Companion"
+      "title": "Your companion",
+      "waking": "Waking your companion…",
+      "needCompanion": "You need a companion first.",
+      "chooseOne": "Choose one",
+      "subtitle": "Talk to {{name}}. They react to how you speak their language.",
+      "yourRhythm": "Your rhythm",
+      "streak": "Streak",
+      "catchMistake": "{{name}} wants you to catch its mistake",
+      "freeChat": "Free chat",
+      "sayInChinese": "Say something in Chinese — try one of these:",
+      "send": "Send",
+      "recentSessions": "Recent voice sessions",
+      "noSessions": "No sessions yet."
     },
     "petTeacher": {
-      "title": "Pet Teacher Mode"
+      "title": "Pet Teacher Mode",
+      "thinking": "Your companion is thinking of a mistake…",
+      "subtitle": "{{name}} sometimes gets Chinese wrong on purpose. Catch the mistake, fix it, and explain the rule — that's how it actually learns.",
+      "yourCompanion": "Your companion",
+      "yourCorrection": "Your correction",
+      "correctionPlaceholder": "Rewrite the sentence correctly…",
+      "explainRule": "Explain the rule",
+      "explanationPlaceholder": "Why was it wrong? Tap the mic to speak your answer…",
+      "checking": "Checking…",
+      "teachCompanion": "Teach your companion",
+      "correctSentence": "Correct sentence",
+      "teachAnother": "Teach another rule",
+      "tryAgain": "Try again",
+      "rulesTaught": "Rules taught so far"
     },
     "world": {
       "title": "Chinese World",
       "subtitle": "A living city. Walk into a place, meet an NPC, and hold a real conversation. Everything unlocks with HSK progress.",
-      "tapToEnter": "Tap a location to enter it"
+      "tapToEnter": "Tap a location to enter it",
+      "drawingMap": "Drawing the map…",
+      "locked": "Locked",
+      "almostThere": "Almost there",
+      "open": "Open",
+      "unlocksHsk": "Unlocks HSK {{level}}",
+      "openClickToEnter": "Open — click to enter"
     },
     "mistakes": {
-      "title": "Needs work",
-      "subtitle": "Your recurring mistakes, brought back on a spaced schedule."
+      "title": "Mistakes lab",
+      "subtitle": "Every slip is data. Mastery is earned by getting it right again through voice, vocab review, a case, or a duel — not by a click here.",
+      "stillWorking": "Still working on",
+      "youSaid": "You said",
+      "correct": "correct",
+      "dueNow": "due now",
+      "practiceThis": "Practice this",
+      "mastered": "Mastered",
+      "masteredBadge": "mastered",
+      "empty": "No mistakes recorded yet. Go make some."
     },
     "progress": {
-      "title": "Your progress"
+      "title": "Your progress",
+      "loading": "Crunching your activity…",
+      "subtitle": "Real activity, tracked as you use the app — not estimates.",
+      "total": "total",
+      "noActivity": "No tracked activity yet.",
+      "learningRhythm": "Learning Rhythm",
+      "yourRealActivity": "Your real activity",
+      "totalActiveTime": "total active time",
+      "actions": "{{count}} action(s)",
+      "record": "record",
+      "timeBySection": "Time by Section",
+      "activityMap": "Activity Map",
+      "actionsThisYear": "{{count}} actions this year",
+      "currentStreakDays": "{{count}}-day current streak",
+      "bestStreakDays": "{{count}}-day best streak",
+      "section": {
+        "world": "World & Conversations",
+        "vocabulary": "Vocabulary",
+        "lessons": "Lessons",
+        "duels": "Duels",
+        "quests": "Quests",
+        "missions": "Missions",
+        "pet_teacher": "Pet Teacher",
+        "other": "Other"
+      }
     },
     "profile": {
       "title": "Profile",
@@ -218,10 +348,27 @@
       "editProfile": "Edit profile",
       "streak": "Streak",
       "rewardsEarned": "Rewards earned",
-      "followers": "Followers",
-      "following": "Following",
+      "followers": "followers",
+      "following": "following",
       "follow": "Follow",
-      "unfollow": "Unfollow"
+      "unfollow": "Unfollow",
+      "joined": "joined",
+      "findPeople": "Find people",
+      "nativeLanguage": "Native language",
+      "goal": "Goal",
+      "dailyGoal": "Daily goal",
+      "minPerDay": "min/day",
+      "levelTest": "Level test",
+      "pts": "pts",
+      "notTaken": "not taken",
+      "bio": "Bio",
+      "current": "current",
+      "longest": "longest",
+      "activeDays": "active days",
+      "lastActive": "Last active",
+      "totalXp": "total xp",
+      "community": "Community",
+      "findPeopleToFollow": "Find people to follow"
     },
     "animalSelect": {
       "title": "Choose your companion",
@@ -314,6 +461,34 @@
       "caseSolved": "CASE SOLVED",
       "notQuiteRight": "Not quite right",
       "hint": "Hint"
+    },
+    "community": {
+      "title": "Find people",
+      "subtitle": "Search for other learners by username and follow the ones you want to keep up with.",
+      "searchPlaceholder": "Search by username…",
+      "noMatch": "No learners match \"{{query}}\".",
+      "follow": "Follow",
+      "unfollow": "Unfollow",
+      "following": "Following"
+    },
+    "publicProfile": {
+      "nobodyHere": "Nobody here yet."
+    },
+    "grammar": {
+      "title": "Grammar",
+      "subtitle": "The real HSK grammar points behind every sentence.",
+      "gotIt": "Got it",
+      "stillLearning": "Still learning",
+      "showExamples": "Show examples",
+      "hideExamples": "Hide examples",
+      "empty": "No grammar points at this level yet."
+    },
+    "hanzi": {
+      "title": "Hanzi",
+      "subtitle": "Tap a character to self-review its reading and meaning.",
+      "handwriting": "writing",
+      "strokes": "{{count}} strokes",
+      "empty": "No characters at this level yet."
     }
   }
 }

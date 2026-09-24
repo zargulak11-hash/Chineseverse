@@ -240,10 +240,18 @@ class HSKLevelProgress(BaseModel):
     status: str  # locked | current | unlocked
     vocab_mastered: int
     vocab_total: int
+    hanzi_mastered: int = 0
+    hanzi_total: int = 0
+    grammar_mastered: int = 0
+    grammar_total: int = 0
     mastery: float
     lessons_completed: int
     ready_for_next: bool
     reason: Optional[str] = None
+    # True for the 3 synthetic HSK 7/8/9 rows: they subdivide ONE shared
+    # advanced pool by mastery thirds rather than being independent official
+    # levels with their own vocab/hanzi/grammar lists (see HSKLevel.is_advanced_band).
+    is_advanced_stage: bool = False
 
 
 class HSKRoadmapResponse(BaseModel):
@@ -371,8 +379,37 @@ class GrammarTopicResponse(BaseModel):
     pattern: Optional[str]
     explanation: Optional[str]
     examples: Optional[str]
+    category: Optional[str] = None
+    difficulty: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GrammarTopicWithStatus(GrammarTopicResponse):
+    status: Optional[str] = None
+    mastery: Optional[float] = None
+    due_for_review: bool = False
+
+
+# --------------------------------------------------------------------------- Hanzi
+class HanziResponse(BaseModel):
+    id: int
+    hsk_level_id: int
+    character: str
+    pinyin: Optional[str]
+    meaning: Optional[str]
+    radical: Optional[str]
+    decomposition: Optional[str]
+    stroke_count: Optional[int]
+    handwriting_tier: Optional[str]
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class HanziWithStatus(HanziResponse):
+    status: Optional[str] = None
+    mastery: Optional[float] = None
+    due_for_review: bool = False
 
 
 # --------------------------------------------------------------------------- Pet Teacher

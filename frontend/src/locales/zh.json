@@ -38,7 +38,9 @@
     "voiceCompanion": "每日语音",
     "achievements": "成就",
     "assistant": "助手",
-    "hskLearner": "HSK {{level}} 学习者"
+    "hskLearner": "HSK {{level}} 学习者",
+    "hanzi": "汉字",
+    "grammar": "语法"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -140,7 +142,8 @@
     "onARoll": "状态正好 — 继续多说。",
     "viewAllMissions": "查看全部使命",
     "needsWork": "需要加强",
-    "reviewMistakes": "复习错题"
+    "reviewMistakes": "复习错题",
+    "noQuestsToday": "今天没有任务——去探索一下吧。"
   },
   "pages": {
     "lessons": {
@@ -156,11 +159,36 @@
       "empty": "该级别暂无词语。"
     },
     "dna": {
-      "title": "学习DNA",
-      "subtitle": "九项实时技能，追踪你所做的一切。"
+      "title": "你的学习DNA",
+      "subtitle": "根据每次互动衡量的九项指标。加强薄弱项——每日任务和伙伴会随之调整。",
+      "loading": "正在解析你的DNA…",
+      "overall": "总体",
+      "weak": "薄弱",
+      "strong": "强项",
+      "none": "无",
+      "status": {
+        "weak": "薄弱",
+        "developing": "发展中",
+        "strong": "强"
+      }
     },
     "roadmap": {
-      "title": "HSK 路线图"
+      "title": "HSK 计划",
+      "loading": "正在加载计划…",
+      "overall": "总体",
+      "locked": "已锁定",
+      "current": "当前",
+      "unlocked": "已解锁",
+      "words": "词",
+      "mastery": "掌握度",
+      "lessons": "课程",
+      "readyForNext": "已可进入 HSK {{level}}",
+      "maxLevel": "已达最高级别",
+      "practiceVocab": "练习词汇",
+      "hanzi": "汉字",
+      "grammar": "语法",
+      "advancedStage": "共享高级词库",
+      "advancedStageHint": "HSK 7/8/9 共享同一个真实的高级词汇/汉字/语法库，此处显示为三个进度阶段。"
     },
     "quests": {
       "title": "每日任务",
@@ -178,8 +206,35 @@
       "empty": "暂无任务。"
     },
     "duels": {
-      "title": "对战",
-      "subtitle": "在你最薄弱的方面挑战好友或AI伙伴。"
+      "title": "DNA对决",
+      "subtitle": "快节奏的词语对决。题目从你最薄弱的技能中挑选。",
+      "newDuel": "新对决",
+      "challengeSomeone": "挑战某人",
+      "opponent": "对手",
+      "opponentPlaceholder": "Buddy 或好友用户名",
+      "challengeFocus": "挑战重点",
+      "challengeType": {
+        "auto": "自动——我最薄弱的方向",
+        "vocabulary": "词汇",
+        "tones": "声调",
+        "characters": "汉字",
+        "memory": "记忆",
+        "listening": "听力",
+        "reactionSpeed": "反应速度",
+        "speaking": "口语"
+      },
+      "creating": "创建中…",
+      "start": "开始",
+      "vs": "对",
+      "you": "你",
+      "opponentWon": "对手获胜",
+      "youWon": "你赢了🎉",
+      "draw": "平局",
+      "waitingFor": "等待{{opponent}}",
+      "practiceVsAi": "对战AI练习·进行中",
+      "inProgress": "进行中",
+      "open": "打开",
+      "empty": "还没有对决。向Buddy发起你的第一场对决吧。"
     },
     "duelBattle": {
       "victory": "胜利",
@@ -191,36 +246,128 @@
     },
     "achievements": {
       "title": "成就",
-      "earned": "已获得 {{unlocked}}/{{total}}"
+      "earned": "已获得 {{unlocked}}/{{total}}",
+      "unlocked": "已解锁",
+      "hidden": "隐藏",
+      "category": {
+        "world": "世界",
+        "habit": "习惯",
+        "hsk": "HSK",
+        "animal": "伙伴",
+        "voice": "语音",
+        "general": "综合",
+        "vocabulary": "词汇",
+        "social": "社交"
+      }
     },
     "companion": {
-      "title": "伙伴"
+      "title": "你的伙伴",
+      "waking": "正在唤醒你的伙伴…",
+      "needCompanion": "你需要先选择一个伙伴。",
+      "chooseOne": "选择一个",
+      "subtitle": "和{{name}}聊聊吧。它们会对你说它们语言的方式作出反应。",
+      "yourRhythm": "你的节奏",
+      "streak": "连续打卡",
+      "catchMistake": "{{name}}想让你找出它的错误",
+      "freeChat": "自由聊天",
+      "sayInChinese": "用中文说点什么——可以试试这些：",
+      "send": "发送",
+      "recentSessions": "最近的语音记录",
+      "noSessions": "暂无记录。"
     },
     "petTeacher": {
-      "title": "教小伙伴模式"
+      "title": "教宠物模式",
+      "thinking": "你的伙伴正在想一个错误…",
+      "subtitle": "{{name}}有时会故意说错中文。找出错误、纠正它并解释规则——这才是它真正学习的方式。",
+      "yourCompanion": "你的伙伴",
+      "yourCorrection": "你的修正",
+      "correctionPlaceholder": "重新写出正确的句子…",
+      "explainRule": "解释规则",
+      "explanationPlaceholder": "为什么错了？点击麦克风说出你的答案…",
+      "checking": "检查中…",
+      "teachCompanion": "教导你的伙伴",
+      "correctSentence": "正确的句子",
+      "teachAnother": "教另一条规则",
+      "tryAgain": "再试一次",
+      "rulesTaught": "已教授的规则数"
     },
     "world": {
       "title": "中文世界",
       "subtitle": "一座活生生的城市。走进一个地方，认识一个NPC，进行真实的对话。一切都会随着HSK进度解锁。",
-      "tapToEnter": "点击地点即可进入"
+      "tapToEnter": "点击地点即可进入",
+      "drawingMap": "正在绘制地图…",
+      "locked": "已锁定",
+      "almostThere": "就快到了",
+      "open": "已开放",
+      "unlocksHsk": "HSK {{level}} 解锁",
+      "openClickToEnter": "已开放——点击进入"
     },
     "mistakes": {
-      "title": "需要加强",
-      "subtitle": "你反复出现的错误，会按间隔复习计划重新出现。"
+      "title": "错题实验室",
+      "subtitle": "每一次失误都是数据。掌握是通过语音、词汇复习、案件或对决再次答对而获得的——不是靠点这里。",
+      "stillWorking": "仍在攻克",
+      "youSaid": "你说的是",
+      "correct": "正确答案",
+      "dueNow": "现在待复习",
+      "practiceThis": "练习这个",
+      "mastered": "已掌握",
+      "masteredBadge": "已掌握",
+      "empty": "尚未记录任何错误。快去犯几个吧。"
     },
     "progress": {
-      "title": "你的进度"
+      "title": "你的进度",
+      "loading": "正在统计你的活动…",
+      "subtitle": "根据你使用应用的真实活动记录——而非估算。",
+      "total": "总计",
+      "noActivity": "尚无记录的活动。",
+      "learningRhythm": "学习节奏",
+      "yourRealActivity": "你的真实活动",
+      "totalActiveTime": "总活跃时长",
+      "actions": "{{count}}次操作",
+      "record": "纪录",
+      "timeBySection": "各版块用时",
+      "activityMap": "活动地图",
+      "actionsThisYear": "今年{{count}}次操作",
+      "currentStreakDays": "当前连续{{count}}天",
+      "bestStreakDays": "最佳连续{{count}}天",
+      "section": {
+        "world": "世界与对话",
+        "vocabulary": "词汇",
+        "lessons": "课程",
+        "duels": "对决",
+        "quests": "任务",
+        "missions": "使命",
+        "pet_teacher": "教宠物",
+        "other": "其他"
+      }
     },
     "profile": {
       "title": "个人资料",
       "changeCompanion": "更换伙伴",
       "editProfile": "编辑资料",
-      "streak": "连续天数",
+      "streak": "连续打卡",
       "rewardsEarned": "已获奖励",
       "followers": "粉丝",
-      "following": "关注中",
+      "following": "关注",
       "follow": "关注",
-      "unfollow": "取消关注"
+      "unfollow": "取消关注",
+      "joined": "加入于",
+      "findPeople": "寻找好友",
+      "nativeLanguage": "母语",
+      "goal": "目标",
+      "dailyGoal": "每日目标",
+      "minPerDay": "分钟/天",
+      "levelTest": "水平测试",
+      "pts": "分",
+      "notTaken": "未参加",
+      "bio": "个人简介",
+      "current": "当前",
+      "longest": "最长",
+      "activeDays": "活跃天数",
+      "lastActive": "最近活跃",
+      "totalXp": "总经验",
+      "community": "社区",
+      "findPeopleToFollow": "寻找可关注的人"
     },
     "animalSelect": {
       "title": "选择你的伙伴",
@@ -313,6 +460,34 @@
       "caseSolved": "案件已破解",
       "notQuiteRight": "还不太对",
       "hint": "提示"
+    },
+    "community": {
+      "title": "寻找好友",
+      "subtitle": "按用户名搜索其他学习者，并关注你想保持联系的人。",
+      "searchPlaceholder": "按用户名搜索…",
+      "noMatch": "没有与“{{query}}”匹配的学习者。",
+      "follow": "关注",
+      "unfollow": "取消关注",
+      "following": "已关注"
+    },
+    "publicProfile": {
+      "nobodyHere": "这里还没有人。"
+    },
+    "grammar": {
+      "title": "语法",
+      "subtitle": "每个句子背后真正的HSK语法点。",
+      "gotIt": "掌握了",
+      "stillLearning": "还在学",
+      "showExamples": "显示例句",
+      "hideExamples": "隐藏例句",
+      "empty": "此级别暂无语法点。"
+    },
+    "hanzi": {
+      "title": "汉字",
+      "subtitle": "点击汉字自测读音和释义。",
+      "handwriting": "书写",
+      "strokes": "{{count}} 笔画",
+      "empty": "此级别暂无汉字。"
     }
   }
 }

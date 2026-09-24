@@ -28,6 +28,8 @@ const GROUPS = [
     links: [
       ["/lessons", "nav.lessons", "book"],
       ["/vocabulary", "nav.vocabulary", "type"],
+      ["/hanzi", "nav.hanzi", "pen"],
+      ["/grammar", "nav.grammar", "seal"],
       ["/roadmap", "nav.roadmap", "trending"],
       ["/quests", "nav.quests", "target"],
       ["/missions", "nav.missions", "flag"],

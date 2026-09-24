@@ -24,3 +24,9 @@ _verify.db
 .ruff_cache/
 
 backend/static/uploads/
+
+# Raw HSK 3.0 curriculum source dumps (elkmovie/hsk30, drkameleon, makemeahanzi,
+# krmanik grammar) + derived *_import_ready.json staging files -- provenance
+# only, not needed at runtime (the actual data lives in Postgres, imported via
+# backend/scripts/import_hsk30_curriculum.py). ~58MB, deliberately untracked.
+backend/data_sources/

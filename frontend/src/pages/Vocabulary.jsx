@@ -45,8 +45,8 @@ export default function Vocabulary() {
       <h1 className="h1">{t("pages.vocabulary.title")}</h1>
       <p className="sub">{t("pages.vocabulary.subtitle")}</p>
 
-      <div className="row" style={{ marginTop: 14 }}>
-        {[1, 2, 3, 4, 5, 6].map((lv) => (
+      <div className="row" style={{ marginTop: 14, flexWrap: "wrap" }}>
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((lv) => (
           <button
             key={lv}
             className={`btn small${level === lv ? " primary" : ""}`}

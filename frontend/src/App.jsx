@@ -15,6 +15,8 @@ import Roadmap from "./pages/Roadmap.jsx";
 import Lessons from "./pages/Lessons.jsx";
 import LessonDetail from "./pages/LessonDetail.jsx";
 import Vocabulary from "./pages/Vocabulary.jsx";
+import Grammar from "./pages/Grammar.jsx";
+import Hanzi from "./pages/Hanzi.jsx";
 import WorldMap from "./pages/WorldMap.jsx";
 import LocationDetail from "./pages/LocationDetail.jsx";
 import Conversation from "./pages/Conversation.jsx";
@@ -163,6 +165,22 @@ export default function App() {
           element={
             <RequireAuth>
               <Vocabulary />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/grammar"
+          element={
+            <RequireAuth>
+              <Grammar />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/hanzi"
+          element={
+            <RequireAuth>
+              <Hanzi />
             </RequireAuth>
           }
         />

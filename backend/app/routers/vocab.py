@@ -9,6 +9,7 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
+from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.gamification import (
     check_achievements,
@@ -44,8 +45,10 @@ def list_words(
     ensure_user_skills(db, user)
     query = db.query(models.VocabularyWord)
     if hsk_level is not None:
-        query = query.join(models.HSKLevel, models.VocabularyWord.hsk_level_id == models.HSKLevel.id)
-        query = query.filter(models.HSKLevel.level == hsk_level)
+        level_id, id_subset = resolve_level_filter(db, models.VocabularyWord, models.VocabularyWord.hsk_level_id, hsk_level)
+        query = query.filter(models.VocabularyWord.hsk_level_id == (level_id or 0))
+        if id_subset is not None:
+            query = query.filter(models.VocabularyWord.id.in_(id_subset or [0]))
     words = query.order_by(models.VocabularyWord.id).all()
 
     # Only `meanings` is localized -- simplified/traditional/pinyin/example

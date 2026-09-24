@@ -48,6 +48,8 @@ class User(Base):
     )
     user_skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
     user_vocabulary = relationship("UserVocabulary", back_populates="user", cascade="all, delete-orphan")
+    user_hanzi = relationship("UserHanzi", back_populates="user", cascade="all, delete-orphan")
+    user_grammar = relationship("UserGrammar", back_populates="user", cascade="all, delete-orphan")
     voice_attempts = relationship("VoiceAttempt", back_populates="user", cascade="all, delete-orphan")
     learning_mistakes = relationship("LearningMistake", back_populates="user", cascade="all, delete-orphan")
     taught_facts = relationship("UserTaughtFact", back_populates="user", cascade="all, delete-orphan")
@@ -215,10 +217,16 @@ class HSKLevel(Base):
     description = Column(Text, nullable=True)
     total_vocab_target = Column(Integer, default=150)
     mastery_to_unlock_next = Column(Float, default=60.0)
+    # True only for the single "HSK 7-9 (Advanced)" row: per the real HSK 3.0
+    # standard, 7/8/9 share one advanced vocabulary/Hanzi/grammar pool rather
+    # than three independent official lists. The frontend still renders three
+    # progression stages, computed from mastery thirds within this one band.
+    is_advanced_band = Column(Boolean, default=False)
 
     lessons = relationship("Lesson", back_populates="level")
     vocabulary = relationship("VocabularyWord", back_populates="level")
     grammar = relationship("GrammarTopic", back_populates="level")
+    hanzi = relationship("Hanzi", back_populates="level")
 
 
 class Skill(Base):
@@ -325,6 +333,61 @@ class UserVocabulary(Base):
     word = relationship("VocabularyWord", back_populates="user_records")
 
 
+class Hanzi(Base):
+    """A single Chinese character, distinct from VocabularyWord (which may be
+    single- or multi-character words). Recognition data (pinyin/meaning/
+    stroke order) is sourced for every row; `handwriting_tier` is only set
+    when the real HSK 3.0 syllabus requires the character to be handwritten
+    at that stage -- it is never inferred from recognition activity alone."""
+
+    __tablename__ = "hanzi"
+    __table_args__ = (
+        UniqueConstraint("hsk_level_id", "character", name="uq_hanzi_level"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    hsk_level_id = Column(Integer, ForeignKey("hsk_levels.id"), nullable=False, index=True)
+    character = Column(String(4), nullable=False, index=True)
+    pinyin = Column(String(50), nullable=True)
+    meaning = Column(String(300), nullable=True)
+    radical = Column(String(10), nullable=True)
+    decomposition = Column(String(50), nullable=True)
+    stroke_count = Column(Integer, nullable=True)
+    # null = recognition-only; "elementary"/"intermediate"/"advanced" = the
+    # real HSK 3.0 handwriting-syllabus tier this character belongs to.
+    handwriting_tier = Column(String(20), nullable=True)
+    # stroke path/median vector data (for a future tracing UI); recognition
+    # features never depend on this being present.
+    stroke_data = Column(JSON, nullable=True)
+    order_index = Column(Integer, default=0)
+
+    level = relationship("HSKLevel", back_populates="hanzi")
+    user_records = relationship("UserHanzi", back_populates="hanzi")
+
+
+class UserHanzi(Base):
+    """Recognition-mastery tracking only. There is no writing/tracing UI yet
+    (see Hanzi.stroke_data), so no writing-mastery field is populated here --
+    that would falsely claim "handwriting mastered" for a character the user
+    only ever saw, which the project's data-integrity rules forbid."""
+
+    __tablename__ = "user_hanzi"
+    __table_args__ = (UniqueConstraint("user_id", "hanzi_id", name="uq_user_hanzi"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    hanzi_id = Column(Integer, ForeignKey("hanzi.id"), nullable=False, index=True)
+    status = Column(String(20), default="new")
+    mastery = Column(Float, default=0.0)
+    times_seen = Column(Integer, default=0)
+    times_missed = Column(Integer, default=0)
+    last_reviewed_at = Column(DateTime, nullable=True)
+    next_review_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="user_hanzi")
+    hanzi = relationship("Hanzi", back_populates="user_records")
+
+
 class GrammarTopic(Base):
     __tablename__ = "grammar_topics"
 
@@ -334,9 +397,34 @@ class GrammarTopic(Base):
     pattern = Column(String(200), nullable=True)
     explanation = Column(Text, nullable=True)
     examples = Column(Text, nullable=True)
+    # word-class / topic grouping from the official syllabus (e.g. "名词",
+    # "动词", "补语"), and a difficulty band derived from the HSK level
+    # itself (elementary=1-2, intermediate=3-4, advanced=5-9) -- never a
+    # per-item guess.
+    category = Column(String(100), nullable=True)
+    difficulty = Column(String(20), nullable=True)
     order_index = Column(Integer, default=0)
 
     level = relationship("HSKLevel", back_populates="grammar")
+    user_records = relationship("UserGrammar", back_populates="topic")
+
+
+class UserGrammar(Base):
+    __tablename__ = "user_grammar"
+    __table_args__ = (UniqueConstraint("user_id", "topic_id", name="uq_user_grammar"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    topic_id = Column(Integer, ForeignKey("grammar_topics.id"), nullable=False, index=True)
+    status = Column(String(20), default="new")
+    mastery = Column(Float, default=0.0)
+    times_practiced = Column(Integer, default=0)
+    times_missed = Column(Integer, default=0)
+    last_reviewed_at = Column(DateTime, nullable=True)
+    next_review_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="user_grammar")
+    topic = relationship("GrammarTopic", back_populates="user_records")
 
 
 # ---------------------------------------------------------------------------

@@ -40,6 +40,11 @@ export default function Roadmap() {
                 <span className={`badge ${lvl.status === "current" ? "accent" : ""}`}>
                   {stateLabel(lvl.status)}
                 </span>
+                {lvl.is_advanced_stage && (
+                  <span className="badge" title={t("pages.roadmap.advancedStageHint")}>
+                    {t("pages.roadmap.advancedStage")}
+                  </span>
+                )}
               </div>
               <span className="muted">
                 {lvl.vocab_mastered}/{lvl.vocab_total} {t("pages.roadmap.words")}
@@ -54,13 +59,27 @@ export default function Roadmap() {
             </div>
             <div className="hbar" style={{ marginTop: 6 }}>
               <span className="muted" style={{ width: 90, fontSize: 12 }}>
+                {t("pages.roadmap.hanzi")}
+              </span>
+              <Bar value={lvl.hanzi_total ? (lvl.hanzi_mastered / lvl.hanzi_total) * 100 : 0} max={100} alt />
+              <span style={{ width: 60, textAlign: "right", fontSize: 12 }}>{lvl.hanzi_mastered}/{lvl.hanzi_total}</span>
+            </div>
+            <div className="hbar" style={{ marginTop: 6 }}>
+              <span className="muted" style={{ width: 90, fontSize: 12 }}>
+                {t("pages.roadmap.grammar")}
+              </span>
+              <Bar value={lvl.grammar_total ? (lvl.grammar_mastered / lvl.grammar_total) * 100 : 0} max={100} alt />
+              <span style={{ width: 60, textAlign: "right", fontSize: 12 }}>{lvl.grammar_mastered}/{lvl.grammar_total}</span>
+            </div>
+            <div className="hbar" style={{ marginTop: 6 }}>
+              <span className="muted" style={{ width: 90, fontSize: 12 }}>
                 {t("pages.roadmap.lessons")}
               </span>
               <Bar value={lvl.lessons_completed} max={10} alt />
               <span style={{ width: 40, textAlign: "right" }}>{lvl.lessons_completed}</span>
             </div>
             {lvl.ready_for_next ? (
-              <BadgeOK>{lvl.level + 1 <= 6 ? t("pages.roadmap.readyForNext", { level: lvl.level + 1 }) : t("pages.roadmap.maxLevel")}</BadgeOK>
+              <BadgeOK>{lvl.level + 1 <= 9 ? t("pages.roadmap.readyForNext", { level: lvl.level + 1 }) : t("pages.roadmap.maxLevel")}</BadgeOK>
             ) : (
               lvl.reason && <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{lvl.reason}</p>
             )}
