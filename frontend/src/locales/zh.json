@@ -487,7 +487,15 @@
       "subtitle": "点击汉字自测读音和释义。",
       "handwriting": "书写",
       "strokes": "{{count}} 笔画",
-      "empty": "此级别暂无汉字。"
+      "empty": "此级别暂无汉字。",
+      "practiceWriting": "练习书写",
+      "writingMastery": "书写掌握度",
+      "noStrokeData": "该汉字没有笔画数据。",
+      "mistakes": "目前 {{count}} 次错误",
+      "traceComplete": "描摹正确！（{{count}} 次错误）",
+      "retry": "重试",
+      "saveProgress": "保存进度",
+      "cancel": "取消"
     }
   }
 }

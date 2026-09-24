@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
+import HanziTrace from "../components/HanziTrace.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -12,6 +13,7 @@ export default function Hanzi() {
   const { data: roadmap } = useApi("/hsk/roadmap");
   const chars = data || [];
   const [flash, setFlash] = useState(null);
+  const [tracing, setTracing] = useState(null);
 
   useEffect(() => {
     if (!flash) return;
@@ -63,10 +65,12 @@ export default function Hanzi() {
 
       <div className="grid cards" style={{ marginTop: 16 }}>
         {chars.map((ch) => (
-          <button
+          <div
             key={ch.id}
             className="card hover animal"
-            style={{ border: ch.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative" }}
+            role="button"
+            tabIndex={0}
+            style={{ border: ch.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative", cursor: "pointer" }}
             onClick={() => review(ch)}
           >
             {ch.due_for_review && (
@@ -88,10 +92,40 @@ export default function Hanzi() {
             <div style={{ marginTop: 8, width: "100%" }}>
               <Bar value={ch.mastery ?? 0} alt />
             </div>
-          </button>
+            {ch.handwriting_tier && (
+              <>
+                <div style={{ marginTop: 6, width: "100%" }} title={t("pages.hanzi.writingMastery")}>
+                  <Bar value={ch.writing_mastery ?? 0} />
+                </div>
+                <button
+                  type="button"
+                  className="btn small ghost"
+                  style={{ marginTop: 8, width: "100%" }}
+                  onClick={(e) => { e.stopPropagation(); setTracing(ch); }}
+                >
+                  {t("pages.hanzi.practiceWriting")}
+                </button>
+              </>
+            )}
+          </div>
         ))}
       </div>
       {chars.length === 0 && <Empty>{t("pages.hanzi.empty")}</Empty>}
+
+      {tracing && (
+        <HanziTrace
+          hanzi={tracing}
+          onClose={() => setTracing(null)}
+          onSaved={(res) => {
+            setFlash({ char: tracing.character, mastery: res.writing_mastery, status: res.writing_status });
+            setData((items) =>
+              (items || []).map((x) =>
+                x.id === tracing.id ? { ...x, writing_mastery: res.writing_mastery, writing_status: res.writing_status } : x
+              )
+            );
+          }}
+        />
+      )}
     </Layout>
   );
 }

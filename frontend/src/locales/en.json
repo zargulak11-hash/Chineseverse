@@ -488,7 +488,15 @@
       "subtitle": "Tap a character to self-review its reading and meaning.",
       "handwriting": "writing",
       "strokes": "{{count}} strokes",
-      "empty": "No characters at this level yet."
+      "empty": "No characters at this level yet.",
+      "practiceWriting": "Practice writing",
+      "writingMastery": "Writing mastery",
+      "noStrokeData": "No stroke data available for this character.",
+      "mistakes": "{{count}} mistake(s) so far",
+      "traceComplete": "Traced correctly! ({{count}} mistakes)",
+      "retry": "Retry",
+      "saveProgress": "Save progress",
+      "cancel": "Cancel"
     }
   }
 }

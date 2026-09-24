@@ -356,8 +356,9 @@ class Hanzi(Base):
     # null = recognition-only; "elementary"/"intermediate"/"advanced" = the
     # real HSK 3.0 handwriting-syllabus tier this character belongs to.
     handwriting_tier = Column(String(20), nullable=True)
-    # stroke path/median vector data (for a future tracing UI); recognition
-    # features never depend on this being present.
+    # real stroke path/median vector data (skishore/makemeahanzi), consumed
+    # directly by the HanziWriter quiz for stroke-order tracing practice;
+    # recognition features never depend on this being present.
     stroke_data = Column(JSON, nullable=True)
     order_index = Column(Integer, default=0)
 
@@ -366,10 +367,13 @@ class Hanzi(Base):
 
 
 class UserHanzi(Base):
-    """Recognition-mastery tracking only. There is no writing/tracing UI yet
-    (see Hanzi.stroke_data), so no writing-mastery field is populated here --
-    that would falsely claim "handwriting mastered" for a character the user
-    only ever saw, which the project's data-integrity rules forbid."""
+    """Recognition mastery (`mastery`/`status`) and handwriting mastery
+    (`writing_mastery`/`writing_status`) are tracked separately and updated
+    by different real events: recognition from /hanzi/{id}/review (did you
+    recognize the reading/meaning), writing from /hanzi/{id}/write (did you
+    correctly trace the real stroke data via the HanziWriter quiz). Neither
+    field is ever bumped by the other action -- viewing a character never
+    counts as having written it."""
 
     __tablename__ = "user_hanzi"
     __table_args__ = (UniqueConstraint("user_id", "hanzi_id", name="uq_user_hanzi"),)
@@ -383,6 +387,12 @@ class UserHanzi(Base):
     times_missed = Column(Integer, default=0)
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
+    # Populated only by a completed HanziWriter stroke quiz (see hanzi.py's
+    # /write endpoint) -- never by a recognition review.
+    writing_status = Column(String(20), default="not_practiced")
+    writing_mastery = Column(Float, default=0.0)
+    times_written = Column(Integer, default=0)
+    last_written_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="user_hanzi")
     hanzi = relationship("Hanzi", back_populates="user_records")

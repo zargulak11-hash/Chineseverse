@@ -35,6 +35,21 @@ class ReviewResponse(BaseModel):
     status: str
 
 
+class WritePayload(BaseModel):
+    # Real results from a completed HanziWriter stroke-order quiz against
+    # this character's actual stroke_data -- totalMistakes is HanziWriter's
+    # own count of incorrect strokes before each one was matched correctly.
+    # This endpoint is only reachable after every real stroke was traced and
+    # validated; there is no "mark as written" shortcut.
+    total_mistakes: int = Field(ge=0)
+
+
+class WriteResponse(BaseModel):
+    hanzi: schemas.HanziWithStatus
+    writing_mastery: float
+    writing_status: str
+
+
 @router.get("", response_model=list[schemas.HanziWithStatus])
 def list_hanzi(
     hsk_level: int | None = None,
@@ -44,8 +59,9 @@ def list_hanzi(
     locale: str = Depends(get_locale),
 ):
     """Recognition-tracked Hanzi list. `handwriting_only` filters to
-    characters the real HSK 3.0 syllabus actually requires handwriting for --
-    it never implies a writing/tracing exercise exists yet (see Hanzi model)."""
+    characters the real HSK 3.0 syllabus actually requires handwriting for.
+    Use GET /{hanzi_id}/stroke-data + POST /{hanzi_id}/write for the real
+    tracing quiz on those characters."""
     ensure_user_skills(db, user)
     query = db.query(models.Hanzi)
     if hsk_level is not None:
@@ -69,9 +85,25 @@ def list_hanzi(
         item.status = rec.status if rec else "new"
         item.mastery = rec.mastery if rec else 0.0
         item.due_for_review = bool(rec and rec.next_review_at and rec.next_review_at <= now)
+        item.writing_status = rec.writing_status if rec else "not_practiced"
+        item.writing_mastery = rec.writing_mastery if rec else 0.0
         out.append(item)
     out.sort(key=lambda h: (not h.due_for_review, h.hsk_level_id, h.id))
     return out
+
+
+@router.get("/{hanzi_id}/stroke-data", response_model=schemas.HanziStrokeData)
+def get_stroke_data(
+    hanzi_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Real stroke path/median vector data for the tracing quiz -- kept out
+    of the list endpoint because it's heavy, fetched on demand per character."""
+    h = db.get(models.Hanzi, hanzi_id)
+    if h is None:
+        raise HTTPException(status_code=404, detail="Hanzi not found")
+    return schemas.HanziStrokeData.model_validate(h)
 
 
 @router.post("/{hanzi_id}/review", response_model=ReviewResponse)
@@ -156,4 +188,77 @@ def review_hanzi(
     h_out.meaning = tr(translations, h.id, "meaning", h_out.meaning)
     h_out.status = rec.status
     h_out.mastery = rec.mastery
+    h_out.writing_status = rec.writing_status
+    h_out.writing_mastery = rec.writing_mastery
     return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status)
+
+
+@router.post("/{hanzi_id}/write", response_model=WriteResponse)
+def write_hanzi(
+    hanzi_id: int,
+    payload: WritePayload,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Records a completed HanziWriter stroke-order quiz. Only reachable
+    after the learner actually traced every real stroke correctly (per
+    HanziWriter's own hit-testing against Hanzi.stroke_data); total_mistakes
+    only affects how much writing_mastery is gained, never whether it's
+    recorded at all. This is fully separate from recognition mastery."""
+    h = db.get(models.Hanzi, hanzi_id)
+    if h is None:
+        raise HTTPException(status_code=404, detail="Hanzi not found")
+    if h.stroke_data is None:
+        raise HTTPException(status_code=422, detail="No stroke data available for this character")
+
+    rec = (
+        db.query(models.UserHanzi)
+        .filter_by(user_id=user.id, hanzi_id=hanzi_id)
+        .first()
+    )
+    if rec is None:
+        rec = models.UserHanzi(
+            user_id=user.id, hanzi_id=hanzi_id,
+            times_seen=0, times_missed=0, mastery=0.0, status="new",
+            times_written=0, writing_mastery=0.0, writing_status="not_practiced",
+        )
+        db.add(rec)
+
+    rec.times_written = (rec.times_written or 0) + 1
+    # Fewer real stroke mistakes -> more mastery gained per attempt, but a
+    # completed quiz always counts for something (it was still traced
+    # correctly in the end, just with retries along the way).
+    if payload.total_mistakes == 0:
+        gain = 25.0
+    elif payload.total_mistakes <= 2:
+        gain = 15.0
+    else:
+        gain = 8.0
+    rec.writing_mastery = min(100.0, (rec.writing_mastery or 0.0) + gain)
+    rec.last_written_at = datetime.utcnow()
+    if rec.writing_mastery >= 85:
+        rec.writing_status = "mastered"
+    elif rec.writing_mastery >= 40:
+        rec.writing_status = "practicing"
+    else:
+        rec.writing_status = "practicing" if rec.times_written > 0 else "not_practiced"
+
+    ensure_user_skills(db, user)
+    bump_skill(user, "writing", 2.0 if payload.total_mistakes <= 2 else 1.0)
+
+    progress_quests(db, user, "hanzi_write", amount=1)
+    progress_missions(db, user, "hanzi_write")
+    log_activity(db, user, "hanzi_write")
+    db.commit()
+    db.refresh(rec)
+    check_achievements(db, user)
+
+    h_out = schemas.HanziWithStatus.model_validate(h)
+    translations = load_translations(db, "hanzi", [str(h.id)], locale)
+    h_out.meaning = tr(translations, h.id, "meaning", h_out.meaning)
+    h_out.status = rec.status
+    h_out.mastery = rec.mastery
+    h_out.writing_status = rec.writing_status
+    h_out.writing_mastery = rec.writing_mastery
+    return WriteResponse(hanzi=h_out, writing_mastery=round(rec.writing_mastery, 1), writing_status=rec.writing_status)

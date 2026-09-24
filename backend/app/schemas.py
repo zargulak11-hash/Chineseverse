@@ -410,6 +410,19 @@ class HanziWithStatus(HanziResponse):
     status: Optional[str] = None
     mastery: Optional[float] = None
     due_for_review: bool = False
+    writing_status: Optional[str] = None
+    writing_mastery: Optional[float] = None
+
+
+class HanziStrokeData(BaseModel):
+    """Detail response for the tracing quiz -- the only Hanzi payload that
+    includes the real stroke path/median vectors, since they're too heavy
+    for the list endpoint."""
+    id: int
+    character: str
+    stroke_data: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --------------------------------------------------------------------------- Pet Teacher
