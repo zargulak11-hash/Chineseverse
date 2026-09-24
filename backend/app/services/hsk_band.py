@@ -42,3 +42,20 @@ def resolve_level_filter(db: Session, model, id_field, hsk_level: int):
     thirds = split_thirds(ids)
     stage_index = hsk_level - 7
     return band.id, thirds[stage_index]
+
+
+def display_level_for_row(db: Session, model, id_field, row) -> int:
+    """The inverse of resolve_level_filter: given one real row that belongs
+    to the advanced band, which of the three real thirds (-> which of HSK
+    7/8/9) does it fall in? Used so a per-row response (e.g. a lesson) can
+    report the correct stage even when fetched outside a level-filtered
+    list. Non-band rows just report their real HSKLevel.level."""
+    level = row.level if hasattr(row, "level") else db.get(models.HSKLevel, getattr(row, "hsk_level_id", None))
+    if level is None or not level.is_advanced_band:
+        return level.level if level else None
+    ids = [r.id for r in db.query(model.id).filter(id_field == level.id).order_by(model.id).all()]
+    thirds = split_thirds(ids)
+    for stage_index, chunk in enumerate(thirds):
+        if row.id in chunk:
+            return 7 + stage_index
+    return level.level

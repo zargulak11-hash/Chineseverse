@@ -56,7 +56,7 @@ def _total_count(db, model, id_field, hsk_level_id, id_subset=None):
 
 def _level_progress(db, user, lvl, mastered_vocab_ids, mastered_hanzi_ids, mastered_grammar_ids,
                      current_level, label_level=None, vocab_subset=None, hanzi_subset=None,
-                     grammar_subset=None, is_advanced_stage=False):
+                     grammar_subset=None, lesson_subset=None, is_advanced_stage=False):
     vocab_total = _total_count(db, models.VocabularyWord, models.VocabularyWord.hsk_level_id, lvl.id, vocab_subset)
     vocab_mastered = _mastered_count(db, models.VocabularyWord, models.VocabularyWord.hsk_level_id, lvl.id, mastered_vocab_ids, vocab_subset)
     hanzi_total = _total_count(db, models.Hanzi, models.Hanzi.hsk_level_id, lvl.id, hanzi_subset)
@@ -64,7 +64,8 @@ def _level_progress(db, user, lvl, mastered_vocab_ids, mastered_hanzi_ids, maste
     grammar_total = _total_count(db, models.GrammarTopic, models.GrammarTopic.hsk_level_id, lvl.id, grammar_subset)
     grammar_mastered = _mastered_count(db, models.GrammarTopic, models.GrammarTopic.hsk_level_id, lvl.id, mastered_grammar_ids, grammar_subset)
 
-    completed = (
+    lesson_total = _total_count(db, models.Lesson, models.Lesson.hsk_level_id, lvl.id, lesson_subset)
+    completed_q = (
         db.query(models.Progress)
         .join(models.Lesson, models.Progress.lesson_id == models.Lesson.id)
         .filter(
@@ -72,8 +73,10 @@ def _level_progress(db, user, lvl, mastered_vocab_ids, mastered_hanzi_ids, maste
             models.Progress.status == "completed",
             models.Lesson.hsk_level_id == lvl.id,
         )
-        .count()
     )
+    if lesson_subset is not None:
+        completed_q = completed_q.filter(models.Lesson.id.in_(lesson_subset or [0]))
+    completed = completed_q.count()
 
     domain_totals = [(vocab_mastered, vocab_total), (hanzi_mastered, hanzi_total), (grammar_mastered, grammar_total)]
     weighted = [(m / t * 100.0) for m, t in domain_totals if t]
@@ -93,7 +96,7 @@ def _level_progress(db, user, lvl, mastered_vocab_ids, mastered_hanzi_ids, maste
         vocab_mastered=vocab_mastered, vocab_total=vocab_total,
         hanzi_mastered=hanzi_mastered, hanzi_total=hanzi_total,
         grammar_mastered=grammar_mastered, grammar_total=grammar_total,
-        mastery=round(mastery, 1), lessons_completed=completed,
+        mastery=round(mastery, 1), lessons_completed=completed, lessons_total=lesson_total,
         ready_for_next=ready, is_advanced_stage=is_advanced_stage,
     )
 
@@ -151,14 +154,17 @@ def roadmap(
             vocab_ids = [w.id for w in db.query(models.VocabularyWord.id).filter_by(hsk_level_id=lvl.id).order_by(models.VocabularyWord.id).all()]
             hanzi_ids = [h.id for h in db.query(models.Hanzi.id).filter_by(hsk_level_id=lvl.id).order_by(models.Hanzi.id).all()]
             grammar_ids = [g.id for g in db.query(models.GrammarTopic.id).filter_by(hsk_level_id=lvl.id).order_by(models.GrammarTopic.id).all()]
+            lesson_ids = [ls.id for ls in db.query(models.Lesson.id).filter_by(hsk_level_id=lvl.id).order_by(models.Lesson.id).all()]
             vocab_thirds = split_thirds(vocab_ids)
             hanzi_thirds = split_thirds(hanzi_ids)
             grammar_thirds = split_thirds(grammar_ids)
+            lesson_thirds = split_thirds(lesson_ids)
             for i, stage_level in enumerate((7, 8, 9)):
                 results.append(_level_progress(
                     db, user, lvl, mastered_vocab_ids, mastered_hanzi_ids, mastered_grammar_ids,
                     effective_stage, label_level=stage_level,
                     vocab_subset=vocab_thirds[i], hanzi_subset=hanzi_thirds[i], grammar_subset=grammar_thirds[i],
+                    lesson_subset=lesson_thirds[i],
                     is_advanced_stage=True,
                 ))
         else:

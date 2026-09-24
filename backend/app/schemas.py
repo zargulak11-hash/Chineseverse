@@ -246,6 +246,7 @@ class HSKLevelProgress(BaseModel):
     grammar_total: int = 0
     mastery: float
     lessons_completed: int
+    lessons_total: int = 0
     ready_for_next: bool
     reason: Optional[str] = None
     # True for the 3 synthetic HSK 7/8/9 rows: they subdivide ONE shared

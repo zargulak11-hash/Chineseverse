@@ -5,13 +5,19 @@ from app import models, schemas
 from app.crud import apply_updates, get_or_404
 from app.database import get_db
 from app.deps import get_locale
+from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/lessons", tags=["lessons"])
 
 
-def _localize(lesson: models.Lesson, translations: dict) -> schemas.LessonResponse:
+def _localize(db: Session, lesson: models.Lesson, translations: dict) -> schemas.LessonResponse:
     out = schemas.LessonResponse.model_validate(lesson)
+    # A lesson whose level is the shared HSK 7-9 band reports the real third
+    # (7/8/9) it belongs to, not always the band's literal level=7 -- so
+    # /lessons (unfiltered) groups it under the correct stage heading, the
+    # same stage the level-filtered vocab/hanzi/grammar/roadmap views use.
+    out.hsk_level = display_level_for_row(db, models.Lesson, models.Lesson.hsk_level_id, lesson)
     key = str(lesson.id)
     out.title = tr(translations, key, "title", out.title)
     out.summary = tr(translations, key, "summary", out.summary)
@@ -32,12 +38,15 @@ def list_lessons(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
-    query = db.query(models.Lesson).join(models.HSKLevel, models.Lesson.hsk_level_id == models.HSKLevel.id)
+    query = db.query(models.Lesson)
     if hsk_level is not None:
-        query = query.filter(models.HSKLevel.level == hsk_level)
-    lessons = query.order_by(models.HSKLevel.level, models.Lesson.order_index).all()
+        level_id, id_subset = resolve_level_filter(db, models.Lesson, models.Lesson.hsk_level_id, hsk_level)
+        query = query.filter(models.Lesson.hsk_level_id == (level_id or 0))
+        if id_subset is not None:
+            query = query.filter(models.Lesson.id.in_(id_subset or [0]))
+    lessons = query.order_by(models.Lesson.hsk_level_id, models.Lesson.order_index).all()
     translations = load_translations(db, "lesson", [str(l.id) for l in lessons], locale)
-    return [_localize(l, translations) for l in lessons]
+    return [_localize(db, l, translations) for l in lessons]
 
 
 @router.post("", response_model=schemas.LessonResponse, status_code=201)
@@ -61,7 +70,7 @@ def create_lesson(payload: schemas.LessonCreate, db: Session = Depends(get_db)):
 def get_lesson(lesson_id: int, db: Session = Depends(get_db), locale: str = Depends(get_locale)):
     lesson = get_or_404(db, models.Lesson, lesson_id)
     translations = load_translations(db, "lesson", [str(lesson_id)], locale)
-    return _localize(lesson, translations)
+    return _localize(db, lesson, translations)
 
 
 @router.put("/{lesson_id}", response_model=schemas.LessonResponse)
