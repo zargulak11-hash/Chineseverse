@@ -8,8 +8,13 @@ from app.database import get_db
 router = APIRouter(prefix="/api/animals", tags=["animals"])
 
 
-@router.get("", response_model=list[schemas.AnimalResponse])
+@router.get("", response_model=list[schemas.AnimalDetailResponse])
 def list_animals(db: Session = Depends(get_db)):
+    # AnimalDetailResponse adds personality_row (traits/energy/humor/patience/
+    # strictness/catchphrase) on top of the existing fields -- purely
+    # additive, so nothing that already reads this endpoint breaks. The
+    # Voice Companion picker is what actually needs these to build a
+    # distinct voice profile per animal instead of one generic voice.
     return db.query(models.Animal).order_by(models.Animal.id).all()
 
 

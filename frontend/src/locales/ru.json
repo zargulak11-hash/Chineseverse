@@ -33,6 +33,7 @@
     "missions": "Миссии",
     "petTeacher": "Учим питомца",
     "companion": "Компаньон",
+    "voiceCompanion": "Голосовой компаньон",
     "achievements": "Достижения",
     "assistant": "Помощник",
     "hskLearner": "Уровень HSK {{level}}"

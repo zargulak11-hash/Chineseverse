@@ -25,6 +25,7 @@ import Duels from "./pages/Duels.jsx";
 import DuelBattle from "./pages/DuelBattle.jsx";
 import Achievements from "./pages/Achievements.jsx";
 import Companion from "./pages/Companion.jsx";
+import VoiceCompanion from "./pages/VoiceCompanion.jsx";
 import PetTeacher from "./pages/PetTeacher.jsx";
 import Mistakes from "./pages/Mistakes.jsx";
 import Progress from "./pages/Progress.jsx";
@@ -242,6 +243,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Companion />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/voice-companion"
+          element={
+            <RequireAuth>
+              <VoiceCompanion />
             </RequireAuth>
           }
         />

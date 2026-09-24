@@ -33,6 +33,7 @@ const GROUPS = [
       ["/missions", "nav.missions", "flag"],
       ["/pet-teacher", "nav.petTeacher", "teach"],
       ["/companion", "nav.companion", "heart"],
+      ["/voice-companion", "nav.voiceCompanion", "mic"],
       ["/achievements", "nav.achievements", "award"],
       ["/assistant", "nav.assistant", "chat"],
     ],

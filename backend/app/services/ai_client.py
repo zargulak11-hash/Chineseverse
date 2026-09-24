@@ -105,21 +105,35 @@ def _offline_react(transcript: str, expected_keywords: List[str], correct: str, 
     return incorrect
 
 
-def _offline_chat(messages: List[dict], companion: str, user_name: str) -> str:
+def _offline_chat(
+    messages: List[dict],
+    companion: str,
+    user_name: str,
+    catchphrase: Optional[str] = None,
+    energy: Optional[int] = None,
+) -> str:
+    """Deterministic, keyword-triggered fallback. `catchphrase` and `energy`
+    are the SAME per-animal AnimalPersonality fields the real AI branch is
+    told about (see chat_reply's `personality` string below) -- so even
+    offline, a high-energy animal like Cheetah doesn't read identically to
+    a calm one like Capybara; it's not just the name swapped in a template."""
     role = companion
     last = messages[-1] if messages else {}
     content = (last.get("content") or "").lower()
+    exclaim = "！" if (energy is None or energy >= 50) else "。"
     if _contain(content, "你好", "hi", "hello"):
-        return f"{role}：你好！我叫{role}，是你的语言伙伴。你想聊什么？"
+        lead = f"{catchphrase} " if catchphrase else ""
+        return f"{role}：{lead}你好{exclaim}我是{role}，你的语言伙伴。你想聊什么？"
     if _contain(content, "名字", "name"):
-        return f"{role}：我的名字。你呢？你的中文名字是什么？"
+        return f"{role}：我的名字就是{role}。你呢？你的中文名字是什么？"
     if _contain(content, "谢谢", "thank"):
-        return f"{role}：不客气！随时找我。"
+        return f"{role}：不客气{exclaim}随时找我。"
     if _contain(content, "再见", "bye", "拜拜"):
-        return f"{role}：再见！今天练习得不错。"
+        tail = f" {catchphrase}" if catchphrase else ""
+        return f"{role}：再见{exclaim}今天练习得不错。{tail}"
     return (
         f"{role}：我听到你说「{last.get('content', '')}」。"
-        f"很有进步，{user_name}！再说一遍怎么样？"
+        f"很有进步，{user_name}{exclaim}再说一遍怎么样？"
     )
 
 
@@ -192,15 +206,40 @@ def evaluate_speech(
     return _offline_evaluate(prompt, transcript, expected_keywords)
 
 
-def chat_reply(messages: List[dict], companion: str, user_name: str) -> str:
-    """Companion is the pre-named NPC. Returns the NPC's reply text."""
+def chat_reply(
+    messages: List[dict],
+    companion: str,
+    user_name: str,
+    personality: Optional[str] = None,
+    catchphrase: Optional[str] = None,
+    energy: Optional[int] = None,
+    level_hint: Optional[str] = None,
+) -> str:
+    """Companion is the pre-named NPC. Returns the NPC's reply text.
+
+    `personality`/`catchphrase`/`energy` are the SAME AnimalPersonality
+    fields already shown elsewhere in the app (Companion page, animal
+    picker) -- passing them into the prompt is what makes Wolf actually
+    read differently from Rabbit instead of only the name changing.
+    `level_hint` ("beginner"/"intermediate"/"advanced") reuses the
+    learner's existing HSK level so the same animal adapts its Chinese
+    instead of always talking at one fixed difficulty.
+    """
     provider = _active_provider()
     if provider == "openai":
         try:
+            level_line = {
+                "beginner": "学习者是初级水平：用非常简单的中文、常用词汇，句子要短。",
+                "intermediate": "学习者是中级水平：可以用更自然、稍复杂的中文对话，词汇更广。",
+                "advanced": "学习者是高级水平：可以用丰富、自然、更复杂的中文和更有深度的问题。",
+            }.get(level_hint or "", "")
             system = (
-                f"你是一个叫「{companion}」的中文语音伙伴，"
-                "用简单中文和少量拼音引导学习者说话，末尾给一句鼓励。"
-                "对话中不要用拼音解释，直接说中文。"
+                f"你是一个叫「{companion}」的中文语音伙伴。"
+                + (f"你的性格：{personality}。" if personality else "")
+                + (f"你常说的一句话：「{catchphrase}」，可以偶尔自然地用上。" if catchphrase else "")
+                + "用符合你性格的语气和学习者说中文，引导对话，末尾给一句鼓励。"
+                + "对话中不要用拼音解释，直接说中文。"
+                + (f" {level_line}" if level_line else "")
             )
             return _openai_chat(
                 [{"role": "system", "content": system}] + messages,
@@ -208,7 +247,7 @@ def chat_reply(messages: List[dict], companion: str, user_name: str) -> str:
             )
         except httpx.HTTPError:
             pass
-    return _offline_chat(messages, companion, user_name)
+    return _offline_chat(messages, companion, user_name, catchphrase=catchphrase, energy=energy)
 
 
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:

@@ -33,6 +33,7 @@
     "missions": "Missions",
     "petTeacher": "Pet Teacher",
     "companion": "Companion",
+    "voiceCompanion": "Daily Voice",
     "achievements": "Achievements",
     "assistant": "Assistant",
     "hskLearner": "HSK {{level}} learner"
