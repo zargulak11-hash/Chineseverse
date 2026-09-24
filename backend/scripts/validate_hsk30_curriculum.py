@@ -94,6 +94,29 @@ band_rows = [l for l in levels if l.is_advanced_band]
 report("HSKLevel rows with is_advanced_band=True (expect exactly 1)", 0 if len(band_rows) == 1 else 1, [b.level for b in band_rows])
 report("HSK 1-6 present as real (non-advanced) levels", 0 if set(range(1, 7)).issubset(set(level_numbers)) else 1)
 
+# 8b. No two lessons with the exact same title (real bug precedent: a
+# non-deterministic category tie-break in generate_hsk_lessons.py once
+# produced duplicate-content lessons under slightly different titles).
+all_lesson_titles = [l.title for l in db.query(models.Lesson.title).all()]
+report("duplicate lesson titles", len(all_lesson_titles) - len(set(all_lesson_titles)))
+
+# 8c. Every HSK level (1-9, counting the advanced band's 3 stages) has at
+# least one lesson -- "vocabulary/grammar exists but zero lessons" is
+# exactly the gap this curriculum work set out to close.
+from app.services.hsk_band import resolve_level_filter
+no_lessons = []
+for lvl_num in range(1, 10):
+    _, id_subset = resolve_level_filter(db, models.Lesson, models.Lesson.hsk_level_id, lvl_num)
+    lvl_row = db.query(models.HSKLevel).filter(models.HSKLevel.level == lvl_num).first()
+    if lvl_row and not lvl_row.is_advanced_band:
+        count = db.query(models.Lesson).filter_by(hsk_level_id=lvl_row.id).count()
+    else:
+        band = db.query(models.HSKLevel).filter(models.HSKLevel.is_advanced_band.is_(True)).first()
+        count = db.query(models.Lesson).filter(models.Lesson.hsk_level_id == band.id, models.Lesson.id.in_(id_subset or [0])).count()
+    if count == 0:
+        no_lessons.append(lvl_num)
+report("HSK levels 1-9 with zero lessons", len(no_lessons), no_lessons)
+
 # 9. Handwriting tier values are only the 3 real tiers or null
 bad_tier = db.query(models.Hanzi).filter(
     models.Hanzi.handwriting_tier.isnot(None),

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Generates structured lessons for HSK3-9, closing the gap where those levels
-had real vocabulary/Hanzi/grammar data but zero Lesson rows connecting it
-into learnable chapters (HSK1-2 already have hand-authored lessons from
-seed_learning.py and are left alone here).
+Generates structured lessons for HSK1-9 from real GrammarTopic/VocabularyWord
+data, closing the gap where most levels had far too few Lesson rows to
+represent a meaningful learning path (HSK1 had 5 hand-authored lessons
+covering a handful of the level's 60 real grammar points, HSK2 had 2
+covering a handful of 89; HSK3-9 had zero). The hand-authored lessons from
+seed_learning.py are left in place untouched -- this only adds more real,
+chunked chapters alongside them, covering the rest of each level's grammar.
 
 Every fact in a generated lesson is copied verbatim from an already-imported,
 already-validated GrammarTopic/VocabularyWord row -- title, pattern, and
@@ -40,8 +43,13 @@ def build_lessons_for_level(db, level_row, display_level, vocab_ids=None, gramma
     chunks = [topics[i:i + CHUNK_SIZE] for i in range(0, len(topics), CHUNK_SIZE)]
     created = 0
     for idx, chunk in enumerate(chunks, start=1):
+        # Deterministic tie-break: most frequent category in the chunk, then
+        # alphabetically first -- `set()` iteration order is randomized per
+        # process (PYTHONHASHSEED), so without a stable tie-break this could
+        # pick a different category label (hence a different title) on a
+        # re-run and defeat the title-based idempotency check below.
         categories = [t.category for t in chunk if t.category]
-        rep_category = max(set(categories), key=categories.count) if categories else None
+        rep_category = min(set(categories), key=lambda c: (-categories.count(c), c)) if categories else None
         title = f"HSK{display_level} Grammar {idx}" + (f": {rep_category}" if rep_category else "")
         title = title[:200]
 
@@ -85,7 +93,7 @@ if __name__ == "__main__":
     levels = {l.level: l for l in db.query(models.HSKLevel).all()}
     total = 0
 
-    for lvl_num in (3, 4, 5, 6):
+    for lvl_num in (1, 2, 3, 4, 5, 6):
         lvl = levels[lvl_num]
         n = build_lessons_for_level(db, lvl, lvl_num)
         db.commit()
