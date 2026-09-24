@@ -9,22 +9,18 @@ from app.services.activity import log_activity
 from app.services.gamification import (
     ensure_bond,
     ensure_user_skills,
+    location_status,
     progress_missions,
     progress_quests,
     record_mistake,
     reinforce_mistake,
+    scenario_is_unlocked,
     user_rank,
 )
 
 router = APIRouter(prefix="/api/world", tags=["world"])
 
-
-def _computed_status(location: models.Location, current: int) -> str:
-    if location.unlock_level <= current:
-        return "unlocked"
-    if location.unlock_level == current + 1:
-        return "next"
-    return "locked"
+_computed_status = location_status
 
 
 @router.get("/locations", response_model=list[schemas.LocationResponse])
@@ -34,7 +30,7 @@ def list_locations(
 ):
     if user:
         ensure_user_skills(db, user)
-        _, current = user_rank(db, user)
+        current, _ = user_rank(db, user)
     else:
         current = 1
     out = []
@@ -57,14 +53,22 @@ def location_detail(
     current = 1
     if user:
         ensure_bond(db, user)
-        _, current = user_rank(db, user)
+        current, _ = user_rank(db, user)
 
+    status = _computed_status(loc, current)
     detail = schemas.LocationDetailResponse.model_validate(loc)
-    detail.status = _computed_status(loc, current)
-    detail.npcs = [schemas.NPCBrief.model_validate(n) for n in loc.npcs]
-    detail.scenarios = [
-        schemas.ScenarioResponse.model_validate(s) for s in loc.scenarios
-    ]
+    detail.status = status
+    # Locked/next locations are visible on the map (so the player can see
+    # what's coming) but their people and conversations aren't playable yet
+    # — matching the unlock status shown, not just a cosmetic badge.
+    if status == "unlocked":
+        detail.npcs = [schemas.NPCBrief.model_validate(n) for n in loc.npcs]
+        detail.scenarios = [
+            schemas.ScenarioResponse.model_validate(s) for s in loc.scenarios
+        ]
+    else:
+        detail.npcs = []
+        detail.scenarios = []
     return detail
 
 
@@ -90,6 +94,8 @@ def scenario_detail(
     scenario = db.query(models.Scenario).filter_by(slug=slug).first()
     if scenario is None:
         raise HTTPException(status_code=404, detail="Scenario not found")
+    if not scenario_is_unlocked(db, user, scenario):
+        raise HTTPException(status_code=403, detail="This location isn't unlocked yet")
 
     out = schemas.ScenarioResponse.model_validate(scenario)
     dialogues = sorted(scenario.dialogues, key=lambda d: d.turn_index)
@@ -115,6 +121,8 @@ def solve_case(
     scenario = db.query(models.Scenario).filter_by(slug=slug).first()
     if scenario is None or not scenario.is_case:
         raise HTTPException(status_code=404, detail="Case scenario not found")
+    if not scenario_is_unlocked(db, user, scenario):
+        raise HTTPException(status_code=403, detail="This location isn't unlocked yet")
     case_data = scenario.case_data or {}
     solution_kws = case_data.get("solution_kws", [])
     verdict = ai_client.evaluate_case_solution(

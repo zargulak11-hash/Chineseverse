@@ -1,29 +1,33 @@
 /* =========================================================================
    ChineseVerse design system — "Ink & Jade"
-   Two crafted themes, not a dark-mode-only template: Ink (深墨, warm
-   charcoal) and Rice Paper (宣纸, warm parchment). Both share one accent —
-   an aged-brass-to-imperial-gold gradient — used sparingly for primary
-   actions and key numbers, plus a jade-green success tone and a cinnabar
-   (朱砂, seal-ink red) error/stamp tone. Differentiation between content
-   (animals, locations, question types) comes from shape and type, not a
-   rainbow of brand colors.
+   Two crafted themes, not a dark-mode-only template: Ink (深墨, now a deep
+   midnight navy/indigo atmosphere rather than warm charcoal) and Rice
+   Paper (宣纸, warm parchment). Both share one accent — an aged-brass-to-
+   imperial-gold gradient — used sparingly for primary actions and key
+   numbers, plus a jade-green success tone and a cinnabar (朱砂, seal-ink
+   red) error/stamp tone. Differentiation between content (animals,
+   locations, question types) comes from shape and type, not a rainbow of
+   brand colors.
    ========================================================================= */
 
 :root,
 [data-theme="ink"] {
-  /* ---- Surfaces: warm charcoal, not flat black ---- */
-  --bg: #16130e;
-  --bg-radial-1: rgba(201, 151, 74, 0.09);
-  --bg-radial-2: rgba(255, 255, 255, 0.03);
-  --surface-1: #1e1a13;
-  --surface-2: #282219;
-  --surface-3: #332c20;
-  --border: #392f21;
-  --border-strong: #4d422e;
-  --text: #f3ecdb;
-  --text-dim: #b2a68d;
-  --text-faint: #79705c;
-  --glass-bg: rgba(22, 19, 14, 0.66);
+  /* ---- Surfaces: deep midnight navy/indigo, not warm brown-black —
+     layered cool tones with a faint indigo and muted-teal ambient glow
+     (see body's radial-gradient below). Accent/semantic tokens are
+     unchanged; only the base atmosphere moved. ---- */
+  --bg: #0b1020;
+  --bg-radial-1: rgba(93, 78, 201, 0.11);
+  --bg-radial-2: rgba(45, 140, 140, 0.06);
+  --surface-1: #10162a;
+  --surface-2: #161d35;
+  --surface-3: #1d2542;
+  --border: #262e4e;
+  --border-strong: #333c60;
+  --text: #edeff6;
+  --text-dim: #a6abc7;
+  --text-faint: #6c7192;
+  --glass-bg: rgba(11, 16, 32, 0.7);
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 12px 34px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.6);
@@ -77,11 +81,11 @@
   --indigo: var(--surface-3);
   --warn: var(--accent);
 
-  /* ---- Type scale: Noto Serif SC pairs CJK and Latin in one face — "你好"
-     and "Zarina" read as one considered typographic choice, not a Western
-     serif bolted onto system-font Chinese fallback. ---- */
-  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Noto Serif SC", "Songti SC", "Noto Serif", Georgia, serif;
+  /* ---- Type: Manrope for Latin/Cyrillic UI text, Noto Sans SC carries
+     Chinese characters in the same clean sans-serif register — no serif
+     anywhere in the application. ---- */
+  --font-ui: "Manrope", "Noto Sans SC", sans-serif;
+  --font-display: "Manrope", "Noto Sans SC", sans-serif;
   --text-2xs: 11.5px;
   --text-xs: 13px;
   --text-sm: 14.5px;
@@ -233,6 +237,45 @@ body {
   font-size: var(--text-base);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Scrollbars: themed, not default browser gray ----------
+   Firefox reads scrollbar-color/-width as inherited properties, so setting
+   them once on html covers every scrollable element in the app (sidebar,
+   main content, modals, textareas, ...) without repeating per container.
+   Chromium has no such inheritance for its pseudo-elements, so the
+   *::-webkit-scrollbar rules below are universal instead of scoped to a
+   handful of known-scrollable selectors — same effect, different API. Track
+   blends into the surface it sits on; thumb is a muted, dim accent (gold/
+   bronze in Ink, unchanged in Paper) that brightens on hover, never a flat
+   gray. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-soft) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--accent-soft);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-strong);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 a {
@@ -573,6 +616,16 @@ a.navlink.active::after {
   gap: var(--space-4);
 }
 
+.grid.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .grid.grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .grid.cards {
   grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
 }
@@ -646,7 +699,8 @@ a.navlink.active::after {
 }
 
 /* The one large-scale editorial moment per page — the dashboard greeting,
-   not every h1. Noto Serif SC carries "你好" and the name in one face. */
+   not every h1. Manrope + Noto Sans SC carries "你好" and the name in one
+   consistent sans-serif face. */
 .hero-greeting {
   font-family: var(--font-display);
   font-size: var(--text-hero);
@@ -2167,7 +2221,7 @@ table.data td {
 }
 
 .topbar-greeting {
-  flex-shrink: 0;
+  flex-shrink: 1;
   min-width: 0;
 }
 

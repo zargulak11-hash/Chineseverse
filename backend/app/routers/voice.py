@@ -17,6 +17,7 @@ from app.services.gamification import (
     progress_quests,
     record_mistake,
     reinforce_mistake,
+    scenario_is_unlocked,
     touch_streak,
 )
 
@@ -66,6 +67,11 @@ def submit_attempt(
     db: Session = Depends(get_db),
 ):
     ensure_user_skills(db, user)
+
+    if payload.scenario_id:
+        scenario = db.get(models.Scenario, payload.scenario_id)
+        if scenario is not None and not scenario_is_unlocked(db, user, scenario):
+            raise HTTPException(status_code=403, detail="This location isn't unlocked yet")
 
     dialogue = None
     if payload.dialogue_id:

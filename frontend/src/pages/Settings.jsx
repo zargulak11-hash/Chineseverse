@@ -118,7 +118,7 @@ export default function Settings() {
     <Layout>
       <h1 className="h1">{t("settings.title")}</h1>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18, alignItems: "start" }}>
+      <div className="grid grid-2" style={{ marginTop: 18, alignItems: "start" }}>
         <div className="col">
           <div className="card">
             <h2 className="h2">{t("settings.appearance")}</h2>

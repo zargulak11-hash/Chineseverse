@@ -25,6 +25,17 @@ export default function LocationDetail() {
       </div>
       <p className="sub" style={{ marginTop: 10 }}>{loc.description}</p>
 
+      {loc.status !== "unlocked" && (
+        <div className="card center" style={{ marginTop: 20 }}>
+          <div style={{ fontSize: 40 }}>🔒</div>
+          <p>
+            {loc.status === "next"
+              ? "Almost there — keep training to unlock this place."
+              : "This place is still locked. Keep leveling up to reach it."}
+          </p>
+        </div>
+      )}
+
       {loc.npcs?.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h2 className="h2">People here</h2>

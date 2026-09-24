@@ -8,6 +8,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services.activity import log_activity
+from app.services.dna import bump_skill
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
@@ -118,6 +119,12 @@ def review_word(
         rec.status = "learning"
 
     rec.last_reviewed_at = now
+
+    # A vocab review is real "vocabulary" activity for Learning DNA too —
+    # same +2.0/-0.3 convention duels already use for a correct/incorrect
+    # answer, so this doesn't invent a second tuning scale.
+    ensure_user_skills(db, user)
+    bump_skill(user, "vocabulary", 2.0 if payload.correct else -0.3)
 
     if payload.correct:
         progress_quests(db, user, "vocab", amount=1)

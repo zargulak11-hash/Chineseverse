@@ -66,7 +66,7 @@ export default function Companion() {
       <h1 className="h1">Your companion</h1>
       <p className="sub">Talk to {animal.name}. They react to how you speak their language.</p>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
+      <div className="grid grid-2" style={{ marginTop: 18 }}>
         <div className="card center">
           <div style={{ filter: "drop-shadow(0 8px 18px rgba(0,0,0,.45))" }}>
             <AnimalAvatar slug={animal.slug} size={104} />

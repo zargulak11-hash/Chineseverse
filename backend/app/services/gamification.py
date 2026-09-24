@@ -240,10 +240,17 @@ def _count(db: Session, user: models.User, criteria: dict):
     if ctype == "streak":
         return (user.streak.current_streak if user.streak else 0)
     if ctype == "hsk":
-        mastery = next(
-            (s.mastery for s in user.user_skills if s.skill and s.skill.code == "vocabulary"), 0
-        )
-        return mastery
+        # criteria is {target: <hsk level>, mastery: <required overall %>} —
+        # this used to compare the unrelated "vocabulary" DNA skill (0-100,
+        # a per-skill duel/review stat) against target as if it were an HSK
+        # level, so e.g. "HSK 2 Mastery" (target=2, mastery=80) unlocked
+        # after a single vocab review nudged that skill above 2.0. The real
+        # HSK level + overall mastery already exist via user_rank (the same
+        # pair World's unlock logic uses), so reuse that instead.
+        current_level, overall = user_rank(db, user)
+        if overall < criteria.get("mastery", 0):
+            return 0
+        return current_level
     if ctype == "duel_wins":
         return sum(1 for p in user.participants if p.score and p.score > 0)
     if ctype == "vocab_mastered":
@@ -397,3 +404,22 @@ def user_rank(db: Session, user: models.User) -> tuple[int, float]:
         if overall >= max(0, (level - 1) * 15):
             current = max(current, level)
     return current, round(overall, 1)
+
+
+def location_status(location: models.Location, current_level: int) -> str:
+    """Same unlock rule World's map uses, exposed here so any router that
+    needs to gate access to a location's content (not just display a badge)
+    can check it without importing another router."""
+    if location.unlock_level <= current_level:
+        return "unlocked"
+    if location.unlock_level == current_level + 1:
+        return "next"
+    return "locked"
+
+
+def scenario_is_unlocked(db: Session, user: models.User | None, scenario: models.Scenario) -> bool:
+    location = db.get(models.Location, scenario.location_id)
+    if location is None:
+        return True
+    current = user_rank(db, user)[0] if user else 1
+    return location_status(location, current) == "unlocked"

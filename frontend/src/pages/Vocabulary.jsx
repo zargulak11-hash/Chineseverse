@@ -5,9 +5,10 @@ import { Bar, Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Vocabulary() {
-  const { data, setData, error } = useApi("/vocab");
-  const words = data || [];
   const [level, setLevel] = useState(1);
+  const { data, setData, error } = useApi(`/vocab?hsk_level=${level}`);
+  const { data: roadmap } = useApi("/hsk/roadmap");
+  const words = data || [];
   const [flash, setFlash] = useState(null);
 
   useEffect(() => {
@@ -16,7 +17,7 @@ export default function Vocabulary() {
     return () => clearTimeout(t);
   }, [flash]);
 
-  const filtered = words.filter((w) => w.hsk_level_id === level);
+  const filtered = words;
 
   async function review(w) {
     try {
@@ -35,7 +36,7 @@ export default function Vocabulary() {
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
 
   const counts = {};
-  for (const lv of [1, 2, 3, 4, 5, 6]) counts[lv] = words.filter((w) => w.hsk_level_id === lv).length;
+  for (const lv of roadmap?.levels || []) counts[lv.level] = lv.vocab_total;
 
   return (
     <Layout>

@@ -21,9 +21,9 @@ export default function Missions() {
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading>Gathering missions…</Loading></Layout>;
 
-  async function accept(id) {
-    const updated = await api.post(`/missions/${id}/accept`);
-    setData((ms) => (ms || []).map((m) => (m.id === id ? updated : m)));
+  async function accept(missionId) {
+    const updated = await api.post(`/missions/${missionId}/accept`);
+    setData((ms) => (ms || []).map((m) => (m.mission.id === missionId ? updated : m)));
   }
 
   const active = data.filter((m) => m.status !== "completed");
@@ -63,7 +63,7 @@ export default function Missions() {
               </div>
             </div>
             {m.status === "available" ? (
-              <button className="btn primary small" style={{ marginTop: 10 }} onClick={() => accept(m.id)}>
+              <button className="btn primary small" style={{ marginTop: 10 }} onClick={() => accept(m.mission.id)}>
                 Accept mission
               </button>
             ) : (

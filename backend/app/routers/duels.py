@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app import models, schemas
 from app.database import get_db
@@ -362,6 +363,15 @@ def answer_question(
     if payload.index >= len(questions):
         raise HTTPException(status_code=400, detail="Question index out of range")
 
+    # Re-submitting an already-answered index (double-click, retry, replay)
+    # must not re-score or re-bump DNA/mistakes — each question counts once
+    # per participant. Tracked in the duel's own JSON blob rather than a new
+    # column/table, since nothing else needs this outside this endpoint.
+    answered_map = dict((duel.question_data or {}).get("answered") or {})
+    already = set(answered_map.get(str(user.id), []))
+    if payload.index in already:
+        raise HTTPException(status_code=409, detail="Question already answered")
+
     q = questions[payload.index]
     qtype = q.get("type", "meaning")
     correct = (payload.answer or "").strip().lower() == (q.get("answer") or "").strip().lower()
@@ -380,6 +390,11 @@ def answer_question(
         me.score += 2
         bump_skill(user, TYPE_SKILL.get(qtype, "vocabulary"), -0.3)
     me.answered += 1
+
+    already.add(payload.index)
+    answered_map[str(user.id)] = sorted(already)
+    duel.question_data = {**(duel.question_data or {}), "answered": answered_map}
+    flag_modified(duel, "question_data")
 
     mistake_type = TYPE_MISTAKE.get(qtype)
     if mistake_type:

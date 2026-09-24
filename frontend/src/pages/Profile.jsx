@@ -46,7 +46,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
+      <div className="grid grid-2" style={{ marginTop: 18 }}>
         <div className="card">
           <h2 className="h2">Profile</h2>
           <div className="col" style={{ marginTop: 10 }}>
