@@ -7,53 +7,7 @@ import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { deriveVoiceProfile, voiceLabel } from "../voiceProfile.js";
-
-// Picks an actual Chinese SpeechSynthesisVoice instead of leaving voice
-// choice to the browser/system default -- `utter.lang` alone is a hint the
-// browser is free to ignore if no Chinese voice happens to be its default.
-// Voice list loads asynchronously in some browsers, so this also listens
-// for `voiceschanged` and re-picks once it fires.
-let cachedZhVoice;
-function pickChineseVoice() {
-  if (!window.speechSynthesis) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return cachedZhVoice ?? null;
-  const zhVoices = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith("zh"));
-  cachedZhVoice =
-    zhVoices.find((v) => v.lang.toLowerCase() === "zh-cn") ||
-    zhVoices.find((v) => v.lang.toLowerCase().startsWith("zh-cn")) ||
-    zhVoices[0] ||
-    null;
-  return cachedZhVoice;
-}
-if (typeof window !== "undefined" && window.speechSynthesis) {
-  // addEventListener (not `.onvoiceschanged =`) so this never overwrites a
-  // handler another page might set on the same shared speechSynthesis object.
-  window.speechSynthesis.addEventListener("voiceschanged", pickChineseVoice);
-}
-
-// Speaks `text` aloud using the browser's own speechSynthesis (the same
-// mechanism DuelBattle/Onboarding already use for tts_text) with the
-// chosen animal's derived pitch/rate, so each companion is audibly
-// distinct without any new voice stack or server-side TTS call. The
-// Daily Voice Companion is Chinese-only, so both the utterance language
-// AND (when available) an actual Chinese voice are set explicitly --
-// never left to whatever the browser/system default happens to be.
-function speak(text, profile, onStart, onEnd) {
-  if (!text || !window.speechSynthesis) return;
-  const utter = new SpeechSynthesisUtterance(text.replace(/^[^：:]+[：:]\s*/, ""));
-  utter.lang = "zh-CN";
-  const zhVoice = pickChineseVoice();
-  if (zhVoice) utter.voice = zhVoice;
-  utter.rate = profile.rate;
-  utter.pitch = profile.pitch;
-  utter.volume = profile.volume;
-  utter.onstart = onStart;
-  utter.onend = onEnd;
-  utter.onerror = onEnd;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
-}
+import { speakChinese } from "../zhSpeech.js";
 
 export default function VoiceCompanion() {
   const [animals, setAnimals] = useState(null);
@@ -111,12 +65,11 @@ export default function VoiceCompanion() {
           attempt: { ...res.attempt, feedback: res.attempt.feedback },
         },
       ]);
-      speak(
-        res.companion_reply,
-        deriveVoiceProfile(session.personality_row),
-        () => setSpeaking(true),
-        () => setSpeaking(false)
-      );
+      speakChinese(res.companion_reply, {
+        profile: deriveVoiceProfile(session.personality_row),
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
     } catch (e) {
       setChat((c) => [...c, { from: "npc", error: e.message }]);
     } finally {
