@@ -56,7 +56,7 @@ export default function AnimalSelect() {
             onClick={() => !busy && choose(a.id)}
           >
             <div className="face">
-              <AnimalAvatar slug={a.slug} size={76} />
+              <AnimalAvatar slug={a.slug} size={76} state={picked === a.id ? "happy" : "idle"} />
             </div>
             <div className="name">{a.name}</div>
             <div className="species">{a.species}</div>
@@ -65,6 +65,12 @@ export default function AnimalSelect() {
               <Icon name="sparkles" size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
               {a.special_ability}
             </div>
+            {a.preferred_mechanics && (
+              <div className="ability" style={{ opacity: 0.85 }}>
+                <Icon name="target" size={12} style={{ verticalAlign: -2, marginRight: 4 }} />
+                {a.preferred_mechanics}
+              </div>
+            )}
             <div className="statsrow">
               {a.personality && <span className="statpill">{a.personality}</span>}
               {a.tone_style && <span className="statpill">{a.tone_style}</span>}

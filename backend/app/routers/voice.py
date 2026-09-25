@@ -10,7 +10,7 @@ from app.deps import get_current_user
 from app.services import voice_eval
 from app.services.activity import log_activity
 from app.services.dna import apply_voice_to_skills
-from app.services.ai_client import chat_reply
+from app.services.ai_client import chat_reply, voice_companion_feedback_zh
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
@@ -185,6 +185,12 @@ def submit_companion_chat(
     personality_row = animal.personality_row
 
     result = voice_eval.grade_turn(None, payload.spoken_text, expected_keywords=None)
+    # Daily Voice Companion is Chinese-immersion only: the shared voice_eval
+    # pipeline's `feedback` string (used as-is by /attempt and /evaluate for
+    # the main companion / World voice system, which this must not change)
+    # can be English. Swap in a Chinese coaching line derived from the same
+    # score numbers, only for this endpoint's own VoiceAttempt row.
+    zh_feedback = voice_companion_feedback_zh(result)
 
     attempt = models.VoiceAttempt(
         user_id=user.id,
@@ -200,7 +206,7 @@ def submit_companion_chat(
         relevance=result["relevance"],
         response_time_ms=payload.response_time_ms,
         overall=result["overall"],
-        feedback=result["feedback"],
+        feedback=zh_feedback,
     )
     db.add(attempt)
     db.flush()
@@ -216,13 +222,10 @@ def submit_companion_chat(
     hsk_level, _ = user_rank(db, user)
     level_hint = "beginner" if hsk_level <= 2 else "intermediate" if hsk_level <= 4 else "advanced"
 
-    personality_desc = " ".join(filter(None, [animal.personality, animal.tone_style]))
     reply = chat_reply(
         [t.model_dump() for t in payload.history] + [{"role": "user", "content": payload.spoken_text}],
-        companion=animal.name,
+        animal_slug=animal.slug,
         user_name=user.username,
-        personality=personality_desc or None,
-        catchphrase=personality_row.catchphrase if personality_row else None,
         energy=personality_row.energy if personality_row else None,
         level_hint=level_hint,
     )

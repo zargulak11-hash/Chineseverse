@@ -105,35 +105,125 @@ def _offline_react(transcript: str, expected_keywords: List[str], correct: str, 
     return incorrect
 
 
+# ---------------------------------------------------------------------------
+# Daily Voice Companion — Chinese-only content helpers.
+#
+# The animal's DB fields (Animal.name, .personality, .tone_style, and
+# AnimalPersonality.catchphrase) are English, by design: they're shown as
+# English/localized UI text elsewhere (the Companion page, the animal
+# picker). The Daily Voice Companion is a dedicated Chinese-immersion
+# screen, so its own spoken content must never splice those raw English
+# strings in. These mappings are ChineseVerse-authored companion flavor
+# text (not curriculum data), one per real animal, used ONLY by chat_reply/
+# _offline_chat below -- they never touch the DB fields or any other page.
+# ---------------------------------------------------------------------------
+
+ANIMAL_ZH_NAME = {
+    "panda": "熊猫", "red-panda": "小熊猫", "phoenix": "凤凰", "golden-dragon": "金龙",
+    "fox": "狐狸", "wolf": "狼", "snake": "蛇", "cheetah": "猎豹",
+    "cat": "猫", "dog": "狗", "tiger": "老虎", "rabbit": "兔子",
+    "bird": "小鸟", "capybara": "水豚", "panther": "黑豹", "sheep": "绵羊",
+}
+
+# A short, natural Chinese line capturing the same vibe as the animal's
+# English catchphrase (e.g. fox's "Wanna play a word game?" -> playful
+# invitation to a word game), so personality still differs animal to
+# animal without ever emitting the English original.
+ANIMAL_ZH_FLAVOR = {
+    "panda": "慢慢来，一步一步来。",
+    "red-panda": "这个词是什么呀？",
+    "phoenix": "每一次犯错，都是重新出发。",
+    "golden-dragon": "向下一个境界前进！",
+    "fox": "要不要玩个词语游戏？",
+    "wolf": "咱们可不能只做到一般水平。",
+    "snake": "慢慢来，才能真正记住。",
+    "cheetah": "太慢啦！再来一次，快一点！",
+    "cat": "呼噜～慢慢来，不着急。",
+    "dog": "太棒了！再来一次！真厉害！",
+    "tiger": "让我看看你的实力。",
+    "rabbit": "摔倒了？跳起来，再试一次！",
+    "bird": "声调对不对？再听一遍！",
+    "capybara": "不急，慢慢来，继续吧。",
+    "panther": "嗯……好像有点不对劲。",
+    "sheep": "再来一次没关系，我们慢慢练。",
+}
+
+# Short Chinese personality description for the AI system prompt, replacing
+# Animal.personality/tone_style (English) so nothing English ever appears
+# in the prompt that shapes what the model says.
+ANIMAL_ZH_PERSONALITY = {
+    "panda": "温和、友善、让人安心",
+    "red-panda": "好奇、有点害羞，对新词特别兴奋",
+    "phoenix": "睿智、坚韧、说话有诗意",
+    "golden-dragon": "自信、有雄心、自豪",
+    "fox": "聪明、机灵、有点调皮",
+    "wolf": "忠诚、认真、专注目标",
+    "snake": "沉稳、耐心、善于观察",
+    "cheetah": "精力充沛、好胜、性子急",
+    "cat": "慵懒、独立、让人放松",
+    "dog": "友好、忠诚、总是为你加油",
+    "tiger": "强壮、有雄心、无所畏惧",
+    "rabbit": "充满希望、可爱、坚韧不拔",
+    "bird": "爱唱歌、好奇、话很多",
+    "capybara": "淡定、平静、处变不惊",
+    "panther": "神秘、善于分析、话不多",
+    "sheep": "温柔、耐心、喜欢慢慢重复",
+}
+
+# Chinese feedback used ONLY by the Daily Voice Companion (see
+# voice.py:submit_companion_chat) so the "{animal} says" coaching line is
+# never the shared English feedback that /attempt and /evaluate still use
+# for the main companion / World voice system.
+_WEAKEST_LABEL_ZH = {"pronunciation": "发音", "tones": "声调", "fluency": "流利度", "grammar": "语法"}
+
+
+def voice_companion_feedback_zh(scores: dict) -> str:
+    """A short Chinese coaching line derived from the same score numbers the
+    shared voice_eval pipeline already computed -- language-agnostic
+    numbers in, Chinese-only text out, regardless of which provider (AI or
+    offline) produced the scores."""
+    overall = scores.get("overall", 0)
+    sub = {k: scores.get(k, 0) for k in ("pronunciation", "tones", "fluency", "grammar")}
+    weakest_key = min(sub, key=sub.get)
+    weakest_zh = _WEAKEST_LABEL_ZH[weakest_key]
+    if overall >= 85:
+        return "非常好！继续保持这个状态！"
+    if overall >= 65:
+        return f"不错！{weakest_zh}再练一下会更好。"
+    return f"再听一次，跟着慢慢说一遍，注意{weakest_zh}。"
+
+
 def _offline_chat(
     messages: List[dict],
-    companion: str,
+    animal_slug: str,
     user_name: str,
-    catchphrase: Optional[str] = None,
     energy: Optional[int] = None,
 ) -> str:
-    """Deterministic, keyword-triggered fallback. `catchphrase` and `energy`
-    are the SAME per-animal AnimalPersonality fields the real AI branch is
-    told about (see chat_reply's `personality` string below) -- so even
-    offline, a high-energy animal like Cheetah doesn't read identically to
-    a calm one like Capybara; it's not just the name swapped in a template."""
-    role = companion
+    """Deterministic, keyword-triggered, Chinese-only fallback. `energy` is
+    the SAME per-animal AnimalPersonality field the real AI branch is told
+    about -- so even offline, a high-energy animal like Cheetah doesn't
+    read identically to a calm one like Capybara. The reply text is never
+    prefixed with the animal's (English) name -- the frontend already shows
+    that as a separate UI label; baking it into the message would itself be
+    an English leak into the spoken content."""
+    zh_name = ANIMAL_ZH_NAME.get(animal_slug, "朋友")
+    flavor = ANIMAL_ZH_FLAVOR.get(animal_slug, "")
     last = messages[-1] if messages else {}
     content = (last.get("content") or "").lower()
     exclaim = "！" if (energy is None or energy >= 50) else "。"
     if _contain(content, "你好", "hi", "hello"):
-        lead = f"{catchphrase} " if catchphrase else ""
-        return f"{role}：{lead}你好{exclaim}我是{role}，你的语言伙伴。你想聊什么？"
+        lead = f"{flavor} " if flavor else ""
+        return f"{lead}你好{exclaim}我是{zh_name}，你的语言伙伴。你想聊什么？"
     if _contain(content, "名字", "name"):
-        return f"{role}：我的名字就是{role}。你呢？你的中文名字是什么？"
+        return f"我叫{zh_name}。你呢？你的中文名字是什么？"
     if _contain(content, "谢谢", "thank"):
-        return f"{role}：不客气{exclaim}随时找我。"
+        return f"不客气{exclaim}随时找我聊天。"
     if _contain(content, "再见", "bye", "拜拜"):
-        tail = f" {catchphrase}" if catchphrase else ""
-        return f"{role}：再见{exclaim}今天练习得不错。{tail}"
+        tail = f" {flavor}" if flavor else ""
+        return f"再见{exclaim}今天练习得不错。{tail}"
     return (
-        f"{role}：我听到你说「{last.get('content', '')}」。"
-        f"很有进步，{user_name}{exclaim}再说一遍怎么样？"
+        f"我听到你说「{last.get('content', '')}」。"
+        f"很有进步{exclaim}再说一遍怎么样？"
     )
 
 
@@ -206,25 +296,42 @@ def evaluate_speech(
     return _offline_evaluate(prompt, transcript, expected_keywords)
 
 
+CHINESE_ONLY_RULE = (
+    "STRICT LANGUAGE RULE: Respond exclusively in Mandarin Chinese (simplified "
+    "characters). Never output English, Russian, or Tajik. Never mix languages "
+    "in the same reply. Do not translate your answer into the user's app UI "
+    "language under any circumstance. Do not add pinyin or an English gloss "
+    "next to the Chinese. This rule applies to every single turn of the "
+    "conversation, not just the first message."
+)
+
+
 def chat_reply(
     messages: List[dict],
-    companion: str,
+    animal_slug: str,
     user_name: str,
-    personality: Optional[str] = None,
-    catchphrase: Optional[str] = None,
     energy: Optional[int] = None,
     level_hint: Optional[str] = None,
 ) -> str:
-    """Companion is the pre-named NPC. Returns the NPC's reply text.
-
-    `personality`/`catchphrase`/`energy` are the SAME AnimalPersonality
-    fields already shown elsewhere in the app (Companion page, animal
-    picker) -- passing them into the prompt is what makes Wolf actually
-    read differently from Rabbit instead of only the name changing.
-    `level_hint` ("beginner"/"intermediate"/"advanced") reuses the
-    learner's existing HSK level so the same animal adapts its Chinese
-    instead of always talking at one fixed difficulty.
+    """Daily Voice Companion reply -- this is a dedicated Chinese-immersion
+    screen, so the returned text (and everything in the system prompt that
+    could be echoed back) is Chinese-only, regardless of the app's UI
+    language. `animal_slug` looks up the animal's Chinese name/flavor line/
+    personality description (see ANIMAL_ZH_* above) -- the English
+    Animal.name/personality/tone_style/AnimalPersonality.catchphrase fields
+    (shared with the rest of the app) are deliberately never passed in
+    here, only their Chinese counterparts. `level_hint`
+    ("beginner"/"intermediate"/"advanced") reuses the learner's existing HSK
+    level so the same animal adapts its Chinese instead of always talking
+    at one fixed difficulty, while staying Chinese-only at every level.
     """
+    # Fall back to a generic Chinese noun, never an English name, so an
+    # animal added later without an ANIMAL_ZH_NAME entry still can't leak
+    # English here.
+    zh_name = ANIMAL_ZH_NAME.get(animal_slug, "朋友")
+    zh_personality = ANIMAL_ZH_PERSONALITY.get(animal_slug, "")
+    zh_flavor = ANIMAL_ZH_FLAVOR.get(animal_slug, "")
+
     provider = _active_provider()
     if provider == "openai":
         try:
@@ -234,11 +341,12 @@ def chat_reply(
                 "advanced": "学习者是高级水平：可以用丰富、自然、更复杂的中文和更有深度的问题。",
             }.get(level_hint or "", "")
             system = (
-                f"你是一个叫「{companion}」的中文语音伙伴。"
-                + (f"你的性格：{personality}。" if personality else "")
-                + (f"你常说的一句话：「{catchphrase}」，可以偶尔自然地用上。" if catchphrase else "")
+                f"{CHINESE_ONLY_RULE}\n\n"
+                f"你是一个叫「{zh_name}」的中文语音伙伴。"
+                + (f"你的性格：{zh_personality}。" if zh_personality else "")
+                + (f"你说话的感觉类似「{zh_flavor}」这种语气，可以偶尔自然地用上这句话或类似的说法。" if zh_flavor else "")
                 + "用符合你性格的语气和学习者说中文，引导对话，末尾给一句鼓励。"
-                + "对话中不要用拼音解释，直接说中文。"
+                + "对话中不要用拼音解释，不要中英夹杂，直接说中文。"
                 + (f" {level_line}" if level_line else "")
             )
             return _openai_chat(
@@ -247,7 +355,7 @@ def chat_reply(
             )
         except httpx.HTTPError:
             pass
-    return _offline_chat(messages, companion, user_name, catchphrase=catchphrase, energy=energy)
+    return _offline_chat(messages, animal_slug, user_name, energy=energy)
 
 
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:

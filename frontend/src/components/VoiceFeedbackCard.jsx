@@ -28,12 +28,15 @@ export default function VoiceFeedbackCard({ attempt, reaction, companionSlug, co
   const scores = SCORE_FIELDS.map(([key, label, icon]) => ({ key, label, icon, value: attempt[key] ?? 0 }));
   const weakest = scores.reduce((a, b) => (b.value < a.value ? b : a), scores[0]);
   const overall = Math.round(attempt.overall ?? 0);
+  // The avatar's expression reflects the SAME score already driving the bar
+  // below it -- not a separate judgment call, just the same number read twice.
+  const avatarState = overall >= 85 ? "celebrating" : overall >= 65 ? "correct" : overall >= 45 ? "encouraging" : "wrong";
 
   return (
     <motion.div className="voice-feedback" variants={popIn} initial="initial" animate="animate">
       <div className="voice-feedback-head">
         {companionSlug ? (
-          <AnimalAvatar slug={companionSlug} size={40} />
+          <AnimalAvatar slug={companionSlug} size={40} state={avatarState} />
         ) : (
           <span className="sidebar-profile-fallback" style={{ width: 40, height: 40 }}>
             <Icon name="chat" size={18} />
