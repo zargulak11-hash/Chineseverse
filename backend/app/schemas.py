@@ -806,7 +806,14 @@ class AdminUserSummary(BaseModel):
 
     id: int
     username: str
-    email: EmailStr
+    # str, not EmailStr: this field echoes an already-stored value, it
+    # doesn't validate new input. EmailStr's deliverability check rejects
+    # IANA special-use/reserved TLDs (.local, .test, .invalid, ...), which
+    # would 500 the entire list the moment any one row has such an address
+    # (e.g. scripts/seed_demo_users.py's demo.*@chineseverse.local accounts)
+    # — a row's email having an unusual domain is never a reason to hide
+    # every other user from the admin.
+    email: str
     is_active: bool
     is_admin: bool
     created_at: datetime
