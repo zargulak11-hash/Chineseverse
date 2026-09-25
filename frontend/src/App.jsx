@@ -37,6 +37,7 @@ import Assistant from "./pages/Assistant.jsx";
 import Community from "./pages/Community.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
+import AdminHome from "./pages/AdminHome.jsx";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -348,6 +349,14 @@ export default function App() {
             <RequireAuth>
               <PublicProfile />
             </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminHome />
+            </RequireAdmin>
           }
         />
         <Route

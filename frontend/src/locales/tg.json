@@ -42,7 +42,8 @@
     "hanzi": "Иероглифҳо",
     "grammar": "Грамматика",
     "groupAdmin": "Маъмурият",
-    "adminUsers": "Корбарон (маъмур)"
+    "adminUsers": "Корбарон (маъмур)",
+    "adminHome": "Саҳифаи асосии маъмур"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -527,7 +528,14 @@
       "cannotDeleteSelf": "Шумо ҳисоби маъмурии худро ҳазф карда наметавонед",
       "confirmTitle": "Ин корбарро ҳазф кунам?",
       "confirmBody": "Ин корбар {{username}} ва тамоми маълумоти таълимии ӯро бебозгашт ҳазф мекунад. Ин амалро бекор кардан мумкин нест.",
-      "deleteSuccess": "{{username}} ҳазф шуд."
+      "deleteSuccess": "{{username}} ҳазф шуд.",
+      "companion": "Ҳамроҳ",
+      "noCompanion": "Ҳамроҳ то ҳол интихоб нашудааст"
+    },
+    "adminHome": {
+      "title": "Саҳифаи асосии маъмур",
+      "subtitle": "Мушоҳидаи ҳисобҳои сабтшудаи ChineseVerse.",
+      "registeredUsers": "Корбарони сабтшуда"
     }
   }
 }

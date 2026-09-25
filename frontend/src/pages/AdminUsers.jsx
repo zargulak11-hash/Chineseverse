@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
+import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import Icon from "../components/Icon.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
@@ -66,9 +67,16 @@ export default function AdminUsers() {
         {users.map((u) => (
           <div key={u.id} className="card" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>{u.username}</div>
-                <div className="sub">{u.email}</div>
+              <div className="row" style={{ gap: 10, alignItems: "center" }}>
+                {/* The user's permanent main companion (chosen during
+                    onboarding), never their uploaded profile photo and
+                    never the Daily Voice Companion — see
+                    schemas.AdminUserSummary.companion_slug. */}
+                <AnimalAvatar slug={u.companion_slug} size={44} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{u.username}</div>
+                  <div className="sub">{u.email}</div>
+                </div>
               </div>
               <div className="row" style={{ gap: 6 }}>
                 {u.is_admin && <span className="badge accent">{t("pages.adminUsers.admin")}</span>}
@@ -76,6 +84,10 @@ export default function AdminUsers() {
                   {u.is_active ? t("pages.adminUsers.active") : t("pages.adminUsers.inactive")}
                 </span>
               </div>
+            </div>
+
+            <div className="sub">
+              {t("pages.adminUsers.companion")}: {u.companion_name || t("pages.adminUsers.noCompanion")}
             </div>
 
             <div className="statsrow">

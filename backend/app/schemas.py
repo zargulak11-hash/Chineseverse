@@ -810,7 +810,6 @@ class AdminUserSummary(BaseModel):
     # doesn't validate new input. EmailStr's deliverability check rejects
     # IANA special-use/reserved TLDs (.local, .test, .invalid, ...), which
     # would 500 the entire list the moment any one row has such an address
-    # (e.g. scripts/seed_demo_users.py's demo.*@chineseverse.local accounts)
     # — a row's email having an unusual domain is never a reason to hide
     # every other user from the admin.
     email: str
@@ -822,8 +821,22 @@ class AdminUserSummary(BaseModel):
     hsk_level: Optional[int] = None
     mastery: Optional[float] = None
     current_streak: Optional[int] = None
+    # The user's PERMANENT main companion (set once during onboarding via
+    # POST /api/me/animal), for the frontend to render with the existing
+    # AnimalAvatar component -- never the per-session Daily Voice
+    # Companion, and never the user's own uploaded profile picture
+    # (UserProfile.avatar_url is deliberately not exposed here). None
+    # until onboarding sets one; the frontend's existing "unknown slug"
+    # placeholder covers that case, so no fake/default image is invented
+    # here.
+    companion_slug: Optional[str] = None
+    companion_name: Optional[str] = None
 
 
 class AdminUserListResponse(BaseModel):
     total: int
     users: list[AdminUserSummary]
+
+
+class AdminDashboardResponse(BaseModel):
+    total_users: int

@@ -42,7 +42,8 @@
     "hanzi": "Hanzi",
     "grammar": "Grammar",
     "groupAdmin": "Admin",
-    "adminUsers": "Admin Users"
+    "adminUsers": "Admin Users",
+    "adminHome": "Admin Home"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -527,7 +528,14 @@
       "cannotDeleteSelf": "You can't delete your own admin account",
       "confirmTitle": "Delete this user?",
       "confirmBody": "This permanently deletes {{username}} and all of their learning data. This cannot be undone.",
-      "deleteSuccess": "{{username}} was deleted."
+      "deleteSuccess": "{{username}} was deleted.",
+      "companion": "Companion",
+      "noCompanion": "No companion chosen yet"
+    },
+    "adminHome": {
+      "title": "Admin Home",
+      "subtitle": "Overview of registered ChineseVerse accounts.",
+      "registeredUsers": "Registered Users"
     }
   }
 }

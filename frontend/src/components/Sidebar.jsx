@@ -48,7 +48,10 @@ const GROUPS = [
 // and App.jsx's RequireAdmin route guard).
 const ADMIN_GROUP = {
   labelKey: "nav.groupAdmin",
-  links: [["/admin/users", "nav.adminUsers", "lock"]],
+  links: [
+    ["/admin", "nav.adminHome", "chart"],
+    ["/admin/users", "nav.adminUsers", "lock"],
+  ],
 };
 
 export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile, user, dashboard, onLogout }) {

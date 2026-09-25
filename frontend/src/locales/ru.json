@@ -42,7 +42,8 @@
     "hanzi": "Иероглифы",
     "grammar": "Грамматика",
     "groupAdmin": "Администрирование",
-    "adminUsers": "Пользователи (админ)"
+    "adminUsers": "Пользователи (админ)",
+    "adminHome": "Главная админа"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -529,7 +530,14 @@
       "cannotDeleteSelf": "Нельзя удалить свою учётную запись администратора",
       "confirmTitle": "Удалить этого пользователя?",
       "confirmBody": "Это навсегда удалит {{username}} и все его учебные данные. Это действие нельзя отменить.",
-      "deleteSuccess": "{{username}} удалён."
+      "deleteSuccess": "{{username}} удалён.",
+      "companion": "Компаньон",
+      "noCompanion": "Компаньон ещё не выбран"
+    },
+    "adminHome": {
+      "title": "Главная админа",
+      "subtitle": "Обзор зарегистрированных аккаунтов ChineseVerse.",
+      "registeredUsers": "Зарегистрированные пользователи"
     }
   }
 }

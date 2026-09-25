@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app import models, schemas
 from app.crud import delete_user_cascade_safe
@@ -29,7 +29,18 @@ def list_users(
     db: Session = Depends(get_db),
     _admin: models.User = Depends(require_admin),
 ):
-    users = db.query(models.User).order_by(models.User.id).all()
+    # animal is the user's PERMANENT main companion, set once during
+    # onboarding via POST /api/me/animal (see app.routers.me.choose_animal)
+    # and never touched by the ephemeral, per-session Daily Voice Companion
+    # (app.routers.voice picks an animal_id per request and never writes it
+    # to user.animal_id/UserAnimal — see that router's own comments).
+    # joinedload avoids one extra query per user for the whole list.
+    users = (
+        db.query(models.User)
+        .options(joinedload(models.User.animal))
+        .order_by(models.User.id)
+        .all()
+    )
 
     mastery_by_user = dict(
         db.query(models.UserSkill.user_id, func.avg(models.UserSkill.mastery))
@@ -57,9 +68,19 @@ def list_users(
                 hsk_level=_hsk_level_for_mastery(overall, hsk_levels) if overall is not None else None,
                 mastery=round(overall, 1) if overall is not None else None,
                 current_streak=streak_by_user.get(u.id),
+                companion_slug=u.animal.slug if u.animal is not None else None,
+                companion_name=u.animal.name if u.animal is not None else None,
             )
         )
     return schemas.AdminUserListResponse(total=len(summaries), users=summaries)
+
+
+@router.get("/dashboard", response_model=schemas.AdminDashboardResponse)
+def admin_dashboard(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    return schemas.AdminDashboardResponse(total_users=db.query(models.User).count())
 
 
 @router.delete("/users/{user_id}", status_code=204)
