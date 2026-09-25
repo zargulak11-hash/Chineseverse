@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../api.js";
+import HanziDetail from "../components/HanziDetail.jsx";
 import HanziTrace from "../components/HanziTrace.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty } from "../components/ui.jsx";
@@ -14,6 +14,7 @@ export default function Hanzi() {
   const chars = data || [];
   const [flash, setFlash] = useState(null);
   const [tracing, setTracing] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   useEffect(() => {
     if (!flash) return;
@@ -21,18 +22,8 @@ export default function Hanzi() {
     return () => clearTimeout(timer);
   }, [flash]);
 
-  async function review(ch) {
-    try {
-      const res = await api.post(`/hanzi/${ch.id}/review`, { correct: true });
-      setFlash({ char: ch.character, mastery: res.mastery, status: res.status });
-      setData((items) =>
-        (items || []).map((x) =>
-          x.id === ch.id ? { ...x, mastery: res.mastery, status: res.status } : x
-        )
-      );
-    } catch (e) {
-      setFlash({ char: ch.character, mastery: null, status: e.message });
-    }
+  function applyUpdate(updated) {
+    setData((items) => (items || []).map((x) => (x.id === updated.id ? { ...x, ...updated } : x)));
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
@@ -71,7 +62,7 @@ export default function Hanzi() {
             role="button"
             tabIndex={0}
             style={{ border: ch.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative", cursor: "pointer" }}
-            onClick={() => review(ch)}
+            onClick={() => setDetail(ch)}
           >
             {ch.due_for_review && (
               <span className="badge accent" style={{ position: "absolute", top: 8, right: 8, fontSize: 10 }}>
@@ -112,17 +103,25 @@ export default function Hanzi() {
       </div>
       {chars.length === 0 && <Empty>{t("pages.hanzi.empty")}</Empty>}
 
+      {detail && (
+        <HanziDetail
+          hanzi={detail}
+          level={level}
+          onClose={() => setDetail(null)}
+          onUpdated={(updated) => {
+            applyUpdate(updated);
+            setDetail(updated);
+          }}
+        />
+      )}
+
       {tracing && (
         <HanziTrace
           hanzi={tracing}
           onClose={() => setTracing(null)}
           onSaved={(res) => {
             setFlash({ char: tracing.character, mastery: res.writing_mastery, status: res.writing_status });
-            setData((items) =>
-              (items || []).map((x) =>
-                x.id === tracing.id ? { ...x, writing_mastery: res.writing_mastery, writing_status: res.writing_status } : x
-              )
-            );
+            applyUpdate({ id: tracing.id, writing_mastery: res.writing_mastery, writing_status: res.writing_status });
           }}
         />
       )}

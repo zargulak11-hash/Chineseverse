@@ -495,7 +495,20 @@
       "traceComplete": "描摹正确！（{{count}} 次错误）",
       "retry": "重试",
       "saveProgress": "保存进度",
-      "cancel": "取消"
+      "cancel": "取消",
+      "watchingStrokeOrder": "正在演示笔顺…",
+      "strokeOrderShown": "这就是笔顺。准备好自己写了吗？",
+      "watchAgain": "再看一遍",
+      "tryWriting": "尝试书写",
+      "hear": "听",
+      "examples": "例词",
+      "noExamples": "词汇表中暂无例词。",
+      "recognitionProgress": "识别",
+      "writingProgress": "书写",
+      "gotIt": "我认识",
+      "stillLearning": "还在学",
+      "viewDetail": "学习这个汉字",
+      "close": "关闭"
     }
   }
 }

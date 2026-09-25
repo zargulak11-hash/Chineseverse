@@ -498,7 +498,20 @@
       "traceComplete": "Начертано верно! ({{count}} ошибок)",
       "retry": "Повторить",
       "saveProgress": "Сохранить прогресс",
-      "cancel": "Отмена"
+      "cancel": "Отмена",
+      "watchingStrokeOrder": "Смотрим порядок черт…",
+      "strokeOrderShown": "Вот порядок черт. Готовы попробовать написать сами?",
+      "watchAgain": "Посмотреть ещё раз",
+      "tryWriting": "Попробовать написать",
+      "hear": "Слушать",
+      "examples": "Примеры",
+      "noExamples": "В списке слов пока нет примеров.",
+      "recognitionProgress": "Узнавание",
+      "writingProgress": "Письмо",
+      "gotIt": "Я узнаю это",
+      "stillLearning": "Ещё учу",
+      "viewDetail": "Изучить этот иероглиф",
+      "close": "Закрыть"
     }
   }
 }

@@ -496,7 +496,20 @@
       "traceComplete": "Traced correctly! ({{count}} mistakes)",
       "retry": "Retry",
       "saveProgress": "Save progress",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "watchingStrokeOrder": "Watching stroke order…",
+      "strokeOrderShown": "That's the stroke order. Ready to try writing it yourself?",
+      "watchAgain": "Watch again",
+      "tryWriting": "Try writing",
+      "hear": "Listen",
+      "examples": "Examples",
+      "noExamples": "No example words in the vocabulary list yet.",
+      "recognitionProgress": "Recognition",
+      "writingProgress": "Writing",
+      "gotIt": "I recognize this",
+      "stillLearning": "Still learning",
+      "viewDetail": "Learn this character",
+      "close": "Close"
     }
   }
 }

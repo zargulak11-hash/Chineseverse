@@ -496,7 +496,20 @@
       "traceComplete": "Дуруст навишта шуд! ({{count}} хато)",
       "retry": "Такрор",
       "saveProgress": "Пешравиро нигоҳ доред",
-      "cancel": "Бекор кардан"
+      "cancel": "Бекор кардан",
+      "watchingStrokeOrder": "Тартиби хатҳо тамошо мешавад…",
+      "strokeOrderShown": "Ин тартиби хатҳо буд. Омодаед худатон нависед?",
+      "watchAgain": "Боз тамошо кунед",
+      "tryWriting": "Навиштанро санҷед",
+      "hear": "Гӯш кунед",
+      "examples": "Мисолҳо",
+      "noExamples": "Дар рӯйхати луғат ҳанӯз мисол нест.",
+      "recognitionProgress": "Шинохтан",
+      "writingProgress": "Хат",
+      "gotIt": "Ман инро мешиносам",
+      "stillLearning": "Ҳанӯз меомӯзам",
+      "viewDetail": "Ин аломатро омӯзед",
+      "close": "Пӯшидан"
     }
   }
 }
