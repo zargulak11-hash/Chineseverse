@@ -27,6 +27,18 @@ backend/static/uploads/
 
 # Raw HSK 3.0 curriculum source dumps (elkmovie/hsk30, drkameleon, makemeahanzi,
 # krmanik grammar) + derived *_import_ready.json staging files -- provenance
-# only, not needed at runtime (the actual data lives in Postgres, imported via
-# backend/scripts/import_hsk30_curriculum.py). ~58MB, deliberately untracked.
+# only, not needed at runtime. ~58MB, deliberately untracked.
+#
+# IMPORTANT (see alembic/versions/06e70a177b1d_...): the assumption that "the
+# actual data lives in Postgres" only held for whichever database this was
+# manually imported into -- it does NOT reach a fresh database (CI, another
+# developer, a freshly deployed server), since backend/scripts/
+# import_hsk30_curriculum.py depends on these gitignored files and was only
+# ever run by hand, once, locally. That caused a real bug: HSK level pages
+# showing "no Hanzi" on any database that only ever got schema migrations.
+# The Hanzi dataset specifically now also has a COMMITTED copy at
+# backend/alembic/seed_data/hanzi_import_ready.json, inserted automatically
+# by that migration on every `alembic upgrade head` -- do not re-gitignore
+# that path. Vocabulary/grammar/lesson data still has the same gap and is
+# tracked as a separate follow-up, not fixed by this directory rule alone.
 backend/data_sources/
