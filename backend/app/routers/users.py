@@ -3,8 +3,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.crud import apply_updates, get_or_404
+from app.crud import apply_updates, delete_user_cascade_safe, get_or_404
 from app.database import get_db
+from app.deps import require_admin
 from app.security import hash_password
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -36,7 +37,10 @@ def _check_unique(db: Session, payload, current_user=None):
 
 
 @router.get("", response_model=list[schemas.UserResponse])
-def list_users(db: Session = Depends(get_db)):
+def list_users(db: Session = Depends(get_db), _admin: models.User = Depends(require_admin)):
+    # Superseded by GET /api/admin/users (richer, purpose-built response) —
+    # kept only for whatever still calls this generic CRUD shape, now gated
+    # the same way: admin-only, never an open user directory.
     return db.query(models.User).order_by(models.User.id).all()
 
 
@@ -57,13 +61,16 @@ def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=schemas.UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
+def get_user(user_id: int, db: Session = Depends(get_db), _admin: models.User = Depends(require_admin)):
     return get_or_404(db, models.User, user_id)
 
 
 @router.put("/{user_id}", response_model=schemas.UserResponse)
 def update_user(
-    user_id: int, payload: schemas.UserUpdate, db: Session = Depends(get_db)
+    user_id: int,
+    payload: schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
 ):
     user = get_or_404(db, models.User, user_id)
     _ensure_animal_exists(db, payload.animal_id)
@@ -79,7 +86,12 @@ def update_user(
 
 
 @router.patch("/{user_id}", response_model=schemas.UserResponse)
-def patch_user(user_id: int, payload: schemas.UserPatch, db: Session = Depends(get_db)):
+def patch_user(
+    user_id: int,
+    payload: schemas.UserPatch,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     user = get_or_404(db, models.User, user_id)
     data = payload.model_dump(exclude_unset=True)
     if "animal_id" in data:
@@ -96,7 +108,14 @@ def patch_user(user_id: int, payload: schemas.UserPatch, db: Session = Depends(g
 
 
 @router.delete("/{user_id}", status_code=204)
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: models.User = Depends(require_admin),
+):
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=400, detail="You cannot delete your own admin account"
+        )
     user = get_or_404(db, models.User, user_id)
-    db.delete(user)
-    db.commit()
+    delete_user_cascade_safe(db, user)

@@ -32,6 +32,11 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
+    # Grants access to /api/admin/*. Never set from a request payload — the
+    # only writers are a one-off migration (see
+    # alembic/versions/*_add_user_is_admin.py) and direct DB access, so a
+    # user can never self-promote through the app itself (see deps.require_admin).
+    is_admin = Column(Boolean, nullable=False, server_default="false", default=False)
     total_xp = Column(Integer, nullable=False, server_default="0", default=0)
     coins = Column(Integer, nullable=False, server_default="0", default=0)
     created_at = Column(DateTime, default=datetime.utcnow)

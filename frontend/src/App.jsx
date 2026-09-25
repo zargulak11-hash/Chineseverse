@@ -36,11 +36,25 @@ import Settings from "./pages/Settings.jsx";
 import Assistant from "./pages/Assistant.jsx";
 import Community from "./pages/Community.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
+import AdminUsers from "./pages/AdminUsers.jsx";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  return children;
+}
+
+// Frontend visibility is NOT the security boundary here — it's only UX
+// (don't show a page whose API calls would fail anyway). A non-admin who
+// reaches /admin/users by any means still gets a real 401/403 from
+// GET/DELETE /api/admin/users (see app.deps.require_admin); this redirect
+// just avoids flashing an error-filled page first.
+function RequireAdmin({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  if (!user.is_admin) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -334,6 +348,14 @@ export default function App() {
             <RequireAuth>
               <PublicProfile />
             </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAdmin>
+              <AdminUsers />
+            </RequireAdmin>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -40,7 +40,9 @@
     "assistant": "助手",
     "hskLearner": "HSK {{level}} 学习者",
     "hanzi": "汉字",
-    "grammar": "语法"
+    "grammar": "语法",
+    "groupAdmin": "管理",
+    "adminUsers": "用户管理"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -509,6 +511,22 @@
       "stillLearning": "还在学",
       "viewDetail": "学习这个汉字",
       "close": "关闭"
+    },
+    "adminUsers": {
+      "title": "用户管理",
+      "subtitle": "查看并管理所有已注册的ChineseVerse账户。",
+      "totalUsers": "共{{count}}位注册用户",
+      "empty": "暂无注册用户。",
+      "admin": "管理员",
+      "active": "活跃",
+      "inactive": "未激活",
+      "streak": "连续{{count}}天",
+      "registered": "注册于{{date}}",
+      "deleteUser": "删除用户",
+      "cannotDeleteSelf": "无法删除自己的管理员账户",
+      "confirmTitle": "确定删除此用户？",
+      "confirmBody": "此操作将永久删除{{username}}及其所有学习数据，且无法撤销。",
+      "deleteSuccess": "已删除{{username}}。"
     }
   }
 }

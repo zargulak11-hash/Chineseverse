@@ -9,6 +9,8 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/smoke.db"
 
 from fastapi.testclient import TestClient
 
+from app import models
+from app.database import SessionLocal
 from app.main import app
 
 
@@ -62,7 +64,43 @@ with TestClient(app) as client:
     expect(client, "delete", f"/api/animals/{aid}", 204)
     expect(client, "get", f"/api/animals/{aid}", 404)
 
-    # User CRUD
+    # User CRUD — GET/PUT/PATCH/DELETE on /api/users are admin-gated (see
+    # app.routers.users / app.deps.require_admin), so this smoke test needs
+    # its own admin account. Promoting via a direct DB write mirrors exactly
+    # how a real deployment bootstraps its first admin (see
+    # alembic/versions/a1c3f9e2d7b4_add_user_is_admin.py) — never through a
+    # request payload.
+    adminbot = expect(
+        client, "post", "/api/users", 201,
+        json={"username": "adminbot", "email": "adminbot@example.com", "password": "secret1"},
+    ).json()
+    regularjoe = expect(
+        client, "post", "/api/users", 201,
+        json={"username": "regularjoe", "email": "regularjoe@example.com", "password": "secret1"},
+    ).json()
+    with SessionLocal() as _db:
+        _admin = _db.get(models.User, adminbot["id"])
+        _admin.is_admin = True
+        _db.commit()
+    admin_login = expect(
+        client, "post", "/api/auth/login", 200,
+        json={"username": "adminbot", "password": "secret1"},
+    ).json()
+    admin_headers = {"Authorization": f"Bearer {admin_login['access_token']}"}
+    joe_login = expect(
+        client, "post", "/api/auth/login", 200,
+        json={"username": "regularjoe", "password": "secret1"},
+    ).json()
+    joe_headers = {"Authorization": f"Bearer {joe_login['access_token']}"}
+
+    expect(client, "get", "/api/users", 401)  # no token
+    expect(client, "get", "/api/users", 403, headers=joe_headers)  # authenticated, not admin
+    expect(client, "get", "/api/users", 200, headers=admin_headers)
+    expect(client, "get", f"/api/users/{adminbot['id']}", 200, headers=admin_headers)
+    expect(client, "delete", f"/api/users/{regularjoe['id']}", 403, headers=joe_headers)
+    expect(client, "delete", f"/api/users/{adminbot['id']}", 400, headers=admin_headers)  # no self-delete
+    expect(client, "delete", f"/api/users/{regularjoe['id']}", 204, headers=admin_headers)
+
     expect(client, "post", "/api/users", 422, json={"username": "ab", "email": "t@t.com", "password": "123456"})
     expect(client, "post", "/api/users", 422, json={"username": "alice", "email": "not-an-email", "password": "123456"})
     user = expect(
@@ -78,14 +116,15 @@ with TestClient(app) as client:
     expect(client, "post", "/api/users", 409, json={"username": "alice", "email": "other@example.com", "password": "secret1"})
     expect(client, "post", "/api/users", 409, json={"username": "bob", "email": "alice@example.com", "password": "secret1"})
     expect(client, "post", "/api/users", 404, json={"username": "carol", "email": "c@example.com", "password": "secret1", "animal_id": 999999})
-    expect(client, "get", f"/api/users/{uid}", 200)
-    expect(client, "get", "/api/users/999999", 404)
+    expect(client, "get", f"/api/users/{uid}", 200, headers=admin_headers)
+    expect(client, "get", "/api/users/999999", 404, headers=admin_headers)
     expect(
         client,
         "patch",
         f"/api/users/{uid}",
         200,
         json={"animal_id": None},
+        headers=admin_headers,
     )
     put_user = expect(
         client,
@@ -93,6 +132,7 @@ with TestClient(app) as client:
         f"/api/users/{uid}",
         200,
         json={"username": "alice", "email": "alice@example.com", "password": "newsecret", "animal_id": panda["id"]},
+        headers=admin_headers,
     ).json()
     assert put_user["animal_id"] == panda["id"]
 
@@ -163,6 +203,6 @@ with TestClient(app) as client:
 
     # Deletion safeguards
     expect(client, "delete", f"/api/animals/{panda['id']}", 400)
-    expect(client, "delete", f"/api/users/{uid}", 204)
+    expect(client, "delete", f"/api/users/{uid}", 204, headers=admin_headers)
 
 print("ALL SMOKE TESTS PASSED")

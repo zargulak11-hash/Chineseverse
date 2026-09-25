@@ -57,6 +57,10 @@ class UserResponse(BaseModel):
     total_xp: int = 0
     coins: int = 0
     created_at: datetime
+    # Read-only: server-computed from the DB, never accepted on any request
+    # schema. The frontend only uses it to decide whether to render the
+    # admin nav link/route — the real gate is app.deps.require_admin.
+    is_admin: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -792,3 +796,27 @@ class DashboardResponse(BaseModel):
     next_location: Optional[LocationResponse] = None
     quests_today: list[QuestResponse] = []
     achievements: list[AchievementResponse] = []
+
+
+# --------------------------------------------------------------------------- Admin
+class AdminUserSummary(BaseModel):
+    """Deliberately excludes password_hash and every other credential field
+    — only what an owner needs to identify an account and judge whether to
+    delete it. See app.routers.admin.list_users for how each value is built."""
+
+    id: int
+    username: str
+    email: EmailStr
+    is_active: bool
+    is_admin: bool
+    created_at: datetime
+    total_xp: int
+    coins: int
+    hsk_level: Optional[int] = None
+    mastery: Optional[float] = None
+    current_streak: Optional[int] = None
+
+
+class AdminUserListResponse(BaseModel):
+    total: int
+    users: list[AdminUserSummary]

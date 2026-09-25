@@ -42,7 +42,14 @@ const GROUPS = [
   },
 ];
 
-const ALL_PATHS = GROUPS.flatMap((g) => g.links.map(([to]) => to));
+// Owner-only — never shown to a regular user. This is a UX convenience,
+// not the access boundary: even someone who forges is_admin in their own
+// browser still hits a real 401/403 from the API (see app.deps.require_admin
+// and App.jsx's RequireAdmin route guard).
+const ADMIN_GROUP = {
+  labelKey: "nav.groupAdmin",
+  links: [["/admin/users", "nav.adminUsers", "lock"]],
+};
 
 export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile, user, dashboard, onLogout }) {
   const { t } = useTranslation();
@@ -51,12 +58,15 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
   const avatarUrl = dashboard?.avatar_url;
   const hsk = dashboard?.hsk_level ?? 1;
 
+  const groups = user?.is_admin ? [...GROUPS, ADMIN_GROUP] : GROUPS;
+  const allPaths = groups.flatMap((g) => g.links.map(([to]) => to));
+
   const navRef = useRef(null);
   const inkRef = useRef(null);
   const linkRefs = useRef({});
   const placedRef = useRef(false);
 
-  const activePath = ALL_PATHS.includes(pathname) ? pathname : null;
+  const activePath = allPaths.includes(pathname) ? pathname : null;
 
   // The active indicator isn't a pill sliding into place — it's ink landing
   // on rice paper: each move oversizes and blurs the blob for an instant,
@@ -139,7 +149,7 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
 
         <nav className="sidebar-nav" ref={navRef}>
           <div ref={inkRef} className="sidebar-ink-blob" style={{ opacity: 0 }} />
-          {GROUPS.map((group) => (
+          {groups.map((group) => (
             <div className="sidebar-group" key={group.labelKey}>
               <div className="sidebar-group-label">
                 <span className="sidebar-group-mark" aria-hidden="true" />

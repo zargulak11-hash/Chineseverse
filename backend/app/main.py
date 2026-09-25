@@ -108,6 +108,7 @@ async def crash_logger(request, call_next):
 
 from app.routers import (  # noqa: E402
     achievements,
+    admin,
     analytics,
     animals,
     assistant,
@@ -161,6 +162,7 @@ for module in (
     dashboard,
     assistant,
     analytics,
+    admin,
 ):
     app.include_router(module.router)
 

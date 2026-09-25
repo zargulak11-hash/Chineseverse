@@ -40,7 +40,9 @@
     "assistant": "Ёрдамчӣ",
     "hskLearner": "Сатҳи HSK {{level}}",
     "hanzi": "Иероглифҳо",
-    "grammar": "Грамматика"
+    "grammar": "Грамматика",
+    "groupAdmin": "Маъмурият",
+    "adminUsers": "Корбарон (маъмур)"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -510,6 +512,22 @@
       "stillLearning": "Ҳанӯз меомӯзам",
       "viewDetail": "Ин аломатро омӯзед",
       "close": "Пӯшидан"
+    },
+    "adminUsers": {
+      "title": "Идоракунии корбарон",
+      "subtitle": "Мушоҳида ва идоракунии ҳамаи ҳисобҳои сабтшудаи ChineseVerse.",
+      "totalUsers": "{{count}} корбари сабтшуда",
+      "empty": "То ҳол корбари сабтшуда нест.",
+      "admin": "Маъмур",
+      "active": "Фаъол",
+      "inactive": "Ғайрифаъол",
+      "streak": "{{count}} рӯз паёпай",
+      "registered": "Сабт шудааст {{date}}",
+      "deleteUser": "Ҳазфи корбар",
+      "cannotDeleteSelf": "Шумо ҳисоби маъмурии худро ҳазф карда наметавонед",
+      "confirmTitle": "Ин корбарро ҳазф кунам?",
+      "confirmBody": "Ин корбар {{username}} ва тамоми маълумоти таълимии ӯро бебозгашт ҳазф мекунад. Ин амалро бекор кардан мумкин нест.",
+      "deleteSuccess": "{{username}} ҳазф шуд."
     }
   }
 }

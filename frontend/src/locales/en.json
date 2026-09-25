@@ -40,7 +40,9 @@
     "assistant": "Assistant",
     "hskLearner": "HSK {{level}} learner",
     "hanzi": "Hanzi",
-    "grammar": "Grammar"
+    "grammar": "Grammar",
+    "groupAdmin": "Admin",
+    "adminUsers": "Admin Users"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -510,6 +512,22 @@
       "stillLearning": "Still learning",
       "viewDetail": "Learn this character",
       "close": "Close"
+    },
+    "adminUsers": {
+      "title": "Admin Users",
+      "subtitle": "View and manage all registered ChineseVerse accounts.",
+      "totalUsers": "{{count}} registered user(s)",
+      "empty": "No registered users yet.",
+      "admin": "Admin",
+      "active": "Active",
+      "inactive": "Inactive",
+      "streak": "{{count}}-day streak",
+      "registered": "Registered {{date}}",
+      "deleteUser": "Delete user",
+      "cannotDeleteSelf": "You can't delete your own admin account",
+      "confirmTitle": "Delete this user?",
+      "confirmBody": "This permanently deletes {{username}} and all of their learning data. This cannot be undone.",
+      "deleteSuccess": "{{username}} was deleted."
     }
   }
 }

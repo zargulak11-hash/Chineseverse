@@ -43,6 +43,13 @@ check("GET deleted -> 404", status("GET", f"/api/animals/{aid}")[0] == 404)
 
 # ---------- USERS (CRUD) ----------
 print("== USERS ==")
+
+
+def astatus(method, path, headers, body=None):
+    r = c.request(method, path, json=body, headers=headers)
+    return r.status_code, r.json() if r.text else None
+
+
 check("POST invalid email -> 422", status("POST", "/api/users", {"username": "bob", "email": "bad", "password": "secret1"})[0] == 422)
 check("POST short username -> 422", status("POST", "/api/users", {"username": "b", "email": "b@e.co", "password": "secret1"})[0] == 422)
 s, user = status("POST", "/api/users", {"username": "bob", "email": "bob@example.com", "password": "secret1"})
@@ -53,19 +60,49 @@ s, _ = status("POST", "/api/users", {"username": "bob", "email": "x@y.z", "passw
 check("POST duplicate username -> 409", s == 409)
 s, _ = status("POST", "/api/users", {"username": "bob2", "email": "bob@example.com", "password": "secret1"})
 check("POST duplicate email -> 409", s == 409)
-check("GET one -> 200", status("GET", f"/api/users/{uid}")[0] == 200)
-check("GET missing -> 404", status("GET", "/api/users/999999")[0] == 404)
-s, u2 = status("PUT", f"/api/users/{uid}", {"username": "bob", "email": "bob@example.com", "password": "newsecret1"})
+
+# GET/PUT/PATCH/DELETE on /api/users are admin-gated (see
+# app.routers.users / app.deps.require_admin). "bob" is not an admin, so
+# every one of those must be denied for him even against his own account —
+# self-service profile reads/edits go through /api/me, not this generic
+# CRUD router. Promote a throwaway account the same way a real deployment
+# bootstraps its first admin: a direct DB write (see
+# alembic/versions/a1c3f9e2d7b4_add_user_is_admin.py), never a request payload.
+s, bob_login = status("POST", "/api/auth/login", {"username": "bob", "password": "secret1"})
+check("bob login -> 200", s == 200)
+bob_headers = {"Authorization": f"Bearer {bob_login['access_token']}"}
+check("GET one, no token -> 401", status("GET", f"/api/users/{uid}")[0] == 401)
+check("GET one, non-admin token -> 403", astatus("GET", f"/api/users/{uid}", bob_headers)[0] == 403)
+
+s, adminbot = status("POST", "/api/users", {"username": "admin_bootstrap", "email": "admin_bootstrap@example.com", "password": "secret1"})
+check("POST create adminbot -> 201", s == 201)
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app.database import SessionLocal as _SessionLocal
+from app import models as _models
+with _SessionLocal() as _db:
+    _admin_row = _db.get(_models.User, adminbot["id"])
+    _admin_row.is_admin = True
+    _db.commit()
+s, admin_login = status("POST", "/api/auth/login", {"username": "admin_bootstrap", "password": "secret1"})
+check("adminbot login -> 200", s == 200)
+admin_headers = {"Authorization": f"Bearer {admin_login['access_token']}"}
+
+check("GET one, admin token -> 200", astatus("GET", f"/api/users/{uid}", admin_headers)[0] == 200)
+check("GET missing -> 404", astatus("GET", "/api/users/999999", admin_headers)[0] == 404)
+s, u2 = astatus("PUT", f"/api/users/{uid}", admin_headers, {"username": "bob", "email": "bob@example.com", "password": "newsecret1"})
 check("PUT update -> 200", s == 200)
 s, login = status("POST", "/api/auth/login", {"username": "bob", "password": "newsecret1"})
 check("Login with new password -> 200", s == 200)
-s, u3 = status("PATCH", f"/api/users/{uid}", {"username": "robert"})
+s, u3 = astatus("PATCH", f"/api/users/{uid}", admin_headers, {"username": "robert"})
 check("PATCH username -> 200", s == 200 and u3["username"] == "robert")
 status("POST", "/api/users", {"username": "carol", "email": "carol@example.com", "password": "secret1"})
-s, _ = status("PATCH", "/api/users/1", {"username": "carol"})
+s, _ = astatus("PATCH", "/api/users/1", admin_headers, {"username": "carol"})
 check("PATCH to other user's username -> 409", s == 409)
-s, unchanged = status("PATCH", "/api/users/1", {"username": "robert"})
+s, unchanged = astatus("PATCH", "/api/users/1", admin_headers, {"username": "robert"})
 check("PATCH keeping own username -> 200", s == 200 and unchanged["username"] == "robert")
+check("DELETE self (adminbot) -> 400", astatus("DELETE", f"/api/users/{adminbot['id']}", admin_headers)[0] == 400)
+check("DELETE bob, non-admin token -> 403", astatus("DELETE", f"/api/users/{uid}", bob_headers)[0] == 403)
 
 # ---------- LESSONS (CRUD) ----------
 print("== LESSONS ==")
