@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -104,6 +105,39 @@ def get_stroke_data(
     if h is None:
         raise HTTPException(status_code=404, detail="Hanzi not found")
     return schemas.HanziStrokeData.model_validate(h)
+
+
+@router.get("/{hanzi_id}/examples", response_model=list[schemas.WordResponse])
+def get_examples(
+    hanzi_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Real words from the already-imported vocabulary that actually contain
+    this character (e.g. 你 -> 你好/你们/你是) -- never invented example
+    sentences. Shortest/most basic words first (short + low HSK level is a
+    reasonable proxy for "more elementary"), capped at 5 so this stays a
+    quick reference, not a second vocabulary browser."""
+    h = db.get(models.Hanzi, hanzi_id)
+    if h is None:
+        raise HTTPException(status_code=404, detail="Hanzi not found")
+
+    words = (
+        db.query(models.VocabularyWord)
+        .filter(models.VocabularyWord.simplified.contains(h.character))
+        .join(models.HSKLevel, models.VocabularyWord.hsk_level_id == models.HSKLevel.id)
+        .order_by(func.length(models.VocabularyWord.simplified), models.HSKLevel.level)
+        .limit(5)
+        .all()
+    )
+    translations = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
+    out = []
+    for w in words:
+        item = schemas.WordResponse.model_validate(w)
+        item.meanings = tr(translations, w.id, "meanings", item.meanings)
+        out.append(item)
+    return out
 
 
 @router.post("/{hanzi_id}/review", response_model=ReviewResponse)
