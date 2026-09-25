@@ -22,7 +22,7 @@ const FEATURES = [
   ["paw", "featCompanionsTitle", "featCompanionsDesc", "#FFC24B", ""],
 ];
 
-const SHOWCASE = ["fox", "wolf", "snake", "cheetah", "cat", "phoenix", "golden-dragon", "panda"];
+const SHOWCASE = ["fox", "wolf", "snake", "monkey", "cat", "phoenix", "owl", "panda"];
 
 export default function Landing() {
   const { t } = useTranslation();

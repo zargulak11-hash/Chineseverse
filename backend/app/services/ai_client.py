@@ -119,10 +119,11 @@ def _offline_react(transcript: str, expected_keywords: List[str], correct: str, 
 # ---------------------------------------------------------------------------
 
 ANIMAL_ZH_NAME = {
-    "panda": "熊猫", "red-panda": "小熊猫", "phoenix": "凤凰", "golden-dragon": "金龙",
-    "fox": "狐狸", "wolf": "狼", "snake": "蛇", "cheetah": "猎豹",
+    "panda": "熊猫", "red-panda": "小熊猫", "phoenix": "凤凰", "monkey": "猴子",
+    "fox": "狐狸", "wolf": "狼", "snake": "蛇", "koala": "考拉",
     "cat": "猫", "dog": "狗", "tiger": "老虎", "rabbit": "兔子",
     "bird": "小鸟", "capybara": "水豚", "panther": "黑豹", "sheep": "绵羊",
+    "elephant": "大象", "cow": "奶牛", "penguin": "企鹅", "owl": "猫头鹰",
 }
 
 # A short, natural Chinese line capturing the same vibe as the animal's
@@ -133,11 +134,9 @@ ANIMAL_ZH_FLAVOR = {
     "panda": "慢慢来，一步一步来。",
     "red-panda": "这个词是什么呀？",
     "phoenix": "每一次犯错，都是重新出发。",
-    "golden-dragon": "向下一个境界前进！",
     "fox": "要不要玩个词语游戏？",
     "wolf": "咱们可不能只做到一般水平。",
     "snake": "慢慢来，才能真正记住。",
-    "cheetah": "太慢啦！再来一次，快一点！",
     "cat": "呼噜～慢慢来，不着急。",
     "dog": "太棒了！再来一次！真厉害！",
     "tiger": "让我看看你的实力。",
@@ -146,6 +145,12 @@ ANIMAL_ZH_FLAVOR = {
     "capybara": "不急，慢慢来，继续吧。",
     "panther": "嗯……好像有点不对劲。",
     "sheep": "再来一次没关系，我们慢慢练。",
+    "monkey": "嘿嘿！我们来点好玩的吧！",
+    "koala": "嗯……慢慢来，抱一个。",
+    "elephant": "大象不会忘记，你也不会。",
+    "cow": "哞～一句一句慢慢来。",
+    "penguin": "我们摇摇摆摆去聊天吧！",
+    "owl": "咕咕！我们好好想一想。",
 }
 
 # Short Chinese personality description for the AI system prompt, replacing
@@ -155,11 +160,9 @@ ANIMAL_ZH_PERSONALITY = {
     "panda": "温和、友善、让人安心",
     "red-panda": "好奇、有点害羞，对新词特别兴奋",
     "phoenix": "睿智、坚韧、说话有诗意",
-    "golden-dragon": "自信、有雄心、自豪",
     "fox": "聪明、机灵、有点调皮",
     "wolf": "忠诚、认真、专注目标",
     "snake": "沉稳、耐心、善于观察",
-    "cheetah": "精力充沛、好胜、性子急",
     "cat": "慵懒、独立、让人放松",
     "dog": "友好、忠诚、总是为你加油",
     "tiger": "强壮、有雄心、无所畏惧",
@@ -168,6 +171,12 @@ ANIMAL_ZH_PERSONALITY = {
     "capybara": "淡定、平静、处变不惊",
     "panther": "神秘、善于分析、话不多",
     "sheep": "温柔、耐心、喜欢慢慢重复",
+    "monkey": "调皮、好奇、爱开玩笑",
+    "koala": "慵懒、温柔、让人想抱抱",
+    "elephant": "睿智、沉稳、记忆力超强",
+    "cow": "善良、耐心、踏实",
+    "penguin": "友好、爱社交、开朗",
+    "owl": "睿智、善于分析、好奇",
 }
 
 # Chinese feedback used ONLY by the Daily Voice Companion (see

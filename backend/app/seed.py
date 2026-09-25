@@ -62,6 +62,40 @@ def seed_gen_animals(db: Session) -> None:
                     chat_style=chat,
                 )
             )
+    retire_removed_animals(db)
+
+
+# Companions dropped from the roster -> the companion their users move to.
+# Only these exact slugs are ever removed, so animals added via the API stay.
+REMOVED_ANIMALS = {
+    "cheetah": "fox",
+    "golden-dragon": "phoenix",
+}
+
+
+def retire_removed_animals(db: Session) -> None:
+    """Idempotent: moves users off each retired companion, then deletes it
+    (its personality row cascades; its translations are removed here)."""
+    db.flush()
+    for old_slug, new_slug in REMOVED_ANIMALS.items():
+        old = db.query(models.Animal).filter_by(slug=old_slug).first()
+        if old is None:
+            continue
+        new = db.query(models.Animal).filter_by(slug=new_slug).first()
+        if new is None:
+            continue
+        for user in db.query(models.User).filter_by(animal_id=old.id).all():
+            user.animal_id = new.id
+        for link in db.query(models.UserAnimal).filter_by(animal_id=old.id).all():
+            link.animal_id = new.id
+        db.query(models.ContentTranslation).filter_by(
+            content_type="animal", content_key=str(old.id)
+        ).delete(synchronize_session=False)
+        db.flush()
+        db.expire(old)
+        db.delete(old)
+        db.flush()
+        logger.info("Retired companion %s -> users moved to %s", old_slug, new_slug)
 
 
 def seed_locations(db: Session) -> None:

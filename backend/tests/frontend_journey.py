@@ -33,9 +33,9 @@ r = c.get("/")
 assert "<title>中 ChineseVerse</title>" in r.text
 print("  OK SPA root served")
 animals = call("GET", "/api/animals")
-assert len(animals) == 16, f"expected 16 animals, got {len(animals)}"
+assert len(animals) == 20, f"expected 20 animals, got {len(animals)}"
 assert any(a["slug"] == "panda" for a in animals)
-print(f"  OK 16 animals listed (panda present)")
+print(f"  OK 20 animals listed (panda present)")
 
 print("\n== Register (POST /api/auth/register) ==")
 import uuid

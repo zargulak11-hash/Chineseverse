@@ -47,7 +47,6 @@ ANIMAL_BIAS: dict[str, dict] = {
     "fox":          {"quests": ["vocab", "duel"],     "mission_kinds": ["vocab", "duel"],      "duel_focus": "reaction"},
     "wolf":         {"quests": ["duel"],              "mission_kinds": ["duel", "conversation"], "duel_focus": "character"},
     "snake":        {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "memory"},
-    "cheetah":      {"quests": ["duel"],              "mission_kinds": ["duel"],               "duel_focus": "reaction"},
     "cat":          {"quests": ["listening"],         "mission_kinds": ["listening"],          "duel_focus": "listening"},
     "dog":          {"quests": ["vocab", "lesson"],   "mission_kinds": ["vocab"],              "duel_focus": "meaning"},
     "tiger":        {"quests": ["duel", "case"],      "mission_kinds": ["duel", "case"],       "duel_focus": "translate"},
@@ -55,7 +54,12 @@ ANIMAL_BIAS: dict[str, dict] = {
     "panda":        {"quests": [],                    "mission_kinds": [],                     "duel_focus": None},
     "red-panda":    {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "meaning"},
     "phoenix":      {"quests": ["vocab"],             "mission_kinds": ["case"],               "duel_focus": "character"},
-    "golden-dragon": {"quests": ["duel", "case"],     "mission_kinds": ["duel"],               "duel_focus": "translate"},
+    "monkey":       {"quests": ["duel", "speaking"],  "mission_kinds": ["duel", "conversation"], "duel_focus": "reaction"},
+    "koala":        {"quests": ["listening"],         "mission_kinds": ["listening"],          "duel_focus": "listening"},
+    "elephant":     {"quests": ["vocab"],             "mission_kinds": ["vocab"],              "duel_focus": "memory"},
+    "cow":          {"quests": ["lesson"],            "mission_kinds": ["teach"],              "duel_focus": "translate"},
+    "penguin":      {"quests": ["speaking"],          "mission_kinds": ["conversation", "speak"], "duel_focus": "meaning"},
+    "owl":          {"quests": ["case", "lesson"],    "mission_kinds": ["case", "teach"],      "duel_focus": "recognition"},
 }
 
 _NEUTRAL_BIAS = {"quests": [], "mission_kinds": [], "duel_focus": None}

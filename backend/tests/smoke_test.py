@@ -26,7 +26,7 @@ with TestClient(app) as client:
 
     # Animals: seeded on startup
     animals = client.get("/api/animals").json()
-    assert len(animals) == 16, animals
+    assert len(animals) == 20, animals
     panda = next(a for a in animals if a["name"] == "Panda")
 
     # Animal CRUD
