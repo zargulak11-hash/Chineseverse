@@ -36,20 +36,37 @@ def commit_or_409(db: Session, message: str) -> None:
 def delete_user_cascade_safe(db: Session, user: "models.User") -> None:
     """Delete a User row without leaving broken foreign keys behind.
 
-    Every other user-owned table cascades automatically via User's own
-    cascade="all, delete-orphan" relationships. Follow.follower_id/
-    following_id and Duel.winner_id are the two exceptions: plain FK
-    columns with no relationship declared on User, and no ondelete=
-    at the DB level either, so a bare db.delete(user) raises
-    ForeignKeyViolation for any user who ever followed/was followed or won
-    a duel. Follows are deleted outright; a duel's winner_id is nulled so
-    the duel record and the other participant's history survive.
+    Most user-owned tables cascade automatically via User's own
+    cascade="all, delete-orphan" relationships. The tables below are the
+    exceptions: plain FK columns with no relationship declared on User and
+    no ondelete= at the DB level, so a bare db.delete(user) raises
+    ForeignKeyViolation for any user these actually apply to. Confirmed the
+    hard way: PlacementAttempt/ActivityEvent weren't caught by the original
+    Follow/Duel audit because the accounts tested against at the time were
+    freshly created and had no onboarding/activity history yet to expose
+    the gap — a bulk cleanup of real accounts with real history hit it
+    immediately.
+
+    - Follow.follower_id/following_id: deleted outright (nothing meaningful
+      to keep once one side of a follow relationship is gone).
+    - Duel.winner_id: nulled, not deleted — the duel record and the other
+      participant's history survive; only the dangling reference is cleared.
+    - PlacementAttempt/ActivityEvent: deleted outright — both are pure
+      per-user history rows (onboarding placement test, activity log) with
+      no meaning to anyone but this user and nothing else in the schema
+      references either table's id, so there's nothing to preserve.
     """
     db.query(models.Follow).filter(
         (models.Follow.follower_id == user.id) | (models.Follow.following_id == user.id)
     ).delete(synchronize_session=False)
     db.query(models.Duel).filter(models.Duel.winner_id == user.id).update(
         {models.Duel.winner_id: None}, synchronize_session=False
+    )
+    db.query(models.PlacementAttempt).filter(models.PlacementAttempt.user_id == user.id).delete(
+        synchronize_session=False
+    )
+    db.query(models.ActivityEvent).filter(models.ActivityEvent.user_id == user.id).delete(
+        synchronize_session=False
     )
     db.delete(user)
     db.commit()

@@ -121,21 +121,33 @@ check("DELETE self -> 400, not 204", r.status_code == 400, r.text)
 still_admin = c.get("/api/admin/users", headers=auth(admin_token))
 check("admin account still present after blocked self-delete", still_admin.status_code == 200)
 
-print("\n== FK-safety: delete a user with a Follow relationship + a Duel win ==")
+print("\n== FK-safety: delete a user with a Follow, a Duel win, a PlacementAttempt and an ActivityEvent ==")
 # victim follows admintestowner, and admintestowner follows victim back —
 # exercises both follower_id and following_id pointing at the deleted row.
 # Inserted directly via the DB rather than through social.py's follow route,
 # so this test doesn't depend on that router's URL shape.
+#
+# PlacementAttempt and ActivityEvent are included here because they were a
+# real, previously-undiscovered gap: the original Follow/Duel audit missed
+# both (neither has a cascade relationship declared on User either), and it
+# only surfaced once a bulk cleanup hit real accounts with real onboarding/
+# activity history — accounts freshly created in a test never have either
+# row, so the gap stayed invisible until then. See crud.delete_user_cascade_safe.
 with SessionLocal() as db:
     db.add(models.Follow(follower_id=victim_id, following_id=admin_id))
     db.add(models.Follow(follower_id=admin_id, following_id=victim_id))
     duel = models.Duel(status="finished", winner_id=victim_id)
     db.add(duel)
+    db.add(models.PlacementAttempt(user_id=victim_id, status="finished", placed_level=2))
+    db.add(models.ActivityEvent(user_id=victim_id, section="hanzi", action_type="review", minutes=1.0))
     db.commit()
     duel_id = duel.id
 
 r = c.delete(f"/api/admin/users/{victim_id}", headers=auth(admin_token))
-check("DELETE user with Follow rows + a Duel win -> 204, no 500/IntegrityError", r.status_code == 204, r.text)
+check(
+    "DELETE user with Follow + Duel win + PlacementAttempt + ActivityEvent -> 204, no 500/IntegrityError",
+    r.status_code == 204, r.text,
+)
 
 with SessionLocal() as db:
     check("Follow rows referencing the deleted user are gone", db.query(models.Follow).filter(
@@ -143,6 +155,12 @@ with SessionLocal() as db:
     ).count() == 0)
     reloaded_duel = db.get(models.Duel, duel_id)
     check("Duel record survives with winner_id nulled out", reloaded_duel is not None and reloaded_duel.winner_id is None)
+    check("PlacementAttempt rows for the deleted user are gone", db.query(models.PlacementAttempt).filter(
+        models.PlacementAttempt.user_id == victim_id
+    ).count() == 0)
+    check("ActivityEvent rows for the deleted user are gone", db.query(models.ActivityEvent).filter(
+        models.ActivityEvent.user_id == victim_id
+    ).count() == 0)
 
 check("deleted user is gone from admin list", victim_id not in {u["id"] for u in c.get("/api/admin/users", headers=auth(admin_token)).json()["users"]})
 
