@@ -3270,3 +3270,34 @@ table.data td {
   background: var(--accent-gradient);
   pointer-events: none;
 }
+
+/* ---------- Admin Users ----------
+   Desktop gets a table, phones get stacked cards; the same data and the
+   same delete action in both, just laid out for the screen. */
+.admin-users-table { display: none; }
+.admin-users-cards { display: grid; gap: 10px; }
+@media (min-width: 760px) {
+  .admin-users-table { display: block; overflow-x: auto; }
+  .admin-users-cards { display: none; }
+}
+.admin-users-table td { vertical-align: middle; }
+.admin-users-table .col-actions { text-align: right; width: 1%; white-space: nowrap; }
+.admin-user-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.admin-user-id .email { color: var(--text-faint); font-size: var(--text-xs); overflow-wrap: anywhere; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent; color: var(--text-faint); cursor: pointer;
+}
+.icon-btn.danger { color: var(--bad); }
+.icon-btn.danger:hover:not(:disabled) { background: var(--bad-dim); border-color: var(--bad); }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.admin-toast {
+  position: fixed; right: 16px; bottom: 16px; z-index: 110;
+  max-width: min(360px, calc(100vw - 32px));
+  display: flex; align-items: center; gap: 8px;
+}
+.admin-toast.good { border-color: var(--good); }
+.admin-toast.bad { border-color: var(--bad); }

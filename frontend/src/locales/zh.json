@@ -18,7 +18,10 @@
     "lastWeek": "上周",
     "loadingWorld": "正在加载你的世界…",
     "xp": "经验",
-    "coins": "金币"
+    "coins": "金币",
+    "error": "错误",
+    "delete": "删除",
+    "confirm": "确认"
   },
   "nav": {
     "groupMain": "主要",
@@ -517,7 +520,7 @@
       "title": "用户管理",
       "subtitle": "查看并管理所有已注册的ChineseVerse账户。",
       "totalUsers": "共{{count}}位注册用户",
-      "empty": "暂无注册用户。",
+      "empty": "未找到用户",
       "admin": "管理员",
       "active": "活跃",
       "inactive": "未激活",
@@ -529,7 +532,18 @@
       "confirmBody": "此操作将永久删除{{username}}及其所有学习数据，且无法撤销。",
       "deleteSuccess": "已删除{{username}}。",
       "companion": "伙伴",
-      "noCompanion": "尚未选择伙伴"
+      "noCompanion": "尚未选择伙伴",
+      "users": "用户",
+      "user": "用户",
+      "status": "状态",
+      "registeredCol": "注册日期",
+      "actions": "操作",
+      "deleteSuccessGeneric": "用户已成功删除",
+      "deleteFailed": "删除用户失败",
+      "loadFailed": "加载用户失败",
+      "deleteAria": "删除用户 {{username}}",
+      "deleting": "正在删除…",
+      "retry": "重试"
     },
     "adminHome": {
       "title": "管理主页",

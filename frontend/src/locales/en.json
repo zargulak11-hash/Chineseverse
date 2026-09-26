@@ -18,7 +18,10 @@
     "lastWeek": "Last week",
     "loadingWorld": "Loading your world…",
     "xp": "xp",
-    "coins": "coins"
+    "coins": "coins",
+    "error": "Error",
+    "delete": "Delete",
+    "confirm": "Confirm"
   },
   "nav": {
     "groupMain": "Main",
@@ -518,7 +521,7 @@
       "title": "Admin Users",
       "subtitle": "View and manage all registered ChineseVerse accounts.",
       "totalUsers": "{{count}} registered user(s)",
-      "empty": "No registered users yet.",
+      "empty": "No users found",
       "admin": "Admin",
       "active": "Active",
       "inactive": "Inactive",
@@ -530,7 +533,18 @@
       "confirmBody": "This permanently deletes {{username}} and all of their learning data. This cannot be undone.",
       "deleteSuccess": "{{username}} was deleted.",
       "companion": "Companion",
-      "noCompanion": "No companion chosen yet"
+      "noCompanion": "No companion chosen yet",
+      "users": "Users",
+      "user": "User",
+      "status": "Status",
+      "registeredCol": "Registered",
+      "actions": "Actions",
+      "deleteSuccessGeneric": "User deleted successfully",
+      "deleteFailed": "Failed to delete user",
+      "loadFailed": "Failed to load users",
+      "deleteAria": "Delete user {{username}}",
+      "deleting": "Deleting…",
+      "retry": "Retry"
     },
     "adminHome": {
       "title": "Admin Home",
