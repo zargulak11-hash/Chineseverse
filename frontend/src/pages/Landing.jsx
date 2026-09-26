@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import BrandLogo from "../components/BrandLogo.jsx";
 import HeroCarousel from "../components/HeroCarousel.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
@@ -33,8 +34,7 @@ export default function Landing() {
       <div className="appbar-wrap">
         <header className="appbar">
           <span className="brand">
-            <span className="logomark">中</span>
-            中 ChineseVerse
+            <BrandLogo className="brand-logo--bar" />
           </span>
           <span className="spacer" />
           <button
@@ -68,7 +68,9 @@ export default function Landing() {
         <HeroCarousel />
         <InkBrush variant="hero" />
         <span className="ilb">{t("landing.kicker")}</span>
-        <h1>中 ChineseVerse</h1>
+        <h1 className="hero-brand">
+          <BrandLogo className="brand-logo--hero" />
+        </h1>
         <p className="tagline">{t("landing.tagline")}</p>
         <div className="row center" style={{ justifyContent: "center" }}>
           {user ? (

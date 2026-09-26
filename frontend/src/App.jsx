@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, clearSession, getSavedUser, getToken } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
 import { initButtonFX } from "./buttonFx.js";
+import BrandLogo from "./components/BrandLogo.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -109,7 +110,11 @@ export default function App() {
   }
 
   if (!booted) {
-    return <div className="boot">中 ChineseVerse…</div>;
+    return (
+      <div className="boot">
+        <BrandLogo className="brand-logo--boot" />
+      </div>
+    );
   }
 
   return (

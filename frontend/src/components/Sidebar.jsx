@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import AnimalAvatar from "./AnimalAvatar.jsx";
+import BrandLogo from "./BrandLogo.jsx";
 import Icon from "./Icon.jsx";
 
 // Every real authenticated route, grouped the way the app itself is
@@ -136,8 +137,8 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
       <aside className={`sidebar${collapsed ? " collapsed" : ""}${mobileOpen ? " mobile-open" : ""}`}>
         <div className="sidebar-head">
           <span className="brand sidebar-brand">
-            <span className="logomark">中</span>
-            <span className="label">中 ChineseVerse</span>
+            <BrandLogo className="brand-logo--sidebar" />
+            <BrandLogo variant="mark" className="brand-logo--sidebar-mark" />
           </span>
           <button
             type="button"

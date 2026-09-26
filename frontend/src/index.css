@@ -364,22 +364,121 @@ a {
   font-family: var(--font-display);
 }
 
-/* The 中 seal — a crafted mark, not a generic icon: a chop-stamp square
-   with the character itself, engraved by a soft inset shadow, brass on
-   ink. This is the one place the accent gradient fills a solid shape. */
-.brand .logomark {
+/* ---------- Brand logo ----------
+   The real ChineseVerse logo (frontend/photo/*.png, imported by
+   components/BrandLogo.jsx) is now the only brand artwork in the UI.
+
+   Sizing rule: exactly ONE dimension is ever set on the image and the
+   other stays `auto`, so the browser keeps the PNG's intrinsic 2048:768
+   ratio. The logo is sized, never scaled into a box, and so can never be
+   stretched or squashed on any screen.
+
+   The plate is not decoration — it is legibility. The artwork is dark
+   ink plus a cinnabar seal, so on the Ink theme (near-black #0b1020) it
+   would otherwise sit at ~2.2:1 and effectively disappear. Measured
+   contrast of the logo's own pixels against each backdrop:
+       paper #f2ead4  ->  8.8:1   (already perfect, no plate)
+       ink   #0b1020  ->  2.2:1   (needs the plate)
+   Hence a rice-paper chip on Ink only, and nothing at all on Paper so the
+   light theme keeps its clean, plate-free look. Both values are scoped to
+   .brand-logo; no global token changes. */
+.brand-logo {
+  --logo-plate: transparent;
+  --logo-ring: transparent;
+  --logo-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  --logo-radius: var(--radius-sm);
   display: inline-flex;
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  background: var(--accent-gradient);
   align-items: center;
   justify-content: center;
-  color: var(--on-accent);
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 700;
-  box-shadow: var(--accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  vertical-align: middle;
+  border-radius: var(--logo-radius);
+  background: var(--logo-plate);
+  box-shadow: inset 0 0 0 1px var(--logo-ring), var(--logo-shadow);
+}
+
+[data-theme="ink"] .brand-logo {
+  --logo-plate: #f8f2e3;
+  --logo-ring: rgba(255, 255, 255, 0.1);
+  --logo-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.brand-logo__img {
+  display: block;
+  max-width: none;
+  width: auto;
+  height: var(--logo-h, 34px);
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Full lockup — height-driven, width follows the 8:3 ratio. */
+.brand-logo--lockup {
+  --logo-h: 34px;
+}
+
+/* Seal only, for the collapsed sidebar. Cropped out of the same logo file
+   rather than shipped as a second asset, so the two can never drift.
+
+   Measured from the PNG: the seal occupies x 96..613 and y 144..649 of
+   the 2048x768 canvas — 4.69%..29.93% across, 18.75%..84.51% down. Those
+   fractions become the scale and offsets below, so the crop lands on the
+   artwork at any size instead of being pinned to one pixel value. The
+   result keeps ~4% breathing room inside a square window. */
+.brand-logo--mark {
+  --logo-mark: 32px;
+  position: relative;
+  overflow: hidden;
+  width: var(--logo-mark);
+  height: var(--logo-mark);
+}
+
+.brand-logo--mark .brand-logo__img {
+  position: absolute;
+  height: calc(var(--logo-mark) * 1.36403);
+  width: auto;
+  left: calc(var(--logo-mark) * -0.12964);
+  top: calc(var(--logo-mark) * -0.20509);
+}
+
+/* Per-placement sizes. Desktop first, then one small-screen step down. */
+.brand-logo--bar {
+  --logo-h: 34px;
+}
+
+.brand-logo--sidebar {
+  --logo-h: 32px;
+}
+
+/* Collapsed rail only. 30px is the largest seal that shares the 78px rail
+   with the 26px toggle without either one being squeezed. */
+.brand-logo--sidebar-mark {
+  --logo-mark: 30px;
+}
+
+.brand-logo--hero {
+  --logo-h: clamp(46px, 10.5vw, 92px);
+  --logo-radius: var(--radius-md);
+}
+
+.brand-logo--boot {
+  --logo-h: 40px;
+  --logo-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .brand-logo--bar {
+    --logo-h: 30px;
+  }
+
+  .brand-logo--sidebar {
+    --logo-h: 28px;
+  }
+
+  .brand-logo--hero {
+    --logo-h: clamp(38px, 13vw, 60px);
+  }
 }
 
 .appbar .nav {
@@ -1464,6 +1563,15 @@ table.data td {
   color: var(--text);
 }
 
+/* The hero wordmark is the logo artwork now. The h1 stays exactly where it
+   was — same element, same margins, same entrance animation — it just
+   stops setting type on an image and centres the logo instead. */
+.hero h1.hero-brand {
+  display: flex;
+  justify-content: center;
+  font-style: normal;
+}
+
 .hero .tagline {
   font-size: var(--text-md);
   color: var(--text-dim);
@@ -1915,14 +2023,31 @@ table.data td {
   overflow: hidden;
 }
 
-.sidebar-brand .label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* Collapsed, the full lockup has no room, so the sidebar falls back to the
+   seal alone — the same behaviour as before, now cropped from the real
+   logo instead of a CSS-drawn square. */
+.sidebar-brand .brand-logo--sidebar-mark {
+  display: none;
 }
 
-.sidebar.collapsed .sidebar-brand .label {
+.sidebar.collapsed .sidebar-brand .brand-logo--sidebar {
   display: none;
+}
+
+.sidebar.collapsed .sidebar-brand .brand-logo--sidebar-mark {
+  display: inline-flex;
+}
+
+/* The 78px collapsed rail is tight: at the old 16px padding it had to hold
+   a 32px mark, an 8px gap and the 26px toggle, which left the logo just
+   11px of the rail and clipped it. Tighten only the collapsed rail's own
+   padding and gap so the seal shows whole — 30 + 4 + 26 + 16 = 76 of the
+   available 78. The rail width, the toggle and every other panel stay
+   exactly as they were. */
+.sidebar.collapsed .sidebar-head {
+  gap: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .sidebar-collapse-btn {
