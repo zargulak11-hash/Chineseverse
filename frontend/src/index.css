@@ -480,8 +480,12 @@ a {
   --logo-h: 44px;
 }
 
+/* The expanded sidebar's head gives the brand 252 - 32 (padding) - 8 (gap)
+   - 26 (collapse toggle) = 185px, so the 8:3 lockup has room well past
+   where it was reading small next to the nav labels. 46px renders 122.7px
+   wide, leaving ~62px of slack. */
 .brand-logo--sidebar {
-  --logo-h: 40px;
+  --logo-h: 46px;
 }
 
 /* Collapsed rail only. The 78px rail shares its width with the 26px
@@ -505,7 +509,7 @@ a {
   }
 
   .brand-logo--sidebar {
-    --logo-h: 34px;
+    --logo-h: 38px;
   }
 
   .brand-logo--hero {
