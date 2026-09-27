@@ -377,9 +377,14 @@ a {
    ride on a warm cream plate, which read as an orange block against the
    near-black Ink theme; that chip is gone for good.
 
-   Legibility on Ink comes from the mark itself, tinted to the brand red —
-   see the note on the filter below. No background, no box, no shadow.
-   On Paper nothing is filtered and the artwork shows exactly as authored. */
+   The artwork is never recoloured, filtered or re-graded in any theme.
+   Two earlier passes tinted the mark (once white, once flat brand red via
+   a filter chain) to raise its contrast on the dark theme, but that changed
+   the look of the photo, which is exactly what the logo must not do. Both
+   are gone: there is no filter rule at all any more, so switching between
+   Ink and Paper changes the page around the logo and never the logo
+   itself. Whatever you supplied is what renders, in both themes, on every
+   screen. */
 .brand-logo {
   display: inline-flex;
   align-items: center;
@@ -388,33 +393,8 @@ a {
   vertical-align: middle;
 }
 
-/* On the Ink theme the mark is rendered in one flat brand red. Measured on
-   the logo's own pixels: 51% of the artwork is already cinnabar, but the
-   seal is a deep #b80818 and the wordmark ink is near-black #181828, so
-   the whole mark sat at 2.2:1 on #0b1020 and disappeared. Turning it white
-   fixed the contrast but threw the identity away — red IS the brand.
-
-   So the silhouette is re-tinted to a lifted cinnabar instead.
-   `brightness(0)` first flattens every pixel to one grey, after which the
-   rest of the chain only has to steer that single grey to the target and
-   the artwork's own colours become irrelevant. The exact values were NOT
-   hand-picked: two earlier attempts were derived in isolation and both
-   failed, because at 44px nearly every pixel is a partial-alpha
-   antialiased edge, which no closed-form model of the filter chain
-   predicts. The numbers below were instead read back off real Chrome
-   screenshots of the actual logo at actual sizes, by rendering many
-   candidate chains and measuring the pixels. The winner produces a flat
-   #fa3b2d at 5.16:1 on the page, 96% red-dominant.
-
-   Shape, alpha and proportions are untouched: these act on colour channels
-   only, so the file is not edited, re-encoded or re-scaled, and the mark
-   stays a faithful silhouette of your artwork. The low blue channel keeps
-   it true to your real cinnabar (#b80818) rather than drifting pink.
-
-   Paper applies no filter at all: the logo shows exactly as authored. */
-[data-theme="ink"] .brand-logo__img {
-  filter: brightness(0) invert(32%) sepia(95%) saturate(2800%) hue-rotate(344deg);
-}
+/* Deliberately no filter, no mix-blend-mode, no backdrop and no recolouring
+   here. The photo renders as supplied in every theme. */
 
 .brand-logo__img {
   display: block;
@@ -428,7 +408,7 @@ a {
 
 /* Full lockup — height-driven, width follows the 8:3 ratio. */
 .brand-logo--lockup {
-  --logo-h: 44px;
+  --logo-h: 38px;
 }
 
 /* Seal only, for the collapsed sidebar. Cropped out of the same logo file
@@ -440,7 +420,7 @@ a {
    artwork at any size instead of being pinned to one pixel value. The
    result keeps ~4% breathing room inside a square window. */
 .brand-logo--mark {
-  --logo-mark: 34px;
+  --logo-mark: 30px;
   position: relative;
   overflow: hidden;
   width: var(--logo-mark);
@@ -455,45 +435,47 @@ a {
   top: calc(var(--logo-mark) * -0.20509);
 }
 
-/* Per-placement sizes. Desktop first, then one small-screen step down so
-   the mark scales with the header instead of breaking it. */
+/* Per-placement sizes, stepped down from the previous pass. Desktop first,
+   then one small-screen step down so the mark scales with the header
+   instead of breaking it. Every height is ~15% off the last round:
+   header 44 -> 38, sidebar 40 -> 34, hero 120 -> 100, boot 48 -> 40. */
 .brand-logo--bar {
-  --logo-h: 44px;
+  --logo-h: 38px;
 }
 
 .brand-logo--sidebar {
-  --logo-h: 40px;
+  --logo-h: 34px;
 }
 
-/* Collapsed rail only. The 78px rail has to share its width with the 26px
-   toggle, so 34px is the largest seal that still fits whole. */
+/* Collapsed rail only. The 78px rail shares its width with the 26px
+   toggle; at this size the seal plus its 8px breathing room fits whole. */
 .brand-logo--sidebar-mark {
-  --logo-mark: 34px;
+  --logo-mark: 30px;
 }
 
 .brand-logo--hero {
-  --logo-h: clamp(58px, 13vw, 120px);
+  --logo-h: clamp(50px, 11vw, 100px);
 }
 
 .brand-logo--boot {
-  --logo-h: 48px;
+  --logo-h: 40px;
 }
 
 @media (max-width: 640px) {
   .brand-logo--bar {
-    --logo-h: 36px;
+    --logo-h: 32px;
   }
 
   .brand-logo--sidebar {
-    --logo-h: 34px;
+    --logo-h: 30px;
   }
 
   .brand-logo--hero {
-    --logo-h: clamp(44px, 15vw, 76px);
+    --logo-h: clamp(40px, 13vw, 64px);
   }
 
   .brand-logo--boot {
-    --logo-h: 40px;
+    --logo-h: 36px;
   }
 }
 
@@ -2057,16 +2039,16 @@ table.data td {
   display: inline-flex;
 }
 
-/* The 78px collapsed rail is tight: at the old 16px padding it had to hold
-   the seal, an 8px gap and the 26px toggle, which left the logo just 11px
-   of the rail and clipped it. Tighten only the collapsed rail's own
-   padding and gap so the seal shows whole — 34 + 4 + 26 + 12 = 76 of the
-   available 77. The rail width, the toggle and every other panel stay
-   exactly as they were. */
+/* The 78px collapsed rail is tight: at the original 16px padding it had to
+   hold the seal, an 8px gap and the 26px toggle, which left the logo 11px
+   of rail and clipped it. A 4px gap and 8px padding keep the seal whole
+   AND give it breathing room — 30 + 4 + 26 + 16 = 76 of the available 77.
+   The rail width, the toggle and every other panel stay exactly as they
+   were. */
 .sidebar.collapsed .sidebar-head {
   gap: 4px;
-  padding-left: 6px;
-  padding-right: 6px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .sidebar-collapse-btn {
