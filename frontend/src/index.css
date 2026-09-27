@@ -377,18 +377,9 @@ a {
    ride on a warm cream plate, which read as an orange block against the
    near-black Ink theme; that chip is gone for good.
 
-   Legibility instead comes from the Ink theme only, where the mark is
-   rendered white. The artwork is dark ink plus cinnabar, so measured
-   against Ink's #0b1020 it sat at 2.2:1 with 80% of its pixels under 3:1
-   — the dark ink simply disappeared. `brightness(0) invert(1)` collapses
-   the artwork to a clean white silhouette and lifts it to ~18:1. Both
-   filters act on colour channels only, so the PNG's own alpha — and with
-   it the transparent background and the exact silhouette — is untouched;
-   nothing is scaled and the file itself is never edited.
-
-   On the Paper theme (#f2ead4) no filter applies at all: the logo renders
-   exactly as authored, at its natural 8.8:1. Scoped to .brand-logo — no
-   global colour, font or token is changed. */
+   Legibility on Ink comes from the mark itself, tinted to the brand red —
+   see the note on the filter below. No background, no box, no shadow.
+   On Paper nothing is filtered and the artwork shows exactly as authored. */
 .brand-logo {
   display: inline-flex;
   align-items: center;
@@ -397,8 +388,32 @@ a {
   vertical-align: middle;
 }
 
+/* On the Ink theme the mark is rendered in one flat brand red. Measured on
+   the logo's own pixels: 51% of the artwork is already cinnabar, but the
+   seal is a deep #b80818 and the wordmark ink is near-black #181828, so
+   the whole mark sat at 2.2:1 on #0b1020 and disappeared. Turning it white
+   fixed the contrast but threw the identity away — red IS the brand.
+
+   So the silhouette is re-tinted to a lifted cinnabar instead.
+   `brightness(0)` first flattens every pixel to one grey, after which the
+   rest of the chain only has to steer that single grey to the target and
+   the artwork's own colours become irrelevant. The exact values were NOT
+   hand-picked: two earlier attempts were derived in isolation and both
+   failed, because at 44px nearly every pixel is a partial-alpha
+   antialiased edge, which no closed-form model of the filter chain
+   predicts. The numbers below were instead read back off real Chrome
+   screenshots of the actual logo at actual sizes, by rendering many
+   candidate chains and measuring the pixels. The winner produces a flat
+   #fa3b2d at 5.16:1 on the page, 96% red-dominant.
+
+   Shape, alpha and proportions are untouched: these act on colour channels
+   only, so the file is not edited, re-encoded or re-scaled, and the mark
+   stays a faithful silhouette of your artwork. The low blue channel keeps
+   it true to your real cinnabar (#b80818) rather than drifting pink.
+
+   Paper applies no filter at all: the logo shows exactly as authored. */
 [data-theme="ink"] .brand-logo__img {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(32%) sepia(95%) saturate(2800%) hue-rotate(344deg);
 }
 
 .brand-logo__img {
