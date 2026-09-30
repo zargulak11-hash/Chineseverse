@@ -770,5 +770,14 @@
     "conjunction": "连词",
     "pronoun": "代词",
     "word": "词"
+  },
+  "notifications": {
+    "follow": "{{name}} 关注了你。",
+    "someone": "有人",
+    "generic": "新通知",
+    "unread": "未读",
+    "reminders": "提醒",
+    "loadError": "通知加载失败，请稍后再试。",
+    "bellUnread_other": "通知：{{count}} 条未读"
   }
 }

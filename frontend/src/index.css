@@ -4063,3 +4063,53 @@ table.data td {
 .cr-words-toggle { margin-top: 8px; }
 .cr-words-toggle summary { cursor: pointer; font-size: 12px; }
 .practice-companion .cr-words-toggle summary { text-align: center; }
+
+/* Stored notifications in the topbar bell (Topbar.jsx NotifBell). */
+.notif-count {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--bad);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 13px;
+  border: 2px solid var(--surface-1);
+  box-sizing: border-box;
+}
+.notif-dropdown { max-width: calc(100vw - 24px); max-height: min(70vh, 520px); overflow-y: auto; }
+.notif-entry {
+  width: 100%;
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  align-items: center;
+}
+.notif-entry:hover { background: var(--surface-2); }
+.notif-entry.is-unread { background: var(--accent-dim); }
+.notif-entry.is-unread:hover { background: var(--surface-2); }
+.notif-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.notif-entry.is-unread .notif-text > span:first-child { font-weight: 700; }
+.notif-time { font-size: 11.5px; color: var(--text-faint); }
+.notif-unread-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.notif-dropdown h4.notif-subhead { border-top: 1px solid var(--border); padding-top: 10px; }
+@media (max-width: 560px) {
+  /* The bell sits mid-topbar on phones; a 300px dropdown anchored to it
+     ran off the left edge. Pin it to the viewport instead. */
+  .notif-dropdown {
+    position: fixed;
+    top: 64px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+}

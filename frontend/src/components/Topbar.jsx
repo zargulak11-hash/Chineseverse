@@ -70,9 +70,37 @@ function useGlobalSearch(t) {
   return { query, setQuery, results, ensureLoaded };
 }
 
+// How often the bell re-checks the real unread count while the app is open
+// (and on tab focus). Stored notifications don't need the learner online --
+// this only refreshes the badge for someone who is.
+const NOTIF_POLL_MS = 60_000;
+
+function timeAgo(iso, lang) {
+  if (!iso) return "";
+  // The API returns naive UTC timestamps.
+  const then = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`).getTime();
+  const secs = Math.round((then - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(DATE_LOCALE[lang] || "en-US", { numeric: "auto" });
+  const abs = Math.abs(secs);
+  if (abs < 60) return rtf.format(secs, "second");
+  if (abs < 3600) return rtf.format(Math.round(secs / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(secs / 3600), "hour");
+  if (abs < 86400 * 30) return rtf.format(Math.round(secs / 86400), "day");
+  return new Intl.DateTimeFormat(DATE_LOCALE[lang] || "en-US", { month: "short", day: "numeric" }).format(new Date(then));
+}
+
+// The bell shows two kinds of things: stored notifications from other
+// people (GET /api/notifications -- persistent, per-user, with read state)
+// and today's derived reminders (open quests, mistakes due) that come from
+// the dashboard. Opening the dropdown never marks anything read; clicking
+// one notification marks THAT one read (PATCH) and opens its link.
 function NotifBell({ dashboard }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [items, setItems] = useState(null);
+  const [loadError, setLoadError] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -83,9 +111,53 @@ function NotifBell({ dashboard }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+    const check = () =>
+      api
+        .get("/notifications/unread-count")
+        .then((r) => alive && setUnread(r.unread))
+        .catch(() => {}); // badge just keeps its last value
+    check();
+    const id = setInterval(check, NOTIF_POLL_MS);
+    const onFocus = () => document.visibilityState === "visible" && check();
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [i18n.language]); // the call also tells the server the current UI language
+
+  useEffect(() => {
+    if (!open) return;
+    setLoadError(false);
+    api
+      .get("/notifications?limit=20")
+      .then(setItems)
+      .catch(() => setLoadError(true));
+    // The list is capped; the count endpoint stays the source of truth.
+    api.get("/notifications/unread-count").then((r) => setUnread(r.unread)).catch(() => {});
+  }, [open]);
+
+  async function openNotification(n) {
+    setOpen(false);
+    if (!n.read) {
+      try {
+        const updated = await api.patch(`/notifications/${n.id}/read`);
+        setItems((list) => list && list.map((x) => (x.id === n.id ? updated : x)));
+        setUnread((c) => Math.max(0, c - 1));
+      } catch {
+        // stays unread; the next poll shows the real state
+      }
+    }
+    if (n.link) navigate(n.link);
+  }
+
   const openQuests = (dashboard?.quests_today || []).filter((q) => !q.completed);
   const mistakeCount = dashboard?.recent_mistakes?.length || 0;
-  const count = openQuests.length + (mistakeCount > 0 ? 1 : 0);
+  const reminders = openQuests.length + (mistakeCount > 0 ? 1 : 0);
+  const stored = items || [];
 
   return (
     <div className="notif-wrap" ref={ref}>
@@ -93,21 +165,48 @@ function NotifBell({ dashboard }) {
         type="button"
         className="theme-toggle notif-btn"
         onClick={() => setOpen((o) => !o)}
-        aria-label={t("topbar.notifications")}
+        aria-label={unread > 0 ? t("notifications.bellUnread", { count: unread }) : t("topbar.notifications")}
         title={t("topbar.notifications")}
+        aria-expanded={open}
       >
         <Icon name="bell" size={15} />
-        {count > 0 && <span className="dot" />}
+        {unread > 0 ? (
+          <span className="notif-count">{unread > 9 ? "9+" : unread}</span>
+        ) : (
+          reminders > 0 && <span className="dot" />
+        )}
       </button>
       {open && (
         <div className="notif-dropdown">
           <h4>{t("topbar.notifications")}</h4>
-          {openQuests.length === 0 && mistakeCount === 0 && (
+          {items === null && !loadError && <div className="notif-item sub">…</div>}
+          {loadError && <div className="notif-item sub">{t("notifications.loadError")}</div>}
+          {stored.map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              className={`notif-item notif-entry${n.read ? "" : " is-unread"}`}
+              onClick={() => openNotification(n)}
+            >
+              <UserAvatar url={n.actor?.avatar_url} name={n.actor?.username} size={28} />
+              <span className="notif-text">
+                <span>
+                  {n.type === "follow"
+                    ? t("notifications.follow", { name: n.actor?.username || t("notifications.someone") })
+                    : t("notifications.generic")}
+                </span>
+                <span className="notif-time">{timeAgo(n.created_at, i18n.language)}</span>
+              </span>
+              {!n.read && <span className="notif-unread-dot" aria-label={t("notifications.unread")} />}
+            </button>
+          ))}
+          {items !== null && stored.length === 0 && reminders === 0 && (
             <div className="notif-item">
               <span className="ic"><Icon name="check" size={14} /></span>
               <span>{t("topbar.allCaughtUp")}</span>
             </div>
           )}
+          {reminders > 0 && <h4 className="notif-subhead">{t("notifications.reminders")}</h4>}
           {openQuests.slice(0, 4).map((q) => (
             <Link key={q.id} to="/quests" className="notif-item" onClick={() => setOpen(false)}>
               <span className="ic"><Icon name="target" size={14} /></span>

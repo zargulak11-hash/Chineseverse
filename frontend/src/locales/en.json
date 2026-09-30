@@ -771,5 +771,15 @@
     "conjunction": "conjunction",
     "pronoun": "pronoun",
     "word": "word"
+  },
+  "notifications": {
+    "follow": "{{name}} followed you.",
+    "someone": "Someone",
+    "generic": "New notification",
+    "unread": "Unread",
+    "reminders": "Reminders",
+    "loadError": "Couldn't load notifications. Try again in a moment.",
+    "bellUnread_one": "Notifications: {{count}} unread",
+    "bellUnread_other": "Notifications: {{count}} unread"
   }
 }
