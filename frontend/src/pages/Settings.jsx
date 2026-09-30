@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api, clearSession } from "../api.js";
-import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -112,7 +112,6 @@ export default function Settings() {
     navigate("/");
   }
 
-  const animalSlug = dashboard?.animal?.slug;
 
   return (
     <Layout>
@@ -161,15 +160,7 @@ export default function Settings() {
           <div className="card" style={{ marginTop: 16 }}>
             <h2 className="h2">{t("settings.profilePicture")}</h2>
             <div className="row" style={{ marginTop: 10 }}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="avatar-preview" />
-              ) : animalSlug ? (
-                <AnimalAvatar slug={animalSlug} size={64} />
-              ) : (
-                <span className="sidebar-profile-fallback" style={{ width: 64, height: 64 }}>
-                  <Icon name="user" size={26} />
-                </span>
-              )}
+              <UserAvatar url={avatarUrl} name={user?.username} size={64} />
               <div className="col" style={{ gap: 8 }}>
                 <div className="row">
                   <button

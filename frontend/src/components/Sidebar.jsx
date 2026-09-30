@@ -3,9 +3,9 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
-import AnimalAvatar from "./AnimalAvatar.jsx";
 import BrandLogo from "./BrandLogo.jsx";
 import Icon from "./Icon.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 
 // Every real authenticated route, grouped the way the app itself is
 // organized: MAIN is the core loop (home / explore / your DNA / compete),
@@ -59,7 +59,6 @@ const ADMIN_GROUP = {
 export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile, user, dashboard, onLogout }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const animalSlug = dashboard?.animal?.slug;
   const avatarUrl = dashboard?.avatar_url;
   const hsk = dashboard?.hsk_level ?? 1;
 
@@ -189,15 +188,7 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
         </nav>
 
         <div className="sidebar-profile">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="avatar-preview" style={{ width: 36, height: 36 }} />
-          ) : animalSlug ? (
-            <AnimalAvatar slug={animalSlug} size={36} />
-          ) : (
-            <span className="sidebar-profile-fallback">
-              <Icon name="user" size={17} />
-            </span>
-          )}
+          <UserAvatar url={avatarUrl} name={user?.username} size={36} />
           <div className="info">
             <div className="name">{user?.username}</div>
             <div className="role">{t("nav.hskLearner", { level: hsk })}</div>

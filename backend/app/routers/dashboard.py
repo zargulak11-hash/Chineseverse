@@ -1,4 +1,7 @@
+from datetime import datetime, time
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -92,6 +95,12 @@ def dashboard(
         return item
 
     due = review_counts(db, user)
+    day_start = datetime.combine(datetime.utcnow().date(), time.min)
+    minutes_today = (
+        db.query(func.coalesce(func.sum(models.ActivityEvent.minutes), 0.0))
+        .filter(models.ActivityEvent.user_id == user.id, models.ActivityEvent.created_at >= day_start)
+        .scalar()
+    )
 
     return schemas.DashboardResponse(
         user=user,
@@ -117,10 +126,9 @@ def dashboard(
         streak=user.streak or models.UserStreak(user_id=user.id),
         daily_goal={
             "daily_goal_minutes": user.profile.daily_goal_minutes if user.profile else 10,
-            "minutes_today": min(
-                sum(a.response_time_ms for a in user.voice_attempts) // 60000,
-                60 * 6,
-            ),
+            # Today's logged learning activity (same per-action weights the
+            # Progress page uses), not the all-time voice total it used to sum.
+            "minutes_today": round(minutes_today),
         },
         recommended_mission=_localize_mission(next_mission, mission_tr) if next_mission else None,
         recent_mistakes=(

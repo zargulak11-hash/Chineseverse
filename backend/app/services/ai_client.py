@@ -13,7 +13,6 @@ any external API key.
 from __future__ import annotations
 
 import json
-import random
 import re
 from typing import List, Optional
 
@@ -57,43 +56,61 @@ def _offline_transcribe(prompt: Optional[str], audio_hint: Optional[str] = None)
     return (audio_hint or "").strip()
 
 
+_CJK_CHAR = re.compile(r"[㐀-鿿]")
+
+
 def _offline_evaluate(prompt: str, transcript: str, expected_keywords: List[str]) -> dict:
+    """Deterministic grade from what the browser's speech recognizer heard.
+
+    No audio model runs offline, so every score is derived from the
+    transcript itself -- never randomized (these numbers feed Learning DNA):
+      relevance      share of expected keywords present in the transcript
+      pronunciation  share of the expected Chinese characters the recognizer
+                     produced (it only outputs a character when it matched
+                     that syllable, so this is a real, if coarse, proxy)
+      tones          same signal, weighted more conservatively: a recognizer
+                     can guess the right character from context despite a
+                     wrong tone, so tone credit is capped lower
+      fluency        how close the spoken length was to the expected length
+      grammar        keyword coverage of a complete answer
+    """
+    keywords = [k for k in expected_keywords if _normalize(k)]
     tx = _normalize(transcript)
-    hits = [k for k in expected_keywords if _normalize(k) and _normalize(k) in tx]
-    hit_ratio = len(hits) / len([k for k in expected_keywords if k]) if expected_keywords else 0.0
-    relevance = hit_ratio * 100.0
-    length_ok = 0.25 <= (len(transcript) or 0) / max(1, len(prompt)) <= 3.0
-    # Deterministic but plausible felt score.
+    if not tx:
+        return {
+            "pronunciation": 0.0, "tones": 0.0, "fluency": 0.0, "grammar": 0.0,
+            "relevance": 0.0, "overall": 0.0,
+            "feedback": "I couldn't hear anything. Check the microphone and try again.",
+        }
+    hits = [k for k in keywords if _normalize(k) in tx]
+    relevance = (len(hits) / len(keywords) * 100.0) if keywords else 0.0
+
+    expected_chars = set(_CJK_CHAR.findall("".join(keywords))) or set(_CJK_CHAR.findall(prompt or ""))
+    heard_chars = _CJK_CHAR.findall(transcript)
+    coverage = (len(expected_chars & set(heard_chars)) / len(expected_chars)) if expected_chars else relevance / 100
+    pronunciation = 40.0 + 55.0 * coverage
+    tones = 35.0 + 50.0 * coverage
+
+    expected_len = max(len("".join(keywords)), 1)
+    ratio = len(heard_chars) / expected_len if heard_chars else len(tx) / expected_len
+    fluency = 45.0 + 45.0 * min(1.0, ratio) - (min(ratio - 2.5, 1.0) * 20.0 if ratio > 2.5 else 0.0)
+    grammar = 45.0 + 0.5 * relevance
+
+    overall = 0.35 * relevance + 0.25 * pronunciation + 0.2 * tones + 0.2 * fluency
     if relevance >= 90:
-        return {
-            "pronunciation": round(random.uniform(82, 94), 1),
-            "tones": round(random.uniform(78, 92), 1),
-            "fluency": round(random.uniform(80, 93), 1),
-            "grammar": round(random.uniform(85, 95), 1),
-            "relevance": relevance,
-            "overall": round(88.0, 1),
-            "feedback": "Excellent! All key phrases were clear."
-            if not length_ok
-            else "Perfect match. Keep that tone steady.",
-        }
-    if relevance >= 55:
-        return {
-            "pronunciation": round(random.uniform(70, 82), 1),
-            "tones": round(random.uniform(66, 80), 1),
-            "fluency": round(random.uniform(68, 82), 1),
-            "grammar": round(random.uniform(72, 85), 1),
-            "relevance": relevance,
-            "overall": round(74.0, 1),
-            "feedback": "Good, but try speaking a little slower and clearer.",
-        }
+        feedback = "Perfect match. Keep that tone steady."
+    elif relevance >= 55:
+        feedback = "Good, but try speaking a little slower and clearer."
+    else:
+        feedback = "Listen once more and repeat the phrase; focus on the tones."
     return {
-        "pronunciation": round(random.uniform(55, 70), 1),
-        "tones": round(random.uniform(50, 66), 1),
-        "fluency": round(random.uniform(50, 66), 1),
-        "grammar": round(random.uniform(55, 72), 1),
-        "relevance": relevance,
-        "overall": round(58.0, 1),
-        "feedback": "Listen once more and repeat the phrase; focus on the tones.",
+        "pronunciation": round(pronunciation, 1),
+        "tones": round(tones, 1),
+        "fluency": round(max(0.0, fluency), 1),
+        "grammar": round(grammar, 1),
+        "relevance": round(relevance, 1),
+        "overall": round(overall, 1),
+        "feedback": feedback,
     }
 
 

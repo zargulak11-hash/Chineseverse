@@ -4,8 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { usePrefs } from "../prefs.jsx";
 import { useTheme } from "../theme.jsx";
-import AnimalAvatar from "./AnimalAvatar.jsx";
 import Icon from "./Icon.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 
 const NAV_INDEX = [
   ["/dashboard", "nav.home", "home"],
@@ -158,7 +158,6 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
   const streak = dashboard?.streak?.current_streak ?? 0;
   const hsk = dashboard?.hsk_level ?? 1;
   const mastery = dashboard?.mastery ?? 0;
-  const animalSlug = dashboard?.animal?.slug;
   const avatarUrl = dashboard?.avatar_url;
 
   return (
@@ -224,13 +223,7 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
           <Icon name="droplet" size={15} />
         </button>
         <Link to="/profile" className="topbar-avatar" title={t("topbar.profile")}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : animalSlug ? (
-            <AnimalAvatar slug={animalSlug} size={34} />
-          ) : (
-            <Icon name="user" size={16} />
-          )}
+          <UserAvatar url={avatarUrl} name={user?.username} size={34} />
         </Link>
       </div>
     </header>

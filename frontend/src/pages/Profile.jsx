@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -28,11 +29,7 @@ export default function Profile() {
     <Layout>
       <div className="row spread">
         <div className="row">
-          {dashboard?.avatar_url ? (
-            <img src={dashboard.avatar_url} alt="" className="avatar-preview" style={{ width: 56, height: 56 }} />
-          ) : (
-            animal && <AnimalAvatar slug={animal.slug} size={56} />
-          )}
+          <UserAvatar url={dashboard?.avatar_url} name={me.user.username} size={56} />
           <div>
             <h1 className="h1">@{me.user.username}</h1>
             <p className="sub">{me.user.email} · {t("pages.profile.joined")} {new Date(me.user.created_at).toLocaleDateString()}</p>
@@ -42,6 +39,12 @@ export default function Profile() {
           <Link to="/community">
             <button className="btn ghost"><Icon name="users" size={13} /> {t("pages.profile.findPeople")}</button>
           </Link>
+          {animal && (
+            <span className="row" style={{ gap: 6 }} title={animal.name}>
+              <AnimalAvatar slug={animal.slug} size={32} />
+              <span className="sub">{animal.name}</span>
+            </span>
+          )}
           <Link to="/animals">
             <button className="btn ghost">{t("pages.profile.changeCompanion")}</button>
           </Link>
