@@ -39,6 +39,8 @@ backend/static/uploads/
 # The Hanzi dataset specifically now also has a COMMITTED copy at
 # backend/alembic/seed_data/hanzi_import_ready.json, inserted automatically
 # by that migration on every `alembic upgrade head` -- do not re-gitignore
-# that path. Vocabulary/grammar/lesson data still has the same gap and is
-# tracked as a separate follow-up, not fixed by this directory rule alone.
+# that path. Vocabulary, grammar, lessons and content translations ship as
+# backend/app/seed_content/curriculum.json.gz (natural-keyed, imported on
+# every startup by app/services/curriculum.py; regenerate it with
+# backend/scripts/export_curriculum_snapshot.py after curating content).
 backend/data_sources/
