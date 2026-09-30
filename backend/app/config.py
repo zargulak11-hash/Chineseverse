@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     google_client_id: str | None = None
     google_client_secret: str | None = None
 
+    # Accounts whose Google-VERIFIED email is listed here are granted
+    # is_admin on Google sign-in. Only the Google path consults this list:
+    # a password registration never proves email ownership, so it must not
+    # be able to claim admin by typing an allowlisted address. Override
+    # with ADMIN_EMAILS='["a@x.com","b@y.com"]' in backend/.env.
+    admin_emails: list[str] = ["zargulak11@gmail.com"]
+
     # AI (never hardcode values here — always via .env)
     ai_provider: str = "auto"  # "openai" | "offline" | "auto"
     ai_api_key: str | None = None

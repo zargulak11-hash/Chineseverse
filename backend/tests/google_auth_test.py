@@ -98,25 +98,78 @@ with TestClient(app) as client:
         existing_user_id = reg.json()["user"]["id"]
 
         auth_router.google_id_token.verify_oauth2_token = fake_verifier({
-            "email": "shared@example.com",
+            "email": "Shared@Example.com",
             "email_verified": True,
             "name": "Shared Account",
+            "sub": "sub-shared",
         })
         r3 = expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"})
         assert r3.json()["user"]["id"] == existing_user_id
         assert r3.json()["user"]["username"] == "priorpassworduser"
-        print("[PASS] Google login for an email already registered by password logs into that same account")
+        print("[PASS] Google login (email differing only in case) logs into the existing password account")
+
+        # --- Once linked, the Google sub wins even if the Google email changes
+        auth_router.google_id_token.verify_oauth2_token = fake_verifier({
+            "email": "renamed@example.com", "email_verified": True, "sub": "sub-shared",
+        })
+        r4 = expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"})
+        assert r4.json()["user"]["id"] == existing_user_id, r4.json()
+        print("[PASS] linked Google sub resolves to the same account after an email change")
+
+        # --- A different Google account can't take over an already-linked row
+        auth_router.google_id_token.verify_oauth2_token = fake_verifier({
+            "email": "shared@example.com", "email_verified": True, "sub": "sub-intruder",
+        })
+        expect(client, "post", "/api/auth/google", 409, json={"credential": "fake-but-long-enough"})
+        print("[PASS] a second Google account cannot re-bind an already-linked account (409)")
+
+        # --- Missing sub is rejected
+        auth_router.google_id_token.verify_oauth2_token = fake_verifier({
+            "email": "nosub@example.com", "email_verified": True,
+        })
+        expect(client, "post", "/api/auth/google", 401, json={"credential": "fake-but-long-enough"})
+        print("[PASS] credential without a sub is rejected with 401")
+
+        # --- Admin allowlist: only via Google-verified email -----------------
+        config.settings.admin_emails = ["owner@example.com"]
+        reg_owner = client.post("/api/auth/register", json={
+            "username": "OwnerByPassword", "email": "owner@example.com", "password": "password1",
+        })
+        assert reg_owner.status_code == 201 and reg_owner.json()["user"]["is_admin"] is False
+        print("[PASS] password registration with an allowlisted email does NOT grant admin")
+        dup = client.post("/api/auth/register", json={
+            "username": "ownerbypassword", "email": "x@example.com", "password": "password1",
+        })
+        assert dup.status_code == 409, dup.text
+        dup = client.post("/api/auth/register", json={
+            "username": "someoneelse", "email": "OWNER@example.com", "password": "password1",
+        })
+        assert dup.status_code == 409, dup.text
+        print("[PASS] register rejects case-insensitive duplicate username and email")
+
+        auth_router.google_id_token.verify_oauth2_token = fake_verifier({
+            "email": "owner@example.com", "email_verified": True, "sub": "sub-owner",
+        })
+        r5 = expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"}).json()
+        assert r5["user"]["id"] == reg_owner.json()["user"]["id"] and r5["user"]["is_admin"] is True, r5
+        me = expect(client, "get", "/api/me", 200, headers={"Authorization": f"Bearer {r5['access_token']}"}).json()
+        assert me["user"]["is_admin"] is True
+        print("[PASS] Google-verified allowlisted email maps to the existing account and grants admin")
+        assert r3.json()["user"]["is_admin"] is False
+        print("[PASS] non-allowlisted Google account stays non-admin")
 
         # --- Username collision gets a numeric suffix, not a 500 -------------
         auth_router.google_id_token.verify_oauth2_token = fake_verifier({
             "email": "collision1@example.com",
             "email_verified": True,
+            "sub": "sub-c1",
             "name": "Collide Name",
         })
         u1 = expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"}).json()["user"]
         auth_router.google_id_token.verify_oauth2_token = fake_verifier({
             "email": "collision2@example.com",
             "email_verified": True,
+            "sub": "sub-c2",
             "name": "Collide Name",
         })
         u2 = expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"}).json()["user"]

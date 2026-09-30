@@ -30,6 +30,10 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    # Google's permanent account id (the ID token's `sub` claim). Set on the
+    # first Google sign-in and used before email for every later one, so a
+    # Google identity always resolves to the same row (see routers/auth.py).
+    google_sub = Column(String(255), unique=True, nullable=True, index=True)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     # Grants access to /api/admin/*. Never set from a request payload — the

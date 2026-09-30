@@ -2,6 +2,7 @@ import re
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -16,7 +17,29 @@ from app.security import create_access_token, hash_password, verify_password
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _create_user_from_email(db: Session, email: str, display_name: str | None = None) -> models.User:
+def _find_by_email(db: Session, email: str) -> models.User | None:
+    """Case-insensitive email lookup. Emails are stored as typed, so the same
+    address can differ in letter case between a password registration and
+    Google's normalized claim; an exact-case match is preferred, then the
+    oldest case-insensitive match, so the result is always deterministic."""
+    exact = db.query(models.User).filter(models.User.email == email).first()
+    if exact is not None:
+        return exact
+    return (
+        db.query(models.User)
+        .filter(func.lower(models.User.email) == email.lower())
+        .order_by(models.User.id)
+        .first()
+    )
+
+
+def _is_admin_email(email: str) -> bool:
+    return email.lower() in {e.strip().lower() for e in settings.admin_emails if e.strip()}
+
+
+def _create_user_from_email(
+    db: Session, email: str, display_name: str | None = None, google_sub: str | None = None
+) -> models.User:
     # Prefer Google's display name for a friendlier username; fall back to
     # the email local-part if it's missing or sanitizes down to nothing.
     seed = re.sub(r"[^a-zA-Z0-9_]", "", (display_name or "").replace(" ", "_"))
@@ -34,6 +57,7 @@ def _create_user_from_email(db: Session, email: str, display_name: str | None = 
     user = models.User(
         username=username,
         email=email,
+        google_sub=google_sub,
         # Google-authenticated accounts never use a password; store an
         # unguessable hash so the NOT NULL constraint and login-by-password
         # path both stay safe.
@@ -48,17 +72,12 @@ def _create_user_from_email(db: Session, email: str, display_name: str | None = 
 
 @router.post("/register", response_model=schemas.TokenResponse, status_code=201)
 def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
-    existing = (
-        db.query(models.User)
-        .filter(
-            (models.User.username == payload.username)
-            | (models.User.email == payload.email)
-        )
-        .first()
-    )
-    if existing is not None:
-        field = "username" if existing.username == payload.username else "email"
-        raise HTTPException(status_code=409, detail=f"{field} already registered")
+    if db.query(models.User).filter(
+        func.lower(models.User.username) == payload.username.lower()
+    ).first() is not None:
+        raise HTTPException(status_code=409, detail="username already registered")
+    if _find_by_email(db, payload.email) is not None:
+        raise HTTPException(status_code=409, detail="email already registered")
 
     user = models.User(
         username=payload.username,
@@ -96,6 +115,8 @@ def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
     )
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="This account has been deactivated")
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)
 
@@ -130,24 +151,51 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
     email = claims.get("email")
     if not email or not claims.get("email_verified"):
         raise HTTPException(status_code=401, detail="Google account has no verified email")
+    sub = claims.get("sub")
+    if not sub:
+        raise HTTPException(status_code=401, detail="Google credential has no account id")
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    # Identity chain: Google `sub` (permanent) first, then the verified email
+    # (links an existing password account or a pre-sub Google account), and
+    # only then a brand-new row. Never a second account for the same person.
+    user = db.query(models.User).filter(models.User.google_sub == sub).first()
+    if user is None:
+        user = _find_by_email(db, email)
+        if user is not None:
+            if user.google_sub and user.google_sub != sub:
+                # The row is already bound to a different Google account;
+                # silently re-binding it would hand one person's data to another.
+                raise HTTPException(
+                    status_code=409,
+                    detail="This email is linked to a different Google account",
+                )
+            user.google_sub = sub
     if user is None:
         try:
-            user = _create_user_from_email(db, email, display_name=claims.get("name"))
-            db.commit()
+            user = _create_user_from_email(
+                db, email, display_name=claims.get("name"), google_sub=sub
+            )
+            db.flush()
         except IntegrityError:
             # Google's Identity Services widget can fire its callback twice
             # for one click, so two requests can both see "no user yet" and
-            # race to insert the same email. _create_user_from_email's own
-            # flush() is where the unique-constraint hit lands; the loser
-            # falls back to the row the winner just created.
+            # race to insert the same email/sub. The loser falls back to the
+            # row the winner just created.
             db.rollback()
-            user = db.query(models.User).filter(models.User.email == email).first()
+            user = (
+                db.query(models.User).filter(models.User.google_sub == sub).first()
+                or _find_by_email(db, email)
+            )
             if user is None:
                 raise
-    else:
-        db.commit()
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="This account has been deactivated")
+    # Admin comes only from the server-side allowlist, and only through a
+    # Google-verified email -- never from anything the client sends.
+    if _is_admin_email(email) and not user.is_admin:
+        user.is_admin = True
+    db.commit()
     db.refresh(user)
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)
