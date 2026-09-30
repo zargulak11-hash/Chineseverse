@@ -16,6 +16,7 @@ from app.services.gamification import (
     ensure_bond,
     ensure_user_skills,
     generate_daily_quests,
+    streak_snapshot,
     user_rank,
 )
 from app.services.localization import load_translations, tr
@@ -123,7 +124,7 @@ def dashboard(
             weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30],
             strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
         ),
-        streak=user.streak or models.UserStreak(user_id=user.id),
+        streak=schemas.StreakResponse(**streak_snapshot(user.streak)),
         daily_goal={
             "daily_goal_minutes": user.profile.daily_goal_minutes if user.profile else 10,
             # Today's logged learning activity (same per-action weights the

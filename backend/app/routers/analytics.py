@@ -9,6 +9,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services.activity import SECTION_LABELS
+from app.services.gamification import activity_today, streak_snapshot
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -21,7 +22,7 @@ def activity_analytics(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    today = date.today()
+    today = activity_today()  # same UTC day ActivityEvent.created_at is stored in
     window_start = today - timedelta(days=HEATMAP_DAYS - 1)
 
     rows = (
@@ -103,7 +104,7 @@ def activity_analytics(
             run = 0
         d += timedelta(days=1)
 
-    streak = user.streak or models.UserStreak(user_id=user.id)
+    streak = schemas.StreakResponse(**streak_snapshot(user.streak))
 
     return schemas.ActivityAnalyticsResponse(
         total_minutes=round(total_minutes, 1),

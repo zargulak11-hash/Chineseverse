@@ -94,16 +94,28 @@ def _pick_quest_templates(preferred_types: list[str], k: int = 3) -> list[tuple]
     return chosen
 
 
+def activity_today() -> date:
+    """The calendar day activity counts toward. ActivityEvent.created_at is
+    stored with datetime.utcnow(), so streak days and the Progress heatmap
+    must use the UTC date too -- date.today() is the server's LOCAL date,
+    which on a non-UTC host put today's events on a different day than the
+    streak/heatmap "today"."""
+    return datetime.utcnow().date()
+
+
 def touch_streak(user: models.User) -> bool:
     """Returns True when a new day just started (streak was bumped)."""
     streak = user.streak
-    today = date.today()
+    today = activity_today()
     if streak is None:
-        from app.database import SessionLocal
-
-        with SessionLocal() as session:
-            session.add(models.UserStreak(user_id=user.id, last_active_date=today, current_streak=1, total_active_days=1))
-            session.commit()
+        # Attached through the relationship, in the caller's own session:
+        # log_activity now touches the streak on every learning action, so a
+        # second call in the same request must see this row instead of
+        # inserting a duplicate (user_id is unique). The caller commits.
+        user.streak = models.UserStreak(
+            user_id=user.id, last_active_date=today,
+            current_streak=1, longest_streak=1, total_active_days=1,
+        )
         return True
     if streak.last_active_date == today:
         return False
@@ -115,6 +127,24 @@ def touch_streak(user: models.User) -> bool:
     streak.total_active_days += 1
     streak.last_active_date = today
     return True
+
+
+def streak_snapshot(streak: models.UserStreak | None) -> dict:
+    """The streak as of today, for display (StreakResponse fields).
+    current_streak is only recomputed by touch_streak on the NEXT action, so
+    after missed days the stored value still showed the old run; a streak
+    whose last active day is before yesterday is already broken. Read-only --
+    nothing is written, longest/total are reported as stored."""
+    today = activity_today()
+    current = 0
+    if streak is not None and streak.last_active_date and streak.last_active_date >= today - timedelta(days=1):
+        current = streak.current_streak or 0
+    return {
+        "current_streak": current,
+        "longest_streak": (streak.longest_streak if streak else 0) or 0,
+        "total_active_days": (streak.total_active_days if streak else 0) or 0,
+        "last_active_date": streak.last_active_date if streak else None,
+    }
 
 
 def ensure_user_skills(db: Session, user: models.User) -> None:

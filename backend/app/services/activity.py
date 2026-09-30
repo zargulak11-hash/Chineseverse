@@ -16,6 +16,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app import models
+from app.services.gamification import touch_streak
 
 # action_type -> (section, estimated minutes)
 ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
@@ -58,3 +59,9 @@ def log_activity(db: Session, user: models.User, action_type: str, when: datetim
             created_at=when or datetime.utcnow(),
         )
     )
+    # Every real learning action logs here, so this is also where the day
+    # counts toward the streak. Before, only practice answers and voice
+    # attempts touched the streak: days spent on Hanzi, vocabulary, grammar,
+    # lessons, duels, cases, Pet Teacher or quests filled the heatmap but
+    # never extended the streak. Idempotent within a day.
+    touch_streak(user)

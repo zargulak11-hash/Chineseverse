@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -40,11 +40,21 @@ export default function ActivityHeatmap({ days }) {
     return { weeks: weeksArr, monthMarks: marks, maxActions: max };
   }, [days]);
 
+  // The 53-week grid (~740px) is wider than a phone or tablet card, and a
+  // scroll box starts at its left edge -- a year ago -- so the recent weeks,
+  // where today's activity is, were off-screen and the card looked empty.
+  // Open it scrolled to the newest week instead.
+  const scrollRef = useRef(null);
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [weeks.length]);
+
   const gridStyle = { gridTemplateColumns: `repeat(${weeks.length}, 11px)` };
 
   return (
     <div className="heatmap-wrap">
-      <div className="heatmap-scroll">
+      <div className="heatmap-scroll" ref={scrollRef}>
         <div className="heatmap-months" style={gridStyle}>
           {monthMarks.map((m, i) => (
             <span key={i} className="heatmap-month" style={{ gridColumnStart: m.week + 1 }}>

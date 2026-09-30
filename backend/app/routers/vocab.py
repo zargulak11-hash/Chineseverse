@@ -113,15 +113,9 @@ def review_word(
             question_text=word.meanings, correct_answer=word.pinyin,
         )
 
-    streak = user.streak
-    if streak is None:
-        from datetime import date
-        streak = models.UserStreak(user_id=user.id, last_active_date=date.today())
-        db.add(streak)
-    streak.total_active_days = max(
-        1, streak.total_active_days if streak.total_active_days else 1
-    )
-
+    # log_activity also updates the streak (creating it if missing). The
+    # ad-hoc row this used to add set last_active_date=today with
+    # current_streak=0, so a first-day vocab review never started a streak.
     log_activity(db, user, "vocab_review")
     db.commit()
     db.refresh(rec)
