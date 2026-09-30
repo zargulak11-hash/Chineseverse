@@ -269,7 +269,11 @@
         "general": "综合",
         "vocabulary": "词汇",
         "social": "社交"
-      }
+      },
+      "inProgress": "尚未获得",
+      "recent": "最近解锁",
+      "byCategory": "按类别",
+      "noneYet": "还没有解锁任何成就——继续学习，它们会出现在这里。"
     },
     "companion": {
       "title": "你的伙伴",
@@ -428,7 +432,11 @@
       "placeholder": "向助手询问任何关于中文学习的问题…",
       "send": "发送",
       "thinking": "思考中…",
-      "scopeHint": "仅回答关于 ChineseVerse 和中文学习的问题。"
+      "scopeHint": "仅回答关于 ChineseVerse 和中文学习的问题。",
+      "tryAsking": "试着问问",
+      "suggestion1": "我接下来该学什么？",
+      "suggestion2": "解释一下“了”和“过”的区别。",
+      "suggestion3": "我在当前 HSK 级别的进度怎么样？"
     },
     "lessonDetail": {
       "allLessons": "所有课程",
@@ -635,7 +643,10 @@
       "char_to_meaning": "这个汉字是什么意思？",
       "char_to_pinyin": "这个汉字怎么读？",
       "example_to_point": "这个句子用了哪个语法点？"
-    }
+    },
+    "questionLabel": "题目",
+    "accuracy": "正确率",
+    "roundProgress": "本轮进度"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",

@@ -270,7 +270,11 @@
         "general": "general",
         "vocabulary": "vocabulary",
         "social": "social"
-      }
+      },
+      "inProgress": "Still to earn",
+      "recent": "Recently unlocked",
+      "byCategory": "By category",
+      "noneYet": "Nothing unlocked yet — keep learning and they'll appear here."
     },
     "companion": {
       "title": "Your companion",
@@ -429,7 +433,11 @@
       "placeholder": "Ask your companion anything about learning Chinese…",
       "send": "Send",
       "thinking": "Thinking…",
-      "scopeHint": "Scoped to ChineseVerse and your Chinese learning."
+      "scopeHint": "Scoped to ChineseVerse and your Chinese learning.",
+      "tryAsking": "Try asking",
+      "suggestion1": "What should I study next?",
+      "suggestion2": "Explain the difference between 了 and 过.",
+      "suggestion3": "How am I progressing at my HSK level?"
     },
     "lessonDetail": {
       "allLessons": "All lessons",
@@ -636,7 +644,10 @@
       "char_to_meaning": "What does this character mean?",
       "char_to_pinyin": "How is this character pronounced?",
       "example_to_point": "Which grammar point does this sentence use?"
-    }
+    },
+    "questionLabel": "Question",
+    "accuracy": "Accuracy",
+    "roundProgress": "This round"
   },
   "companionReact": {
     "fallbackName": "Your companion",
