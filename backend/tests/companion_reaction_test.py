@@ -287,4 +287,14 @@ with TestClient(app) as client:
     expect(client, "post", f"/api/vocab/{word_id}/review", 401, json={"correct": True})
     print("[PASS] reactions stay behind the same auth/ownership checks (401/404)")
 
+    # ------------------------------------------------ frontend species map covers the real roster
+    with SessionLocal() as db:
+        slugs = {a.slug for a in db.query(models.Animal)}
+    species_src = open(os.path.join(FRONTEND, "companionSpecies.js"), encoding="utf-8").read()
+    mapped = set(re.findall(r'^\s*"?([a-z-]+)"?:\s*\{\s*motion:', species_src, re.M))
+    assert slugs <= mapped, f"species without a visual profile: {slugs - mapped}"
+    moods_src = set(re.findall(r'^\s*([a-z]+):\s*\{\s*face:', species_src, re.M))
+    assert set(cr.MOODS) <= moods_src, f"moods without a visual state: {set(cr.MOODS) - moods_src}"
+    print(f"[PASS] every one of the {len(slugs)} companions has its own species profile; every mood has a visual")
+
 print("ALL COMPANION REACTION TESTS PASSED")

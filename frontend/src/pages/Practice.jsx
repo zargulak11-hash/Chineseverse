@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
-import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import CompanionFigure from "../components/CompanionFigure.jsx";
 import CompanionReaction from "../components/CompanionReaction.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -127,7 +127,10 @@ export default function Practice({ forceSource }) {
     try {
       const s = await api.post(`/practice/sessions/${session.id}/complete`);
       setSummary(s);
-      setCelebrating(s.score >= 90 || s.lesson_status === "completed");
+      // Only a real celebration: >= 90% or the lesson completed by THIS
+      // round (the server's reaction decides; re-practicing an already
+      // completed lesson no longer throws a party at any score).
+      setCelebrating(s.reaction?.mood === "celebrating");
       refresh?.(); // XP, streak, DNA and companion state changed
     } catch (e) {
       setError(e.message);
@@ -170,7 +173,11 @@ export default function Practice({ forceSource }) {
       <Layout>
         {head()}
         <div className="card" style={{ marginTop: 16, textAlign: "center" }}>
-          <CompanionReaction animal={dashboard?.animal} reaction={{ mood: "happy", event: "review_clear", streak: 0 }} />
+          <CompanionReaction
+            animal={dashboard?.animal}
+            reaction={session.reaction || { mood: "happy", event: "review_clear", streak: 0 }}
+            size={88}
+          />
           <p className="sub" style={{ marginTop: 10 }}>{t("practice.nothingDue")}</p>
           <div className="row" style={{ justifyContent: "center", marginTop: 12, flexWrap: "wrap" }}>
             <Link to="/vocabulary"><button className="btn">{t("nav.vocabulary")}</button></Link>
@@ -203,8 +210,8 @@ export default function Practice({ forceSource }) {
         )}
         <Celebration
           show={celebrating}
-          icon={summary.lesson_status === "completed" ? "🎓" : "🎉"}
-          title={t(summary.lesson_status === "completed" ? "practice.lessonDone" : "practice.greatRound")}
+          icon={summary.reaction?.event === "lesson_complete" ? "🎓" : "🎉"}
+          title={t(summary.reaction?.event === "lesson_complete" ? "practice.lessonDone" : "practice.greatRound")}
           countTo={Math.round(summary.score)}
           countLabel="%"
           onClose={() => setCelebrating(false)}
@@ -229,7 +236,7 @@ export default function Practice({ forceSource }) {
             )}
           </div>
           <div className="card">
-            <CompanionReaction animal={dashboard?.animal} reaction={summary.reaction} size={80} />
+            <CompanionReaction animal={dashboard?.animal} reaction={summary.reaction} size={96} />
             {summary.missed.length > 0 && (
               <>
                 <h2 className="h2" style={{ marginTop: 14 }}>{t("practice.toReview")}</h2>
@@ -259,6 +266,13 @@ export default function Practice({ forceSource }) {
   const correctCount = Object.values(outcomes).filter(Boolean).length;
   const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin"].includes(question.type);
   const animal = dashboard?.animal;
+  // The greeting belongs to the start of the round only; after that the
+  // companion reacts to each graded answer and calms back to neutral when
+  // the next question appears -- temporary emotions never linger.
+  const greeting = index === 0 && answered === 0 && !result ? session.reaction : null;
+  // On narrow screens the greeting card stays until "Next" so answering the
+  // first question doesn't make the feedback jump up the page.
+  const narrowGreeting = index === 0 ? session.reaction : null;
 
   return (
     <Layout>
@@ -286,6 +300,11 @@ export default function Practice({ forceSource }) {
 
       <div className="ws">
         <div className="ws-main">
+          {narrowGreeting && (
+            <div className="card only-narrow" style={{ marginBottom: 12 }}>
+              <CompanionReaction animal={animal} reaction={narrowGreeting} compact size={56} />
+            </div>
+          )}
           <div className="card practice-card" key={`${session.id}-${index}-${i18n.language}`}>
             <p className="sub" style={{ marginBottom: 8 }}>{t(`practice.q.${question.type}`)}</p>
             <div className="practice-prompt">
@@ -340,7 +359,7 @@ export default function Practice({ forceSource }) {
                 {/* On narrow screens the side panel sits below the fold, so
                     the reaction is repeated here where the learner is looking. */}
                 <div className="only-narrow">
-                  <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} />
+                  <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} compact focusMode="example" size={60} />
                 </div>
                 <button className="btn primary" style={{ marginTop: 12 }} onClick={next} disabled={busy} autoFocus>
                   {index + 1 < total ? t("practice.next") : t("practice.finish")}
@@ -354,9 +373,11 @@ export default function Practice({ forceSource }) {
           <div className="card side-card practice-companion only-wide">
             <p className="side-title">{animal?.name || t("nav.companion")}</p>
             {result ? (
-              <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} size={84} />
+              <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} size={104} focusMode="example" />
+            ) : greeting ? (
+              <CompanionReaction animal={animal} reaction={greeting} size={104} />
             ) : (
-              animal?.slug && <AnimalAvatar slug={animal.slug} size={84} state="thinking" />
+              animal?.slug && <CompanionFigure slug={animal.slug} mood="neutral" size={104} />
             )}
           </div>
 

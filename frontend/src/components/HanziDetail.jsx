@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
+import { useDashboard } from "../context/DashboardContext.jsx";
+import CompanionReaction from "./CompanionReaction.jsx";
 import { Bar } from "./ui.jsx";
 import Icon from "./Icon.jsx";
 import HanziTrace from "./HanziTrace.jsx";
@@ -20,11 +22,16 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
   const [tracing, setTracing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  // The permanent companion's reaction to the last real self-check or
+  // completed trace on this character (server-decided, see the API).
+  const [reaction, setReaction] = useState(null);
+  const { dashboard, refresh } = useDashboard() || {};
 
   useEffect(() => {
     setCurrent(hanzi);
     setExamples(null);
     setExamplesError(null);
+    setReaction(null);
     api
       .get(`/hanzi/${hanzi.id}/examples`)
       .then(setExamples)
@@ -46,6 +53,8 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
       const updated = { ...current, mastery: res.mastery, status: res.status };
       setCurrent(updated);
       onUpdated?.(updated);
+      setReaction(res.reaction || null);
+      refresh?.(); // XP/streak/DNA changed
     } catch {
       // stays on-screen; the button simply re-enables for another try
     } finally {
@@ -123,6 +132,10 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
           </button>
         </div>
 
+        {reaction && (
+          <CompanionReaction animal={dashboard?.animal} reaction={reaction} context="hanzi" compact size={60} focusMode="none" settleAfter={9000} />
+        )}
+
         {/* WRITE entry point (real stroke data required, gated to the
             characters the real HSK 3.0 syllabus requires handwriting for) */}
         {current.handwriting_tier && (
@@ -169,6 +182,8 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
             const updated = { ...current, writing_mastery: res.writing_mastery, writing_status: res.writing_status };
             setCurrent(updated);
             onUpdated?.(updated);
+            setReaction(res.reaction || null);
+            refresh?.();
           }}
         />
       )}
