@@ -81,7 +81,13 @@ export default function Vocabulary() {
             )}
             <div className="sub" style={{ color: "var(--accent2)" }}>{w.pinyin}</div>
             <div className="sub">{w.meanings}</div>
-            {w.word_type && <span className="ilb" style={{ marginTop: 6 }}>{w.word_type}</span>}
+            {w.word_type && (
+              <span className="ilb" style={{ marginTop: 6 }}>
+                {/* English part-of-speech labels are UI text; raw dictionary
+                    POS codes (r, g, nz, ...) have no translation and show as-is. */}
+                {t(`wordType.${w.word_type.replace(/[\s-]+/g, "_")}`, { defaultValue: w.word_type })}
+              </span>
+            )}
             <div style={{ marginTop: 8, width: "100%" }}>
               <Bar value={w.mastery ?? 0} alt />
             </div>

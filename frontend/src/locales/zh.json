@@ -199,7 +199,8 @@
       "hanzi": "汉字",
       "grammar": "语法",
       "advancedStage": "共享高级词库",
-      "advancedStageHint": "HSK 7/8/9 共享同一个真实的高级词汇/汉字/语法库，此处显示为三个进度阶段。"
+      "advancedStageHint": "HSK 7/8/9 共享同一个真实的高级词汇/汉字/语法库，此处显示为三个进度阶段。",
+      "note": "估算你的 HSK 备考程度。ChineseVerse 与官方 HSK 考试无关。"
     },
     "quests": {
       "title": "每日任务",
@@ -685,5 +686,22 @@
       "penguin": "（开心地摇摇摆摆）",
       "owl": "咕咕！"
     }
+  },
+  "wordType": {
+    "noun": "名词",
+    "verb": "动词",
+    "adjective": "形容词",
+    "adverb": "副词",
+    "measure": "量词",
+    "measure_word": "量词",
+    "attributive": "区别词",
+    "verb_noun": "动词 / 名词",
+    "preposition": "介词",
+    "number": "数词",
+    "phrase": "短语",
+    "particle": "助词",
+    "conjunction": "连词",
+    "pronoun": "代词",
+    "word": "词"
   }
 }

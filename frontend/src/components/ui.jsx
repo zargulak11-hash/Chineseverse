@@ -1,5 +1,6 @@
 import { animate, createTimeline, stagger, svg } from "animejs";
 import { useEffect, useId, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { prefersReducedMotion } from "../anime.js";
 
 // A plain button — press/hover feedback is now handled app-wide by a single
@@ -284,11 +285,14 @@ export function Empty({ children }) {
   return <div className="empty">{children}</div>;
 }
 
-export function Loading({ children = "Loading…" }) {
+export function Loading({ children }) {
+  // The default used to be a hardcoded English "Loading…", so every page
+  // that renders a bare <Loading /> stayed English in RU/TG/ZH.
+  const { t } = useTranslation();
   return (
     <div className="loading">
       <div className="spinner" />
-      <p className="sub">{children}</p>
+      <p className="sub">{children ?? t("common.loading")}</p>
     </div>
   );
 }

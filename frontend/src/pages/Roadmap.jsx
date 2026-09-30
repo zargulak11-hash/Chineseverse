@@ -44,7 +44,7 @@ export default function Roadmap() {
             <Icon name="trending" size={13} /> HSK 1–9
           </div>
           <h1 className="h1">{t("pages.roadmap.title")}</h1>
-          <p className="sub">{r.note}</p>
+          <p className="sub">{t("pages.roadmap.note")}</p>
         </div>
         <div className="kpi-row">
           <div className="kpi">

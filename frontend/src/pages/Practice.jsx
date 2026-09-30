@@ -33,6 +33,8 @@ export default function Practice({ forceSource }) {
   // display only (round tracker + progress), never sent anywhere.
   const [outcomes, setOutcomes] = useState({});
   const shownAt = useRef(Date.now());
+  // Language the current round was rendered in (see the effect below).
+  const renderedLang = useRef(i18n.language);
 
   const start = useCallback(() => {
     setSession(null);
@@ -47,13 +49,45 @@ export default function Practice({ forceSource }) {
     api
       .post("/practice/sessions", body)
       .then((s) => {
+        renderedLang.current = i18n.language;
         setSession(s);
         shownAt.current = Date.now();
       })
       .catch((e) => setError(e.message));
-  }, [source, level, lessonId]);
+  }, [source, level, lessonId, i18n]);
 
   useEffect(start, [start]);
+
+  // The round is fetched once, so a language switch used to leave its
+  // meanings/options (and the answer card and missed list) in the language
+  // it was created in. GET re-renders the SAME stored round -- same
+  // questions, same answers, nothing regraded -- with the new X-Locale.
+  const sessionId = session?.id;
+  useEffect(() => {
+    if (!sessionId || renderedLang.current === i18n.language) return undefined;
+    let cancelled = false;
+    const lang = i18n.language;
+    api
+      .get(`/practice/sessions/${sessionId}`)
+      .then((s) => {
+        if (cancelled) return;
+        renderedLang.current = lang;
+        setSession(s);
+        setResult((r) => r && { ...r, card: s.questions[r.index]?.answer?.card || r.card });
+        setSummary((sum) =>
+          sum && {
+            ...sum,
+            missed: s.questions
+              .filter((q) => q.answer && !q.answer.correct)
+              .map((q) => ({ item_type: q.item_type, ...q.answer.card })),
+          }
+        );
+      })
+      .catch(() => {}); // keep showing the round in the previous language
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, i18n.language]);
 
   const question = session?.questions?.[index];
 
@@ -74,7 +108,7 @@ export default function Practice({ forceSource }) {
         choice_id: optionId,
         response_ms: Date.now() - shownAt.current,
       });
-      setResult({ ...r, choice_id: optionId });
+      setResult({ ...r, choice_id: optionId, index });
       setOutcomes((o) => ({ ...o, [index]: r.correct }));
     } catch (e) {
       setError(e.message);
