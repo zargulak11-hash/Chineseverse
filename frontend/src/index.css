@@ -3826,6 +3826,8 @@ table.data td {
   background: var(--surface-2);
 }
 .ws-chat .assistant-log { padding: 18px; }
+/* AI replies come back with paragraphs and bullet lines; keep them. */
+.assistant-log .bubble { white-space: pre-wrap; overflow-wrap: anywhere; }
 .ws-chat .assistant-input-row { padding: 14px 18px; border-top: 1px solid var(--border); background: var(--surface-1); margin: 0; }
 .ws-chat .formerr { padding: 0 18px; }
 .prompt-chips { display: flex; flex-direction: column; gap: 8px; }

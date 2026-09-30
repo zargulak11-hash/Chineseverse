@@ -3,6 +3,8 @@ AI service abstraction.
 
 Providers:
   - "openai"  : OpenAI-compatible API via raw HTTP (configurable base_url/model/key).
+  - "gemini"  : Google Gemini through its OpenAI-compatible endpoint -- same
+                transport as "openai", only the defaults differ.
   - "offline" : deterministic, rule-based fallback so the whole product works
                 with no API key configured.  choice in "auto" mode): provider auto-detected.
 
@@ -13,12 +15,15 @@ any external API key.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import List, Optional
 
 import httpx
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class AIError(Exception):
@@ -34,11 +39,45 @@ def _contain(text: str, *keywords: str) -> bool:
     return any(_normalize(k) and _normalize(k) in text for k in keywords)
 
 
-def _active_provider() -> str:
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+OPENAI_MODEL = "gpt-4o-mini"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+GEMINI_MODEL = "gemini-2.5-flash"
+
+
+def _provider_name() -> str:
+    """The configured provider after resolving "auto" and missing keys."""
     provider = (settings.ai_provider or "auto").lower()
     if provider == "auto":
+        if settings.gemini_api_key:
+            return "gemini"
         return "openai" if settings.ai_api_key else "offline"
-    return provider if provider in {"openai", "offline"} else "offline"
+    if provider == "gemini":
+        return "gemini" if (settings.gemini_api_key or settings.ai_api_key) else "offline"
+    if provider == "openai":
+        return "openai" if settings.ai_api_key else "offline"
+    return "offline"
+
+
+def _endpoint() -> tuple[str, str, str]:
+    """(base_url, api_key, model) for the OpenAI-compatible transport."""
+    if _provider_name() == "gemini":
+        return (
+            settings.ai_base_url or GEMINI_BASE_URL,
+            settings.gemini_api_key or settings.ai_api_key or "",
+            settings.ai_model or GEMINI_MODEL,
+        )
+    return (
+        settings.ai_base_url or OPENAI_BASE_URL,
+        settings.ai_api_key or "",
+        settings.ai_model or OPENAI_MODEL,
+    )
+
+
+def _active_provider() -> str:
+    """"openai" means "a live OpenAI-compatible model is configured" -- that
+    covers Gemini too, since it is reached through the same transport."""
+    return "offline" if _provider_name() == "offline" else "openai"
 
 
 # ---------------------------------------------------------------------------
@@ -258,21 +297,42 @@ def _offline_chat(
 # ---------------------------------------------------------------------------
 
 
-def _openai_chat(messages: List[dict], model: str) -> str:
+def _openai_chat(
+    messages: List[dict],
+    model: Optional[str] = None,
+    max_tokens: int = 200,
+    temperature: float = 0.8,
+) -> str:
+    base_url, api_key, default_model = _endpoint()
     body = {
-        "model": model,
+        "model": model or default_model,
         "messages": messages,
-        "temperature": 0.8,
-        "max_tokens": 200,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
-    resp = httpx.post(
-        f"{settings.ai_base_url.rstrip('/')}/chat/completions",
-        headers={"Authorization": f"Bearer {settings.ai_api_key}"},
-        json=body,
-        timeout=30,
-    )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    if _provider_name() == "gemini":
+        # Gemini 2.5 "thinks" by default and those hidden tokens count
+        # against max_tokens, which left short replies empty/truncated.
+        body["reasoning_effort"] = "none"
+    try:
+        resp = httpx.post(
+            f"{base_url.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=body,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+    except httpx.HTTPStatusError as exc:
+        # Log the status only -- never the request (it carries the key).
+        logger.warning("AI provider returned HTTP %s", exc.response.status_code)
+        raise
+    except httpx.HTTPError as exc:
+        logger.warning("AI provider unreachable: %s", type(exc).__name__)
+        raise
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError("AI provider returned an empty reply")
+    return content.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +365,6 @@ def evaluate_speech(
             )
             text = _openai_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                settings.ai_model,
             )
             data = json.loads(text)
             return {
@@ -377,7 +436,6 @@ def chat_reply(
             )
             return _openai_chat(
                 [{"role": "system", "content": system}] + messages,
-                settings.ai_model,
             )
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             # Unreachable API, exhausted credits (429) or a malformed reply:
@@ -419,7 +477,6 @@ def evaluate_case_solution(
             )
             text = _openai_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                settings.ai_model,
             )
             data = json.loads(text)
             return {
@@ -433,23 +490,48 @@ def evaluate_case_solution(
 
 
 # ---------------------------------------------------------------------------
-# In-app study assistant — scoped to ChineseVerse + Chinese learning only.
-# Reuses the same provider plumbing as everything else in this module
-# (chat_reply, evaluate_speech, ...) instead of a separate AI integration.
+# In-app study assistant — a real conversational assistant that knows it
+# lives inside ChineseVerse. Reuses the same provider plumbing as everything
+# else in this module (chat_reply, evaluate_speech, ...) instead of a
+# separate AI integration.
+#
+# It used to be told to "ONLY help with" the app and to decline anything
+# else, and the offline fallback ended in a keyword matcher whose catch-all
+# was that same refusal. With the configured key out of credits every
+# request silently landed there, so "Салом" or "what should I see in China?"
+# got "I can only help with ChineseVerse..." -- the assistant looked broken.
+# Now the model answers whatever is asked, the learner's real stats are
+# context rather than a script, and the offline path says plainly that the
+# AI is unavailable instead of pretending the question was off-topic.
 # ---------------------------------------------------------------------------
 
 ASSISTANT_SYSTEM_TEMPLATE = (
-    "You are the in-app study assistant for ChineseVerse, a gamified Mandarin "
-    "Chinese learning app. You ONLY help with: this app's own features (World, "
-    "Lessons, Vocabulary, Learning DNA, Duels, Missions, Quests, Pet Teacher "
-    "mode, the HSK roadmap, streaks, coins/XP), Chinese grammar/vocabulary/"
-    "pronunciation questions, and this learner's own progress. If asked about "
-    "anything else, politely decline in one sentence and steer back to Chinese "
-    "learning or the app. Keep answers short (2-4 sentences), concrete and "
-    "encouraging — never a generic wall of text.\n\n"
-    "This learner: username={username}, HSK level={hsk_level}, overall "
-    "mastery={mastery}%, current streak={streak} day(s), weakest skills="
-    "{weak_skills}, companion={companion}.\n\n"
+    "You are the ChineseVerse assistant, built into ChineseVerse, a gamified "
+    "app for learning Mandarin Chinese (HSK 1-9 roadmap, lessons, vocabulary, "
+    "Hanzi, grammar, server-graded practice, spaced-repetition Review, "
+    "Learning DNA skill profile, companions, Daily Voice Companion, Duels, "
+    "Missions, Quests, Pet Teacher mode, streaks, XP and coins).\n\n"
+    "How to behave:\n"
+    "- Be a helpful, friendly, conversational assistant. Answer the question "
+    "the learner actually asked.\n"
+    "- You are especially strong at Chinese: grammar, vocabulary, Hanzi, "
+    "pronunciation and tones, HSK preparation, study plans and Chinese "
+    "culture. Give concrete examples with characters and pinyin when useful.\n"
+    "- General questions (travel, science, everyday topics, small talk) are "
+    "fine: answer them naturally. Do not refuse them, do not say you only "
+    "help with ChineseVerse, and do not force every topic back to studying. "
+    "A light, optional Chinese tie-in is welcome only when it fits.\n"
+    "- Use the learner data below when it is relevant (their progress, what "
+    "to practice next, how to prepare for HSK). It is the ONLY data you have "
+    "about them: never invent scores, streaks, mastered words, completed "
+    "lessons, Learning DNA numbers or achievements. If something is not "
+    "listed, say you don't have that information.\n"
+    "- You are read-only: you cannot change progress, XP, streaks, mastery or "
+    "lessons, and must never claim you did. Progress only changes when the "
+    "learner practises in the app.\n"
+    "- Keep answers focused: usually a short paragraph or a few bullet points; "
+    "go longer only when the learner asks for depth. Plain text, no tables.\n\n"
+    "Learner data (from the ChineseVerse database):\n{learner}\n\n"
     "LANGUAGE: always reply in {language} -- the language this learner selected "
     "in the app -- even if they write to you in another language. Chinese "
     "examples (characters, pinyin) stay in Chinese; everything else is {language}."
@@ -461,12 +543,44 @@ ASSISTANT_SYSTEM_TEMPLATE = (
 ASSISTANT_LANGUAGE_NAMES = {"en": "English", "ru": "Russian", "tg": "Tajik", "zh": "Simplified Chinese"}
 
 
-# Offline replies, one set per supported app locale. "en" is the original
-# wording and the fallback for any unknown locale. Chinese examples (了/吗/的
-# sentences) are the subject being taught, so they stay Chinese in every set.
+def _learner_block(context: dict) -> str:
+    """Only facts the router actually read from the database go in; a
+    missing value is omitted rather than defaulted, so the model can't
+    present a placeholder as the learner's real data."""
+    lines = []
+    if context.get("username"):
+        lines.append(f"- username: {context['username']}")
+    if context.get("hsk_level") is not None:
+        lines.append(f"- current HSK level: {context['hsk_level']}")
+    if context.get("mastery") is not None:
+        lines.append(f"- overall mastery at that level: {context['mastery']}%")
+    if context.get("streak") is not None:
+        lines.append(f"- current study streak: {context['streak']} day(s)")
+    if context.get("due_reviews") is not None:
+        lines.append(f"- items due in Review now: {context['due_reviews']}")
+    if context.get("open_mistakes") is not None:
+        lines.append(f"- unresolved mistakes in the mistake bank: {context['open_mistakes']}")
+    if context.get("recent_mistakes"):
+        lines.append("- most recent mistakes: " + "; ".join(context["recent_mistakes"]))
+    if context.get("weak_skills"):
+        lines.append("- weakest Learning DNA skills: " + ", ".join(context["weak_skills"]))
+    if context.get("completed_lessons") is not None:
+        lines.append(f"- lessons completed: {context['completed_lessons']}")
+    lines.append(f"- main companion: {context.get('companion') or 'none chosen yet'}")
+    return "\n".join(lines)
+
+
+# Offline replies, one set per supported app locale; "en" is the fallback for
+# any unknown locale. Used ONLY when no live model is configured or the call
+# failed, so every reply opens with an honest "AI is unavailable" notice and
+# then gives the most useful thing a deterministic helper can: a grounded
+# answer for a few common questions, or the learner's own next step from
+# real data. Chinese examples (了/吗/的 sentences) are the subject being
+# taught, so they stay Chinese in every set.
 ASSISTANT_OFFLINE = {
     "en": {
-        "greet": "Hi {name}! Ask me about a grammar point, your HSK progress, or what to practice next.",
+        "unavailable": "The AI assistant is temporarily unavailable, so this is a short automatic answer.",
+        "greet": "Hi {name}! Once the AI is back you can ask me anything — about Chinese or anything else.",
         "default_name": "there",
         "level": (
             "You're at HSK {hsk_level} with {mastery}% overall mastery. "
@@ -492,14 +606,14 @@ ASSISTANT_OFFLINE = {
         "companion": "Your companion is {companion}. Each one biases your daily quests and missions toward its own specialty — see the Companion page.",
         "no_companion": "no companion chosen yet",
         "duel": "Duels test your weakest strand under a timer. Start one from the Duels page — losing still counts as practice.",
-        "offtopic": (
-            "I can only help with ChineseVerse and Chinese learning — try asking "
-            "about a grammar point (like 了/吗/的), your HSK progress, your weakest "
-            "skill, or what to practice next."
+        "general": (
+            "Please try your question again in a little while. Meanwhile, your next step: "
+            "you're at HSK {hsk_level} and have {due} item(s) waiting in Review."
         ),
     },
     "ru": {
-        "greet": "Привет, {name}! Спроси меня о грамматике, своём прогрессе в HSK или о том, что практиковать дальше.",
+        "unavailable": "ИИ-ассистент временно недоступен, поэтому это короткий автоматический ответ.",
+        "greet": "Привет, {name}! Когда ИИ снова заработает, можешь спросить меня о чём угодно — о китайском и не только.",
         "default_name": "друг",
         "level": (
             "Ты на уровне HSK {hsk_level}, общее освоение — {mastery}%. "
@@ -525,14 +639,14 @@ ASSISTANT_OFFLINE = {
         "companion": "Твой компаньон — {companion}. Каждый компаньон смещает ежедневные квесты и миссии в сторону своей специализации — загляни на страницу компаньона.",
         "no_companion": "компаньон пока не выбран",
         "duel": "Дуэли проверяют твой самый слабый навык на время. Начни дуэль на странице дуэлей — даже проигрыш засчитывается как практика.",
-        "offtopic": (
-            "Я помогаю только с ChineseVerse и изучением китайского — спроси "
-            "о грамматике (например, 了/吗/的), своём прогрессе в HSK, самом слабом "
-            "навыке или о том, что практиковать дальше."
+        "general": (
+            "Попробуй задать вопрос ещё раз чуть позже. А пока следующий шаг: "
+            "ты на уровне HSK {hsk_level}, в повторении ждут элементов: {due}."
         ),
     },
     "tg": {
-        "greet": "Салом, {name}! Аз ман дар бораи грамматика, пешрафти HSK-и худ ё он чи минбаъд машқ кардан лозим аст, пурсед.",
+        "unavailable": "Ёрдамчии зеҳни сунъӣ муваққатан дастнорас аст, бинобар ин ин ҷавоби кӯтоҳи худкор аст.",
+        "greet": "Салом, {name}! Вақте ки зеҳни сунъӣ дубора кор кунад, метавонед аз ман ҳар чиз пурсед — дар бораи забони чинӣ ва на танҳо.",
         "default_name": "дӯст",
         "level": (
             "Шумо дар сатҳи HSK {hsk_level} ҳастед, азхудкунии умумӣ {mastery}% аст. "
@@ -558,14 +672,14 @@ ASSISTANT_OFFLINE = {
         "companion": "Ҳамроҳи шумо — {companion}. Ҳар ҳамроҳ супоришҳо ва миссияҳои ҳаррӯзаро ба самти тахассуси худ майл медиҳад — саҳифаи ҳамроҳро бинед.",
         "no_companion": "ҳамроҳ ҳоло интихоб нашудааст",
         "duel": "Дуэлҳо заифтарин маҳорати шуморо бо вақт месанҷанд. Дуэлро аз саҳифаи дуэлҳо оғоз кунед — ҳатто бохт ҳамчун машқ ҳисоб мешавад.",
-        "offtopic": (
-            "Ман танҳо дар ChineseVerse ва омӯзиши забони чинӣ кӯмак мекунам — "
-            "дар бораи грамматика (масалан, 了/吗/的), пешрафти HSK, заифтарин "
-            "маҳорат ё он чи минбаъд машқ кардан лозим аст, пурсед."
+        "general": (
+            "Лутфан саволатонро каме баъдтар боз диҳед. Ҳоло қадами навбатӣ: "
+            "шумо дар сатҳи HSK {hsk_level} ҳастед ва дар такрор {due} унсур интизор аст."
         ),
     },
     "zh": {
-        "greet": "你好，{name}！可以问我语法点、你的 HSK 进度，或者接下来该练什么。",
+        "unavailable": "AI 助手暂时无法使用，下面是一条简短的自动回复。",
+        "greet": "你好，{name}！AI 恢复后，你可以问我任何问题——中文学习或其他话题都可以。",
         "default_name": "同学",
         "level": (
             "你现在是 HSK {hsk_level}，总体掌握度 {mastery}%。"
@@ -581,12 +695,13 @@ ASSISTANT_OFFLINE = {
         "companion": "你的伙伴是{companion}。每个伙伴都会让每日任务和使命偏向它的专长——请查看伙伴页面。",
         "no_companion": "还没有选择伙伴",
         "duel": "对战会在限时内考查你最薄弱的方面。从对战页面开始一局吧——输了也算练习。",
-        "offtopic": "我只能帮助解答 ChineseVerse 和中文学习的问题——可以问我语法点（比如 了/吗/的）、你的 HSK 进度、最薄弱的技能，或者接下来该练什么。",
+        "general": "请稍后再问一次。现在的下一步：你是 HSK {hsk_level}，复习中有 {due} 项等着你。",
     },
 }
 
 # Topic keywords in every supported language: the learner may type in any of
 # them, but the REPLY language is always the selected locale.
+_KW_GREET = ("hello", "hi", "hey", "привет", "здравств", "салом", "你好", "您好")
 _KW_LEVEL = ("hsk", "level", "progress", "уровень", "прогресс", "сатҳ", "пешрафт", "水平", "进度", "等级", "级别")
 _KW_STREAK = ("streak", "серия", "стрик", "силсила", "连续", "打卡")
 _KW_WEAK = ("weak", "improve", "focus", "struggl", "слаб", "улучш", "заиф", "беҳтар", "薄弱", "弱", "提高", "加强")
@@ -595,22 +710,23 @@ _KW_COMPANION = ("companion", "animal", "компаньон", "животн", "�
 _KW_DUEL = ("duel", "дуэл", "поедин", "对战", "决斗")
 
 
-def _offtopic_reply(locale: str = "en") -> str:
-    return ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])["offtopic"]
+def _is_greeting(text: str) -> bool:
+    # Whole-word match for the short Latin greetings ("hi" is inside "this").
+    words = re.findall(r"\w+", (text or "").lower())
+    if len(words) > 4:
+        return False
+    return any(w in _KW_GREET for w in words) or _contain(text, "привет", "здравств", "салом", "你好", "您好")
 
 
-def _offline_assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
-    t = ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])
-    last = messages[-1]["content"] if messages else ""
+def _offline_answer(last: str, context: dict, t: dict) -> str:
     q = _normalize(last)
     name = context.get("username") or t["default_name"]
-
-    if not q:
+    if not q or _is_greeting(last):
         return t["greet"].format(name=name)
     if _contain(q, *_KW_LEVEL):
-        return t["level"].format(hsk_level=context["hsk_level"], mastery=context["mastery"])
+        return t["level"].format(hsk_level=context.get("hsk_level", 1), mastery=context.get("mastery", 0))
     if _contain(q, *_KW_STREAK):
-        return t["streak"].format(streak=context["streak"])
+        return t["streak"].format(streak=context.get("streak", 0))
     if _contain(q, *_KW_WEAK):
         weak = ", ".join(context.get("weak_skills") or []) or t["no_weak"]
         return t["weak"].format(weak=weak)
@@ -626,34 +742,39 @@ def _offline_assistant_reply(messages: List[dict], context: dict, locale: str = 
         return t["companion"].format(companion=context.get("companion") or t["no_companion"])
     if _contain(q, *_KW_DUEL):
         return t["duel"]
-    return _offtopic_reply(locale)
+    return t["general"].format(hsk_level=context.get("hsk_level", 1), due=context.get("due_reviews", 0))
 
 
-def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
-    """Reply to one turn of the in-app study assistant. `context` carries the
-    learner's own stats (HSK level, mastery, streak, weak skills, companion)
-    so answers about "how am I doing" are grounded in real data, not
-    hallucinated. Always scoped to ChineseVerse/Chinese-learning topics.
-    `locale` is the app's selected language (X-Locale); both the model and
-    the offline fallback answer in it."""
-    provider = _active_provider()
-    if provider == "openai" and messages:
+def _offline_assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
+    t = ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])
+    last = messages[-1]["content"] if messages else ""
+    return f"{t['unavailable']}\n\n{_offline_answer(last, context, t)}"
+
+
+def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> tuple[str, str]:
+    """Reply to one turn of the in-app assistant. Returns (reply, source),
+    where source is "ai" for a real model answer or "offline" for the
+    fallback. `context` carries the learner's own stats as read from the
+    database, so answers about "how am I doing" are grounded in real data,
+    not hallucinated. `locale` is the app's selected language (X-Locale);
+    both the model and the offline fallback answer in it."""
+    if _active_provider() == "openai" and messages:
         try:
             system = ASSISTANT_SYSTEM_TEMPLATE.format(
-                username=context.get("username", "learner"),
-                hsk_level=context.get("hsk_level", 1),
-                mastery=context.get("mastery", 0),
-                streak=context.get("streak", 0),
-                weak_skills=", ".join(context.get("weak_skills") or []) or "none tracked yet",
-                companion=context.get("companion") or "none chosen yet",
+                learner=_learner_block(context),
                 language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
             )
-            return _openai_chat([{"role": "system", "content": system}] + messages, settings.ai_model)
+            reply = _openai_chat(
+                [{"role": "system", "content": system}] + messages,
+                max_tokens=700,
+                temperature=0.7,
+            )
+            return reply, "ai"
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             # Unreachable API, exhausted credits (429) or a malformed reply:
-            # fall back to the deterministic offline companion, never a 500.
+            # degrade to the offline helper, never a 500.
             pass
-    return _offline_assistant_reply(messages, context, locale)
+    return _offline_assistant_reply(messages, context, locale), "offline"
 
 
 def evaluate_pet_teacher_explanation(
@@ -675,7 +796,6 @@ def evaluate_pet_teacher_explanation(
             user = f"规则：{mistake_summary}\n关键词：{keywords}\n学习者的解释：{explanation}"
             text = _openai_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                settings.ai_model,
             )
             data = json.loads(text)
             return {
