@@ -379,7 +379,9 @@ def chat_reply(
                 [{"role": "system", "content": system}] + messages,
                 settings.ai_model,
             )
-        except httpx.HTTPError:
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+            # Unreachable API, exhausted credits (429) or a malformed reply:
+            # fall back to the deterministic offline companion, never a 500.
             pass
     return _offline_chat(messages, animal_slug, user_name, energy=energy)
 
@@ -519,7 +521,9 @@ def assistant_reply(messages: List[dict], context: dict) -> str:
                 companion=context.get("companion") or "none chosen yet",
             )
             return _openai_chat([{"role": "system", "content": system}] + messages, settings.ai_model)
-        except httpx.HTTPError:
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+            # Unreachable API, exhausted credits (429) or a malformed reply:
+            # fall back to the deterministic offline companion, never a 500.
             pass
     return _offline_assistant_reply(messages, context)
 
