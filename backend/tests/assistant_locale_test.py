@@ -156,6 +156,12 @@ with TestClient(app) as client:
             ("en", "Tell me an interesting fact."),
             ("ru", "Я сегодня плохо прошёл практику."),
             ("en", "What can you do?"),
+            ("ru", "Привет, как дела?"),
+            ("tg", "Ман мехоҳам забони чиниро омӯзам"),
+            ("en", "What is HSK?"),
+            ("en", "What places can I visit in China?"),
+            ("en", "What is AI?"),
+            ("zh", "我的HSK水平和最薄弱的技能是什么？"),
             ("en", "What is my current HSK level and weakest skill?"),
         ]
         for locale, text in cases:
@@ -219,7 +225,7 @@ with TestClient(app) as client:
     assert client.post("/api/assistant/chat", json={"messages": [{"role": "user", "content": "hi"}]}).status_code == 401
     print("[PASS] assistant requires authentication")
 
-# --- transport: Gemini through the OpenAI-compatible endpoint ---------------
+# --- transport: the real OpenAI request the app sends (httpx mocked) --------
 sent = {}
 
 
@@ -230,23 +236,28 @@ def fake_post(url, headers=None, json=None, timeout=None):
 
 
 orig_post = httpx.post
-saved = (settings.ai_provider, settings.ai_api_key, settings.gemini_api_key, settings.ai_base_url, settings.ai_model)
+saved = (settings.ai_provider, settings.ai_api_key, settings.ai_base_url, settings.ai_model)
 httpx.post = fake_post
 try:
-    settings.ai_provider, settings.ai_api_key, settings.gemini_api_key = "auto", None, "test-gemini-key"
-    settings.ai_base_url, settings.ai_model = None, None
+    settings.ai_provider, settings.ai_api_key = "openai", "test-openai-key"
+    settings.ai_base_url, settings.ai_model = "https://api.openai.com/v1", "gpt-4o-mini"
     assert ai_client._active_provider() == "openai"
-    assert ai_client._openai_chat([{"role": "user", "content": "hi"}], max_tokens=700) == "你好！"
-    assert sent["url"] == ai_client.GEMINI_BASE_URL + "/chat/completions", sent["url"]
-    assert sent["json"]["model"] == ai_client.GEMINI_MODEL
-    assert sent["json"]["max_tokens"] == 700
-    assert sent["json"]["reasoning_effort"] == "none"
-    assert sent["headers"]["Authorization"] == "Bearer test-gemini-key"
 
-    settings.ai_provider, settings.ai_api_key, settings.gemini_api_key = "openai", "test-openai-key", None
-    ai_client._openai_chat([{"role": "user", "content": "hi"}])
-    assert sent["url"] == ai_client.OPENAI_BASE_URL + "/chat/completions"
-    assert sent["json"]["model"] == ai_client.OPENAI_MODEL and "reasoning_effort" not in sent["json"]
+    # End to end through the real endpoint: the HTTP request that leaves the
+    # app is an OpenAI chat-completions call carrying the user's message.
+    with TestClient(app) as client:
+        tok = client.post("/api/auth/login", json={"username": "asklearner", "password": "secret1"})
+        assert tok.status_code == 200, tok.text
+        hh = {"Authorization": f"Bearer {tok.json()['access_token']}", "X-Locale": "tg"}
+        r = client.post("/api/assistant/chat", headers=hh,
+                        json={"messages": [{"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}]})
+        assert r.status_code == 200 and r.json() == {"reply": "你好！", "source": "ai"}, r.text
+    assert sent["url"] == "https://api.openai.com/v1/chat/completions", sent["url"]
+    assert sent["json"]["model"] == "gpt-4o-mini"
+    assert sent["json"]["max_tokens"] == 700
+    assert sent["headers"]["Authorization"] == "Bearer test-openai-key"
+    assert sent["json"]["messages"][-1] == {"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}
+    assert "always reply in Tajik" in sent["json"]["messages"][0]["content"]
 
     sent["reply"] = "   "
     try:
@@ -255,13 +266,11 @@ try:
     except ValueError:
         pass
 
-    settings.ai_provider, settings.ai_api_key = "openai", None
+    settings.ai_api_key = None
     assert ai_client._active_provider() == "offline"  # no key -> offline, not a failing call
-    settings.ai_provider = "gemini"
-    assert ai_client._active_provider() == "offline"
-    print("[PASS] Gemini/OpenAI transport: endpoint, model, auth and empty-reply handling")
+    print("[PASS] OpenAI transport: endpoint, model, auth, message and empty-reply handling")
 finally:
     httpx.post = orig_post
-    settings.ai_provider, settings.ai_api_key, settings.gemini_api_key, settings.ai_base_url, settings.ai_model = saved
+    settings.ai_provider, settings.ai_api_key, settings.ai_base_url, settings.ai_model = saved
 
 print("ALL ASSISTANT TESTS PASSED")

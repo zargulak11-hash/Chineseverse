@@ -3,8 +3,6 @@ AI service abstraction.
 
 Providers:
   - "openai"  : OpenAI-compatible API via raw HTTP (configurable base_url/model/key).
-  - "gemini"  : Google Gemini through its OpenAI-compatible endpoint -- same
-                transport as "openai", only the defaults differ.
   - "offline" : deterministic, rule-based fallback so the whole product works
                 with no API key configured.  choice in "auto" mode): provider auto-detected.
 
@@ -39,45 +37,14 @@ def _contain(text: str, *keywords: str) -> bool:
     return any(_normalize(k) and _normalize(k) in text for k in keywords)
 
 
-OPENAI_BASE_URL = "https://api.openai.com/v1"
-OPENAI_MODEL = "gpt-4o-mini"
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
-GEMINI_MODEL = "gemini-2.5-flash"
-
-
-def _provider_name() -> str:
-    """The configured provider after resolving "auto" and missing keys."""
+def _active_provider() -> str:
     provider = (settings.ai_provider or "auto").lower()
     if provider == "auto":
-        if settings.gemini_api_key:
-            return "gemini"
         return "openai" if settings.ai_api_key else "offline"
-    if provider == "gemini":
-        return "gemini" if (settings.gemini_api_key or settings.ai_api_key) else "offline"
-    if provider == "openai":
-        return "openai" if settings.ai_api_key else "offline"
-    return "offline"
-
-
-def _endpoint() -> tuple[str, str, str]:
-    """(base_url, api_key, model) for the OpenAI-compatible transport."""
-    if _provider_name() == "gemini":
-        return (
-            settings.ai_base_url or GEMINI_BASE_URL,
-            settings.gemini_api_key or settings.ai_api_key or "",
-            settings.ai_model or GEMINI_MODEL,
-        )
-    return (
-        settings.ai_base_url or OPENAI_BASE_URL,
-        settings.ai_api_key or "",
-        settings.ai_model or OPENAI_MODEL,
-    )
-
-
-def _active_provider() -> str:
-    """"openai" means "a live OpenAI-compatible model is configured" -- that
-    covers Gemini too, since it is reached through the same transport."""
-    return "offline" if _provider_name() == "offline" else "openai"
+    if provider == "openai" and not settings.ai_api_key:
+        # No key: don't fire a request that can only fail with a 401.
+        return "offline"
+    return provider if provider in {"openai", "offline"} else "offline"
 
 
 # ---------------------------------------------------------------------------
@@ -303,21 +270,16 @@ def _openai_chat(
     max_tokens: int = 200,
     temperature: float = 0.8,
 ) -> str:
-    base_url, api_key, default_model = _endpoint()
     body = {
-        "model": model or default_model,
+        "model": model or settings.ai_model,
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
-    if _provider_name() == "gemini":
-        # Gemini 2.5 "thinks" by default and those hidden tokens count
-        # against max_tokens, which left short replies empty/truncated.
-        body["reasoning_effort"] = "none"
     try:
         resp = httpx.post(
-            f"{base_url.rstrip('/')}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}"},
+            f"{settings.ai_base_url.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {settings.ai_api_key}"},
             json=body,
             timeout=30,
         )

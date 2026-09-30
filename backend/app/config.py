@@ -28,14 +28,10 @@ class Settings(BaseSettings):
     admin_emails: list[str] = ["zargulak11@gmail.com"]
 
     # AI (never hardcode values here — always via .env)
-    # "openai" | "gemini" | "offline" | "auto". Both "openai" and "gemini"
-    # go through the same OpenAI-compatible /chat/completions transport;
-    # base URL and model default per provider when left unset.
-    ai_provider: str = "auto"
+    ai_provider: str = "auto"  # "openai" | "offline" | "auto"
     ai_api_key: str | None = None
-    gemini_api_key: str | None = None
-    ai_base_url: str | None = None
-    ai_model: str | None = None
+    ai_base_url: str = "https://api.openai.com/v1"
+    ai_model: str = "gpt-4o-mini"
     ai_speech_model: str = "whisper-1"
 
     # Outgoing email (notification emails). Credentials only ever come from
