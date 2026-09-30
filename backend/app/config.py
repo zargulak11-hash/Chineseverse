@@ -28,11 +28,14 @@ class Settings(BaseSettings):
     admin_emails: list[str] = ["zargulak11@gmail.com"]
 
     # AI (never hardcode values here — always via .env)
-    ai_provider: str = "auto"  # "openai" | "offline" | "auto"
-    ai_api_key: str | None = None
-    ai_base_url: str = "https://api.openai.com/v1"
-    ai_model: str = "gpt-4o-mini"
-    ai_speech_model: str = "whisper-1"
+    # "gemini" | "offline" | "auto" ("auto" = Gemini when GEMINI_API_KEY is
+    # set, else offline). Gemini has its own GEMINI_* names so leftover
+    # AI_API_KEY/AI_BASE_URL/AI_MODEL lines from the old OpenAI setup are
+    # ignored -- an OpenAI key must never be sent to Google.
+    ai_provider: str = "auto"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
 
     # Outgoing email (notification emails). Credentials only ever come from
     # backend/.env / the environment. With SMTP_HOST unset, email is simply

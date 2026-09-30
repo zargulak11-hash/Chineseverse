@@ -132,14 +132,14 @@ with TestClient(app) as client:
 
     # --- live model path ---------------------------------------------------
     captured = []
-    orig_provider, orig_chat = ai_client._active_provider, ai_client._openai_chat
+    orig_provider, orig_chat = ai_client._active_provider, ai_client._gemini_chat
 
-    def fake_model(messages, model=None, max_tokens=200, temperature=0.8):
+    def fake_model(messages, max_tokens=200, temperature=0.8, json_mode=False):
         captured.append({"messages": messages, "max_tokens": max_tokens})
         return f"generated answer #{len(captured)}"
 
-    ai_client._active_provider = lambda: "openai"
-    ai_client._openai_chat = fake_model
+    ai_client._active_provider = lambda: "gemini"
+    ai_client._gemini_chat = fake_model
     try:
         cases = [
             ("tg", "Салом"),
@@ -196,16 +196,16 @@ with TestClient(app) as client:
         assert captured[-1]["messages"][1:] == history + [{"role": "user", "content": "А приведи ещё пример"}]
         print("[PASS] conversation history reaches the model")
 
-        # Provider failure (429 exhausted credits, network, empty reply) -> localized fallback, no 500.
+        # Provider failure (429 quota, network, blocked/empty reply) -> localized fallback, no 500.
         def quota(messages, **kw):
-            req = httpx.Request("POST", "https://example.invalid/chat/completions")
+            req = httpx.Request("POST", "https://example.invalid/models/x:generateContent")
             raise httpx.HTTPStatusError("429", request=req, response=httpx.Response(429, request=req))
         def unreachable(messages, **kw):
             raise httpx.ConnectError("unreachable")
         def empty(messages, **kw):
             raise ValueError("AI provider returned an empty reply")
         for failure in (quota, unreachable, empty):
-            ai_client._openai_chat = failure
+            ai_client._gemini_chat = failure
             for locale in ("en", "ru", "tg", "zh"):
                 body = chat(client, h, "Какие места стоит посетить в Китае?", locale)
                 assert body["source"] == "offline", body
@@ -213,7 +213,7 @@ with TestClient(app) as client:
                 assert_language(body["reply"], locale)
         print("[PASS] AI failure degrades to a localized 'temporarily unavailable' fallback")
     finally:
-        ai_client._active_provider, ai_client._openai_chat = orig_provider, orig_chat
+        ai_client._active_provider, ai_client._gemini_chat = orig_provider, orig_chat
 
     # The assistant is read-only: dozens of chats changed no XP or lesson progress.
     db = SessionLocal()
@@ -225,52 +225,83 @@ with TestClient(app) as client:
     assert client.post("/api/assistant/chat", json={"messages": [{"role": "user", "content": "hi"}]}).status_code == 401
     print("[PASS] assistant requires authentication")
 
-# --- transport: the real OpenAI request the app sends (httpx mocked) --------
+# --- transport: the real Gemini request the app sends (httpx mocked) --------
 sent = {}
 
 
 def fake_post(url, headers=None, json=None, timeout=None):
     sent.update(url=url, headers=headers, json=json)
     req = httpx.Request("POST", url)
-    return httpx.Response(200, request=req, json={"choices": [{"message": {"content": sent.get("reply", "  你好！  ")}}]})
+    if "response" in sent:
+        return httpx.Response(200, request=req, json=sent["response"])
+    return httpx.Response(200, request=req, json={
+        "candidates": [{"content": {"role": "model", "parts": [{"text": "  Салом! "}, {"text": "Биёед оғоз кунем."}]},
+                        "finishReason": "STOP"}]})
 
 
 orig_post = httpx.post
-saved = (settings.ai_provider, settings.ai_api_key, settings.ai_base_url, settings.ai_model)
+saved = (settings.ai_provider, settings.gemini_api_key, settings.gemini_model, settings.gemini_base_url)
 httpx.post = fake_post
 try:
-    settings.ai_provider, settings.ai_api_key = "openai", "test-openai-key"
-    settings.ai_base_url, settings.ai_model = "https://api.openai.com/v1", "gpt-4o-mini"
-    assert ai_client._active_provider() == "openai"
+    settings.ai_provider, settings.gemini_api_key = "gemini", "test-gemini-key"
+    settings.gemini_model = "gemini-2.5-flash"
+    settings.gemini_base_url = "https://generativelanguage.googleapis.com/v1beta"
+    assert ai_client._active_provider() == "gemini"
 
     # End to end through the real endpoint: the HTTP request that leaves the
-    # app is an OpenAI chat-completions call carrying the user's message.
+    # app is a Gemini generateContent call carrying the user's message.
     with TestClient(app) as client:
         tok = client.post("/api/auth/login", json={"username": "asklearner", "password": "secret1"})
         assert tok.status_code == 200, tok.text
         hh = {"Authorization": f"Bearer {tok.json()['access_token']}", "X-Locale": "tg"}
-        r = client.post("/api/assistant/chat", headers=hh,
-                        json={"messages": [{"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}]})
-        assert r.status_code == 200 and r.json() == {"reply": "你好！", "source": "ai"}, r.text
-    assert sent["url"] == "https://api.openai.com/v1/chat/completions", sent["url"]
-    assert sent["json"]["model"] == "gpt-4o-mini"
-    assert sent["json"]["max_tokens"] == 700
-    assert sent["headers"]["Authorization"] == "Bearer test-openai-key"
-    assert sent["json"]["messages"][-1] == {"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}
-    assert "always reply in Tajik" in sent["json"]["messages"][0]["content"]
+        history = [{"role": "user", "content": "Салом"}, {"role": "assistant", "content": "Салом!"}]
+        r = client.post("/api/assistant/chat", headers=hh, json={"messages": history + [
+            {"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}]})
+        assert r.status_code == 200 and r.json() == {"reply": "Салом! Биёед оғоз кунем.", "source": "ai"}, r.text
+    assert sent["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", sent["url"]
+    assert "key=" not in sent["url"]  # key travels in a header, never the URL
+    assert sent["headers"] == {"x-goog-api-key": "test-gemini-key"}
+    body = sent["json"]
+    assert body["contents"] == [
+        {"role": "user", "parts": [{"text": "Салом"}]},
+        {"role": "model", "parts": [{"text": "Салом!"}]},
+        {"role": "user", "parts": [{"text": "Ман мехоҳам забони чиниро омӯзам"}]},
+    ], body["contents"]
+    assert "always reply in Tajik" in body["systemInstruction"]["parts"][0]["text"]
+    assert body["generationConfig"]["maxOutputTokens"] == 700
+    assert body["generationConfig"]["thinkingConfig"] == {"thinkingBudget": 0}
+    assert "responseMimeType" not in body["generationConfig"]
+    print("[PASS] assistant endpoint sends a real Gemini generateContent request (URL, header auth, roles, locale)")
 
-    sent["reply"] = "   "
-    try:
-        ai_client._openai_chat([{"role": "user", "content": "hi"}])
-        raise AssertionError("empty reply must raise")
-    except ValueError:
-        pass
+    # JSON graders ask Gemini for JSON output.
+    sent["response"] = {"candidates": [{"content": {"parts": [{"text": '{"solved": true, "feedback": "对"}'}]}}]}
+    assert ai_client.evaluate_case_solution("案情", "是他", ["他"])["solved"] is True
+    assert sent["json"]["generationConfig"]["responseMimeType"] == "application/json"
 
-    settings.ai_api_key = None
-    assert ai_client._active_provider() == "offline"  # no key -> offline, not a failing call
-    print("[PASS] OpenAI transport: endpoint, model, auth, message and empty-reply handling")
+    # Blocked prompt (no candidates) / empty text -> ValueError -> callers fall back.
+    for bad in ({"promptFeedback": {"blockReason": "SAFETY"}},
+                {"candidates": [{"finishReason": "SAFETY"}]},
+                {"candidates": [{"content": {"parts": [{"text": "   "}]}}]}):
+        sent["response"] = bad
+        try:
+            ai_client._gemini_chat([{"role": "user", "content": "hi"}])
+            raise AssertionError(f"must raise for {bad}")
+        except ValueError:
+            pass
+    assert ai_client.evaluate_case_solution("案情", "是他", ["他"]) == {"solved": True, "feedback": ""}
+    print("[PASS] blocked/empty Gemini responses raise and callers degrade offline")
+
+    # No Gemini key -> offline without any request; a stale AI_PROVIDER=openai
+    # never routes anywhere but Gemini/offline.
+    settings.ai_provider = "openai"
+    assert ai_client._active_provider() == "gemini"
+    settings.gemini_api_key = None
+    assert ai_client._active_provider() == "offline"
+    settings.ai_provider, settings.gemini_api_key = "offline", "test-gemini-key"
+    assert ai_client._active_provider() == "offline"
+    print("[PASS] provider resolution: Gemini with a key, offline otherwise")
 finally:
     httpx.post = orig_post
-    settings.ai_provider, settings.ai_api_key, settings.ai_base_url, settings.ai_model = saved
+    settings.ai_provider, settings.gemini_api_key, settings.gemini_model, settings.gemini_base_url = saved
 
 print("ALL ASSISTANT TESTS PASSED")

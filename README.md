@@ -16,7 +16,7 @@ HSK level → Lesson → Vocabulary / Hanzi / Grammar → Practice → Result
 - **Review** (`/review`): items due under spaced repetition, plus unresolved mistakes. Mistakes come from practice, duels, voice and Hanzi tracing.
 - **Lessons**: a lesson links to the words and grammar it teaches (`GET /api/lessons/{id}/items`). It counts as completed only when its practice round scores at least 70%.
 - **Learning DNA**: nine skills. Speaking, Listening, Reading, Writing, Vocabulary, Grammar, Tones, Memory and Reaction Speed are all updated from graded activity.
-- **Companion**: the permanent main companion reacts to graded results, and each species voices those reactions in its own way. The **Daily Voice Companion** is a separate, session-only partner that speaks only Chinese. It uses OpenAI when a key is configured and a deterministic offline mode otherwise.
+- **Companion**: the permanent main companion reacts to graded results, and each species voices those reactions in its own way. The **Daily Voice Companion** is a separate, session-only partner that speaks only Chinese. It uses Google Gemini when a key is configured and a deterministic offline mode otherwise.
 
 ## Stack
 
@@ -29,7 +29,7 @@ HSK level → Lesson → Vocabulary / Hanzi / Grammar → Practice → Result
 
 ```bash
 # backend
-cp backend/.env.example backend/.env      # set DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID, optional AI_API_KEY
+cp backend/.env.example backend/.env      # set DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID, optional GEMINI_API_KEY
 python -m venv .venv && .venv/Scripts/pip install -r backend/requirements.txt   # Windows path; use .venv/bin on macOS/Linux
 cd backend && ../.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
 

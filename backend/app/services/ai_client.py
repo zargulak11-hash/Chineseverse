@@ -2,9 +2,11 @@
 AI service abstraction.
 
 Providers:
-  - "openai"  : OpenAI-compatible API via raw HTTP (configurable base_url/model/key).
+  - "gemini"  : Google Gemini API (REST generateContent via httpx; key/model
+                from GEMINI_API_KEY / GEMINI_MODEL).
   - "offline" : deterministic, rule-based fallback so the whole product works
-                with no API key configured.  choice in "auto" mode): provider auto-detected.
+                with no API key configured.
+"auto" picks Gemini when GEMINI_API_KEY is set, else offline.
 
 Every function has an offline implementation, so LinguaVerse keeps working without
 any external API key.
@@ -38,13 +40,15 @@ def _contain(text: str, *keywords: str) -> bool:
 
 
 def _active_provider() -> str:
-    provider = (settings.ai_provider or "auto").lower()
-    if provider == "auto":
-        return "openai" if settings.ai_api_key else "offline"
-    if provider == "openai" and not settings.ai_api_key:
-        # No key: don't fire a request that can only fail with a 401.
+    """"gemini" when a Gemini key is configured, otherwise "offline".
+
+    Any provider value other than "offline" (including a stale "openai"
+    left in an old .env) resolves the same way as "auto", so the app never
+    tries to reach OpenAI.
+    """
+    if (settings.ai_provider or "auto").lower() == "offline":
         return "offline"
-    return provider if provider in {"openai", "offline"} else "offline"
+    return "gemini" if settings.gemini_api_key else "offline"
 
 
 # ---------------------------------------------------------------------------
@@ -260,40 +264,76 @@ def _offline_chat(
 
 
 # ---------------------------------------------------------------------------
-# OpenAI-compatible provider
+# Gemini provider
 # ---------------------------------------------------------------------------
 
 
-def _openai_chat(
+def _gemini_payload(
     messages: List[dict],
-    model: Optional[str] = None,
+    max_tokens: int,
+    temperature: float,
+    json_mode: bool,
+) -> dict:
+    """Map the chat-style messages every caller builds ({role: system|user|
+    assistant, content}) onto Gemini's generateContent body: system turns
+    become systemInstruction, assistant turns become role "model"."""
+    system = "\n\n".join(m["content"] for m in messages if m.get("role") == "system")
+    contents = [
+        {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]}
+        for m in messages
+        if m.get("role") in ("user", "assistant")
+    ]
+    config: dict = {"temperature": temperature, "maxOutputTokens": max_tokens}
+    if "flash" in settings.gemini_model:
+        # 2.5 Flash "thinks" by default and those hidden tokens are taken
+        # out of maxOutputTokens, which left short replies empty. Flash
+        # models accept a zero budget (Pro models don't, so only here).
+        config["thinkingConfig"] = {"thinkingBudget": 0}
+    if json_mode:
+        # The graders json.loads() the reply; without this Gemini tends to
+        # wrap it in a ```json fence.
+        config["responseMimeType"] = "application/json"
+    body: dict = {"contents": contents, "generationConfig": config}
+    if system:
+        body["systemInstruction"] = {"parts": [{"text": system}]}
+    return body
+
+
+def _gemini_chat(
+    messages: List[dict],
     max_tokens: int = 200,
     temperature: float = 0.8,
+    json_mode: bool = False,
 ) -> str:
-    body = {
-        "model": model or settings.ai_model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
+    url = f"{settings.gemini_base_url.rstrip('/')}/models/{settings.gemini_model}:generateContent"
     try:
         resp = httpx.post(
-            f"{settings.ai_base_url.rstrip('/')}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.ai_api_key}"},
-            json=body,
+            url,
+            # Key in a header, not the ?key= query string, so it can't end up
+            # in URL logs or exception messages.
+            headers={"x-goog-api-key": settings.gemini_api_key or ""},
+            json=_gemini_payload(messages, max_tokens, temperature, json_mode),
             timeout=30,
         )
         resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
+        try:
+            candidate = resp.json()["candidates"][0]
+            parts = candidate.get("content", {}).get("parts") or []
+            content = "".join(p.get("text", "") for p in parts)
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            # A blocked prompt comes back with no candidates at all. Every
+            # caller already degrades to offline on ValueError.
+            raise ValueError(f"Unexpected Gemini response shape: {type(exc).__name__}") from exc
     except httpx.HTTPStatusError as exc:
         # Log the status only -- never the request (it carries the key).
-        logger.warning("AI provider returned HTTP %s", exc.response.status_code)
+        logger.warning("Gemini returned HTTP %s", exc.response.status_code)
         raise
     except httpx.HTTPError as exc:
-        logger.warning("AI provider unreachable: %s", type(exc).__name__)
+        logger.warning("Gemini unreachable: %s", type(exc).__name__)
         raise
-    if not isinstance(content, str) or not content.strip():
-        raise ValueError("AI provider returned an empty reply")
+    if not content.strip():
+        # e.g. finishReason SAFETY / MAX_TOKENS with no text
+        raise ValueError(f"Gemini returned no text (finishReason={candidate.get('finishReason')})")
     return content.strip()
 
 
@@ -315,7 +355,7 @@ def evaluate_speech(
     """Grade a single spoken turn. Returns score dict (always complete)."""
     provider = _active_provider()
     expected_keywords = expected_keywords or []
-    if provider == "openai" and transcript:
+    if provider == "gemini" and transcript:
         try:
             system = (
                 "你是中文口语考官。根据提示、转录和关键词，返回JSON，"
@@ -325,8 +365,9 @@ def evaluate_speech(
             user = (
                 f"提示：{prompt}\n转录：{transcript}\n关键词：{expected_keywords}"
             )
-            text = _openai_chat(
+            text = _gemini_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                json_mode=True,
             )
             data = json.loads(text)
             return {
@@ -380,7 +421,7 @@ def chat_reply(
     zh_flavor = ANIMAL_ZH_FLAVOR.get(animal_slug, "")
 
     provider = _active_provider()
-    if provider == "openai":
+    if provider == "gemini":
         try:
             level_line = {
                 "beginner": "学习者是初级水平：用非常简单的中文、常用词汇，句子要短。",
@@ -396,7 +437,7 @@ def chat_reply(
                 + "对话中不要用拼音解释，不要中英夹杂，直接说中文。"
                 + (f" {level_line}" if level_line else "")
             )
-            return _openai_chat(
+            return _gemini_chat(
                 [{"role": "system", "content": system}] + messages,
             )
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
@@ -426,7 +467,7 @@ def evaluate_case_solution(
     work with no API key configured.
     """
     provider = _active_provider()
-    if provider == "openai" and conclusion:
+    if provider == "gemini" and conclusion:
         try:
             system = (
                 "你是中文侦探解谜游戏的裁判。根据案情背景、正确答案的关键线索和玩家的结论，"
@@ -437,8 +478,9 @@ def evaluate_case_solution(
                 f"案情：{case_context}\n关键线索：{solution_keywords}\n提示：{hint}\n"
                 f"玩家的结论：{conclusion}"
             )
-            text = _openai_chat(
+            text = _gemini_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                json_mode=True,
             )
             data = json.loads(text)
             return {
@@ -720,13 +762,13 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
     database, so answers about "how am I doing" are grounded in real data,
     not hallucinated. `locale` is the app's selected language (X-Locale);
     both the model and the offline fallback answer in it."""
-    if _active_provider() == "openai" and messages:
+    if _active_provider() == "gemini" and messages:
         try:
             system = ASSISTANT_SYSTEM_TEMPLATE.format(
                 learner=_learner_block(context),
                 language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
             )
-            reply = _openai_chat(
+            reply = _gemini_chat(
                 [{"role": "system", "content": system}] + messages,
                 max_tokens=700,
                 temperature=0.7,
@@ -748,7 +790,7 @@ def evaluate_pet_teacher_explanation(
     understanding, not just a lucky correction. Offline mode falls back to
     checking whether the explanation touches one of the rule's keywords."""
     provider = _active_provider()
-    if provider == "openai" and explanation:
+    if provider == "gemini" and explanation:
         try:
             system = (
                 "你是中文语法老师。学习者需要解释一个语法规则为什么正确。"
@@ -756,8 +798,9 @@ def evaluate_pet_teacher_explanation(
                 '返回JSON: {"understood": true 或 false, "feedback": "一句简短反馈"}。'
             )
             user = f"规则：{mistake_summary}\n关键词：{keywords}\n学习者的解释：{explanation}"
-            text = _openai_chat(
+            text = _gemini_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                json_mode=True,
             )
             data = json.loads(text)
             return {
