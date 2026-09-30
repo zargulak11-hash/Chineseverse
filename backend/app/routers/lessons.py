@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.crud import apply_updates, get_or_404
 from app.database import get_db
-from app.deps import get_locale
+from app.deps import get_locale, require_admin
 from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
 
@@ -50,7 +50,11 @@ def list_lessons(
 
 
 @router.post("", response_model=schemas.LessonResponse, status_code=201)
-def create_lesson(payload: schemas.LessonCreate, db: Session = Depends(get_db)):
+def create_lesson(
+    payload: schemas.LessonCreate,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     level = _level(db, payload.hsk_level)
     lesson = models.Lesson(
         hsk_level_id=level.id,
@@ -75,7 +79,8 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db), locale: str = Depe
 
 @router.put("/{lesson_id}", response_model=schemas.LessonResponse)
 def update_lesson(
-    lesson_id: int, payload: schemas.LessonUpdate, db: Session = Depends(get_db)
+    lesson_id: int, payload: schemas.LessonUpdate, db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
 ):
     lesson = get_or_404(db, models.Lesson, lesson_id)
     level = _level(db, payload.hsk_level)
@@ -91,7 +96,8 @@ def update_lesson(
 
 @router.patch("/{lesson_id}", response_model=schemas.LessonResponse)
 def patch_lesson(
-    lesson_id: int, payload: schemas.LessonPatch, db: Session = Depends(get_db)
+    lesson_id: int, payload: schemas.LessonPatch, db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
 ):
     lesson = get_or_404(db, models.Lesson, lesson_id)
     data = payload.model_dump(exclude_unset=True)
@@ -105,7 +111,11 @@ def patch_lesson(
 
 
 @router.delete("/{lesson_id}", status_code=204)
-def delete_lesson(lesson_id: int, db: Session = Depends(get_db)):
+def delete_lesson(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     lesson = get_or_404(db, models.Lesson, lesson_id)
     db.delete(lesson)
     db.commit()

@@ -307,7 +307,9 @@ class LessonResponse(BaseModel):
 
 
 class ProgressCreate(BaseModel):
-    user_id: int
+    # Optional and only checked against the signed-in user -- the server
+    # always records progress for the token's user, never for a payload id.
+    user_id: Optional[int] = None
     lesson_id: int
     status: str = Field(default="not_started", max_length=20)
     score: Optional[int] = Field(default=None, ge=0, le=100)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.crud import apply_updates, commit_or_409, get_or_404
 from app.database import get_db
-from app.deps import get_locale
+from app.deps import get_locale, require_admin
 from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/animals", tags=["animals"])
@@ -37,7 +37,11 @@ def list_animals(db: Session = Depends(get_db), locale: str = Depends(get_locale
 
 
 @router.post("", response_model=schemas.AnimalResponse, status_code=201)
-def create_animal(payload: schemas.AnimalCreate, db: Session = Depends(get_db)):
+def create_animal(
+    payload: schemas.AnimalCreate,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     animal = models.Animal(**payload.model_dump())
     db.add(animal)
     commit_or_409(db, f"Animal name '{payload.name}' already exists")
@@ -61,7 +65,8 @@ def get_animal(animal_id: int, db: Session = Depends(get_db), locale: str = Depe
 
 @router.put("/{animal_id}", response_model=schemas.AnimalResponse)
 def update_animal(
-    animal_id: int, payload: schemas.AnimalUpdate, db: Session = Depends(get_db)
+    animal_id: int, payload: schemas.AnimalUpdate, db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
 ):
     animal = get_or_404(db, models.Animal, animal_id)
     apply_updates(animal, payload.model_dump())
@@ -72,7 +77,8 @@ def update_animal(
 
 @router.patch("/{animal_id}", response_model=schemas.AnimalResponse)
 def patch_animal(
-    animal_id: int, payload: schemas.AnimalPatch, db: Session = Depends(get_db)
+    animal_id: int, payload: schemas.AnimalPatch, db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
 ):
     animal = get_or_404(db, models.Animal, animal_id)
     apply_updates(animal, payload.model_dump(exclude_unset=True))
@@ -82,7 +88,11 @@ def patch_animal(
 
 
 @router.delete("/{animal_id}", status_code=204)
-def delete_animal(animal_id: int, db: Session = Depends(get_db)):
+def delete_animal(
+    animal_id: int,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     animal = get_or_404(db, models.Animal, animal_id)
     users_count = db.query(models.User).filter(models.User.animal_id == animal_id).count()
     if users_count > 0:

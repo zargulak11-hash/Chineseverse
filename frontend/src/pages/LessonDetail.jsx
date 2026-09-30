@@ -34,7 +34,6 @@ export default function LessonDetail() {
         setProgressId(p.id);
       } else {
         const p = await api.post("/progress", {
-          user_id: user.id,
           lesson_id: lesson.id,
           status,
           score,

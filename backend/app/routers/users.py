@@ -45,7 +45,11 @@ def list_users(db: Session = Depends(get_db), _admin: models.User = Depends(requ
 
 
 @router.post("", response_model=schemas.UserResponse, status_code=201)
-def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_user(
+    payload: schemas.UserCreate,
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
     _ensure_animal_exists(db, payload.animal_id)
     _check_unique(db, payload)
     user = models.User(
