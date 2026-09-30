@@ -46,7 +46,8 @@
     "grammar": "Grammar",
     "groupAdmin": "Admin",
     "adminUsers": "Admin Users",
-    "adminHome": "Admin Home"
+    "adminHome": "Admin Home",
+    "review": "Review"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -160,10 +161,11 @@
     },
     "vocabulary": {
       "title": "Vocabulary",
-      "subtitle": "Tap a card to self-review. Reviews feed your DNA and daily quests.",
+      "subtitle": "Real HSK 3.0 words. Practice a level to build mastery — results feed your DNA, quests and review queue.",
       "dueForReview": "{{count}} word(s) due for review — surfaced first below.",
       "due": "due",
-      "empty": "No words at this level yet."
+      "empty": "No words at this level yet.",
+      "tapToHear": "Tap a card to hear it."
     },
     "dna": {
       "title": "Your Learning DNA",
@@ -311,7 +313,7 @@
     },
     "mistakes": {
       "title": "Mistakes lab",
-      "subtitle": "Every slip is data. Mastery is earned by getting it right again through voice, vocab review, a case, or a duel — not by a click here.",
+      "subtitle": "Every slip is data. Mastery is earned by getting it right again — in Review, practice, voice, a case or a duel — not by a click here.",
       "stillWorking": "Still working on",
       "youSaid": "You said",
       "correct": "correct",
@@ -319,7 +321,8 @@
       "practiceThis": "Practice this",
       "mastered": "Mastered",
       "masteredBadge": "mastered",
-      "empty": "No mistakes recorded yet. Go make some."
+      "empty": "No mistakes recorded yet. Go make some.",
+      "reviewNow": "Review now"
     },
     "progress": {
       "title": "Your progress",
@@ -345,7 +348,10 @@
         "quests": "Quests",
         "missions": "Missions",
         "pet_teacher": "Pet Teacher",
-        "other": "Other"
+        "other": "Other",
+        "practice": "Practice & Review",
+        "hanzi": "Hanzi",
+        "grammar": "Grammar"
       }
     },
     "profile": {
@@ -427,7 +433,13 @@
       "saved": "Saved — DNA updated.",
       "markComplete": "Mark complete",
       "keepPracticing": "Keep practicing",
-      "tryInWorld": "Try it in the world"
+      "tryInWorld": "Try it in the world",
+      "wordsInLesson": "Words in this lesson ({{count}})",
+      "grammarInLesson": "Grammar in this lesson ({{count}})",
+      "practiceAgain": "Practice again",
+      "practiceToComplete": "Practice to complete",
+      "noPractice": "This lesson has no linked words or grammar to practice yet.",
+      "passHint": "The lesson is completed when you score 70% or more in its practice."
     },
     "locationDetail": {
       "entering": "Entering…",
@@ -550,6 +562,88 @@
       "title": "Admin Home",
       "subtitle": "Overview of registered ChineseVerse accounts.",
       "registeredUsers": "Registered Users"
+    }
+  },
+  "lessonStatus": {
+    "not_started": "Not started",
+    "in_progress": "In progress",
+    "completed": "Completed"
+  },
+  "practice": {
+    "title": {
+      "vocab": "Vocabulary practice · HSK {{level}}",
+      "hanzi": "Hanzi practice · HSK {{level}}",
+      "grammar": "Grammar practice · HSK {{level}}",
+      "lesson": "Lesson practice",
+      "review": "Review"
+    },
+    "retry": "Try again",
+    "back": "Back",
+    "loading": "Preparing your round…",
+    "nothingDue": "Nothing is due right now — you're all caught up. Practice a level to add items to your review queue.",
+    "score": "score",
+    "resultLine": "{{correct}} of {{total}} correct",
+    "lessonPassHint": "Score 70% or more to complete the lesson.",
+    "toReview": "To review",
+    "missedGoToReview": "These are now in your Review queue.",
+    "again": "Practice again",
+    "counter": "{{n}} / {{total}}",
+    "playAgain": "Play again",
+    "correct": "Correct!",
+    "notQuite": "Not quite",
+    "masteryNow": "Mastery now {{value}}%",
+    "next": "Next",
+    "finish": "See results",
+    "startLevel": "Practice HSK {{level}}",
+    "dueCount": "{{count}} due for review",
+    "lessonDone": "Lesson complete!",
+    "greatRound": "Great round!",
+    "nice": "Nice!",
+    "q": {
+      "meaning_to_word": "Which word means this?",
+      "word_to_meaning": "What does this word mean?",
+      "listen_to_word": "Listen and pick the word you hear.",
+      "char_to_meaning": "What does this character mean?",
+      "char_to_pinyin": "How is this character pronounced?",
+      "example_to_point": "Which grammar point does this sentence use?"
+    }
+  },
+  "companionReact": {
+    "fallbackName": "Your companion",
+    "happy": "{{name}} is happy — that's right!",
+    "excited": "{{name}} is thrilled — {{count}} in a row!",
+    "proud": "{{name}} is proud of you. Solid round!",
+    "celebrating": "{{name}} is celebrating — outstanding work!",
+    "encouraging": "{{name}} says: not quite — look at the answer, it will stick next time.",
+    "worried": "{{name}} can see this is tricky right now. Slow down — every miss goes to Review, nothing is lost.",
+    "lessonComplete": "{{name}} is celebrating — lesson complete!",
+    "reviewClear": "{{name}} is relaxed — your review queue is empty.",
+    "context": {
+      "vocab": "New words are sticking.",
+      "hanzi": "These characters are becoming yours.",
+      "grammar": "That structure is clicking."
+    },
+    "voice": {
+      "fox": "Yip!",
+      "wolf": "Awoo!",
+      "snake": "Hsss…",
+      "cat": "Mrrr!",
+      "dog": "Woof!",
+      "tiger": "Rrrawr!",
+      "rabbit": "*thump thump*",
+      "bird": "Tweet!",
+      "capybara": "*calm nod*",
+      "panther": "Prrr…",
+      "sheep": "Baa!",
+      "panda": "*munch munch*",
+      "red-panda": "*tail swish*",
+      "phoenix": "*flames flicker*",
+      "monkey": "Ooh-ooh!",
+      "koala": "*sleepy smile*",
+      "elephant": "*trumpets*",
+      "cow": "Moo!",
+      "penguin": "*happy waddle*",
+      "owl": "Hoo-hoo!"
     }
   }
 }

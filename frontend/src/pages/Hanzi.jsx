@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import HanziDetail from "../components/HanziDetail.jsx";
 import HanziTrace from "../components/HanziTrace.jsx";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Hanzi() {
@@ -27,6 +28,9 @@ export default function Hanzi() {
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  // Without this the empty state ("no characters") flashed while the
+  // request was still in flight, even for levels that have 300+ Hanzi.
+  if (!data) return <Layout><Loading /></Layout>;
 
   const counts = {};
   for (const lv of roadmap?.levels || []) counts[lv.level] = lv.hanzi_total;
@@ -47,6 +51,14 @@ export default function Hanzi() {
           </button>
         ))}
       </div>
+
+      {chars.length > 0 && (
+        <div className="row" style={{ marginTop: 14 }}>
+          <Link to={`/practice?source=hanzi&level=${level}`}>
+            <button className="btn primary">{t("practice.startLevel", { level })}</button>
+          </Link>
+        </div>
+      )}
 
       {flash && (
         <div className="card" style={{ marginTop: 14, borderColor: "var(--good)" }}>

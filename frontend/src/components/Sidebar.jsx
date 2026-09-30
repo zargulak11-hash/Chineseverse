@@ -28,6 +28,7 @@ const GROUPS = [
     labelKey: "nav.groupLearning",
     links: [
       ["/lessons", "nav.lessons", "book"],
+      ["/review", "nav.review", "clock"],
       ["/vocabulary", "nav.vocabulary", "type"],
       ["/hanzi", "nav.hanzi", "pen"],
       ["/grammar", "nav.grammar", "seal"],
@@ -175,6 +176,11 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
                     <span className="sidebar-link-brush" aria-hidden="true" />
                     <Icon name={icon} size={17} />
                     <span className="label">{label}</span>
+                    {to === "/review" && dashboard?.review_due > 0 && (
+                      <span className="sidebar-count" aria-label={t("practice.dueCount", { count: dashboard.review_due })}>
+                        {dashboard.review_due > 99 ? "99+" : dashboard.review_due}
+                      </span>
+                    )}
                   </NavLink>
                 );
               })}

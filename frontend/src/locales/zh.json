@@ -46,7 +46,8 @@
     "grammar": "语法",
     "groupAdmin": "管理",
     "adminUsers": "用户管理",
-    "adminHome": "管理主页"
+    "adminHome": "管理主页",
+    "review": "复习"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -159,10 +160,11 @@
     },
     "vocabulary": {
       "title": "词汇",
-      "subtitle": "点击卡片进行自我复习。复习会影响你的DNA和每日任务。",
+      "subtitle": "真实的 HSK 3.0 词汇。练习一个级别来提高掌握度——结果会计入你的 DNA、任务和复习队列。",
       "dueForReview": "{{count}}个词语待复习——已置顶显示。",
       "due": "待复习",
-      "empty": "该级别暂无词语。"
+      "empty": "该级别暂无词语。",
+      "tapToHear": "点一下卡片就能听发音。"
     },
     "dna": {
       "title": "你的学习DNA",
@@ -310,7 +312,7 @@
     },
     "mistakes": {
       "title": "错题实验室",
-      "subtitle": "每一次失误都是数据。掌握是通过语音、词汇复习、案件或对决再次答对而获得的——不是靠点这里。",
+      "subtitle": "每个错误都是数据。只有再次答对——在复习、练习、口语、案件或对战中——才算掌握，而不是在这里点一下。",
       "stillWorking": "仍在攻克",
       "youSaid": "你说的是",
       "correct": "正确答案",
@@ -318,7 +320,8 @@
       "practiceThis": "练习这个",
       "mastered": "已掌握",
       "masteredBadge": "已掌握",
-      "empty": "尚未记录任何错误。快去犯几个吧。"
+      "empty": "尚未记录任何错误。快去犯几个吧。",
+      "reviewNow": "立即复习"
     },
     "progress": {
       "title": "你的进度",
@@ -344,7 +347,10 @@
         "quests": "任务",
         "missions": "使命",
         "pet_teacher": "教宠物",
-        "other": "其他"
+        "other": "其他",
+        "practice": "练习与复习",
+        "hanzi": "汉字",
+        "grammar": "语法"
       }
     },
     "profile": {
@@ -426,7 +432,13 @@
       "saved": "已保存——DNA已更新。",
       "markComplete": "标记为已完成",
       "keepPracticing": "继续练习",
-      "tryInWorld": "在世界中尝试"
+      "tryInWorld": "在世界中尝试",
+      "wordsInLesson": "本课词语（{{count}}）",
+      "grammarInLesson": "本课语法（{{count}}）",
+      "practiceAgain": "再练一次",
+      "practiceToComplete": "通过练习完成本课",
+      "noPractice": "本课暂时没有可练习的词语或语法。",
+      "passHint": "在本课练习中得分达到 70% 及以上即完成本课。"
     },
     "locationDetail": {
       "entering": "正在进入…",
@@ -549,6 +561,88 @@
       "title": "管理主页",
       "subtitle": "ChineseVerse已注册账户概览。",
       "registeredUsers": "注册用户数"
+    }
+  },
+  "lessonStatus": {
+    "not_started": "未开始",
+    "in_progress": "进行中",
+    "completed": "已完成"
+  },
+  "practice": {
+    "title": {
+      "vocab": "词汇练习 · HSK {{level}}",
+      "hanzi": "汉字练习 · HSK {{level}}",
+      "grammar": "语法练习 · HSK {{level}}",
+      "lesson": "课程练习",
+      "review": "复习"
+    },
+    "retry": "再试一次",
+    "back": "返回",
+    "loading": "正在准备练习…",
+    "nothingDue": "现在没有需要复习的内容——全部完成了。练习一个级别，就会把新内容加入复习队列。",
+    "score": "得分",
+    "resultLine": "答对 {{correct}} / {{total}}",
+    "lessonPassHint": "得分达到 70% 及以上即可完成本课。",
+    "toReview": "需要复习",
+    "missedGoToReview": "这些已加入你的复习队列。",
+    "again": "再练一轮",
+    "counter": "{{n}} / {{total}}",
+    "playAgain": "再听一遍",
+    "correct": "答对了！",
+    "notQuite": "不太对",
+    "masteryNow": "当前掌握度 {{value}}%",
+    "next": "下一题",
+    "finish": "查看结果",
+    "startLevel": "练习 HSK {{level}}",
+    "dueCount": "待复习 {{count}} 项",
+    "lessonDone": "课程完成！",
+    "greatRound": "这一轮很棒！",
+    "nice": "太好了！",
+    "q": {
+      "meaning_to_word": "哪个词是这个意思？",
+      "word_to_meaning": "这个词是什么意思？",
+      "listen_to_word": "听一听，选出你听到的词。",
+      "char_to_meaning": "这个汉字是什么意思？",
+      "char_to_pinyin": "这个汉字怎么读？",
+      "example_to_point": "这个句子用了哪个语法点？"
+    }
+  },
+  "companionReact": {
+    "fallbackName": "你的伙伴",
+    "happy": "{{name}}很开心——答对了！",
+    "excited": "{{name}}太兴奋了——连续答对 {{count}} 题！",
+    "proud": "{{name}}为你骄傲。这一轮很扎实！",
+    "celebrating": "{{name}}在庆祝——太出色了！",
+    "encouraging": "{{name}}说：差一点——看看答案，下次就记住了。",
+    "worried": "{{name}}发现现在有点难。慢慢来——每个错误都会进入复习，什么都不会丢。",
+    "lessonComplete": "{{name}}在庆祝——课程完成！",
+    "reviewClear": "{{name}}很放松——复习队列是空的。",
+    "context": {
+      "vocab": "新词记住了。",
+      "hanzi": "这些汉字正在变成你的。",
+      "grammar": "这个结构越来越顺了。"
+    },
+    "voice": {
+      "fox": "嘤嘤！",
+      "wolf": "嗷呜——！",
+      "snake": "嘶嘶……",
+      "cat": "喵～",
+      "dog": "汪汪！",
+      "tiger": "嗷！",
+      "rabbit": "（跺跺脚）",
+      "bird": "叽叽喳喳！",
+      "capybara": "（淡定点头）",
+      "panther": "呼噜……",
+      "sheep": "咩～",
+      "panda": "（咔嚓咔嚓吃竹子）",
+      "red-panda": "（甩甩尾巴）",
+      "phoenix": "（火焰闪耀）",
+      "monkey": "吱吱！",
+      "koala": "（迷迷糊糊地笑）",
+      "elephant": "（长鼻高歌）",
+      "cow": "哞～",
+      "penguin": "（开心地摇摇摆摆）",
+      "owl": "咕咕！"
     }
   }
 }

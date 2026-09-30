@@ -3468,3 +3468,124 @@ table.data td {
 }
 .admin-toast.good { border-color: var(--good); }
 .admin-toast.bad { border-color: var(--bad); }
+
+/* ---- Practice / Review ------------------------------------------------ */
+.badge.bad {
+  background: var(--bad-dim);
+  color: var(--bad);
+}
+.practice-card {
+  max-width: 720px;
+}
+.practice-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  text-align: center;
+}
+.practice-hanzi {
+  font-size: clamp(40px, 9vw, 64px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+.practice-text {
+  font-size: clamp(17px, 3.6vw, 22px);
+  font-weight: 700;
+}
+.practice-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.practice-option {
+  min-height: 56px;
+  white-space: normal;
+  text-align: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
+}
+.practice-option-hanzi {
+  font-size: 24px;
+  font-weight: 800;
+}
+.practice-option.is-correct {
+  border-color: var(--good);
+  background: var(--good-dim);
+  color: var(--good);
+}
+.practice-option.is-wrong {
+  border-color: var(--bad);
+  background: var(--bad-dim);
+  color: var(--bad);
+}
+.practice-answer-card {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--good-dim);
+}
+.practice-missed {
+  margin: 8px 0;
+  padding-left: 18px;
+  line-height: 1.8;
+}
+.companion-reaction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.companion-reaction-text {
+  flex: 1;
+  min-width: 0;
+}
+.companion-voice {
+  font-weight: 700;
+}
+@media (max-width: 480px) {
+  .practice-options {
+    grid-template-columns: 1fr;
+  }
+}
+.sidebar-count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.sidebar.collapsed .sidebar-count {
+  display: none;
+}
+.lesson-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.lesson-word {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.25));
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.lesson-word b {
+  font-size: 20px;
+}

@@ -1,41 +1,30 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../api.js";
+import { Link } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { speakChinese } from "../zhSpeech.js";
 
 export default function Vocabulary() {
   const { t } = useTranslation();
   const [level, setLevel] = useState(1);
-  const { data, setData, error } = useApi(`/vocab?hsk_level=${level}`);
+  const { data, error } = useApi(`/vocab?hsk_level=${level}`);
   const { data: roadmap } = useApi("/hsk/roadmap");
   const words = data || [];
-  const [flash, setFlash] = useState(null);
+  // Clicking a card only plays it: mastery is earned in the graded
+  // practice round (/practice), never by clicking a card.
+  const [playing, setPlaying] = useState(null);
 
-  useEffect(() => {
-    if (!flash) return;
-    const t = setTimeout(() => setFlash(null), 2200);
-    return () => clearTimeout(t);
-  }, [flash]);
-
-  const filtered = words;
-
-  async function review(w) {
-    try {
-      const res = await api.post(`/vocab/${w.id}/review`, { correct: true });
-      setFlash({ word: w.simplified, mastery: res.mastery, status: res.status });
-      setData((ws) =>
-        (ws || []).map((x) =>
-          x.id === w.id ? { ...x, mastery: res.mastery, status: res.status } : x
-        )
-      );
-    } catch (e) {
-      setFlash({ word: w.simplified, mastery: null, status: e.message });
-    }
+  function hear(w) {
+    speakChinese(w.simplified, {
+      onStart: () => setPlaying(w.id),
+      onEnd: () => setPlaying(null),
+    });
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!data) return <Layout><Loading /></Layout>;
 
   const counts = {};
   for (const lv of roadmap?.levels || []) counts[lv.level] = lv.vocab_total;
@@ -57,9 +46,12 @@ export default function Vocabulary() {
         ))}
       </div>
 
-      {flash && (
-        <div className="card" style={{ marginTop: 14, borderColor: "var(--good)" }}>
-          <b>{flash.word}</b> — {flash.mastery != null ? `${flash.mastery.toFixed(0)}% · ${flash.status}` : flash.status}
+      {words.length > 0 && (
+        <div className="row" style={{ marginTop: 14, flexWrap: "wrap", gap: 8 }}>
+          <Link to={`/practice?source=vocab&level=${level}`}>
+            <button className="btn primary">{t("practice.startLevel", { level })}</button>
+          </Link>
+          <span className="sub">{t("pages.vocabulary.tapToHear")}</span>
         </div>
       )}
 
@@ -75,7 +67,8 @@ export default function Vocabulary() {
             key={w.id}
             className="card hover animal"
             style={{ border: w.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative" }}
-            onClick={() => review(w)}
+            onClick={() => hear(w)}
+            aria-pressed={playing === w.id}
           >
             {w.due_for_review && (
               <span className="badge accent" style={{ position: "absolute", top: 8, right: 8, fontSize: 10 }}>

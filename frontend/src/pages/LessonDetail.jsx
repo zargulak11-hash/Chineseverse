@@ -2,59 +2,55 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
-import { useAuth } from "../auth.js";
+import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
+import { speakChinese } from "../zhSpeech.js";
 
+// A lesson is read here and completed by its practice round: the backend
+// marks it completed only when that server-graded round scores >= 70%
+// (services/practice.py), so there is no self-awarded "mark complete".
 export default function LessonDetail() {
   const { t, i18n } = useTranslation();
   const { lessonId } = useParams();
-  const { user } = useAuth();
   const [lesson, setLesson] = useState(null);
-  const [progressId, setProgressId] = useState(null);
-  const [feedback, setFeedback] = useState("");
+  const [items, setItems] = useState(null);
+  const [progress, setProgress] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setError("");
     Promise.all([
       api.get(`/lessons/${lessonId}`),
-      api.get("/progress").catch(() => []),
-    ]).then(([l, ps]) => {
-      setLesson(l);
-      const mine = ps.find((p) => p.lesson_id === l.id);
-      setProgressId(mine?.id || null);
-    }).catch((e) => setError(e.message));
+      api.get(`/lessons/${lessonId}/items`),
+      api.get(`/progress?lesson_id=${lessonId}`),
+    ])
+      .then(([l, it, ps]) => {
+        setLesson(l);
+        setItems(it);
+        setProgress(ps[0] || null);
+      })
+      .catch((e) => setError(e.message));
   }, [lessonId, i18n.language]);
 
-  async function mark(status, score) {
-    setFeedback("");
-    try {
-      if (progressId) {
-        const p = await api.patch(`/progress/${progressId}`, { status, score });
-        setProgressId(p.id);
-      } else {
-        const p = await api.post("/progress", {
-          lesson_id: lesson.id,
-          status,
-          score,
-        });
-        setProgressId(p.id);
-      }
-      setFeedback(t("pages.lessonDetail.saved"));
-    } catch (err) {
-      setFeedback(err.message);
-    }
-  }
-
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!lesson) return <Layout><Loading /></Layout>;
+  if (!lesson || !items) return <Layout><Loading /></Layout>;
+
+  const status = progress?.status || "not_started";
+  const practicable = items.vocab.length + items.grammar.length > 0;
 
   return (
     <Layout>
       <Link to="/lessons" className="sub">← {t("pages.lessonDetail.allLessons")}</Link>
-      <div className="row spread" style={{ marginTop: 10 }}>
+      <div className="row spread" style={{ marginTop: 10, flexWrap: "wrap", gap: 8 }}>
         <h1 className="h1">{lesson.title}</h1>
-        <span className="badge accent">HSK {lesson.hsk_level}</span>
+        <span className="row" style={{ gap: 6 }}>
+          <span className="badge accent">HSK {lesson.hsk_level}</span>
+          <span className={`badge ${status === "completed" ? "good" : ""}`}>
+            {t(`lessonStatus.${status}`)}
+            {progress?.score != null && status !== "not_started" ? ` · ${progress.score}%` : ""}
+          </span>
+        </span>
       </div>
       <p className="sub">{lesson.summary}</p>
 
@@ -71,18 +67,52 @@ export default function LessonDetail() {
           )}
       </div>
 
-      <div className="row" style={{ marginTop: 18 }}>
-        <button className="btn primary" onClick={() => mark("completed", 100)}>
-          {t("pages.lessonDetail.markComplete")}
-        </button>
-        <button className="btn" onClick={() => mark("in_progress", 50)}>
-          {t("pages.lessonDetail.keepPracticing")}
-        </button>
+      {items.vocab.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 className="h2">{t("pages.lessonDetail.wordsInLesson", { count: items.vocab.length })}</h2>
+          <div className="lesson-words">
+            {items.vocab.map((w) => (
+              <button key={w.id} type="button" className="lesson-word" onClick={() => speakChinese(w.simplified)}>
+                <b>{w.simplified}</b>
+                <span className="sub" style={{ color: "var(--accent2)" }}>{w.pinyin}</span>
+                <span className="sub">{w.meanings}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {items.grammar.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 className="h2">{t("pages.lessonDetail.grammarInLesson", { count: items.grammar.length })}</h2>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, lineHeight: 1.8 }}>
+            {items.grammar.map((g) => (
+              <li key={g.id}>
+                <b>{g.title}</b> {g.pattern && <span className="sub">— {g.pattern}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="row" style={{ marginTop: 18, flexWrap: "wrap" }}>
+        {practicable ? (
+          <Link to={`/practice?lesson=${lesson.id}`}>
+            <button className="btn primary">
+              <Icon name="target" size={15} style={{ verticalAlign: -2, marginRight: 6 }} />
+              {status === "completed" ? t("pages.lessonDetail.practiceAgain") : t("pages.lessonDetail.practiceToComplete")}
+            </button>
+          </Link>
+        ) : (
+          <p className="sub">{t("pages.lessonDetail.noPractice")}</p>
+        )}
         <Link to="/world">
           <button className="btn ghost">{t("pages.lessonDetail.tryInWorld")}</button>
         </Link>
       </div>
-      {feedback && <p className="sub" style={{ marginTop: 10 }}>{feedback}</p>}
+      {practicable && status !== "completed" && (
+        <p className="sub" style={{ marginTop: 8, fontSize: 12 }}>{t("pages.lessonDetail.passHint")}</p>
+      )}
     </Layout>
   );
 }

@@ -1,40 +1,20 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { api } from "../api.js";
+import { Link } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
-import { Bar, Empty } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Grammar() {
   const { t } = useTranslation();
   const [level, setLevel] = useState(1);
-  const { data, setData, error } = useApi(`/grammar?hsk_level=${level}`);
+  const { data, error } = useApi(`/grammar?hsk_level=${level}`);
   const { data: roadmap } = useApi("/hsk/roadmap");
   const topics = data || [];
-  const [flash, setFlash] = useState(null);
   const [open, setOpen] = useState(null);
 
-  useEffect(() => {
-    if (!flash) return;
-    const timer = setTimeout(() => setFlash(null), 2200);
-    return () => clearTimeout(timer);
-  }, [flash]);
-
-  async function practice(topicItem, correct) {
-    try {
-      const res = await api.post(`/grammar/${topicItem.id}/practice`, { correct });
-      setFlash({ title: topicItem.title, mastery: res.mastery, status: res.status });
-      setData((items) =>
-        (items || []).map((x) =>
-          x.id === topicItem.id ? { ...x, mastery: res.mastery, status: res.status } : x
-        )
-      );
-    } catch (e) {
-      setFlash({ title: topicItem.title, mastery: null, status: e.message });
-    }
-  }
-
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!data) return <Layout><Loading /></Layout>;
 
   const counts = {};
   for (const lv of roadmap?.levels || []) counts[lv.level] = lv.grammar_total;
@@ -56,9 +36,11 @@ export default function Grammar() {
         ))}
       </div>
 
-      {flash && (
-        <div className="card" style={{ marginTop: 14, borderColor: "var(--good)" }}>
-          <b>{flash.title}</b> — {flash.mastery != null ? `${flash.mastery.toFixed(0)}% · ${flash.status}` : flash.status}
+      {topics.length > 0 && (
+        <div className="row" style={{ marginTop: 14 }}>
+          <Link to={`/practice?source=grammar&level=${level}`}>
+            <button className="btn primary">{t("practice.startLevel", { level })}</button>
+          </Link>
         </div>
       )}
 
@@ -92,14 +74,6 @@ export default function Grammar() {
 
             <div style={{ marginTop: 10 }}>
               <Bar value={topic.mastery ?? 0} alt />
-            </div>
-            <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn small" onClick={() => practice(topic, true)}>
-                {t("pages.grammar.gotIt")}
-              </button>
-              <button className="btn small ghost" onClick={() => practice(topic, false)}>
-                {t("pages.grammar.stillLearning")}
-              </button>
             </div>
           </div>
         ))}

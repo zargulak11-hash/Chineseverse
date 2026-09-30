@@ -7,6 +7,7 @@ from app.database import get_db
 from app.deps import get_locale, require_admin
 from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
+from app.services.practice import lesson_items
 
 router = APIRouter(prefix="/api/lessons", tags=["lessons"])
 
@@ -75,6 +76,32 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db), locale: str = Depe
     lesson = get_or_404(db, models.Lesson, lesson_id)
     translations = load_translations(db, "lesson", [str(lesson_id)], locale)
     return _localize(db, lesson, translations)
+
+
+@router.get("/{lesson_id}/items")
+def get_lesson_items(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The vocabulary and grammar this lesson teaches (see
+    services.practice.lesson_items) -- what its practice round is built from."""
+    lesson = get_or_404(db, models.Lesson, lesson_id)
+    items = lesson_items(db, lesson)
+    words, topics = items["vocab"], items["grammar"]
+    w_tr = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
+    g_tr = load_translations(db, "grammar_topic", [str(g.id) for g in topics], locale)
+    return {
+        "vocab": [
+            {"id": w.id, "simplified": w.simplified, "pinyin": w.pinyin,
+             "meanings": tr(w_tr, w.id, "meanings", w.meanings)}
+            for w in words
+        ],
+        "grammar": [
+            {"id": g.id, "title": tr(g_tr, g.id, "title", g.title), "pattern": g.pattern}
+            for g in topics
+        ],
+    }
 
 
 @router.put("/{lesson_id}", response_model=schemas.LessonResponse)

@@ -9,12 +9,21 @@ import { useApi } from "../hooks/useApi.js";
 // never set by a click here, only by answering correctly again on one of
 // these surfaces (see reinforce_mistake() in the backend).
 const PRACTICE_ROUTE = {
-  word: "/vocabulary",
+  word: "/review",
+  hanzi: "/review",
+  hanzi_write: "/hanzi",
   pinyin: "/duels",
   tone: "/duels",
   character: "/duels",
-  grammar: "/world",
+  grammar: "/review",
 };
+
+// World cases log grammar mistakes against the scenario slug (ascii-kebab),
+// which only the world can re-test; grammar-point mistakes go to Review.
+function practiceRoute(m) {
+  if (m.mistake_type === "grammar" && /^[a-z0-9-]+$/.test(m.reference)) return "/world";
+  return PRACTICE_ROUTE[m.mistake_type] || "/review";
+}
 
 export default function Mistakes() {
   const { t } = useTranslation();
@@ -29,7 +38,7 @@ export default function Mistakes() {
     } catch (e) {
       setError(e.message);
     }
-    navigate(PRACTICE_ROUTE[m.mistake_type] || "/vocabulary");
+    navigate(practiceRoute(m));
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
@@ -41,6 +50,11 @@ export default function Mistakes() {
     <Layout>
       <h1 className="h1">{t("pages.mistakes.title")}</h1>
       <p className="sub">{t("pages.mistakes.subtitle")}</p>
+      {open.length > 0 && (
+        <button className="btn primary" style={{ marginTop: 12 }} onClick={() => navigate("/review")}>
+          {t("pages.mistakes.reviewNow")}
+        </button>
+      )}
 
       <div className="ranges" style={{ marginTop: 16 }}>
         <h2 className="h2">{t("pages.mistakes.stillWorking")} ({open.length})</h2>

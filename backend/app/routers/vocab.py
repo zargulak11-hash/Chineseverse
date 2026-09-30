@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -9,12 +9,12 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
+from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
-    memory_multiplier,
     progress_missions,
     progress_quests,
     record_mistake,
@@ -95,40 +95,7 @@ def review_word(
         )
         db.add(rec)
 
-    rec.times_seen += 1
-    now = datetime.utcnow()
-    if payload.correct:
-        rec.mastery = min(100.0, rec.mastery + payload.delta)
-        # Exponential backoff: each correct review roughly doubles the gap
-        # since the last one (capped at 30 days), instead of a fixed
-        # interval — a genuinely spaced schedule, not a 3-tier bucket.
-        multiplier = memory_multiplier(user)
-        prev_interval = (
-            rec.next_review_at - rec.last_reviewed_at
-            if rec.next_review_at and rec.last_reviewed_at
-            else None
-        )
-        # Undo the previous step's animal multiplier before doubling, so
-        # the multiplier is always a flat bonus on top of a plain 2x
-        # doubling — not compounding into an ever-growing extra bonus.
-        prev_base = prev_interval / multiplier if prev_interval and prev_interval.total_seconds() > 0 else None
-        base = prev_base * 2 if prev_base else timedelta(days=1)
-        interval = min(timedelta(days=30), base)
-        rec.next_review_at = now + interval * multiplier
-    else:
-        rec.times_missed += 1
-        rec.mastery = max(0.0, rec.mastery - payload.delta * 0.5)
-        # Reset to a short cycle on failure, regardless of prior progress.
-        rec.next_review_at = now + timedelta(hours=6)
-
-    if rec.mastery >= 85:
-        rec.status = "mastered"
-    elif rec.mastery >= 55:
-        rec.status = "reviewing"
-    else:
-        rec.status = "learning"
-
-    rec.last_reviewed_at = now
+    apply_srs(rec, payload.correct, user, delta=payload.delta)
 
     # A vocab review is real "vocabulary" activity for Learning DNA too —
     # same +2.0/-0.3 convention duels already use for a correct/incorrect

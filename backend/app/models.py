@@ -67,6 +67,7 @@ class User(Base):
     daily_quests = relationship("DailyQuest", back_populates="user", cascade="all, delete-orphan")
     participants = relationship("DuelParticipant", back_populates="user", cascade="all, delete-orphan")
     progress = relationship("Progress", back_populates="user", cascade="all, delete-orphan")
+    practice_sessions = relationship("PracticeSession", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -651,6 +652,27 @@ class VoiceAttempt(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="voice_attempts")
+
+
+class PracticeSession(Base):
+    """A server-generated, server-graded practice or review round. `questions`
+    holds what was asked ({type, item_type, item_id, option_ids}); `answers`
+    is index-aligned ({choice_id, correct, response_ms} or null)."""
+
+    __tablename__ = "practice_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    source = Column(String(20), nullable=False)  # vocab|hanzi|grammar|lesson|review
+    hsk_level = Column(Integer, nullable=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True)
+    questions = Column(JSON, nullable=False)
+    answers = Column(JSON, nullable=False)
+    score = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="practice_sessions")
 
 
 class LearningMistake(Base):

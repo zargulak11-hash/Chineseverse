@@ -798,6 +798,9 @@ class DashboardResponse(BaseModel):
     next_location: Optional[LocationResponse] = None
     quests_today: list[QuestResponse] = []
     achievements: list[AchievementResponse] = []
+    # Items due by the spaced-repetition schedule plus unresolved mistakes --
+    # what /review would serve right now (see services.practice.review_counts).
+    review_due: int = 0
 
 
 # --------------------------------------------------------------------------- Admin

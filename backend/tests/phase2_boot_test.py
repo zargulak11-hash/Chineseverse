@@ -28,7 +28,7 @@ with TestClient(app) as client:
     check("animals seeded (20)", r.status_code == 200 and len(r.json()) == 20)
 
     r = client.get("/api/hsk/levels")
-    check("hsk levels (6)", r.status_code == 200 and len(r.json()) == 6)
+    check("hsk levels (1-6 + the 7-9 band)", r.status_code == 200 and len(r.json()) == 7)
 
     r = client.get("/api/hsk/skills")
     check("skills (9)", r.status_code == 200 and len(r.json()) == 9)

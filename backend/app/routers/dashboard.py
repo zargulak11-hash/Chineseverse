@@ -16,6 +16,7 @@ from app.services.gamification import (
     user_rank,
 )
 from app.services.localization import load_translations, tr
+from app.services.practice import review_counts
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
@@ -90,6 +91,8 @@ def dashboard(
         item.description = tr(ach_tr, ach.id, "description", item.description)
         return item
 
+    due = review_counts(db, user)
+
     return schemas.DashboardResponse(
         user=user,
         avatar_url=user.profile.avatar_url if user.profile else None,
@@ -133,4 +136,5 @@ def dashboard(
         next_location=next_location_out,
         quests_today=[_localize_quest(q, quest_tr) for q in quests],
         achievements=[localize_achievement(ua.achievement) for ua in user.user_achievements],
+        review_due=due["total"] + due["mistakes"],
     )

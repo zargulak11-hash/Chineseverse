@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -9,12 +9,12 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
+from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
-    memory_multiplier,
     progress_missions,
     progress_quests,
     record_mistake,
@@ -96,33 +96,7 @@ def practice_topic(
         )
         db.add(rec)
 
-    rec.times_practiced += 1
-    now = datetime.utcnow()
-    if payload.correct:
-        rec.mastery = min(100.0, rec.mastery + payload.delta)
-        multiplier = memory_multiplier(user)
-        prev_interval = (
-            rec.next_review_at - rec.last_reviewed_at
-            if rec.next_review_at and rec.last_reviewed_at
-            else None
-        )
-        prev_base = prev_interval / multiplier if prev_interval and prev_interval.total_seconds() > 0 else None
-        base = prev_base * 2 if prev_base else timedelta(days=1)
-        interval = min(timedelta(days=30), base)
-        rec.next_review_at = now + interval * multiplier
-    else:
-        rec.times_missed += 1
-        rec.mastery = max(0.0, rec.mastery - payload.delta * 0.5)
-        rec.next_review_at = now + timedelta(hours=6)
-
-    if rec.mastery >= 85:
-        rec.status = "mastered"
-    elif rec.mastery >= 55:
-        rec.status = "reviewing"
-    else:
-        rec.status = "learning"
-
-    rec.last_reviewed_at = now
+    apply_srs(rec, payload.correct, user, delta=payload.delta, counter="times_practiced")
 
     ensure_user_skills(db, user)
     bump_skill(user, "grammar", 2.0 if payload.correct else -0.3)

@@ -31,6 +31,7 @@ import Companion from "./pages/Companion.jsx";
 import VoiceCompanion from "./pages/VoiceCompanion.jsx";
 import PetTeacher from "./pages/PetTeacher.jsx";
 import Mistakes from "./pages/Mistakes.jsx";
+import Practice from "./pages/Practice.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -297,6 +298,22 @@ export default function App() {
           element={
             <RequireAuth>
               <PetTeacher />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/practice"
+          element={
+            <RequireAuth>
+              <Practice />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/review"
+          element={
+            <RequireAuth>
+              <Practice forceSource="review" />
             </RequireAuth>
           }
         />

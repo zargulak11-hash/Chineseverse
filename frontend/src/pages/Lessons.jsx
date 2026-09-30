@@ -4,27 +4,28 @@ import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
-import { Empty } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 
 export default function Lessons() {
-  const { t } = useTranslation();
-  const [lessons, setLessons] = useState([]);
+  const { t, i18n } = useTranslation();
+  const [lessons, setLessons] = useState(null);
   const [progress, setProgress] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     Promise.all([
       api.get("/lessons"),
-      api.get("/progress").catch(() => []),
+      api.get("/progress"),
     ])
       .then(([ls, ps]) => {
         setLessons(ls);
         setProgress(ps);
       })
       .catch((e) => setError(e.message));
-  }, []);
+  }, [i18n.language]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!lessons) return <Layout><Loading /></Layout>;
 
   const statusFor = (id) => {
     const p = progress.filter((x) => x.lesson_id === id).sort((a, b) => b.id - a.id)[0];
@@ -63,7 +64,7 @@ export default function Lessons() {
                         {l.summary}
                       </p>
                     )}
-                    <span className={`badge ${s === "completed" ? "good" : ""}`}>{s}</span>
+                    <span className={`badge ${s === "completed" ? "good" : ""}`}>{t(`lessonStatus.${s}`)}</span>
                   </div>
                 </Link>
               );
