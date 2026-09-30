@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.crud import get_or_404
 from app.database import get_db
 from app.deps import get_current_user
+from app.services import notifications
 
 # Shares the /api/users prefix with routers/users.py (plain CRUD, no auth —
 # a pre-existing separate concern). These routes are registered BEFORE
@@ -68,9 +70,13 @@ def get_public_profile(
 @router.post("/{user_id}/follow", response_model=schemas.PublicUserResponse, status_code=201)
 def follow_user(
     user_id: int,
+    background: BackgroundTasks,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Idempotent: following someone you already follow changes nothing and
+    notifies no one. The follower is always the token's user; the recipient
+    is always the followed row -- neither comes from the request body."""
     if user_id == user.id:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
     target = get_or_404(db, models.User, user_id)
@@ -81,7 +87,21 @@ def follow_user(
     )
     if existing is None:
         db.add(models.Follow(follower_id=user.id, following_id=user_id))
-        db.commit()
+        # Same transaction as the follow: a follow is never stored without
+        # its notification, nor a notification for a follow that failed.
+        note = notifications.create_follow_notification(db, user, target)
+        try:
+            db.commit()
+        except IntegrityError:
+            # A concurrent duplicate request (double click, retry) won the
+            # race on uq_follow_pair. The follow exists, so this request is
+            # the idempotent no-op -- used to surface as a 500.
+            db.rollback()
+            note = None
+        if note is not None:
+            # Runs after the response, with its own session, on a row that
+            # is already committed. Email failures never touch the follow.
+            background.add_task(notifications.deliver_email, note.id)
     return _to_public(db, target, user)
 
 

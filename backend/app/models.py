@@ -44,6 +44,11 @@ class User(Base):
     total_xp = Column(Integer, nullable=False, server_default="0", default=0)
     coins = Column(Integer, nullable=False, server_default="0", default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    # The UI language the learner last used ("en" | "ru" | "tg" | "zh"),
+    # learned from the X-Locale header the frontend sends. Only used for
+    # things sent while they're away (notification emails); null until the
+    # app has seen them once, which means English.
+    locale = Column(String(5), nullable=True)
 
     animal = relationship("Animal", back_populates="users")
     profile = relationship(
@@ -152,6 +157,33 @@ class Follow(Base):
     follower_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     following_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Notification(Base):
+    """A persistent in-app notification for one recipient (e.g. "Zarina
+    followed you"). Stored as ids + a type rather than rendered text, so the
+    actor's CURRENT username and the reader's CURRENT language are used
+    whenever it is shown. The row outlives the recipient being offline: it
+    is what they see when they come back.
+
+    email_* track the optional email copy (services/notifications.py) --
+    private delivery bookkeeping, never returned by the API. Deleting either
+    user removes the row (crud.delete_user_cascade_safe)."""
+
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    actor_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    type = Column(String(30), nullable=False)  # "follow" (more types later)
+    read_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    email_status = Column(String(12), nullable=False, server_default="pending", default="pending")
+    email_attempts = Column(Integer, nullable=False, server_default="0", default=0)
+    emailed_at = Column(DateTime, nullable=True)
+
+    recipient = relationship("User", foreign_keys=[recipient_id])
+    actor = relationship("User", foreign_keys=[actor_id])
 
 
 # ---------------------------------------------------------------------------

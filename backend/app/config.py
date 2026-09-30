@@ -34,6 +34,19 @@ class Settings(BaseSettings):
     ai_model: str = "gpt-4o-mini"
     ai_speech_model: str = "whisper-1"
 
+    # Outgoing email (notification emails). Credentials only ever come from
+    # backend/.env / the environment. With SMTP_HOST unset, email is simply
+    # disabled: notifications are still stored and shown in the app.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None  # e.g. "ChineseVerse <no-reply@example.com>"
+    smtp_security: str = "starttls"  # "starttls" | "ssl" | "none"
+    smtp_timeout_seconds: int = 15
+    # Public address of the frontend, for links inside emails.
+    public_app_url: str = "https://chineseverse.qobus.tj"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

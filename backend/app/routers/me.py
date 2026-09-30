@@ -1,7 +1,7 @@
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -9,6 +9,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services.gamification import touch_streak
+from app.services.notifications import remember_locale
 
 router = APIRouter(prefix="/api/me", tags=["me"])
 
@@ -52,7 +53,12 @@ class PingResponse(BaseModel):
 
 
 @router.get("", response_model=schemas.MeResponse)
-def get_me(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_me(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    x_locale: str | None = Header(default=None),
+):
+    remember_locale(db, user, x_locale)  # the language emails to them should use
     db.refresh(user)
     profile = user.profile
     if profile is None:

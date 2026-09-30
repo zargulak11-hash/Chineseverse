@@ -20,7 +20,11 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False: the app runs migrations in-process at
+    # startup (main._run_migrations), and the default True silently disabled
+    # every app.* logger already imported by then -- e.g. notification email
+    # failures were never logged.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # The real connection string comes from app.config.settings (backend/.env),
 # not from alembic.ini, so no credentials are duplicated or committed.

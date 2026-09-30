@@ -64,6 +64,11 @@ async def lifespan(_app: FastAPI):
         # the DB was first seeded — e.g. seed_pet_teacher_cases — silently
         # never ran on existing databases.
         seed_all(db)
+    # Retry notification emails a previous run could not deliver (runs in a
+    # background thread; does nothing when SMTP isn't configured).
+    from app.services.notifications import start_retry_sweep
+
+    start_retry_sweep()
     yield
 
 
@@ -123,6 +128,7 @@ from app.routers import (  # noqa: E402
     me,
     missions,
     mistakes,
+    notifications,
     onboarding,
     pet_teacher,
     practice,
@@ -147,6 +153,7 @@ for module in (
     progress,
     practice,
     me,
+    notifications,
     onboarding,
     hsk,
     vocab,

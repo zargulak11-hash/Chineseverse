@@ -59,6 +59,10 @@ def delete_user_cascade_safe(db: Session, user: "models.User") -> None:
     db.query(models.Follow).filter(
         (models.Follow.follower_id == user.id) | (models.Follow.following_id == user.id)
     ).delete(synchronize_session=False)
+    # Notifications to or from this user mean nothing once they're gone.
+    db.query(models.Notification).filter(
+        (models.Notification.recipient_id == user.id) | (models.Notification.actor_id == user.id)
+    ).delete(synchronize_session=False)
     db.query(models.Duel).filter(models.Duel.winner_id == user.id).update(
         {models.Duel.winner_id: None}, synchronize_session=False
     )
