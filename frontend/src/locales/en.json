@@ -21,7 +21,10 @@
     "coins": "coins",
     "error": "Error",
     "delete": "Delete",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "renderError": "Something went wrong on this page.",
+    "renderErrorHint": "Reload the page to try again. Your progress is saved on the server.",
+    "reload": "Reload"
   },
   "nav": {
     "groupMain": "Main",

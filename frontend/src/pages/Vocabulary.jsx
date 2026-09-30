@@ -55,14 +55,14 @@ export default function Vocabulary() {
         </div>
       )}
 
-      {filtered.some((w) => w.due_for_review) && (
+      {words.some((w) => w.due_for_review) && (
         <p className="sub" style={{ marginTop: 14 }}>
-          ⏰ {t("pages.vocabulary.dueForReview", { count: filtered.filter((w) => w.due_for_review).length })}
+          ⏰ {t("pages.vocabulary.dueForReview", { count: words.filter((w) => w.due_for_review).length })}
         </p>
       )}
 
       <div className="grid cards" style={{ marginTop: 16 }}>
-        {filtered.map((w) => (
+        {words.map((w) => (
           <button
             key={w.id}
             className="card hover animal"
@@ -88,7 +88,7 @@ export default function Vocabulary() {
           </button>
         ))}
       </div>
-      {filtered.length === 0 && <Empty>{t("pages.vocabulary.empty")}</Empty>}
+      {words.length === 0 && <Empty>{t("pages.vocabulary.empty")}</Empty>}
     </Layout>
   );
 }

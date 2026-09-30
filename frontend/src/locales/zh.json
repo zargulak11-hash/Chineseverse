@@ -21,7 +21,10 @@
     "coins": "金币",
     "error": "错误",
     "delete": "删除",
-    "confirm": "确认"
+    "confirm": "确认",
+    "renderError": "此页面出了点问题。",
+    "renderErrorHint": "请重新加载页面再试一次。你的学习进度已保存在服务器上。",
+    "reload": "重新加载"
   },
   "nav": {
     "groupMain": "主要",

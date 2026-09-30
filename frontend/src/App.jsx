@@ -4,6 +4,7 @@ import { api, clearSession, getSavedUser, getToken } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
 import { initButtonFX } from "./buttonFx.js";
 import BrandLogo from "./components/BrandLogo.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -72,6 +73,7 @@ function NavLink({ to, children }) {
 export default function App() {
   const [user, setUser] = useState(getSavedUser());
   const [booted, setBooted] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (!getToken() || !getSavedUser()) {
@@ -121,6 +123,7 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setCurrentUser, logout }}>
       <DashboardProvider>
+      <ErrorBoundary resetKey={pathname}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
@@ -391,6 +394,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ErrorBoundary>
       </DashboardProvider>
     </AuthContext.Provider>
   );
