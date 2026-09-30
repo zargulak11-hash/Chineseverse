@@ -164,6 +164,65 @@ with TestClient(app) as client:
     r = client.delete(f"/api/admin/users/{owner_id}", headers=owner_headers)
     check("self-delete -> 400", r.status_code == 400, r.text)
 
+    print("\n== 18. auth method, Google id, last activity, counts, paging, database source ==")
+    from app import config
+    from app.routers import auth as auth_router
+
+    original_verify = auth_router.google_id_token.verify_oauth2_token
+    original_client_id = config.settings.google_client_id
+    config.settings.google_client_id = "test-client-id.apps.googleusercontent.com"
+    auth_router.google_id_token.verify_oauth2_token = lambda *a, **k: {
+        "email": "realalice@example.com", "email_verified": True, "sub": "google-sub-alice",
+    }
+    try:
+        r = client.post("/api/auth/google", json={"credential": "fake-but-long-enough"})
+        check("alice links her Google account -> 200", r.status_code == 200, r.text)
+    finally:
+        auth_router.google_id_token.verify_oauth2_token = original_verify
+        config.settings.google_client_id = original_client_id
+
+    s = client.post("/api/practice/sessions", json={"source": "vocab", "hsk_level": 1, "size": 4}, headers=alice_headers).json()
+    q0 = db.get(models.PracticeSession, s["id"]).questions[0]
+    client.post(f"/api/practice/sessions/{s['id']}/answer", json={"index": 0, "choice_id": q0["item_id"]}, headers=alice_headers)
+
+    body = client.get("/api/admin/users", headers=owner_headers).json()
+    rows = {u["id"]: u for u in body["users"]}
+    check("alice: auth_method google + her real Google id", rows[alice_id]["auth_method"] == "google"
+          and rows[alice_id]["google_sub"] == "google-sub-alice", rows[alice_id])
+    check("owner: auth_method password, no Google id", rows[owner_id]["auth_method"] == "password"
+          and rows[owner_id]["google_sub"] is None)
+    db.expire_all()
+    newest = db.query(models.ActivityEvent.created_at).filter_by(user_id=alice_id).order_by(models.ActivityEvent.created_at.desc()).first()[0]
+    check("alice last_activity_at = her newest ActivityEvent", rows[alice_id]["last_activity_at"].startswith(newest.isoformat()[:19]), rows[alice_id])
+    check("owner never did anything -> last_activity_at is null", rows[owner_id]["last_activity_at"] is None)
+
+    real_total = db.query(models.User).count()
+    real_admins = db.query(models.User).filter(models.User.is_admin.is_(True)).count()
+    check("total_users / admin_count / regular_count match the DB",
+          (body["total_users"], body["admin_count"], body["regular_count"]) == (real_total, real_admins, real_total - real_admins), body)
+    for u in body["users"]:
+        check(f"user {u['username']} still exposes no credential fields", FORBIDDEN.isdisjoint(u.keys()))
+
+    page = client.get("/api/admin/users?limit=1&offset=1", headers=owner_headers).json()
+    ordered = [u.id for u in db.query(models.User).order_by(models.User.id)]
+    check("pagination: one row, the DB's second user, total unchanged",
+          [u["id"] for u in page["users"]] == ordered[1:2] and page["total"] == real_total, page)
+    found = client.get("/api/admin/users?q=REALALICE", headers=owner_headers).json()
+    check("search is case-insensitive on username/email", [u["id"] for u in found["users"]] == [alice_id] and found["total"] == 1, found)
+    check("limit=0 -> 422", client.get("/api/admin/users?limit=0", headers=owner_headers).status_code == 422)
+    check("normal user with paging params -> still 403",
+          client.get("/api/admin/users?limit=1&q=a", headers=alice_headers).status_code == 403)
+
+    dbinfo = body["database"]
+    check("database source is this API's own sqlite file", dbinfo["engine"] == "sqlite"
+          and dbinfo["name"] == "admin_dashboard.db" and dbinfo["environment"] == "test", dbinfo)
+    check("database info carries no credentials", not any("@" in str(v) or "password" in str(v).lower() for v in dbinfo.values()))
+    local = client.get("/api/admin/users", headers={**owner_headers, "Host": "localhost:8000"}).json()["database"]
+    prod = client.get("/api/admin/users", headers={**owner_headers, "Host": "chineseverse.qobus.tj"}).json()["database"]
+    check("reached via localhost -> environment 'local'", local["environment"] == "local", local)
+    check("reached via the public domain -> environment 'production'",
+          prod["environment"] == "production" and prod["served_by"] == "chineseverse.qobus.tj", prod)
+
     db.close()
 
 print(f"\nADMIN DASHBOARD/COMPANION TESTS: {passed} checks PASSED")

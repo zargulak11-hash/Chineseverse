@@ -8,19 +8,50 @@ import Icon from "../components/Icon.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
+const PAGE_SIZE = 25;
+
+// Timestamps are stored as naive UTC (datetime.utcnow()); without a zone
+// marker the browser would read them as local time and shift them.
+function parseUtc(iso) {
+  if (!iso) return null;
+  return new Date(/[zZ]|[+-]\d\d:\d\d$/.test(iso) ? iso : `${iso}Z`);
+}
+
 // Owner-only user management. The real access control is server-side
 // (GET/DELETE /api/admin/users both require app.deps.require_admin) — this
 // page and its RequireAdmin route guard only decide what an admin *sees*,
 // never what they're *allowed* to do. A non-admin who reaches this route
 // some other way still gets a 401/403 from the API itself.
+//
+// Everything shown comes from the `users` table of the database the API
+// is connected to; the banner names that database (local vs production),
+// since the two environments are separate databases and never mixed here.
 export default function AdminUsers() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user: me } = useAuth();
-  const { data, setData, error, reload } = useApi("/admin/users");
+  const [query, setQuery] = useState("");
+  const [q, setQ] = useState("");
+  const [offset, setOffset] = useState(0);
+  const path = `/admin/users?limit=${PAGE_SIZE}&offset=${offset}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+  const { data, setData, error, reload } = useApi(path);
   const [target, setTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [toast, setToast] = useState(null);
+
+  // Debounce the search box so each keystroke doesn't hit the API.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setQ(query.trim());
+      setOffset(0);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  // Deleting the last user on a later page leaves that page empty: step back.
+  useEffect(() => {
+    if (data && data.users.length === 0 && offset > 0) setOffset(Math.max(0, offset - PAGE_SIZE));
+  }, [data, offset]);
 
   // There's no app-wide toast system yet, so this page keeps its own small
   // one: a fixed-position, self-dismissing status message.
@@ -42,7 +73,7 @@ export default function AdminUsers() {
     try {
       await api.del(`/admin/users/${target.id}`);
       // Drop the row immediately so the list never shows a deleted user,
-      // then refetch so total/order reflect the database's real state.
+      // then refetch so totals/order reflect the database's real state.
       setData((d) =>
         d ? { ...d, total: d.total - 1, users: d.users.filter((u) => u.id !== target.id) } : d
       );
@@ -58,13 +89,47 @@ export default function AdminUsers() {
   }
 
   const users = data?.users || [];
-  const fmtDate = (iso) => new Date(iso).toLocaleDateString();
+  const fmtDate = (iso) => parseUtc(iso)?.toLocaleDateString(i18n.language) ?? "—";
+  const fmtDateTime = (iso) =>
+    iso ? parseUtc(iso).toLocaleString(i18n.language, { dateStyle: "medium", timeStyle: "short" }) : t("pages.adminUsers.never");
 
   const statusBadge = (u) => (
     <span className={`badge ${u.is_active ? "good" : "bad"}`}>
       {u.is_active ? t("pages.adminUsers.active") : t("pages.adminUsers.inactive")}
     </span>
   );
+
+  const roleBadge = (u) => (
+    <span className={`badge ${u.is_admin ? "accent" : ""}`}>
+      {u.is_admin ? t("pages.adminUsers.roleAdmin") : t("pages.adminUsers.roleUser")}
+    </span>
+  );
+
+  const authCell = (u) => (
+    <div>
+      <span className="badge">
+        {u.auth_method === "google" ? t("pages.adminUsers.authGoogle") : t("pages.adminUsers.authPassword")}
+      </span>
+      {u.google_sub && (
+        <div className="admin-mono" title={t("pages.adminUsers.googleId")}>
+          {t("pages.adminUsers.googleId")}: {u.google_sub}
+        </div>
+      )}
+    </div>
+  );
+
+  const progressCell = (u) =>
+    u.hsk_level != null ? (
+      <div>
+        <div>{t("pages.adminUsers.hskMastery", { level: u.hsk_level, mastery: Math.round(u.mastery ?? 0) })}</div>
+        <div className="sub" style={{ fontSize: 12 }}>
+          {t("pages.adminUsers.xp", { xp: u.total_xp })}
+          {u.current_streak ? ` · ${t("pages.adminUsers.streak", { count: u.current_streak })}` : ""}
+        </div>
+      </div>
+    ) : (
+      <span className="sub">{t("pages.adminUsers.noProgress")}</span>
+    );
 
   const identity = (u) => (
     <div className="admin-user-id">
@@ -80,6 +145,9 @@ export default function AdminUsers() {
           )}
         </div>
         <div className="email">{u.email}</div>
+        <div className="email">
+          #{u.id} · {u.companion_name || t("pages.adminUsers.noCompanion")}
+        </div>
       </div>
     </div>
   );
@@ -100,16 +168,15 @@ export default function AdminUsers() {
     );
   };
 
+  const db = data?.database;
+  const envKey = db?.environment === "production" ? "dbProduction" : db?.environment === "local" ? "dbLocal" : "dbTest";
+  const from = data && data.total > 0 ? data.offset + 1 : 0;
+  const to = data ? Math.min(data.offset + users.length, data.total) : 0;
+
   return (
     <Layout>
       <h1 className="h1">{t("pages.adminUsers.users")}</h1>
       <p className="sub">{t("pages.adminUsers.subtitle")}</p>
-
-      {data && !error && (
-        <div className="row" style={{ marginTop: 10 }}>
-          <span className="badge accent">{t("pages.adminUsers.totalUsers", { count: data.total })}</span>
-        </div>
-      )}
 
       {error && (
         <div className="card" style={{ marginTop: 16, borderColor: "var(--bad)" }}>
@@ -123,47 +190,124 @@ export default function AdminUsers() {
 
       {!data && !error && <Loading>{t("common.loading")}</Loading>}
 
-      {data && !error && users.length === 0 && <Empty>{t("pages.adminUsers.empty")}</Empty>}
-
-      {data && !error && users.length > 0 && (
+      {data && !error && (
         <>
-          <div className="card admin-users-table" style={{ marginTop: 16 }}>
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>{t("pages.adminUsers.user")}</th>
-                  <th>{t("pages.adminUsers.registeredCol")}</th>
-                  <th>{t("pages.adminUsers.status")}</th>
-                  <th className="col-actions">{t("pages.adminUsers.actions")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td>{identity(u)}</td>
-                    <td>{fmtDate(u.created_at)}</td>
-                    <td>{statusBadge(u)}</td>
-                    <td className="col-actions">{deleteButton(u)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="admin-users-cards" style={{ marginTop: 16 }}>
-            {users.map((u) => (
-              <div key={u.id} className="card" style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {identity(u)}
-                  <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                    {statusBadge(u)}
-                    <span className="sub">{t("pages.adminUsers.registered", { date: fmtDate(u.created_at) })}</span>
+          {db && (
+            <div className={`card admin-db-banner env-${db.environment}`} style={{ marginTop: 16 }}>
+              <div className="row spread" style={{ flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div className="admin-db-label">{t(`pages.adminUsers.${envKey}`)}</div>
+                  <div className="sub" style={{ fontSize: 12 }}>
+                    {t("pages.adminUsers.dbSource", { engine: db.engine, name: db.name || "—" })}
+                    {db.host ? ` @ ${db.host}` : ""} · {t("pages.adminUsers.servedBy", { host: db.served_by })}
                   </div>
                 </div>
-                {deleteButton(u)}
+                <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                  <span className="badge accent">{t("pages.adminUsers.totalUsers", { count: data.total_users })}</span>
+                  <span className="badge">{t("pages.adminUsers.adminCount", { count: data.admin_count })}</span>
+                  <span className="badge">{t("pages.adminUsers.regularCount", { count: data.regular_count })}</span>
+                </div>
               </div>
-            ))}
+              <p className="sub" style={{ fontSize: 12, marginTop: 8 }}>{t("pages.adminUsers.dbNote")}</p>
+            </div>
+          )}
+
+          <div className="row" style={{ marginTop: 14, gap: 8, flexWrap: "wrap" }}>
+            <input
+              type="search"
+              className="input admin-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("pages.adminUsers.searchPlaceholder")}
+              aria-label={t("pages.adminUsers.searchPlaceholder")}
+            />
+            {data.total > 0 && (
+              <span className="sub">{t("pages.adminUsers.pageRange", { from, to, total: data.total })}</span>
+            )}
           </div>
+
+          {users.length === 0 && (
+            <Empty>{q ? t("pages.adminUsers.noMatches", { query: q }) : t("pages.adminUsers.empty")}</Empty>
+          )}
+
+          {users.length > 0 && (
+            <>
+              <div className="card admin-users-table" style={{ marginTop: 16 }}>
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>{t("pages.adminUsers.user")}</th>
+                      <th>{t("pages.adminUsers.colAuth")}</th>
+                      <th>{t("pages.adminUsers.colProgress")}</th>
+                      <th>{t("pages.adminUsers.registeredCol")}</th>
+                      <th>{t("pages.adminUsers.colLastActivity")}</th>
+                      <th>{t("pages.adminUsers.colRole")}</th>
+                      <th>{t("pages.adminUsers.status")}</th>
+                      <th className="col-actions">{t("pages.adminUsers.actions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id}>
+                        <td>{identity(u)}</td>
+                        <td>{authCell(u)}</td>
+                        <td>{progressCell(u)}</td>
+                        <td>{fmtDate(u.created_at)}</td>
+                        <td>{fmtDateTime(u.last_activity_at)}</td>
+                        <td>{roleBadge(u)}</td>
+                        <td>{statusBadge(u)}</td>
+                        <td className="col-actions">{deleteButton(u)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="admin-users-cards" style={{ marginTop: 16 }}>
+                {users.map((u) => (
+                  <div key={u.id} className="card" style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {identity(u)}
+                      <div className="row" style={{ gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                        {roleBadge(u)}
+                        {statusBadge(u)}
+                      </div>
+                      {authCell(u)}
+                      {progressCell(u)}
+                      <span className="sub">{t("pages.adminUsers.registered", { date: fmtDate(u.created_at) })}</span>
+                      <span className="sub">
+                        {t("pages.adminUsers.colLastActivity")}: {fmtDateTime(u.last_activity_at)}
+                      </span>
+                    </div>
+                    {deleteButton(u)}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {data.total > PAGE_SIZE && (
+            <div className="row" style={{ marginTop: 14, gap: 8, justifyContent: "center" }}>
+              <button
+                type="button"
+                className="btn small"
+                disabled={offset === 0}
+                onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+              >
+                {t("pages.adminUsers.prev")}
+              </button>
+              <button
+                type="button"
+                className="btn small"
+                disabled={offset + PAGE_SIZE >= data.total}
+                onClick={() => setOffset(offset + PAGE_SIZE)}
+              >
+                {t("pages.adminUsers.next")}
+              </button>
+            </div>
+          )}
+
+          <p className="sub" style={{ fontSize: 12, marginTop: 12 }}>{t("pages.adminUsers.authNote")}</p>
         </>
       )}
 

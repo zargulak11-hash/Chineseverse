@@ -836,11 +836,43 @@ class AdminUserSummary(BaseModel):
     # here.
     companion_slug: Optional[str] = None
     companion_name: Optional[str] = None
+    # Google's account id (users.google_sub) -- an identifier, not a
+    # credential. None for password accounts, and also for Google accounts
+    # created before linking existed until their next Google sign-in, which
+    # is why auth_method can only say "google" when the link is recorded.
+    google_sub: Optional[str] = None
+    auth_method: str = "password"  # "google" | "password"
+    # There is no last-login column; this is the newest real ActivityEvent
+    # (practice, reviews, lessons, voice, ...) or, failing that, the streak's
+    # last active day. None when the account has never done anything.
+    last_activity_at: Optional[datetime] = None
+
+
+class AdminDatabaseInfo(BaseModel):
+    """Which database this list was read from -- the API's own configured
+    DATABASE_URL, never with credentials. `environment` is "local" when the
+    request reached the API through localhost/127.0.0.1, "production" when
+    it came through the public domain (nginx forwards the Host header), so
+    local and production numbers can never be mistaken for each other."""
+
+    environment: str
+    served_by: str
+    engine: str
+    name: Optional[str] = None
+    host: Optional[str] = None
 
 
 class AdminUserListResponse(BaseModel):
+    # `total` is the number of users matching the current search (all users
+    # when there is none); `users` is one page of them.
     total: int
     users: list[AdminUserSummary]
+    total_users: int = 0
+    admin_count: int = 0
+    regular_count: int = 0
+    limit: int = 50
+    offset: int = 0
+    database: Optional[AdminDatabaseInfo] = None
 
 
 class AdminDashboardResponse(BaseModel):

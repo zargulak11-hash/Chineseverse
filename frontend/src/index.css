@@ -3468,6 +3468,14 @@ table.data td {
 }
 .admin-toast.good { border-color: var(--good); }
 .admin-toast.bad { border-color: var(--bad); }
+/* Which database the Admin Users list comes from: local and production are
+   separate databases, so the environment is spelled out, never implied. */
+.admin-db-banner { border-left: 4px solid var(--accent); }
+.admin-db-banner.env-production { border-left-color: var(--bad); }
+.admin-db-banner.env-local { border-left-color: var(--good); }
+.admin-db-label { font-weight: 800; letter-spacing: 0.06em; }
+.admin-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-xs); color: var(--text-faint); overflow-wrap: anywhere; margin-top: 4px; }
+.admin-search { flex: 1 1 240px; max-width: 360px; }
 
 /* ---- Practice / Review ------------------------------------------------ */
 .badge.bad {
