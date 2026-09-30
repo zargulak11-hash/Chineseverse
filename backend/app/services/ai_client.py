@@ -449,66 +449,193 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "encouraging — never a generic wall of text.\n\n"
     "This learner: username={username}, HSK level={hsk_level}, overall "
     "mastery={mastery}%, current streak={streak} day(s), weakest skills="
-    "{weak_skills}, companion={companion}."
+    "{weak_skills}, companion={companion}.\n\n"
+    "LANGUAGE: always reply in {language} -- the language this learner selected "
+    "in the app -- even if they write to you in another language. Chinese "
+    "examples (characters, pinyin) stay in Chinese; everything else is {language}."
 )
 
-
-def _offtopic_reply() -> str:
-    return (
-        "I can only help with ChineseVerse and Chinese learning — try asking "
-        "about a grammar point (like 了/吗/的), your HSK progress, your weakest "
-        "skill, or what to practice next."
-    )
+# The app's selected UI language (X-Locale) decides the assistant's reply
+# language, the same way it localizes every other screen. Names are written
+# in English because they go into the English system prompt above.
+ASSISTANT_LANGUAGE_NAMES = {"en": "English", "ru": "Russian", "tg": "Tajik", "zh": "Simplified Chinese"}
 
 
-def _offline_assistant_reply(messages: List[dict], context: dict) -> str:
-    last = messages[-1]["content"] if messages else ""
-    q = _normalize(last)
-    name = context.get("username") or "there"
-
-    if not q:
-        return f"Hi {name}! Ask me about a grammar point, your HSK progress, or what to practice next."
-    if _contain(q, "hsk", "level", "progress"):
-        return (
-            f"You're at HSK {context['hsk_level']} with {context['mastery']}% overall mastery. "
+# Offline replies, one set per supported app locale. "en" is the original
+# wording and the fallback for any unknown locale. Chinese examples (了/吗/的
+# sentences) are the subject being taught, so they stay Chinese in every set.
+ASSISTANT_OFFLINE = {
+    "en": {
+        "greet": "Hi {name}! Ask me about a grammar point, your HSK progress, or what to practice next.",
+        "default_name": "there",
+        "level": (
+            "You're at HSK {hsk_level} with {mastery}% overall mastery. "
             "Keep reviewing Vocabulary and Lessons daily — the HSK Roadmap page shows exactly "
             "what's left to unlock the next level."
-        )
-    if _contain(q, "streak"):
-        return (
-            f"Your current streak is {context['streak']} day(s). Do at least one review, lesson "
+        ),
+        "streak": (
+            "Your current streak is {streak} day(s). Do at least one review, lesson "
             "or conversation today to keep it alive."
-        )
-    if _contain(q, "weak", "improve", "focus", "struggl"):
-        weak = ", ".join(context.get("weak_skills") or []) or "a bit of everything so far"
-        return (
-            f"Your weakest skill right now looks like {weak}. A Mission or Duel that targets it "
+        ),
+        "weak": (
+            "Your weakest skill right now looks like {weak}. A Mission or Duel that targets it "
             "is the fastest way to move the needle — check your DNA page for the exact numbers."
-        )
-    if "了" in last:
-        return (
+        ),
+        "no_weak": "a bit of everything so far",
+        "le": (
             "了 (le) usually marks a completed action or a change of state — e.g. 我吃了 (I ate) "
             "vs 我在吃 (I'm eating). Try it in a Lesson or a Pet Teacher case to see it corrected live."
-        )
+        ),
+        "ma": "吗 (ma) turns a statement into a yes/no question — 你好吗？ = \"Are you well?\" Just add it to the end of a sentence.",
+        "de": "的 (de) is the all-purpose possessive/descriptive particle — 我的书 = \"my book\". It links a modifier to the noun after it.",
+        "xp": "You earn XP and coins from voice attempts, quests, missions and duels — the Quests page usually has today's easiest wins.",
+        "companion": "Your companion is {companion}. Each one biases your daily quests and missions toward its own specialty — see the Companion page.",
+        "no_companion": "no companion chosen yet",
+        "duel": "Duels test your weakest strand under a timer. Start one from the Duels page — losing still counts as practice.",
+        "offtopic": (
+            "I can only help with ChineseVerse and Chinese learning — try asking "
+            "about a grammar point (like 了/吗/的), your HSK progress, your weakest "
+            "skill, or what to practice next."
+        ),
+    },
+    "ru": {
+        "greet": "Привет, {name}! Спроси меня о грамматике, своём прогрессе в HSK или о том, что практиковать дальше.",
+        "default_name": "друг",
+        "level": (
+            "Ты на уровне HSK {hsk_level}, общее освоение — {mastery}%. "
+            "Повторяй словарь и уроки каждый день — на странице плана HSK видно, "
+            "что осталось до следующего уровня."
+        ),
+        "streak": (
+            "Твоя текущая серия — {streak} дн. Сделай сегодня хотя бы одно повторение, урок "
+            "или разговор, чтобы её сохранить."
+        ),
+        "weak": (
+            "Сейчас твой самый слабый навык — {weak}. Миссия или дуэль на этот навык — "
+            "самый быстрый способ его подтянуть. Точные цифры — на странице ДНК."
+        ),
+        "no_weak": "пока понемногу всё",
+        "le": (
+            "了 (le) обычно обозначает завершённое действие или изменение состояния — например, 我吃了 (я поел) "
+            "и 我在吃 (я ем). Попробуй его в уроке или в режиме Pet Teacher, чтобы сразу увидеть исправления."
+        ),
+        "ma": "吗 (ma) превращает утверждение в вопрос «да/нет» — 你好吗？ = «Как дела?» Просто добавь его в конец предложения.",
+        "de": "的 (de) — универсальная частица принадлежности и определения — 我的书 = «моя книга». Она связывает определение с существительным после него.",
+        "xp": "Опыт и монеты даются за голосовые попытки, квесты, миссии и дуэли — на странице квестов обычно есть самые лёгкие задания на сегодня.",
+        "companion": "Твой компаньон — {companion}. Каждый компаньон смещает ежедневные квесты и миссии в сторону своей специализации — загляни на страницу компаньона.",
+        "no_companion": "компаньон пока не выбран",
+        "duel": "Дуэли проверяют твой самый слабый навык на время. Начни дуэль на странице дуэлей — даже проигрыш засчитывается как практика.",
+        "offtopic": (
+            "Я помогаю только с ChineseVerse и изучением китайского — спроси "
+            "о грамматике (например, 了/吗/的), своём прогрессе в HSK, самом слабом "
+            "навыке или о том, что практиковать дальше."
+        ),
+    },
+    "tg": {
+        "greet": "Салом, {name}! Аз ман дар бораи грамматика, пешрафти HSK-и худ ё он чи минбаъд машқ кардан лозим аст, пурсед.",
+        "default_name": "дӯст",
+        "level": (
+            "Шумо дар сатҳи HSK {hsk_level} ҳастед, азхудкунии умумӣ {mastery}% аст. "
+            "Луғат ва дарсҳоро ҳар рӯз такрор кунед — саҳифаи нақшаи HSK нишон медиҳад, "
+            "ки то сатҳи навбатӣ чӣ боқӣ мондааст."
+        ),
+        "streak": (
+            "Силсилаи ҳозираи шумо {streak} рӯз аст. Барои нигоҳ доштани он имрӯз ақаллан як такрор, "
+            "дарс ё гуфтугӯ анҷом диҳед."
+        ),
+        "weak": (
+            "Ҳоло заифтарин маҳорати шумо {weak} аст. Миссия ё дуэл барои ҳамин маҳорат "
+            "роҳи зудтарини беҳтар кардани он аст — рақамҳои дақиқ дар саҳифаи ДНК."
+        ),
+        "no_weak": "ҳоло ҳамааш каме-каме",
+        "le": (
+            "了 (le) одатан амали анҷомёфта ё тағйири ҳолатро нишон медиҳад — масалан, 我吃了 (ман хӯрдам) "
+            "ва 我在吃 (ман хӯрда истодаам). Онро дар дарс ё дар реҷаи Pet Teacher санҷед, то ислоҳро фавран бинед."
+        ),
+        "ma": "吗 (ma) ҷумларо ба саволи «ҳа/не» табдил медиҳад — 你好吗？ = «Аҳволатон чӣ хел?» Танҳо онро ба охири ҷумла илова кунед.",
+        "de": "的 (de) ҳиссачаи умумии тааллуқ ва тавсиф аст — 我的书 = «китоби ман». Он муайянкунандаро бо исми баъдӣ мепайвандад.",
+        "xp": "Таҷриба ва тангаҳоро барои кӯшишҳои овозӣ, супоришҳо, миссияҳо ва дуэлҳо мегиред — дар саҳифаи супоришҳо одатан осонтарин вазифаҳои имрӯза ҳастанд.",
+        "companion": "Ҳамроҳи шумо — {companion}. Ҳар ҳамроҳ супоришҳо ва миссияҳои ҳаррӯзаро ба самти тахассуси худ майл медиҳад — саҳифаи ҳамроҳро бинед.",
+        "no_companion": "ҳамроҳ ҳоло интихоб нашудааст",
+        "duel": "Дуэлҳо заифтарин маҳорати шуморо бо вақт месанҷанд. Дуэлро аз саҳифаи дуэлҳо оғоз кунед — ҳатто бохт ҳамчун машқ ҳисоб мешавад.",
+        "offtopic": (
+            "Ман танҳо дар ChineseVerse ва омӯзиши забони чинӣ кӯмак мекунам — "
+            "дар бораи грамматика (масалан, 了/吗/的), пешрафти HSK, заифтарин "
+            "маҳорат ё он чи минбаъд машқ кардан лозим аст, пурсед."
+        ),
+    },
+    "zh": {
+        "greet": "你好，{name}！可以问我语法点、你的 HSK 进度，或者接下来该练什么。",
+        "default_name": "同学",
+        "level": (
+            "你现在是 HSK {hsk_level}，总体掌握度 {mastery}%。"
+            "每天坚持复习词汇和课程——HSK 学习计划页面会清楚显示离下一级还差什么。"
+        ),
+        "streak": "你目前已连续学习 {streak} 天。今天至少完成一次复习、一节课或一次对话，保持连续记录。",
+        "weak": "你目前最薄弱的技能是{weak}。针对它的任务或对战是提升最快的方法——具体数据请看学习 DNA 页面。",
+        "no_weak": "目前各方面都还在起步",
+        "le": "了 (le) 通常表示动作完成或状态变化——例如 我吃了（已经吃过）和 我在吃（正在吃）。可以在课程或 Pet Teacher 案例中试一试，马上看到纠正。",
+        "ma": "吗 (ma) 能把陈述句变成是非疑问句——你好吗？ 只要把它放在句末就可以。",
+        "de": "的 (de) 是最常用的结构助词，表示所属或修饰——我的书 就是“属于我的书”。它把修饰语和后面的名词连接起来。",
+        "xp": "语音练习、任务、使命和对战都能获得经验值和金币——任务页面通常有今天最容易完成的奖励。",
+        "companion": "你的伙伴是{companion}。每个伙伴都会让每日任务和使命偏向它的专长——请查看伙伴页面。",
+        "no_companion": "还没有选择伙伴",
+        "duel": "对战会在限时内考查你最薄弱的方面。从对战页面开始一局吧——输了也算练习。",
+        "offtopic": "我只能帮助解答 ChineseVerse 和中文学习的问题——可以问我语法点（比如 了/吗/的）、你的 HSK 进度、最薄弱的技能，或者接下来该练什么。",
+    },
+}
+
+# Topic keywords in every supported language: the learner may type in any of
+# them, but the REPLY language is always the selected locale.
+_KW_LEVEL = ("hsk", "level", "progress", "уровень", "прогресс", "сатҳ", "пешрафт", "水平", "进度", "等级", "级别")
+_KW_STREAK = ("streak", "серия", "стрик", "силсила", "连续", "打卡")
+_KW_WEAK = ("weak", "improve", "focus", "struggl", "слаб", "улучш", "заиф", "беҳтар", "薄弱", "弱", "提高", "加强")
+_KW_XP = ("xp", "coin", "reward", "опыт", "монет", "наград", "таҷриба", "танга", "мукофот", "经验", "金币", "奖励")
+_KW_COMPANION = ("companion", "animal", "компаньон", "животн", "питом", "ҳамроҳ", "ҳайвон", "伙伴", "动物", "宠物")
+_KW_DUEL = ("duel", "дуэл", "поедин", "对战", "决斗")
+
+
+def _offtopic_reply(locale: str = "en") -> str:
+    return ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])["offtopic"]
+
+
+def _offline_assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
+    t = ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])
+    last = messages[-1]["content"] if messages else ""
+    q = _normalize(last)
+    name = context.get("username") or t["default_name"]
+
+    if not q:
+        return t["greet"].format(name=name)
+    if _contain(q, *_KW_LEVEL):
+        return t["level"].format(hsk_level=context["hsk_level"], mastery=context["mastery"])
+    if _contain(q, *_KW_STREAK):
+        return t["streak"].format(streak=context["streak"])
+    if _contain(q, *_KW_WEAK):
+        weak = ", ".join(context.get("weak_skills") or []) or t["no_weak"]
+        return t["weak"].format(weak=weak)
+    if "了" in last:
+        return t["le"]
     if "吗" in last:
-        return "吗 (ma) turns a statement into a yes/no question — 你好吗？ = \"Are you well?\" Just add it to the end of a sentence."
+        return t["ma"]
     if "的" in last:
-        return "的 (de) is the all-purpose possessive/descriptive particle — 我的书 = \"my book\". It links a modifier to the noun after it."
-    if _contain(q, "xp", "coin", "reward"):
-        return "You earn XP and coins from voice attempts, quests, missions and duels — the Quests page usually has today's easiest wins."
-    if _contain(q, "companion", "animal"):
-        comp = context.get("companion") or "no companion chosen yet"
-        return f"Your companion is {comp}. Each one biases your daily quests and missions toward its own specialty — see the Companion page."
-    if _contain(q, "duel"):
-        return "Duels test your weakest strand under a timer. Start one from the Duels page — losing still counts as practice."
-    return _offtopic_reply()
+        return t["de"]
+    if _contain(q, *_KW_XP):
+        return t["xp"]
+    if _contain(q, *_KW_COMPANION):
+        return t["companion"].format(companion=context.get("companion") or t["no_companion"])
+    if _contain(q, *_KW_DUEL):
+        return t["duel"]
+    return _offtopic_reply(locale)
 
 
-def assistant_reply(messages: List[dict], context: dict) -> str:
+def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
     """Reply to one turn of the in-app study assistant. `context` carries the
     learner's own stats (HSK level, mastery, streak, weak skills, companion)
     so answers about "how am I doing" are grounded in real data, not
-    hallucinated. Always scoped to ChineseVerse/Chinese-learning topics."""
+    hallucinated. Always scoped to ChineseVerse/Chinese-learning topics.
+    `locale` is the app's selected language (X-Locale); both the model and
+    the offline fallback answer in it."""
     provider = _active_provider()
     if provider == "openai" and messages:
         try:
@@ -519,13 +646,14 @@ def assistant_reply(messages: List[dict], context: dict) -> str:
                 streak=context.get("streak", 0),
                 weak_skills=", ".join(context.get("weak_skills") or []) or "none tracked yet",
                 companion=context.get("companion") or "none chosen yet",
+                language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
             )
             return _openai_chat([{"role": "system", "content": system}] + messages, settings.ai_model)
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             # Unreachable API, exhausted credits (429) or a malformed reply:
             # fall back to the deterministic offline companion, never a 500.
             pass
-    return _offline_assistant_reply(messages, context)
+    return _offline_assistant_reply(messages, context, locale)
 
 
 def evaluate_pet_teacher_explanation(
