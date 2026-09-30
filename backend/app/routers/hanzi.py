@@ -9,6 +9,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
+from app.services import companion_reaction as cr
 from app.services.dna import bump_skill
 from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
@@ -34,6 +35,9 @@ class ReviewResponse(BaseModel):
     hanzi: schemas.HanziWithStatus
     mastery: float
     status: str
+    # The permanent companion's reaction to this real result
+    # (services/companion_reaction.py); optional so the shape stays compatible.
+    reaction: dict | None = None
 
 
 class WritePayload(BaseModel):
@@ -49,6 +53,7 @@ class WriteResponse(BaseModel):
     hanzi: schemas.HanziWithStatus
     writing_mastery: float
     writing_status: str
+    reaction: dict | None = None
 
 
 @router.get("", response_model=list[schemas.HanziWithStatus])
@@ -160,6 +165,7 @@ def review_hanzi(
         .filter_by(user_id=user.id, hanzi_id=hanzi_id)
         .first()
     )
+    status_before = rec.status if rec is not None else None
     if rec is None:
         rec = models.UserHanzi(
             user_id=user.id, hanzi_id=hanzi_id,
@@ -170,11 +176,13 @@ def review_hanzi(
     apply_srs(rec, payload.correct, user, delta=payload.delta)
 
     ensure_user_skills(db, user)
+    skill_before = cr.skill_value(user, "reading")
     # Character recognition is a reading/vocabulary-adjacent skill; there is
     # no dedicated "hanzi" DNA skill (see Skill model), so this feeds
     # "reading" -- the closest existing skill to character recognition,
     # same convention as any other reading-comprehension activity.
     bump_skill(user, "reading", 2.0 if payload.correct else -0.3)
+    skill_up = cr.skill_crossing("reading", skill_before, cr.skill_value(user, "reading"))
 
     if payload.correct:
         progress_quests(db, user, "hanzi", amount=1)
@@ -198,7 +206,12 @@ def review_hanzi(
     h_out.mastery = rec.mastery
     h_out.writing_status = rec.writing_status
     h_out.writing_mastery = rec.writing_mastery
-    return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status)
+    reaction = cr.self_check_reaction(
+        user, item_type="hanzi", correct=payload.correct, status_before=status_before, status_after=rec.status,
+        times_missed=rec.times_missed or 0, skill=skill_up,
+        focus={"item_type": "hanzi", "hanzi": h.character, "pinyin": h.pinyin, "meaning": h_out.meaning},
+    )
+    return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status, reaction=reaction)
 
 
 @router.post("/{hanzi_id}/write", response_model=WriteResponse)
@@ -232,6 +245,7 @@ def write_hanzi(
             times_written=0, writing_mastery=0.0, writing_status="not_practiced",
         )
         db.add(rec)
+    writing_before = rec.writing_status
 
     rec.times_written = (rec.times_written or 0) + 1
     # Fewer real stroke mistakes -> more mastery gained per attempt, but a
@@ -253,7 +267,9 @@ def write_hanzi(
         rec.writing_status = "practicing" if rec.times_written > 0 else "not_practiced"
 
     ensure_user_skills(db, user)
+    skill_before = cr.skill_value(user, "writing")
     bump_skill(user, "writing", 2.0 if payload.total_mistakes <= 2 else 1.0)
+    skill_up = cr.skill_crossing("writing", skill_before, cr.skill_value(user, "writing"))
 
     if payload.total_mistakes >= 3:
         # A shaky trace brings the character back through Review.
@@ -277,4 +293,10 @@ def write_hanzi(
     h_out.mastery = rec.mastery
     h_out.writing_status = rec.writing_status
     h_out.writing_mastery = rec.writing_mastery
-    return WriteResponse(hanzi=h_out, writing_mastery=round(rec.writing_mastery, 1), writing_status=rec.writing_status)
+    reaction = cr.write_reaction(
+        user, total_mistakes=payload.total_mistakes, status_before=writing_before, status_after=rec.writing_status,
+        skill=skill_up, focus={"item_type": "hanzi", "hanzi": h.character, "pinyin": h.pinyin, "meaning": h_out.meaning},
+    )
+    return WriteResponse(
+        hanzi=h_out, writing_mastery=round(rec.writing_mastery, 1), writing_status=rec.writing_status, reaction=reaction,
+    )

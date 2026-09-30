@@ -8,6 +8,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
+from app.services import companion_reaction as cr
 from app.services.dna import bump_skill
 from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
@@ -33,6 +34,7 @@ class ReviewResponse(BaseModel):
     word: schemas.WordWithStatus
     mastery: float
     status: str
+    reaction: dict | None = None  # permanent companion's reaction to this result
 
 
 @router.get("", response_model=list[schemas.WordWithStatus])
@@ -88,6 +90,7 @@ def review_word(
         .filter_by(user_id=user.id, word_id=word_id)
         .first()
     )
+    status_before = rec.status if rec is not None else None
     if rec is None:
         rec = models.UserVocabulary(
             user_id=user.id, word_id=word_id,
@@ -101,7 +104,9 @@ def review_word(
     # same +2.0/-0.3 convention duels already use for a correct/incorrect
     # answer, so this doesn't invent a second tuning scale.
     ensure_user_skills(db, user)
+    skill_before = cr.skill_value(user, "vocabulary")
     bump_skill(user, "vocabulary", 2.0 if payload.correct else -0.3)
+    skill_up = cr.skill_crossing("vocabulary", skill_before, cr.skill_value(user, "vocabulary"))
 
     if payload.correct:
         progress_quests(db, user, "vocab", amount=1)
@@ -123,8 +128,15 @@ def review_word(
     word_out = schemas.WordWithStatus.model_validate(word)
     translations = load_translations(db, "vocab_word", [str(word.id)], locale)
     word_out.meanings = tr(translations, word.id, "meanings", word_out.meanings)
+    focus = {"item_type": "vocab", "hanzi": word.simplified, "pinyin": word.pinyin, "meaning": word_out.meanings}
+    if word.example:
+        focus.update(example=word.example, example_pinyin=word.example_pinyin)
     return ReviewResponse(
         word=word_out,
         mastery=round(rec.mastery, 1),
         status=rec.status,
+        reaction=cr.self_check_reaction(
+            user, item_type="vocab", correct=payload.correct, status_before=status_before, status_after=rec.status,
+            times_missed=rec.times_missed or 0, focus=focus, skill=skill_up,
+        ),
     )

@@ -8,6 +8,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services.activity import log_activity
+from app.services import companion_reaction as cr
 from app.services.dna import bump_skill
 from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
@@ -33,6 +34,7 @@ class PracticeResponse(BaseModel):
     topic: schemas.GrammarTopicWithStatus
     mastery: float
     status: str
+    reaction: dict | None = None  # permanent companion's reaction to this result
 
 
 @router.get("", response_model=list[schemas.GrammarTopicWithStatus])
@@ -89,6 +91,7 @@ def practice_topic(
         .filter_by(user_id=user.id, topic_id=topic_id)
         .first()
     )
+    status_before = rec.status if rec is not None else None
     if rec is None:
         rec = models.UserGrammar(
             user_id=user.id, topic_id=topic_id,
@@ -99,7 +102,9 @@ def practice_topic(
     apply_srs(rec, payload.correct, user, delta=payload.delta, counter="times_practiced")
 
     ensure_user_skills(db, user)
+    skill_before = cr.skill_value(user, "grammar")
     bump_skill(user, "grammar", 2.0 if payload.correct else -0.3)
+    skill_up = cr.skill_crossing("grammar", skill_before, cr.skill_value(user, "grammar"))
 
     if payload.correct:
         progress_quests(db, user, "grammar", amount=1)
@@ -124,4 +129,9 @@ def practice_topic(
     topic_out.difficulty = tr(translations, topic.id, "difficulty", topic_out.difficulty)
     topic_out.status = rec.status
     topic_out.mastery = rec.mastery
-    return PracticeResponse(topic=topic_out, mastery=round(rec.mastery, 1), status=rec.status)
+    reaction = cr.self_check_reaction(
+        user, item_type="grammar", correct=payload.correct, status_before=status_before, status_after=rec.status,
+        times_missed=rec.times_missed or 0, skill=skill_up,
+        focus={"item_type": "grammar", "hanzi": topic.pattern or "", "pinyin": "", "meaning": topic_out.title},
+    )
+    return PracticeResponse(topic=topic_out, mastery=round(rec.mastery, 1), status=rec.status, reaction=reaction)

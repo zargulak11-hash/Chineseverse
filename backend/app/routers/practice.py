@@ -7,6 +7,7 @@ from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import practice as svc
+from app.services.companion_reaction import review_clear_reaction
 from app.services.gamification import check_achievements
 
 router = APIRouter(prefix="/api/practice", tags=["practice"])
@@ -52,8 +53,14 @@ def create_session(
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.
-        return JSONResponse(status_code=200, content={"id": None, "source": payload.source, "questions": [], "empty": "nothing_due"})
-    return svc.render_session(db, session, locale)
+        return JSONResponse(status_code=200, content={
+            "id": None, "source": payload.source, "questions": [], "empty": "nothing_due",
+            "reaction": review_clear_reaction(user),
+        })
+    out = svc.render_session(db, session, locale)
+    # Only a freshly started round greets the learner; GET re-renders don't.
+    out["reaction"] = svc.start_reaction(db, user, session, locale)
+    return out
 
 
 @router.get("/sessions/{session_id}")

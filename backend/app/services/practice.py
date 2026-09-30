@@ -23,6 +23,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app import models
+from app.services import companion_reaction as cr
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
 from app.services.gamification import (
@@ -416,37 +417,34 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
 
 # --------------------------------------------------------------------------- grading
 
-def reaction(answers: list, event: str) -> dict:
-    """Companion mood from graded results only. Never shaming: a run of
-    mistakes produces a supportive 'worried', not a scolding one."""
-    graded = [a for a in answers if a is not None]
-    streak = 0
-    for a in reversed(graded):
-        if not a["correct"]:
-            break
-        streak += 1
-    if event == "answer" and graded:
-        if graded[-1]["correct"]:
-            mood = "excited" if streak >= 3 else "happy"
-        else:
-            mood = "worried" if sum(not a["correct"] for a in graded[-4:]) >= 3 else "encouraging"
-    else:
-        total = len(answers) or 1
-        score = sum(1 for a in graded if a["correct"]) / total
-        mood = "celebrating" if score >= 0.9 else "proud" if score >= PASS_SCORE else "encouraging" if score >= 0.4 else "worried"
-    return {"mood": mood, "event": event, "streak": streak}
+def _focus(item_type: str, row, labels: dict) -> dict:
+    """The real item a companion reaction talks about: its answer card plus,
+    for words, the curriculum's own example sentence (never invented)."""
+    card = {"item_type": item_type, **_item_card(item_type, row, labels)}
+    if item_type == "vocab" and row.example:
+        card["example"] = row.example
+        card["example_pinyin"] = row.example_pinyin
+    elif item_type == "grammar":
+        card["example"] = _grammar_example(row)
+    return card
 
 
-def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int) -> float:
+def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int) -> dict:
+    """Applies one graded answer to mastery, DNA, mistakes, quests and XP.
+    Returns what changed (status before/after, the primary DNA skill's value
+    before/after) so the companion can react to the real result."""
     item_type, qtype = q["item_type"], q["type"]
     rec_model, fk = _USER_MODEL[item_type]
     rec = db.query(rec_model).filter(rec_model.user_id == user.id, getattr(rec_model, fk) == row.id).first()
+    status_before = rec.status if rec is not None else None
     if rec is None:
         rec = rec_model(user_id=user.id, mastery=0.0, status="new", times_missed=0, **{fk: row.id})
         db.add(rec)
     apply_srs(rec, correct, user, counter="times_practiced" if item_type == "grammar" else "times_seen")
 
     ensure_user_skills(db, user)
+    primary = cr.PRIMARY_SKILL.get(qtype)
+    skill_before = cr.skill_value(user, primary) if primary else None
     plus, minus = 2.0, -0.3
     if item_type == "vocab":
         bump_skill(user, "vocabulary", plus if correct else minus)
@@ -488,7 +486,13 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
         )
     touch_streak(user)
     log_activity(db, user, "practice_answer")
-    return rec.mastery
+    return {
+        "mastery": rec.mastery,
+        "status_before": status_before,
+        "status_after": rec.status,
+        "times_missed": rec.times_missed or 0,
+        "skill": cr.skill_crossing(primary, skill_before, cr.skill_value(user, primary)) if primary else None,
+    }
 
 
 def answer_question(
@@ -509,7 +513,7 @@ def answer_question(
         raise PracticeError(410, "This item no longer exists")
 
     correct = choice_id == q["item_id"]
-    mastery = _record(db, user, session, q, row, correct, response_ms)
+    change = _record(db, user, session, q, row, correct, response_ms)
     answers = list(session.answers)  # reassign so the JSON column is marked dirty
     answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms}
     session.answers = answers
@@ -519,9 +523,14 @@ def answer_question(
         "correct": correct,
         "correct_id": q["item_id"],
         "card": _item_card(q["item_type"], row, labels),
-        "mastery": round(mastery, 1),
+        "mastery": round(change["mastery"], 1),
         "xp_gained": XP_PER_CORRECT if correct else 0,
-        "reaction": reaction(answers, "answer"),
+        "reaction": cr.answer_reaction(
+            user, answers,
+            item_type=q["item_type"], focus=_focus(q["item_type"], row, labels),
+            status_before=change["status_before"], status_after=change["status_after"],
+            times_missed=change["times_missed"], skill=change["skill"],
+        ),
     }
 
 
@@ -534,6 +543,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
     first_completion = session.completed_at is None
     xp = 0
     lesson_status = None
+    newly_completed = False
     if first_completion:
         if answered == 0:
             raise PracticeError(422, "Answer at least one question before finishing")
@@ -543,7 +553,10 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             user.total_xp += XP_GOOD_ROUND_BONUS
             xp = XP_GOOD_ROUND_BONUS
         if session.lesson_id:
+            prev = db.query(models.Progress).filter_by(user_id=user.id, lesson_id=session.lesson_id).first()
+            was_completed = prev is not None and prev.status == "completed"
             lesson_status = _record_lesson(db, user, session.lesson_id, score)
+            newly_completed = lesson_status == "completed" and not was_completed
         db.commit()
     elif session.lesson_id:
         p = db.query(models.Progress).filter_by(user_id=user.id, lesson_id=session.lesson_id).first()
@@ -551,11 +564,15 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
 
     labels = _labels(db, session.questions, locale)
     missed = []
+    focus = None
     for q, a in zip(session.questions, answers):
         if a is not None and not a["correct"]:
             row = _row(db, q["item_type"], q["item_id"])
             if row is not None:
                 missed.append({"item_type": q["item_type"], **_item_card(q["item_type"], row, labels)})
+                # The first missed item is the one the companion suggests
+                # revisiting -- it is already queued for Review.
+                focus = focus or _focus(q["item_type"], row, labels)
     return {
         "correct": correct,
         "answered": answered,
@@ -565,8 +582,30 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
         "lesson_status": lesson_status,
         "passed": score >= PASS_SCORE,
         "missed": missed,
-        "reaction": reaction(answers, "lesson_complete" if lesson_status == "completed" else "complete"),
+        "reaction": cr.session_reaction(
+            user, answers, total, source=session.source,
+            # Celebrate the completion only when THIS round completed it --
+            # re-practicing an already completed lesson is judged by score.
+            lesson_completed=newly_completed,
+            focus=focus, skill=cr.trained_skill(user, session.questions, answers),
+        ),
     }
+
+
+def start_reaction(db: Session, user: models.User, session: models.PracticeSession, locale: str) -> dict:
+    """The companion greeting a freshly built round. A lesson round previews
+    the lesson's own real words (the ones the round will ask about)."""
+    words = []
+    if session.lesson_id:
+        lesson = db.get(models.Lesson, session.lesson_id)
+        vocab = [w for w in lesson_items(db, lesson)["vocab"] if _usable("vocab", w)][:4] if lesson else []
+        trs = load_translations(db, "vocab_word", [str(w.id) for w in vocab], locale)
+        words = [
+            {"hanzi": w.simplified, "pinyin": w.pinyin, "meaning": _short(tr(trs, w.id, "meanings", w.meanings), 40)}
+            for w in vocab
+        ]
+    due = len(session.questions) if session.source == "review" else 0
+    return cr.start_reaction(user, session.source, words=words, due=due)
 
 
 def _record_lesson(db: Session, user: models.User, lesson_id: int, score: float) -> str:
