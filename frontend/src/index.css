@@ -1155,11 +1155,17 @@ select.input {
 /* Scale the children, not the <g> itself — the <g> already carries a
    positional transform (translate to the location's x/y); a CSS transform
    on the same element would replace that positioning outright instead of
-   combining with it. The circle/text are drawn at local (0,0), which is
-   already their visual center, so scaling them directly is safe. */
+   combining with it.
+   transform-box: fill-box is required: in SVG, transform-origin is measured
+   against the whole viewBox by default, so "center" meant (50, 50) of the
+   map, not the dot. Hovering a node then scaled it around a point far away
+   and threw it ~7.5 units off its position -- out from under the cursor,
+   which ended :hover, snapped it back, hovered again... a rapid shake (and
+   the tooltip flickered with it). fill-box makes "center" the dot itself. */
 .wm-node .wm-dot,
 .wm-node .wm-icon {
   transition: transform var(--dur-fast) ease, filter var(--dur-fast) ease;
+  transform-box: fill-box;
   transform-origin: center;
 }
 
@@ -1183,6 +1189,9 @@ select.input {
 
 .wm-pulse {
   animation: wmPulse 2.4s ease-in-out infinite;
+  /* Same reason as above: without fill-box the ring pulsed around the map's
+     center and swung back and forth across the "next" location. */
+  transform-box: fill-box;
   transform-origin: center;
 }
 
