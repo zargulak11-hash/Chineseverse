@@ -174,13 +174,15 @@ with TestClient(app) as client:
         return orig_first(self)
 
     _Q.first = first_blind
+    sent_before_race = len(sent)
     try:
         expect(client, "post", f"/api/users/{a_id}/follow", 201, headers=c)
     finally:
         _Q.first = orig_first
     assert state["hit"]
     assert len(db_notifications(a_id)) == 0, "the losing duplicate request must not leave a notification"
-    print("[PASS] concurrent duplicate follow hits uq_follow_pair: 201, no 500, no notification")
+    assert len(sent) == sent_before_race, "the losing duplicate request must not send an email"
+    print("[PASS] concurrent duplicate follow hits uq_follow_pair: 201, no 500, no notification, no email")
 
     # ------------------------------------------------ unfollow / follow again
     expect(client, "delete", f"/api/users/{b_id}/follow", 200, headers=a)
@@ -233,14 +235,73 @@ with TestClient(app) as client:
     assert notif.deliver_email(failed.id) == "skipped_duplicate"
     print("[PASS] undelivered email is retried later exactly once")
 
-    # ------------------------------------------------ email disabled: in-app still works
+    # ------------------------------------------------ the periodic sweep: one attempt per run, capped
+    fail_mode["on"] = True
+    e_id, e = register(client, "emil_e")
+    expect(client, "post", f"/api/users/{e_id}/follow", 201, headers=a)
+    capped = db_notifications(e_id)[0]
+    assert capped.email_status == "failed" and capped.email_attempts == 3
+    for attempts in (4, 5, 6):
+        assert notif.retry_undelivered() == 1
+        with SessionLocal() as db:
+            row = db.get(models.Notification, capped.id)
+            assert (row.email_status, row.email_attempts) == ("failed", attempts), (row.email_status, row.email_attempts)
+    fail_mode["on"] = False
+    before = len(sent)
+    assert notif.retry_undelivered() == 0 and notif.deliver_email(capped.id) == "skipped_duplicate"
+    assert len(sent) == before
+    print("[PASS] SMTP outage: each sweep makes one more attempt, stopping at the attempt limit")
+
+    # a delivery in flight ("sending") is never touched by the running sweep;
+    # only the startup sweep reclaims rows a stopped process left behind
+    f_id, f = register(client, "fara_f")
+    settings.smtp_host = None
+    expect(client, "post", f"/api/users/{f_id}/follow", 201, headers=a)
+    enable_email()
+    with SessionLocal() as db:
+        row = db.query(models.Notification).filter_by(recipient_id=f_id).one()
+        row.email_status = "sending"
+        db.commit()
+        stuck_id = row.id
+    before = len(sent)
+    assert notif.retry_undelivered() == 0 and len(sent) == before
+    assert notif.retry_undelivered(reset_stuck=True) == 1
+    assert len(sent) == before + 1 and sent[-1]["To"] == "fara_f@example.com"
+    with SessionLocal() as db:
+        assert db.get(models.Notification, stuck_id).email_status == "sent"
+    print("[PASS] in-flight email is never re-sent by the sweep; startup reclaims rows from a stopped process")
+
+    # ------------------------------------------------ email not configured: stored, shown, and sent LATER
     settings.smtp_host = None
     d_id, d = register(client, "dina_d")
-    expect(client, "post", f"/api/users/{d_id}/follow", 201, headers=a)
+    before = len(sent)
+    r = expect(client, "post", f"/api/users/{d_id}/follow", 201, headers=a)
+    assert r["is_following"] is True
     rows = db_notifications(d_id)
-    assert len(rows) == 1 and rows[0].email_status == "skipped"
+    assert len(rows) == 1 and rows[0].email_status == "pending" and rows[0].email_attempts == 0, (rows[0].email_status, rows[0].email_attempts)
     assert expect(client, "get", "/api/notifications/unread-count", 200, headers=d) == {"unread": 1}
-    print("[PASS] with SMTP unconfigured the notification is still stored and shown (email skipped)")
+    assert notif.deliver_email(rows[0].id) == "pending" and notif.retry_undelivered() == 0
+    assert len(sent) == before
+    print("[PASS] with SMTP unconfigured the follow + notification are stored and shown; email stays pending (no attempt used)")
+
+    # rows a previous version marked "skipped" for the same reason
+    g_id, g = register(client, "gulya_g")
+    expect(client, "post", f"/api/users/{g_id}/follow", 201, headers=a)
+    with SessionLocal() as db:
+        legacy = db.query(models.Notification).filter_by(recipient_id=g_id).one()
+        legacy.email_status = "skipped"
+        db.commit()
+
+    enable_email()  # SMTP configured + backend restarted -> startup sweep
+    assert notif.retry_undelivered(reset_stuck=True) == 2
+    assert sorted(m["To"] for m in sent[before:]) == ["dina_d@example.com", "gulya_g@example.com"]
+    # the real follower name (current username) and the full profile URL
+    assert all("zarina_new" in body_of(m) and f"https://chineseverse.qobus.tj/u/{a_id}" in body_of(m) for m in sent[before:])
+    for uid in (d_id, g_id):
+        row = db_notifications(uid)[0]
+        assert row.email_status == "sent" and row.email_attempts == 1
+    assert notif.retry_undelivered() == 0 and len(sent) == before + 2
+    print("[PASS] once SMTP is configured, pending (and legacy skipped) follow emails are delivered exactly once")
 
     # ------------------------------------------------ localized email for every UI language
     enable_email()
@@ -273,5 +334,11 @@ with TestClient(app) as client:
             (models.Notification.actor_id == c_id) | (models.Notification.recipient_id == c_id)
         ).count() == 0
     print("[PASS] deleting a user removes notifications to/from them (no broken FKs)")
+
+    # nothing logged since the provider-failure section ever carries the SMTP
+    # password, the SMTP login or a recipient address
+    logs = log_buf.getvalue()
+    assert SECRET not in logs and "mailer@test.invalid" not in logs and "@example.com" not in logs, logs
+    print("[PASS] no SMTP secrets or email addresses in the logs")
 
 print("ALL NOTIFICATION TESTS PASSED")

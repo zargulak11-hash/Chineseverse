@@ -31,6 +31,7 @@ export default function PublicProfile() {
   const [list, setList] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [followError, setFollowError] = useState("");
 
   useEffect(() => {
     setProfile(null);
@@ -51,11 +52,15 @@ export default function PublicProfile() {
 
   async function toggleFollow() {
     setBusy(true);
+    setFollowError("");
     try {
       const updated = profile.is_following
         ? await api.del(`/users/${profile.id}/follow`)
         : await api.post(`/users/${profile.id}/follow`);
       setProfile(updated);
+    } catch {
+      // The profile keeps its real (unchanged) state; just say it failed.
+      setFollowError(t("pages.community.followError"));
     } finally {
       setBusy(false);
     }
@@ -91,6 +96,9 @@ export default function PublicProfile() {
             </MotionButton>
           )}
         </div>
+        {followError && (
+          <p className="sub" role="alert" style={{ color: "var(--bad)", margin: "10px 0 0" }}>{followError}</p>
+        )}
 
         <div className="row" style={{ marginTop: 18, gap: 24 }}>
           <button

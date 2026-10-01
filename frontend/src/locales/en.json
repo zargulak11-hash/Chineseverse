@@ -499,7 +499,8 @@
       "noMatch": "No learners match \"{{query}}\".",
       "follow": "Follow",
       "unfollow": "Unfollow",
-      "following": "Following"
+      "following": "Following",
+      "followError": "Couldn't update follow. Please try again."
     },
     "publicProfile": {
       "nobodyHere": "Nobody here yet."

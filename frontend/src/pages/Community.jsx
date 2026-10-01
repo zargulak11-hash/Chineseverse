@@ -10,14 +10,18 @@ import { Empty, MotionButton } from "../components/ui.jsx";
 function FollowButton({ result, onChange }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   async function toggle() {
     setBusy(true);
+    setError("");
     try {
       const updated = result.is_following
         ? await api.del(`/users/${result.id}/follow`)
         : await api.post(`/users/${result.id}/follow`);
       onChange(updated);
+    } catch {
+      setError(t("pages.community.followError"));
     } finally {
       setBusy(false);
     }
@@ -26,13 +30,18 @@ function FollowButton({ result, onChange }) {
   if (result.is_self) return null;
 
   return (
-    <MotionButton
-      className={`btn small${result.is_following ? " ghost" : " primary"}`}
-      disabled={busy}
-      onClick={toggle}
-    >
-      {result.is_following ? t("pages.community.unfollow") : t("pages.community.follow")}
-    </MotionButton>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, maxWidth: 180 }}>
+      <MotionButton
+        className={`btn small${result.is_following ? " ghost" : " primary"}`}
+        disabled={busy}
+        onClick={toggle}
+      >
+        {result.is_following ? t("pages.community.unfollow") : t("pages.community.follow")}
+      </MotionButton>
+      {error && (
+        <span role="alert" style={{ color: "var(--bad)", fontSize: 11.5, textAlign: "right" }}>{error}</span>
+      )}
+    </div>
   );
 }
 

@@ -498,7 +498,8 @@
       "noMatch": "没有与“{{query}}”匹配的学习者。",
       "follow": "关注",
       "unfollow": "取消关注",
-      "following": "已关注"
+      "following": "已关注",
+      "followError": "关注操作失败，请重试。"
     },
     "publicProfile": {
       "nobodyHere": "这里还没有人。"
