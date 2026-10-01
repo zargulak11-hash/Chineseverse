@@ -22,7 +22,7 @@ The general project rules (api.js, i18n workflow, `useApi`, `useDashboard`, git 
    Ask yourself each time: *"Does an existing ChineseVerse class, component or token already solve this?"*
 3. Touch only what the task needs. Don't restyle neighbouring sections because you prefer another look, and don't migrate a legacy page to a new shape unless the user asked for it (section 16).
 
-**After writing code**, run the quality check in section 14.
+**After writing code**, run the quality check in section 15.
 
 ## 1. Tokens: the single source of truth
 
