@@ -216,7 +216,9 @@ with TestClient(app) as client:
     with SessionLocal() as db:
         assert db.query(models.Follow).filter_by(follower_id=c_id, following_id=b_id).count() == 1
         failed = db.query(models.Notification).filter_by(recipient_id=b_id, actor_id=c_id).one()
-        assert failed.email_status == "failed" and failed.email_attempts == 3, (failed.email_status, failed.email_attempts)
+        # NOT given up: still pending (retryable), with its attempts counted
+        assert failed.email_status == "pending" and failed.email_attempts == 3, (failed.email_status, failed.email_attempts)
+        assert failed.email_last_attempt_at is not None
         # the real SMTP reason is kept on the row, with credentials masked
         assert failed.email_error.startswith("SMTPAuthenticationError 535"), failed.email_error
         assert SECRET not in failed.email_error and "mailer@test.invalid" not in failed.email_error, failed.email_error
@@ -225,11 +227,19 @@ with TestClient(app) as client:
     assert "failed" in logs and "SMTPAuthenticationError" in logs, logs
     assert SECRET not in logs and "mailer@test.invalid" not in logs and "bahrom_b@example.com" not in logs, logs
     assert SECRET not in r.__repr__()
-    print("[PASS] provider failure: follow + notification kept, 3 attempts, status failed, no secrets/addresses in logs")
+    print("[PASS] provider failure: follow + notification kept, 3 attempts, email stays pending, no secrets/addresses in logs")
 
-    # the startup sweep retries it once the provider is back
+    def age_last_attempt(nid, minutes):
+        with SessionLocal() as db:
+            row = db.get(models.Notification, nid)
+            row.email_last_attempt_at = datetime.utcnow() - timedelta(minutes=minutes)
+            db.commit()
+
+    # the sweep backs off: nothing is retried right after the failure
     fail_mode["on"] = False
     before = len(sent)
+    assert notif.retry_undelivered() == 0 and len(sent) == before
+    age_last_attempt(failed.id, 16)
     assert notif.retry_undelivered() == 1
     assert len(sent) == before + 1 and sent[-1]["To"] == "bahrom_b@example.com"
     with SessionLocal() as db:
@@ -237,24 +247,33 @@ with TestClient(app) as client:
         assert fixed.email_status == "sent" and fixed.email_error is None
     assert notif.retry_undelivered() == 0  # nothing is ever mailed twice
     assert notif.deliver_email(failed.id) == "skipped_duplicate"
-    print("[PASS] undelivered email is retried later exactly once")
+    print("[PASS] SMTP restored: the pending email is retried after the backoff and sent exactly once")
 
     # ------------------------------------------------ the periodic sweep: one attempt per run, capped
     fail_mode["on"] = True
     e_id, e = register(client, "emil_e")
     expect(client, "post", f"/api/users/{e_id}/follow", 201, headers=a)
     capped = db_notifications(e_id)[0]
-    assert capped.email_status == "failed" and capped.email_attempts == 3
-    for attempts in (4, 5, 6):
+    assert capped.email_status == "pending" and capped.email_attempts == 3
+    for attempts in range(4, notif.MAX_EMAIL_ATTEMPTS + 1):
+        assert notif.retry_undelivered() == 0  # still inside its backoff window
+        age_last_attempt(capped.id, 13 * 60)
         assert notif.retry_undelivered() == 1
         with SessionLocal() as db:
             row = db.get(models.Notification, capped.id)
-            assert (row.email_status, row.email_attempts) == ("failed", attempts), (row.email_status, row.email_attempts)
+            want = "failed" if attempts == notif.MAX_EMAIL_ATTEMPTS else "pending"
+            assert (row.email_status, row.email_attempts) == (want, attempts), (row.email_status, row.email_attempts)
     fail_mode["on"] = False
     before = len(sent)
-    assert notif.retry_undelivered() == 0 and notif.deliver_email(capped.id) == "skipped_duplicate"
+    age_last_attempt(capped.id, 13 * 60)
+    assert notif.retry_undelivered(ignore_backoff=True) == 0 and notif.deliver_email(capped.id) == "skipped_duplicate"
     assert len(sent) == before
-    print("[PASS] SMTP outage: each sweep makes one more attempt, stopping at the attempt limit")
+    print("[PASS] SMTP outage: sweep retries with backoff, gives up (failed) only after the attempt limit")
+    # an admin's explicit retry after fixing SMTP gives a given-up email one more try -- once
+    assert notif.retry_undelivered(ignore_backoff=True, include_exhausted=True) == 1
+    assert len(sent) == before + 1 and sent[-1]["To"] == "emil_e@example.com"
+    assert notif.retry_undelivered(ignore_backoff=True, include_exhausted=True) == 0 and len(sent) == before + 1
+    print("[PASS] admin retry delivers a given-up email exactly once")
 
     # a delivery in flight ("sending") is never touched by the running sweep;
     # only the startup sweep reclaims rows a stopped process left behind
@@ -355,7 +374,21 @@ with TestClient(app) as client:
     dump = str(diag)
     assert SECRET not in dump and "mailer@test.invalid" not in dump and "no-reply@test.invalid" not in dump
     assert "@example.com" not in dump, "no recipient addresses in diagnostics"
+    assert diag["variables"]["SMTP_PASSWORD"] == "configured" and diag["variables"]["SMTP_HOST"] == "configured"
     print("[PASS] admin email diagnostics: admin-only, config presence only, no secrets or addresses")
+
+    # public health: booleans + missing variable NAMES, never values
+    h = expect(client, "get", "/api/health", 200)
+    assert h["email"] == {"enabled": True, "retry_sweep_running": False, "missing": []}, h
+    settings.smtp_password, settings.smtp_from = None, None
+    h = expect(client, "get", "/api/health", 200)
+    assert h["email"]["missing"] == ["SMTP_PASSWORD", "SMTP_FROM"], h
+    settings.smtp_host = None
+    h = expect(client, "get", "/api/health", 200)
+    assert h["email"]["enabled"] is False and "SMTP_HOST" in h["email"]["missing"]
+    assert "test.invalid" not in str(h) and SECRET not in str(h)
+    enable_email()
+    print("[PASS] /api/health reports email readiness and missing variable names only")
 
     before = len(sent)
     assert expect(client, "post", "/api/admin/email/test", 200, headers=a) == {"ok": True, "error": None}
@@ -384,6 +417,17 @@ with TestClient(app) as client:
     assert mailer._host() == "smtp.gmail.com" and mailer._password() == "abcdefghijklmnop"
     settings.smtp_port, settings.smtp_security, settings.smtp_host, settings.smtp_password = saved
     print("[PASS] SMTP settings: quotes/spaces stripped, Gmail app-password spaces removed, 465 => ssl")
+
+    # ------------------------------------------------ startup: clear log line about email readiness
+    settings.smtp_host = None
+    notif.start_retry_sweep()
+    assert "notification emails are DISABLED: missing SMTP_HOST" in log_buf.getvalue(), log_buf.getvalue()
+    assert not notif.sweep_running()
+    enable_email()
+    notif.start_retry_sweep()
+    assert "notification emails enabled: host=smtp.test.invalid port=587 security=starttls" in log_buf.getvalue()
+    assert "SMTP_PASSWORD=configured" in log_buf.getvalue() and notif.sweep_running()
+    print("[PASS] startup logs whether email is enabled (names/booleans only) and starts the retry sweep")
 
     # nothing logged since the provider-failure section ever carries the SMTP
     # password, the SMTP login or a recipient address

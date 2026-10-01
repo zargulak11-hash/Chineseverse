@@ -14,7 +14,8 @@ recipient is online, and whether or not the email ever goes out. Email is
 best-effort with retries (a few in-process attempts, then a periodic
 sweep), and can never undo the follow or the notification.
 
-email_status: pending -> sending -> sent | failed | no_address.
+email_status: pending -> sending -> sent | pending (retry later) | failed
+(gave up after MAX_EMAIL_ATTEMPTS) | no_address.
 "pending" also covers "SMTP not configured on this server yet": such rows
 are left untouched (no attempt counted) and go out once SMTP is set up
 and the backend restarts. "skipped" is a legacy value from before that
@@ -49,7 +50,16 @@ RENOTIFY_AFTER = timedelta(hours=24)
 # Delivery attempts inside one background run (seconds to wait before each
 # retry), and the lifetime cap across runs / restarts.
 RETRY_DELAYS = (2, 10)
-MAX_EMAIL_ATTEMPTS = 6
+MAX_EMAIL_ATTEMPTS = 10
+# After the in-process attempts, how long the sweep waits since the last
+# attempt before the next one (indexed by sweep attempts already made, last
+# value repeats). Spreads the remaining attempts over ~1 day, so a provider
+# outage or a wrong SMTP password fixed the same day still delivers -- a
+# flat 15-minute retry used up the whole budget in under an hour.
+SWEEP_BACKOFF = (
+    timedelta(minutes=15), timedelta(minutes=30), timedelta(hours=1), timedelta(hours=2),
+    timedelta(hours=4), timedelta(hours=8), timedelta(hours=12),
+)
 # Statuses a delivery may (re)claim. "skipped" rows were written while SMTP
 # was not configured and used to be dropped forever; they never had an
 # attempt, so they are just as deliverable as "pending".
@@ -179,24 +189,28 @@ def render_email(n: models.Notification) -> tuple[str, str, str]:
     return tpl["subject"], text, body
 
 
-def _claim(db: Session, notification_id: int) -> bool:
+def _claim(db: Session, notification_id: int, allow_exhausted: bool = False) -> bool:
     """Atomically mark the row as being sent; False if it was already sent
     or is being sent by someone else -- so a retry or a second worker can
-    never mail the same notification twice."""
+    never mail the same notification twice. allow_exhausted: an admin's
+    explicit "Retry now" may give a given-up ("failed") row one more try."""
+    q = db.query(models.Notification).filter(
+        models.Notification.id == notification_id,
+        models.Notification.email_status.in_(RETRYABLE),
+    )
+    if not allow_exhausted:
+        q = q.filter(models.Notification.email_attempts < MAX_EMAIL_ATTEMPTS)
     claimed = (
-        db.query(models.Notification)
-        .filter(
-            models.Notification.id == notification_id,
-            models.Notification.email_status.in_(RETRYABLE),
-            models.Notification.email_attempts < MAX_EMAIL_ATTEMPTS,
-        )
+        q
         .update({models.Notification.email_status: "sending"}, synchronize_session=False)
     )
     db.commit()
     return claimed == 1
 
 
-def deliver_email(notification_id: int, retry_delays: tuple[int, ...] | None = None) -> str:
+def deliver_email(
+    notification_id: int, retry_delays: tuple[int, ...] | None = None, allow_exhausted: bool = False
+) -> str:
     """Background task: send the email copy of one committed notification.
     Returns the final email_status. Never raises.
 
@@ -210,7 +224,7 @@ def deliver_email(notification_id: int, retry_delays: tuple[int, ...] | None = N
         return "pending"
     try:
         with SessionLocal() as db:
-            if not _claim(db, notification_id):
+            if not _claim(db, notification_id, allow_exhausted):
                 return "skipped_duplicate"
             n = db.get(models.Notification, notification_id)
             if n is None or n.recipient is None:
@@ -221,12 +235,14 @@ def deliver_email(notification_id: int, retry_delays: tuple[int, ...] | None = N
                 return n.email_status
             subject, text, body = render_email(n)
             delays = (0,) + tuple(RETRY_DELAYS if retry_delays is None else retry_delays)
+            cap = max(MAX_EMAIL_ATTEMPTS, n.email_attempts + 1) if allow_exhausted else MAX_EMAIL_ATTEMPTS
             for delay in delays:
-                if n.email_attempts >= MAX_EMAIL_ATTEMPTS:
+                if n.email_attempts >= cap:
                     break
                 if delay:
                     time.sleep(delay)
                 n.email_attempts += 1
+                n.email_last_attempt_at = datetime.utcnow()
                 try:
                     # Always the recipient's registered address from the DB.
                     mailer.send_email(n.recipient.email, subject, text, body)
@@ -241,7 +257,11 @@ def deliver_email(notification_id: int, retry_delays: tuple[int, ...] | None = N
                 db.commit()
                 log.info("notification %s emailed", n.id)
                 return n.email_status
-            n.email_status = "failed"
+            # Still retryable unless the lifetime budget is spent. The reason
+            # stays on the row (email_error) and in the warning log above.
+            n.email_status = "pending" if n.email_attempts < MAX_EMAIL_ATTEMPTS else "failed"
+            if n.email_status == "failed":
+                log.error("notification %s email gave up after %s attempts (%s)", n.id, n.email_attempts, n.email_error)
             db.commit()
             return n.email_status
     except Exception as exc:  # never let a background email crash anything
@@ -256,42 +276,59 @@ def _release_stuck() -> None:
     must not be touched (that is what prevents double sends)."""
     with SessionLocal() as db:
         db.query(models.Notification).filter(models.Notification.email_status == "sending").update(
-            {models.Notification.email_status: "failed"}, synchronize_session=False
+            {models.Notification.email_status: "pending"}, synchronize_session=False
         )
         db.commit()
 
 
-def retry_undelivered(reset_stuck: bool = False) -> int:
+def next_attempt_at(n: models.Notification) -> datetime | None:
+    """When the sweep may try this row again (None = now)."""
+    if n.email_last_attempt_at is None:
+        return None
+    step = max(0, n.email_attempts - (1 + len(RETRY_DELAYS)))
+    return n.email_last_attempt_at + SWEEP_BACKOFF[min(step, len(SWEEP_BACKOFF) - 1)]
+
+
+def retry_undelivered(
+    reset_stuck: bool = False, ignore_backoff: bool = False, include_exhausted: bool = False
+) -> int:
     """Re-attempt recent emails that were never delivered: a provider outage,
-    SMTP not configured when the follow happened, or the process stopping
-    before the background task ran. One attempt per row per call.
-    reset_stuck=True is the startup variant (see _release_stuck)."""
+    a wrong SMTP setting, SMTP not configured when the follow happened, or
+    the process stopping before the background task ran. One attempt per
+    due row per call; returns how many rows were attempted.
+
+    reset_stuck: startup variant (see _release_stuck). ignore_backoff: at
+    startup (settings may just have been fixed) and on an admin's "Retry
+    now". include_exhausted: admin only -- given-up rows get one more try."""
     if not mailer.email_enabled():
         return 0
     if reset_stuck:
         _release_stuck()
+    now = datetime.utcnow()
     with SessionLocal() as db:
-        cutoff = datetime.utcnow() - SWEEP_MAX_AGE
-        rows = (
-            db.query(models.Notification.id)
-            .filter(
-                models.Notification.email_status.in_(RETRYABLE),
-                models.Notification.email_attempts < MAX_EMAIL_ATTEMPTS,
-                models.Notification.created_at >= cutoff,
-            )
-            .order_by(models.Notification.id)
-            .all()
+        q = db.query(models.Notification).filter(
+            models.Notification.email_status.in_(RETRYABLE),
+            models.Notification.created_at >= now - SWEEP_MAX_AGE,
         )
-        ids = [r.id for r in rows]
+        if not include_exhausted:
+            q = q.filter(models.Notification.email_attempts < MAX_EMAIL_ATTEMPTS)
+        rows = q.order_by(models.Notification.id).all()
+        ids = [n.id for n in rows if ignore_backoff or (next_attempt_at(n) or now) <= now]
     for nid in ids:
-        deliver_email(nid, retry_delays=())
+        deliver_email(nid, retry_delays=(), allow_exhausted=include_exhausted)
     return len(ids)
 
 
 def _sweep_forever() -> None:
+    first = True
     while True:
         try:
-            retry_undelivered()
+            # The first run is the startup catch-up: SMTP settings may have
+            # just been fixed, so everything retryable goes now.
+            attempted = retry_undelivered(ignore_backoff=first)
+            if attempted:
+                log.info("notification email sweep attempted %s email(s)", attempted)
+            first = False
         except Exception as exc:  # e.g. DB briefly unreachable: try next round
             log.error("notification email sweep failed (%s)", type(exc).__name__)
         time.sleep(SWEEP_INTERVAL_SECONDS)
@@ -312,7 +349,18 @@ def start_retry_sweep() -> None:
     read at startup, so without them there is nothing to do until the
     backend is restarted with them."""
     if not mailer.email_enabled():
+        log.warning(
+            "notification emails are DISABLED: missing %s -- follows and in-app notifications still "
+            "work; emails stay pending until these are set in backend/.env and the backend container "
+            "is recreated",
+            ", ".join(mailer.missing_vars()) or "SMTP_HOST/SMTP_FROM",
+        )
         return
+    log.info(
+        "notification emails enabled: host=%s port=%s security=%s %s",
+        mailer._host(), settings.smtp_port, mailer.effective_security(),
+        " ".join(f"{k}={v}" for k, v in mailer.config_report().items() if k != "SMTP_HOST"),
+    )
     try:
         _release_stuck()
     except Exception as exc:  # never block startup over email bookkeeping
@@ -359,6 +407,7 @@ def email_diagnostics(db: Session, limit: int = 20) -> dict:
             "timeout_seconds": settings.smtp_timeout_seconds,
             "public_app_url": settings.public_app_url,
         },
+        "variables": mailer.config_report(),
         "sweep_running": sweep_running(),
         "renotify_after_hours": int(RENOTIFY_AFTER.total_seconds() // 3600),
         "max_attempts": MAX_EMAIL_ATTEMPTS,
@@ -375,6 +424,8 @@ def email_diagnostics(db: Session, limit: int = 20) -> dict:
                 "email_attempts": n.email_attempts,
                 "emailed_at": n.emailed_at,
                 "email_error": n.email_error,
+                "email_last_attempt_at": n.email_last_attempt_at,
+                "next_attempt_at": next_attempt_at(n) if n.email_status in RETRYABLE else None,
             }
             for n in rows
         ],

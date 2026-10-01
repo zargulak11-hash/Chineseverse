@@ -187,7 +187,9 @@ def email_retry(
     """Retry undelivered notification emails now instead of at the next
     15-minute sweep. Runs after the response; claims make it safe to
     overlap with the sweep (nothing is sent twice)."""
-    background.add_task(notification_svc.retry_undelivered)
+    # An explicit admin action after fixing SMTP: skip the backoff, and give
+    # emails that already used their attempt budget one more try.
+    background.add_task(notification_svc.retry_undelivered, ignore_backoff=True, include_exhausted=True)
     return {"queued": True}
 
 

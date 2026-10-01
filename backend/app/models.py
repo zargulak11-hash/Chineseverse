@@ -185,6 +185,8 @@ class Notification(Base):
     # credentials and addresses masked), so admins can diagnose delivery
     # from the app instead of from container logs.
     email_error = Column(String(200), nullable=True)
+    # When the last attempt ran; the retry sweep backs off from it.
+    email_last_attempt_at = Column(DateTime, nullable=True)
 
     recipient = relationship("User", foreign_keys=[recipient_id])
     actor = relationship("User", foreign_keys=[actor_id])

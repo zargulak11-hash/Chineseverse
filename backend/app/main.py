@@ -189,3 +189,22 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/health")
+def api_health():
+    """Same liveness check, reachable through nginx's /api/ proxy, plus
+    whether notification email can work in THIS running container: booleans
+    and the NAMES of missing SMTP variables only -- never a value. Lets a
+    deploy be verified without shell access to the server."""
+    from app.services import email as mailer
+    from app.services.notifications import sweep_running
+
+    return {
+        "status": "ok",
+        "email": {
+            "enabled": mailer.email_enabled(),
+            "retry_sweep_running": sweep_running(),
+            "missing": mailer.missing_vars(),
+        },
+    }

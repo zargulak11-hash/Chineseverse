@@ -76,6 +76,43 @@ def effective_security() -> str:
     return "starttls"
 
 
+# The variables a server needs for notification email. The first four have
+# no usable default; the rest fall back to config.py defaults.
+REQUIRED_VARS = ("SMTP_HOST", "SMTP_USERNAME", "SMTP_PASSWORD", "SMTP_FROM")
+DEFAULTED_VARS = ("SMTP_PORT", "SMTP_SECURITY", "SMTP_TIMEOUT_SECONDS", "PUBLIC_APP_URL")
+
+
+def config_report() -> dict:
+    """Which SMTP variables THIS process actually received -- from the
+    container environment (docker compose env_file) or a .env next to the
+    app -- as names and booleans only, never values. "default" means the
+    variable is absent and config.py's default is in use."""
+    import os
+
+    try:
+        from dotenv import dotenv_values
+
+        file_vals = dotenv_values(".env")
+    except Exception:  # no .env in the image is normal under compose
+        file_vals = {}
+
+    def present(name: str) -> bool:
+        return bool((os.environ.get(name) or file_vals.get(name) or "").strip())
+
+    values = {
+        "SMTP_HOST": _host(), "SMTP_USERNAME": _username(),
+        "SMTP_PASSWORD": _password(), "SMTP_FROM": _from(),
+    }
+    report = {name: ("configured" if values[name] else "missing") for name in REQUIRED_VARS}
+    for name in DEFAULTED_VARS:
+        report[name] = "configured" if present(name) else "default"
+    return report
+
+
+def missing_vars() -> list[str]:
+    return [name for name, state in config_report().items() if state == "missing"]
+
+
 def email_enabled() -> bool:
     return bool(_host() and (_from() or _username()))
 
