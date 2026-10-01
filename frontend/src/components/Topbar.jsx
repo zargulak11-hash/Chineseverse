@@ -33,11 +33,20 @@ const DATE_LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 // matches page names instantly, and matches lesson/location titles once
 // those lists have loaded (fetched lazily, on first focus, from the same
 // endpoints Lessons.jsx / WorldMap.jsx already use — no fake results).
-function useGlobalSearch(t) {
+function useGlobalSearch(t, lang) {
   const [query, setQuery] = useState("");
   const [lessons, setLessons] = useState(null);
   const [locations, setLocations] = useState(null);
   const loadedRef = useRef(false);
+
+  // Lesson titles and location names are localized by the API; the top bar
+  // now persists across pages, so reload them after a language switch
+  // instead of searching the previous language's names.
+  useEffect(() => {
+    loadedRef.current = false;
+    setLessons(null);
+    setLocations(null);
+  }, [lang]);
 
   function ensureLoaded() {
     if (loadedRef.current) return;
@@ -128,6 +137,11 @@ function NotifBell({ dashboard, showReminders = true }) {
   const [items, setItems] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const ref = useRef(null);
+
+  // The top bar stays mounted across pages now (Layout.jsx AppShell), so a
+  // navigation that isn't a click here (back/forward, a link in the page)
+  // must close the dropdown itself -- the old remount used to do it.
+  useEffect(() => setOpen(false), [location.pathname]);
 
   useEffect(() => {
     function onDocClick(e) {
@@ -259,9 +273,11 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { notifEnabled } = usePrefs() || {};
-  const { query, setQuery, results, ensureLoaded } = useGlobalSearch(t);
+  const { query, setQuery, results, ensureLoaded } = useGlobalSearch(t, i18n.language);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef(null);
+  const { pathname } = useLocation();
+  useEffect(() => setSearchOpen(false), [pathname]);
   const dateFmt = useMemo(
     () => new Intl.DateTimeFormat(DATE_LOCALE[i18n.language] || "en-US", { weekday: "long", month: "long", day: "numeric" }),
     [i18n.language]

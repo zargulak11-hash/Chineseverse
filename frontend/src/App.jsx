@@ -5,6 +5,7 @@ import { AuthContext, useAuth } from "./auth.js";
 import { initButtonFX } from "./buttonFx.js";
 import BrandLogo from "./components/BrandLogo.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import { AppShell } from "./components/Layout.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -128,270 +129,281 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Every signed-in page shares ONE persistent shell (sidebar + top bar,
+            components/Layout.jsx AppShell): it stays mounted across navigation
+            so the sidebar keeps its scroll position and state. */}
         <Route
-          path="/animals"
           element={
             <RequireAuth>
-              <AnimalSelect />
+              <AppShell />
             </RequireAuth>
           }
-        />
-        <Route
-          path="/onboarding"
-          element={
-            <RequireAuth>
-              <Onboarding />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <RequireAuth>
-              <Dashboard />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/dna"
-          element={
-            <RequireAuth>
-              <DNA />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/roadmap"
-          element={
-            <RequireAuth>
-              <Roadmap />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/lessons"
-          element={
-            <RequireAuth>
-              <Lessons />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/lessons/:lessonId"
-          element={
-            <RequireAuth>
-              <LessonDetail />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/vocabulary"
-          element={
-            <RequireAuth>
-              <Vocabulary />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/grammar"
-          element={
-            <RequireAuth>
-              <Grammar />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/hanzi"
-          element={
-            <RequireAuth>
-              <Hanzi />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/world"
-          element={
-            <RequireAuth>
-              <WorldMap />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/world/:slug"
-          element={
-            <RequireAuth>
-              <LocationDetail />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/conversation/:scenarioId"
-          element={
-            <RequireAuth>
-              <Conversation />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/cases/:scenarioId"
-          element={
-            <RequireAuth>
-              <CaseSolve />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/quests"
-          element={
-            <RequireAuth>
-              <Quests />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/missions"
-          element={
-            <RequireAuth>
-              <Missions />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/duels"
-          element={
-            <RequireAuth>
-              <Duels />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/duels/:duelId"
-          element={
-            <RequireAuth>
-              <DuelBattle />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/achievements"
-          element={
-            <RequireAuth>
-              <Achievements />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/companion"
-          element={
-            <RequireAuth>
-              <Companion />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/voice-companion"
-          element={
-            <RequireAuth>
-              <VoiceCompanion />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/pet-teacher"
-          element={
-            <RequireAuth>
-              <PetTeacher />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/practice"
-          element={
-            <RequireAuth>
-              <Practice />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/review"
-          element={
-            <RequireAuth>
-              <Practice forceSource="review" />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/mistakes"
-          element={
-            <RequireAuth>
-              <Mistakes />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/progress"
-          element={
-            <RequireAuth>
-              <Progress />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <RequireAuth>
-              <Profile />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <RequireAuth>
-              <Settings />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/assistant"
-          element={
-            <RequireAuth>
-              <Assistant />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/community"
-          element={
-            <RequireAuth>
-              <Community />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/u/:userId"
-          element={
-            <RequireAuth>
-              <PublicProfile />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <RequireAdmin>
-              <AdminHome />
-            </RequireAdmin>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <RequireAdmin>
-              <AdminUsers />
-            </RequireAdmin>
-          }
-        />
+        >
+          <Route
+            path="/animals"
+            element={
+              <RequireAuth>
+                <AnimalSelect />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <RequireAuth>
+                <Onboarding />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/dna"
+            element={
+              <RequireAuth>
+                <DNA />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/roadmap"
+            element={
+              <RequireAuth>
+                <Roadmap />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/lessons"
+            element={
+              <RequireAuth>
+                <Lessons />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/lessons/:lessonId"
+            element={
+              <RequireAuth>
+                <LessonDetail />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/vocabulary"
+            element={
+              <RequireAuth>
+                <Vocabulary />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/grammar"
+            element={
+              <RequireAuth>
+                <Grammar />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/hanzi"
+            element={
+              <RequireAuth>
+                <Hanzi />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/world"
+            element={
+              <RequireAuth>
+                <WorldMap />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/world/:slug"
+            element={
+              <RequireAuth>
+                <LocationDetail />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/conversation/:scenarioId"
+            element={
+              <RequireAuth>
+                <Conversation />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/cases/:scenarioId"
+            element={
+              <RequireAuth>
+                <CaseSolve />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/quests"
+            element={
+              <RequireAuth>
+                <Quests />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/missions"
+            element={
+              <RequireAuth>
+                <Missions />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/duels"
+            element={
+              <RequireAuth>
+                <Duels />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/duels/:duelId"
+            element={
+              <RequireAuth>
+                <DuelBattle />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/achievements"
+            element={
+              <RequireAuth>
+                <Achievements />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/companion"
+            element={
+              <RequireAuth>
+                <Companion />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/voice-companion"
+            element={
+              <RequireAuth>
+                <VoiceCompanion />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/pet-teacher"
+            element={
+              <RequireAuth>
+                <PetTeacher />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/practice"
+            element={
+              <RequireAuth>
+                <Practice />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/review"
+            element={
+              <RequireAuth>
+                <Practice forceSource="review" />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/mistakes"
+            element={
+              <RequireAuth>
+                <Mistakes />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/progress"
+            element={
+              <RequireAuth>
+                <Progress />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/assistant"
+            element={
+              <RequireAuth>
+                <Assistant />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/community"
+            element={
+              <RequireAuth>
+                <Community />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/u/:userId"
+            element={
+              <RequireAuth>
+                <PublicProfile />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequireAdmin>
+                <AdminHome />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <RequireAdmin>
+                <AdminUsers />
+              </RequireAdmin>
+            }
+          />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ErrorBoundary>

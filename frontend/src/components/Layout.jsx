@@ -1,6 +1,6 @@
 import { animate, stagger } from "animejs";
-import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
@@ -90,7 +90,17 @@ function PageReveal({ children }) {
   );
 }
 
-export default function Layout({ children }) {
+// The sidebar + top bar used to be rendered by every page's own <Layout>.
+// Each route renders a different page component, so React unmounted the
+// whole shell on every navigation and mounted a fresh one: the sidebar's
+// scrollable <nav> came back at scrollTop 0 (clicking Companion near the
+// bottom threw the sidebar to the top), the collapse state had to be
+// re-read from storage, and the active-link ink never travelled. The shell
+// is now mounted once by a layout route in App.jsx (AppShell) and pages'
+// <Layout> only renders the page content inside it.
+const ShellContext = createContext(false);
+
+function Shell({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -138,8 +148,30 @@ export default function Layout({ children }) {
       />
       <div className="shell-main">
         <Topbar user={user} dashboard={dashboard} onOpenMobileSidebar={() => setMobileOpen(true)} />
-        <PageReveal key={location.pathname}>{children}</PageReveal>
+        {children}
       </div>
     </div>
   );
+}
+
+// The persistent shell: the element of the layout route wrapping every
+// signed-in page in App.jsx. The matched page renders in the <Outlet />.
+export function AppShell() {
+  return (
+    <ShellContext.Provider value={true}>
+      <Shell>
+        <Outlet />
+      </Shell>
+    </ShellContext.Provider>
+  );
+}
+
+// What every page wraps itself in: its content, revealed on each route.
+// Inside AppShell that is all it renders; a page rendered outside it (no
+// layout route) still gets the full shell, so nothing can lose its chrome.
+export default function Layout({ children }) {
+  const inShell = useContext(ShellContext);
+  const location = useLocation();
+  const page = <PageReveal key={location.pathname}>{children}</PageReveal>;
+  return inShell ? page : <Shell>{page}</Shell>;
 }
