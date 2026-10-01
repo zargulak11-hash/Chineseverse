@@ -432,6 +432,31 @@ def email_diagnostics(db: Session, limit: int = 20) -> dict:
     }
 
 
+def delivery_health(db: Session) -> dict:
+    """For the public /api/health: when an email last went out, and the
+    TYPE + SMTP code of the newest undelivered email's last error (e.g.
+    "SMTPAuthenticationError 535") -- never the reply text, an address,
+    or any count of users/notifications."""
+    from sqlalchemy import func
+
+    last_sent = db.query(func.max(models.Notification.emailed_at)).scalar()
+    err_row = (
+        db.query(models.Notification.email_error)
+        .filter(
+            models.Notification.email_status.in_(RETRYABLE + ("failed",)),
+            models.Notification.email_error.isnot(None),
+            models.Notification.created_at >= datetime.utcnow() - SWEEP_MAX_AGE,
+        )
+        .order_by(models.Notification.id.desc())
+        .first()
+    )
+    last_error = None
+    if err_row is not None:
+        parts = err_row[0].split()
+        last_error = " ".join(parts[:2]) if len(parts) > 1 and parts[1].isdigit() else parts[0]
+    return {"last_sent_at": last_sent, "last_error": last_error}
+
+
 def send_test_email(to: str) -> str | None:
     """Admin check: one real email through the configured SMTP server to the
     admin's own registered address. Returns None on success, else the

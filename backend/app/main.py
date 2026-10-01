@@ -198,13 +198,16 @@ def api_health():
     and the NAMES of missing SMTP variables only -- never a value. Lets a
     deploy be verified without shell access to the server."""
     from app.services import email as mailer
-    from app.services.notifications import sweep_running
+    from app.services.notifications import delivery_health, sweep_running
 
-    return {
-        "status": "ok",
-        "email": {
-            "enabled": mailer.email_enabled(),
-            "retry_sweep_running": sweep_running(),
-            "missing": mailer.missing_vars(),
-        },
+    email = {
+        "enabled": mailer.email_enabled(),
+        "retry_sweep_running": sweep_running(),
+        "missing": mailer.missing_vars(),
     }
+    try:
+        with SessionLocal() as db:
+            email.update(delivery_health(db))
+    except Exception:  # health must answer even if the DB is briefly away
+        pass
+    return {"status": "ok", "email": email}

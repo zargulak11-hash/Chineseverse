@@ -379,7 +379,22 @@ with TestClient(app) as client:
 
     # public health: booleans + missing variable NAMES, never values
     h = expect(client, "get", "/api/health", 200)
-    assert h["email"] == {"enabled": True, "retry_sweep_running": False, "missing": []}, h
+    assert {k: h["email"][k] for k in ("enabled", "retry_sweep_running", "missing")} == {
+        "enabled": True, "retry_sweep_running": False, "missing": []}, h
+    assert h["email"]["last_sent_at"]  # emails have gone out in this run
+    # newest undelivered email's error: type + SMTP code only, never the reply text
+    with SessionLocal() as db:
+        row = db.query(models.Notification).order_by(models.Notification.id.desc()).first()
+        row.email_status, row.email_error = "pending", "SMTPAuthenticationError 535 5.7.8 Username and Password not accepted"
+        db.commit()
+        newest_id = row.id
+    h = expect(client, "get", "/api/health", 200)
+    assert h["email"]["last_error"] == "SMTPAuthenticationError 535", h
+    with SessionLocal() as db:
+        row = db.get(models.Notification, newest_id)
+        row.email_status, row.email_error = "sent", None
+        db.commit()
+    assert expect(client, "get", "/api/health", 200)["email"]["last_error"] is None
     settings.smtp_password, settings.smtp_from = None, None
     h = expect(client, "get", "/api/health", 200)
     assert h["email"]["missing"] == ["SMTP_PASSWORD", "SMTP_FROM"], h
