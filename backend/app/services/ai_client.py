@@ -288,9 +288,17 @@ THINKING_HEADROOM = 2048
 # On these the call moves to the next model in GEMINI_FALLBACK_MODELS.
 # Anything else -- 400 bad request, 401/403 bad key -- won't fix itself on
 # another model, so it fails fast to the offline fallback.
-_NEXT_MODEL = {404, 429, 500, 503, 504}
-_OVERLOADED = {500, 503, 504}
+_NEXT_MODEL = {404, 429, 500, 502, 503, 504}
+_OVERLOADED = {500, 502, 503, 504}
 _RETRY_DELAY_S = 1.5
+
+# A model that answered 404 (retired) or 429 (quota spent -- the free-tier
+# limit is per day) is skipped for a while instead of being asked first on
+# every message: otherwise each chat paid an extra failed round trip per
+# exhausted model before reaching one that still answers. In-process only;
+# a restart simply tries every model again.
+_MODEL_COOLDOWN_S = {404: 6 * 3600, 429: 15 * 60}
+_cooling_until: dict[str, float] = {}
 
 
 def _gemini_payload(
@@ -349,9 +357,12 @@ def _gemini_chat(
     payload = _gemini_payload(messages, max_tokens, temperature, json_mode)
     base = settings.gemini_base_url.rstrip("/")
     models = list(dict.fromkeys([settings.gemini_model, *settings.gemini_fallback_models]))
+    now = time.monotonic()
+    # If every model is cooling down, try them all anyway rather than
+    # giving up without asking.
+    queue = [m for m in models if _cooling_until.get(m, 0) <= now] or models
     retried = False
     last_exc: Exception | None = None
-    queue = list(models)
     while queue:
         model = queue[0]
         try:
@@ -366,6 +377,7 @@ def _gemini_chat(
                 timeout=45,
             )
             resp.raise_for_status()
+            _cooling_until.pop(model, None)
             return _gemini_text(resp.json())
         except httpx.HTTPStatusError as exc:
             last_exc = exc
@@ -374,6 +386,8 @@ def _gemini_chat(
             logger.warning("Gemini %s returned HTTP %s", model, status)
             if status not in _NEXT_MODEL:
                 raise
+            if status in _MODEL_COOLDOWN_S:
+                _cooling_until[model] = time.monotonic() + _MODEL_COOLDOWN_S[status]
             if status in _OVERLOADED and not retried:
                 retried = True
                 time.sleep(_RETRY_DELAY_S)

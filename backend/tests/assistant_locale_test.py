@@ -170,6 +170,9 @@ with TestClient(app) as client:
             ("ru", "Какой у меня прогресс?"),
             ("ru", "Какой у меня самый слабый навык?"),
             ("ru", "Что ты умеешь?"),
+            ("tg", "Ман мехоҳам забони хитоиро омӯзам."),
+            ("ru", "Как лучше подготовиться к HSK?"),
+            ("ru", "Что ты можешь делать?"),
         ]
         for locale, text in cases:
             body = chat(client, h, text, locale)
@@ -244,7 +247,8 @@ with TestClient(app) as client:
             raise httpx.ReadTimeout("timed out")
         def empty(messages, **kw):
             raise ValueError("Gemini returned no text")
-        failures = (http_error(429), http_error(503), http_error(401), http_error(403), unreachable, timeout, empty)
+        failures = (http_error(429), http_error(500), http_error(502), http_error(503),
+                    http_error(401), http_error(403), unreachable, timeout, empty)
         for failure in failures:
             ai_client._gemini_chat = failure
             for locale in ("en", "ru", "tg", "zh"):
@@ -252,7 +256,7 @@ with TestClient(app) as client:
                 assert set(body) == {"reply", "source"} and body["source"] == "offline", body
                 assert body["reply"].startswith(ai_client.ASSISTANT_OFFLINE[locale]["unavailable"]), body
                 assert_language(body["reply"], locale)
-        print("[PASS] 429/503/401/403/network/timeout/empty all degrade to the localized fallback")
+        print("[PASS] 429/500/502/503/401/403/network/timeout/empty all degrade to the localized fallback")
     finally:
         ai_client._active_provider, ai_client._gemini_chat = orig_provider, orig_chat
 
@@ -346,8 +350,10 @@ try:
 
     msg = [{"role": "user", "content": "hi"}]
 
-    def run(*outcomes):
+    def run(*outcomes, keep_cooldowns=False):
         calls.clear()
+        if not keep_cooldowns:
+            ai_client._cooling_until.clear()
         script[:] = list(outcomes)
         try:
             return ai_client._gemini_chat(msg), [model_of(u) for u in calls]
@@ -361,6 +367,7 @@ try:
     # Overload: one quick retry on the same model first.
     assert run(503)[1] == ["gemini-3.8-flash", "gemini-3.8-flash"]
     assert run(503, 503)[1] == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.5-flash"]
+    assert run(502, 502)[1] == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.5-flash"]
     # Timeout -> next model.
     assert run("timeout")[1] == ["gemini-3.8-flash", "gemini-3.5-flash"]
     # Bad key / bad request won't be fixed by another model: fail fast.
@@ -377,7 +384,25 @@ try:
     except httpx.HTTPStatusError as exc:
         assert exc.response.status_code == 429
     assert len(calls) == 3
-    print("[PASS] model chain: 404/429/timeout -> next model, 503 retried once, 4xx auth errors fail fast")
+    print("[PASS] model chain: 404/429/timeout -> next model, 502/503 retried once, 4xx auth errors fail fast")
+
+    # A model out of quota is skipped on the following messages instead of
+    # costing an extra failed round trip every time...
+    assert run(429)[1] == ["gemini-3.8-flash", "gemini-3.5-flash"]
+    assert run(keep_cooldowns=True)[1] == ["gemini-3.5-flash"]
+    assert run(429, keep_cooldowns=True)[1] == ["gemini-3.5-flash", "gemini-flash-lite-latest"]
+    assert run(keep_cooldowns=True)[1] == ["gemini-flash-lite-latest"]
+    # ...an overload (503) is not remembered...
+    ai_client._cooling_until.clear()
+    run(503, 503)
+    assert run(keep_cooldowns=True)[1] == ["gemini-3.8-flash"]
+    # ...and with every model cooling down, all are still tried.
+    for m in ("gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-lite-latest"):
+        ai_client._cooling_until[m] = ai_client.time.monotonic() + 600
+    assert run(keep_cooldowns=True)[1] == ["gemini-3.8-flash"]
+    assert "gemini-3.8-flash" not in ai_client._cooling_until  # success clears it
+    ai_client._cooling_until.clear()
+    print("[PASS] quota-exhausted / retired models are skipped for a cooldown, overloads are not")
 
     # JSON graders ask Gemini for JSON output.
     script[:] = [{"candidates": [{"content": {"parts": [{"text": '{"solved": true, "feedback": "对"}'}]}}]}]
