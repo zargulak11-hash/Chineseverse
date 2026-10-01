@@ -158,8 +158,32 @@
   "pages": {
     "lessons": {
       "title": "课程",
-      "subtitle": "结构化的语法课程，支撑起每一次对话。",
-      "empty": "暂无课程。"
+      "subtitle": "一课一课地学：通过本课的练习，即可解锁下一课。",
+      "empty": "暂无课程。",
+      "eyebrow": "你的学习路径",
+      "upNext": "下一步",
+      "start": "开始学习",
+      "review": "复习",
+      "open": "打开",
+      "lockedReason": "请先完成上一课。",
+      "levelLocked": "完成 HSK {{level}} 后即可解锁本级。",
+      "readingHint": "阅读课 · 无练习",
+      "pathDone": "你已完成路径上的所有课程。去复习巩固吧。",
+      "completedKpi": "已完成课程",
+      "currentLevel": "当前级别",
+      "levelKpi": "本级进度",
+      "hskProgress": "HSK 进度",
+      "keepSharp": "巩固练习",
+      "reviewMistakes": "复习错题",
+      "chooseLevel": "选择 HSK 级别",
+      "best": "最佳：{{score}}%",
+      "lessonsInLevel": "{{done}} / {{total}} 课",
+      "status": {
+        "completed": "已完成",
+        "current": "下一课",
+        "available": "可学习",
+        "locked": "未解锁"
+      }
     },
     "vocabulary": {
       "title": "词汇",
@@ -544,7 +568,10 @@
       "practiceAgain": "再练一次",
       "practiceToComplete": "通过练习完成本课",
       "noPractice": "本课暂时没有可练习的词语或语法。",
-      "passHint": "在本课练习中得分达到 70% 及以上即完成本课。"
+      "passHint": "在本课练习中得分达到 70% 及以上即完成本课。",
+      "lockedTitle": "本课尚未解锁",
+      "lockedText": "请先完成上一课——学习路径会告诉你接下来学什么。",
+      "backToPath": "返回学习路径"
     },
     "locationDetail": {
       "entering": "正在进入…",
@@ -774,7 +801,8 @@
     },
     "questionLabel": "题目",
     "accuracy": "正确率",
-    "roundProgress": "本轮进度"
+    "roundProgress": "本轮进度",
+    "nextLesson": "下一课"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",

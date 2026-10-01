@@ -26,6 +26,18 @@ def _own_or_404(db: Session, progress_id: int, user: models.User) -> models.Prog
     return item
 
 
+def _no_self_completion(new_status: str | None, was_completed: bool = False) -> None:
+    """A lesson is completed only by passing its server-graded practice round
+    (services.practice._record_lesson), on the lesson path's order. These
+    endpoints used to accept status="completed" from the client, which let a
+    learner complete -- and so unlock past -- any lesson without doing it."""
+    if new_status == "completed" and not was_completed:
+        raise HTTPException(
+            status_code=403,
+            detail="Lessons are completed by passing their practice round",
+        )
+
+
 def _sync_completed_at(item: models.Progress):
     if item.status == "completed" and item.completed_at is None:
         item.completed_at = datetime.utcnow()
@@ -73,6 +85,7 @@ def create_progress(
         raise HTTPException(status_code=403, detail="You can only record your own progress")
     if db.get(models.Lesson, payload.lesson_id) is None:
         raise HTTPException(status_code=404, detail=f"Lesson with id {payload.lesson_id} not found")
+    _no_self_completion(payload.status)
     item = models.Progress(
         user_id=user.id, lesson_id=payload.lesson_id, status=payload.status, score=payload.score
     )
@@ -108,6 +121,7 @@ def update_progress(
 ):
     item = _own_or_404(db, progress_id, user)
     was_completed = item.status == "completed"
+    _no_self_completion(payload.status, was_completed)
     item.status = payload.status
     item.score = payload.score
     _sync_completed_at(item)
@@ -126,6 +140,7 @@ def patch_progress(
 ):
     item = _own_or_404(db, progress_id, user)
     was_completed = item.status == "completed"
+    _no_self_completion(payload.status, was_completed)
     apply_updates(item, payload.model_dump(exclude_unset=True))
     _sync_completed_at(item)
     _log_if_newly_completed(db, user, item, was_completed)

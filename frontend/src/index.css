@@ -4021,6 +4021,27 @@ table.data td {
   margin-top: 14px;
 }
 
+/* Lesson path (pages/Lessons.jsx): the roadmap's rail and nodes, one HSK
+   level at a time, plus the "up next" card -- highlighted the same way as
+   the roadmap's current step. */
+.lesson-path { list-style: none; padding: 0; margin: 0; }
+.lesson-next { border-color: var(--accent-border); box-shadow: var(--ring-accent); }
+.lesson-levels { gap: var(--space-2); }
+.lesson-level-note { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
+.lesson-step-title { min-width: 0; overflow-wrap: anywhere; }
+.lesson-step-summary { margin: var(--space-2) 0 0; }
+/* Grammar lessons' summaries are long point lists; on the path they would
+   push the action button off a phone screen. The lesson page shows it all. */
+.lesson-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lesson-step-foot { margin-top: var(--space-3); gap: var(--space-2); }
+.lesson-locked { max-width: 520px; margin: var(--space-7) auto 0; text-align: center; }
+.lesson-locked .row { justify-content: center; }
+
 /* Practice: question on the left, round progress + companion beside it. */
 .round-dots { display: flex; flex-wrap: wrap; gap: 6px; }
 .round-dot {

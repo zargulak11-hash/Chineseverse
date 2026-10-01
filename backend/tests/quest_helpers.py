@@ -28,15 +28,16 @@ def drive_quest(call, H, q):
             w = words[i % len(words)]
             call("POST", f"/api/vocab/{w['id']}/review", {"correct": True}, headers=H)
     elif kind == "lesson":
-        lessons = call("GET", "/api/lessons", headers=H)
-        lid = lessons[0]["id"]
-        prog = call("GET", "/api/progress", headers=H)
-        p = next((x for x in prog if x["lesson_id"] == lid), None)
-        if p:
-            call("PATCH", f"/api/progress/{p['id']}", {"status": "completed", "score": 100}, headers=H)
-        else:
-            created = call("POST", "/api/progress", {"lesson_id": lid, "status": "completed", "score": 100}, headers=H)
-            call("PATCH", f"/api/progress/{created['id']}", {"status": "completed", "score": 100}, headers=H)
+        # A lesson completes only when its server-graded round is passed
+        # (status="completed" via /api/progress is refused), so this is a real
+        # attempt at the current lesson -- it counts only if it scores >= 70%.
+        path = call("GET", "/api/lessons/path", headers=H)
+        if path["current_lesson_id"] is None:
+            return
+        s = call("POST", "/api/practice/sessions", {"source": "lesson", "lesson_id": path["current_lesson_id"]}, headers=H)
+        for i, q in enumerate(s["questions"]):
+            call("POST", f"/api/practice/sessions/{s['id']}/answer", {"index": i, "choice_id": q["options"][0]["id"]}, headers=H)
+        call("POST", f"/api/practice/sessions/{s['id']}/complete", headers=H)
     elif kind == "case":
         call(
             "POST",
@@ -73,8 +74,9 @@ def play_real_duel(call, H):
 
 
 def complete_any(call, H, quests):
-    """Drive the leader quest until one is completed; return the completed quest."""
-    target = min(quests, key=lambda q: (q["target"] - (q["progress"] or 0)))
+    """Drive the leader quest until one is completed; return the completed quest.
+    Lesson quests go last: a script cannot pass a lesson round on demand."""
+    target = min(quests, key=lambda q: (q["quest_type"] == "lesson", q["target"] - (q["progress"] or 0)))
     for _ in range(30):
         drive_quest(call, H, target)
         refreshed = call("GET", "/api/quests/today", headers=H)

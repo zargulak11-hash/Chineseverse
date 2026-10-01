@@ -190,13 +190,12 @@ with TestClient(app) as client:
     print(f"[PASS] high performance: {' -> '.join(moods4)} -> celebrating; trained skill reports the real DNA value")
 
     # ------------------------------------------------ lesson start + completion
+    # The learner's current lesson on the path: the only lesson both fresh
+    # learners here may practice and complete.
+    current_id = expect(client, "get", "/api/lessons/path", 200, headers=h)["current_lesson_id"]
     with SessionLocal() as db:
-        lesson = None
-        for l in db.query(models.Lesson).order_by(models.Lesson.id):
-            if len(lesson_items(db, l)["vocab"]) >= 3:
-                lesson = l
-                break
-        assert lesson is not None
+        lesson = db.get(models.Lesson, current_id)
+        assert lesson is not None and lesson_items(db, lesson)["vocab"], "current lesson teaches no words"
         lesson_words = {w.simplified for w in lesson_items(db, lesson)["vocab"]}
         lesson_id = lesson.id
     ls = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "lesson", "lesson_id": lesson_id})

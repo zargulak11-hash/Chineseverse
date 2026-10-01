@@ -114,14 +114,11 @@ with TestClient(app) as client:
     print("[PASS] review serves missed items, feeds Memory; a fresh learner gets 'nothing due'")
 
     # --- lessons are practiced through their real content and completed by score
-    lessons = expect(client, "get", "/api/lessons?hsk_level=1", 200)
-    lesson = None
-    for l in lessons:
-        items = expect(client, "get", f"/api/lessons/{l['id']}/items", 200)
-        if len(items["vocab"]) >= 3:
-            lesson = l
-            break
-    assert lesson is not None, "no HSK1 lesson with linked vocabulary"
+    # The learner's current lesson on the path -- the only step they may complete.
+    path = expect(client, "get", "/api/lessons/path", 200, headers=h)
+    lesson = next(l for lvl in path["levels"] for l in lvl["lessons"] if l["id"] == path["current_lesson_id"])
+    items = expect(client, "get", f"/api/lessons/{lesson['id']}/items", 200, headers=h)
+    assert items["vocab"] or items["grammar"], "current lesson has nothing to practice"
     ls = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "lesson", "lesson_id": lesson["id"]})
     with SessionLocal() as db:
         lq = db.get(models.PracticeSession, ls["id"]).questions

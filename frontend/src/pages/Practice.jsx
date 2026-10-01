@@ -53,7 +53,9 @@ export default function Practice({ forceSource }) {
         setSession(s);
         shownAt.current = Date.now();
       })
-      .catch((e) => setError(e.message));
+      // A lesson the learner hasn't reached on the path is refused by the
+      // server with code lesson_locked; explain it in their language.
+      .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
   }, [source, level, lessonId, i18n]);
 
   useEffect(start, [start]);
@@ -253,7 +255,13 @@ export default function Practice({ forceSource }) {
           </div>
         </div>
         <div className="row" style={{ marginTop: 16, flexWrap: "wrap" }}>
-          <button className="btn primary" onClick={start}>{t("practice.again")}</button>
+          {/* Set by the server only when this round just completed the lesson. */}
+          {summary.next_lesson_id && (
+            <Link to={`/lessons/${summary.next_lesson_id}`} className="btn primary">
+              {t("practice.nextLesson")} <Icon name="arrowRight" size={15} />
+            </Link>
+          )}
+          <button className={`btn${summary.next_lesson_id ? "" : " primary"}`} onClick={start}>{t("practice.again")}</button>
           <Link to="/review"><button className="btn">{t("nav.review")}</button></Link>
           <Link to={backTo}><button className="btn ghost">{t("practice.back")}</button></Link>
         </div>

@@ -17,9 +17,12 @@ export default function LessonDetail() {
   const [items, setItems] = useState(null);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState("");
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     setError("");
+    setLocked(false);
+    setLesson(null);
     Promise.all([
       api.get(`/lessons/${lessonId}`),
       api.get(`/lessons/${lessonId}/items`),
@@ -30,9 +33,26 @@ export default function LessonDetail() {
         setItems(it);
         setProgress(ps[0] || null);
       })
-      .catch((e) => setError(e.message));
+      // The lesson path is enforced by the server: a lesson the learner has
+      // not reached yet comes back 403 lesson_locked (URL typed by hand, an
+      // old bookmark, search...), and this page explains it instead.
+      .catch((e) => (e.code === "lesson_locked" ? setLocked(true) : setError(e.message)));
   }, [lessonId, i18n.language]);
 
+  if (locked) {
+    return (
+      <Layout>
+        <div className="card lesson-locked">
+          <Icon name="lock" size={28} />
+          <h1 className="h1" style={{ marginTop: 12 }}>{t("pages.lessonDetail.lockedTitle")}</h1>
+          <p className="sub">{t("pages.lessonDetail.lockedText")}</p>
+          <div className="row" style={{ marginTop: 16 }}>
+            <Link to="/lessons" className="btn primary">{t("pages.lessonDetail.backToPath")}</Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!lesson || !items) return <Layout><Loading /></Layout>;
 

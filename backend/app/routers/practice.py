@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
+from app.services import lesson_path
 from app.services import practice as svc
 from app.services.companion_reaction import review_clear_reaction
 from app.services.gamification import check_achievements
@@ -47,6 +48,12 @@ def create_session(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
+    if payload.source == "lesson" and payload.lesson_id is not None:
+        # A lesson round is how a lesson gets completed, so it is only built
+        # for a lesson the learner has reached on the path (admins included).
+        state = lesson_path.path_state(db, user)
+        if state.entry(payload.lesson_id) is not None and not state.is_open(payload.lesson_id):
+            return JSONResponse(status_code=403, content=lesson_path.locked_payload(state))
     session = _run(
         svc.build_session, db, user, payload.source,
         hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size,

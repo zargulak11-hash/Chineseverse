@@ -153,6 +153,17 @@ def lesson_items(db: Session, lesson: models.Lesson) -> dict[str, list]:
     return {"vocab": words, "grammar": grammar}
 
 
+def lesson_round_items(db: Session, lesson: models.Lesson) -> list[tuple[str, object]]:
+    """What a lesson's practice round is built from. Empty means the lesson
+    is reading-only: it has no round, so it can never be passed -- the
+    lesson path (services/lesson_path.py) uses this same rule so it never
+    blocks a learner behind a lesson they could not complete."""
+    items = lesson_items(db, lesson)
+    vocab = [w for w in items["vocab"] if _usable("vocab", w)][:8]
+    grammar = [g for g in items["grammar"] if _usable("grammar", g)][:4]
+    return [("vocab", w) for w in vocab] + [("grammar", g) for g in grammar]
+
+
 # --------------------------------------------------------------------------- building
 
 def _pick_type(item_type: str, index: int) -> str:
@@ -239,10 +250,7 @@ def build_session(
         lesson = db.get(models.Lesson, lesson_id) if lesson_id else None
         if lesson is None:
             raise PracticeError(404, "Lesson not found")
-        items = lesson_items(db, lesson)
-        vocab = [w for w in items["vocab"] if _usable("vocab", w)][:8]
-        grammar = [g for g in items["grammar"] if _usable("grammar", g)][:4]
-        picked = [("vocab", w) for w in vocab] + [("grammar", g) for g in grammar]
+        picked = lesson_round_items(db, lesson)
         if not picked:
             raise PracticeError(422, "This lesson has no linked vocabulary or grammar to practice yet")
     else:  # review
@@ -544,6 +552,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
     xp = 0
     lesson_status = None
     newly_completed = False
+    next_lesson_id = None
     if first_completion:
         if answered == 0:
             raise PracticeError(422, "Answer at least one question before finishing")
@@ -553,10 +562,27 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             user.total_xp += XP_GOOD_ROUND_BONUS
             xp = XP_GOOD_ROUND_BONUS
         if session.lesson_id:
+            # Imported here: lesson_path builds on this module.
+            from app.services import lesson_path
+
             prev = db.query(models.Progress).filter_by(user_id=user.id, lesson_id=session.lesson_id).first()
             was_completed = prev is not None and prev.status == "completed"
-            lesson_status = _record_lesson(db, user, session.lesson_id, score)
-            newly_completed = lesson_status == "completed" and not was_completed
+            state = lesson_path.path_state(db, user)
+            if state.is_open(session.lesson_id):
+                lesson_status = _record_lesson(db, user, session.lesson_id, score)
+                newly_completed = lesson_status == "completed" and not was_completed
+                if newly_completed:
+                    # Passing the current lesson opens the next step; passing
+                    # an older one (left open by pre-path progress) does not
+                    # move the learner, who continues at their current lesson.
+                    is_current = state.current is not None and state.current.lesson.id == session.lesson_id
+                    nxt = state.after(session.lesson_id) if is_current else state.current
+                    next_lesson_id = nxt.lesson.id if nxt else None
+            else:
+                # A round started on a lesson that is locked by now (e.g.
+                # built before the lesson path existed) still grades its
+                # words, but cannot complete a lesson out of order.
+                lesson_status = prev.status if prev else None
         db.commit()
     elif session.lesson_id:
         p = db.query(models.Progress).filter_by(user_id=user.id, lesson_id=session.lesson_id).first()
@@ -580,6 +606,9 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
         "score": round(score * 100, 1),
         "xp_bonus": xp,
         "lesson_status": lesson_status,
+        # Set only when this round just completed its lesson: the lesson the
+        # learner should study next on the path (None at the end of it).
+        "next_lesson_id": next_lesson_id,
         "passed": score >= PASS_SCORE,
         "missed": missed,
         "reaction": cr.session_reaction(

@@ -128,8 +128,11 @@ with TestClient(app) as client:
     expect(client, "post", "/api/lessons", 201, json={"title": "Numbers", "content": "一二三", "hsk_level": 1, "order_index": 1}, headers=admin_headers)
     expect(client, "post", "/api/lessons", 201, json={"title": "Family", "content": "家", "hsk_level": 2, "order_index": 0}, headers=admin_headers)
     assert len(client.get("/api/lessons", params={"hsk_level": 1}).json()) == baseline_hsk1 + 2
-    expect(client, "get", f"/api/lessons/{lid}", 200)
-    expect(client, "get", "/api/lessons/999999", 404)
+    # A lesson's content is gated by the lesson path (lesson_path_test.py);
+    # admins author lessons, so they may read any of them.
+    expect(client, "get", f"/api/lessons/{lid}", 401)
+    expect(client, "get", f"/api/lessons/{lid}", 200, headers=admin_headers)
+    expect(client, "get", "/api/lessons/999999", 404, headers=admin_headers)
     result = expect(
         client, "put", f"/api/lessons/{lid}", 200,
         json={"title": "Hello!", "content": "你好", "hsk_level": 1, "order_index": 0, "lesson_type": "lesson"},
@@ -140,7 +143,7 @@ with TestClient(app) as client:
     expect(client, "delete", f"/api/lessons/{lid}", 401)
     expect(client, "delete", f"/api/lessons/{lid}", 403, headers=joe_headers)
     expect(client, "delete", f"/api/lessons/{lid}", 204, headers=admin_headers)
-    expect(client, "get", f"/api/lessons/{lid}", 404)
+    expect(client, "get", f"/api/lessons/{lid}", 404, headers=admin_headers)
 
     # Progress: always the signed-in user's own rows
     lesson2 = client.get("/api/lessons", params={"hsk_level": 2}).json()[0]
@@ -157,12 +160,14 @@ with TestClient(app) as client:
     expect(client, "post", "/api/progress", 403, json={"user_id": regularjoe["id"], "lesson_id": lesson2["id"]}, headers=alice_headers)
     expect(client, "post", "/api/progress", 404, json={"lesson_id": 999999}, headers=alice_headers)
     expect(client, "post", "/api/progress", 422, json={"lesson_id": lesson2["id"], "status": "completed", "score": 150}, headers=alice_headers)
-    done = expect(
+    # Completion only comes from a passed practice round, never from the client.
+    expect(client, "patch", f"/api/progress/{pid}", 403, json={"status": "completed", "score": 92}, headers=alice_headers)
+    moved = expect(
         client, "patch", f"/api/progress/{pid}", 200,
-        json={"status": "completed", "score": 92}, headers=alice_headers,
+        json={"status": "in_progress", "score": 40}, headers=alice_headers,
     ).json()
-    assert done["status"] == "completed"
-    assert done["completed_at"] is not None
+    assert moved["status"] == "in_progress"
+    assert moved["completed_at"] is None
     # Another learner can neither see nor touch alice's row.
     assert client.get("/api/progress", headers=joe_headers).json() == []
     expect(client, "get", f"/api/progress/{pid}", 404, headers=joe_headers)

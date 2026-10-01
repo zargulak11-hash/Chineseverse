@@ -73,12 +73,15 @@ rm = call("GET", "/api/hsk/roadmap", headers=H)
 assert len(rm["levels"]) == 6 and rm["current_level"] == 1
 print("  OK 6 levels")
 
-print("\n== Lessons + progress (POST /api/progress, PATCH) ==")
-lessons = call("GET", "/api/lessons", headers=H)
-fl = lessons[0]
-p = call("POST", "/api/progress", {"user_id": user["user"]["id"], "lesson_id": fl["id"], "status": "in_progress"}, headers=H, expected=(200, 201))
-call("PATCH", f"/api/progress/{p['id']}", {"status": "completed", "score": 100}, headers=H)
-print(f"  OK lesson '{fl['title']}' completed")
+print("\n== Lesson path (GET /api/lessons/path, gated lesson reads) ==")
+path = call("GET", "/api/lessons/path", headers=H)
+cur = path["current_lesson_id"]
+fl = call("GET", f"/api/lessons/{cur}", headers=H)
+call("GET", f"/api/lessons/{cur}/items", headers=H)
+locked = next(l for lvl in path["levels"] for l in lvl["lessons"] if l["status"] == "locked")
+call("GET", f"/api/lessons/{locked['id']}", headers=H, expected=(403,))
+call("POST", "/api/progress", {"lesson_id": cur, "status": "completed"}, headers=H, expected=(403,))
+print(f"  OK current lesson '{fl['title']}' opens; locked lesson and self-completion are refused")
 
 print("\n== Vocabulary (GET /api/vocab + POST review) ==")
 words = call("GET", "/api/vocab?hsk_level=1", headers=H)

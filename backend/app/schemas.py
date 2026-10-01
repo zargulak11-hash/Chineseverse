@@ -302,6 +302,9 @@ class LessonResponse(BaseModel):
     content: Optional[str]
     lesson_type: str
     order_index: int
+    # The signed-in learner's place on the lesson path (services/lesson_path):
+    # completed | current | available. Only set on a single-lesson read.
+    path_status: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
