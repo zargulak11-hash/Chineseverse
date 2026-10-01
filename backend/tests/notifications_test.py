@@ -217,6 +217,9 @@ with TestClient(app) as client:
         assert db.query(models.Follow).filter_by(follower_id=c_id, following_id=b_id).count() == 1
         failed = db.query(models.Notification).filter_by(recipient_id=b_id, actor_id=c_id).one()
         assert failed.email_status == "failed" and failed.email_attempts == 3, (failed.email_status, failed.email_attempts)
+        # the real SMTP reason is kept on the row, with credentials masked
+        assert failed.email_error.startswith("SMTPAuthenticationError 535"), failed.email_error
+        assert SECRET not in failed.email_error and "mailer@test.invalid" not in failed.email_error, failed.email_error
     assert any(x["actor"]["id"] == c_id for x in expect(client, "get", "/api/notifications", 200, headers=b))
     logs = log_buf.getvalue()
     assert "failed" in logs and "SMTPAuthenticationError" in logs, logs
@@ -230,7 +233,8 @@ with TestClient(app) as client:
     assert notif.retry_undelivered() == 1
     assert len(sent) == before + 1 and sent[-1]["To"] == "bahrom_b@example.com"
     with SessionLocal() as db:
-        assert db.query(models.Notification).filter_by(recipient_id=b_id, actor_id=c_id).one().email_status == "sent"
+        fixed = db.query(models.Notification).filter_by(recipient_id=b_id, actor_id=c_id).one()
+        assert fixed.email_status == "sent" and fixed.email_error is None
     assert notif.retry_undelivered() == 0  # nothing is ever mailed twice
     assert notif.deliver_email(failed.id) == "skipped_duplicate"
     print("[PASS] undelivered email is retried later exactly once")
@@ -334,6 +338,52 @@ with TestClient(app) as client:
             (models.Notification.actor_id == c_id) | (models.Notification.recipient_id == c_id)
         ).count() == 0
     print("[PASS] deleting a user removes notifications to/from them (no broken FKs)")
+
+    # ------------------------------------------------ admin email diagnostics
+    with SessionLocal() as db:
+        db.get(models.User, a_id).is_admin = True
+        db.commit()
+    expect(client, "get", "/api/admin/email", 401)
+    expect(client, "get", "/api/admin/email", 403, headers=b)
+    expect(client, "post", "/api/admin/email/test", 403, headers=b)
+    expect(client, "post", "/api/admin/email/retry", 403, headers=b)
+    diag = expect(client, "get", "/api/admin/email", 200, headers=a)
+    cfg = diag["config"]
+    assert cfg["enabled"] is True and cfg["host"] == "smtp.test.invalid" and cfg["security"] == "starttls"
+    assert cfg["username_set"] and cfg["password_set"] and cfg["from_set"]
+    assert diag["renotify_after_hours"] == 24 and diag["recent"] and "email_error" in diag["recent"][0]
+    dump = str(diag)
+    assert SECRET not in dump and "mailer@test.invalid" not in dump and "no-reply@test.invalid" not in dump
+    assert "@example.com" not in dump, "no recipient addresses in diagnostics"
+    print("[PASS] admin email diagnostics: admin-only, config presence only, no secrets or addresses")
+
+    before = len(sent)
+    assert expect(client, "post", "/api/admin/email/test", 200, headers=a) == {"ok": True, "error": None}
+    assert len(sent) == before + 1 and sent[-1]["To"] == "zarina_a@example.com"
+    fail_mode["on"] = True
+    r = expect(client, "post", "/api/admin/email/test", 200, headers=a)
+    fail_mode["on"] = False
+    assert r["ok"] is False and r["error"].startswith("SMTPAuthenticationError 535") and SECRET not in r["error"], r
+    assert "mailer@test.invalid" not in r["error"]
+    settings.smtp_host = None
+    r = expect(client, "post", "/api/admin/email/test", 200, headers=a)
+    assert r["ok"] is False and r["error"].startswith("EmailNotConfigured"), r
+    enable_email()
+    assert expect(client, "post", "/api/admin/email/retry", 200, headers=a) == {"queued": True}
+    print("[PASS] admin test email goes to the admin's own address and reports the masked SMTP error")
+
+    # ------------------------------------------------ SMTP settings as people actually paste them
+    saved = (settings.smtp_port, settings.smtp_security, settings.smtp_host, settings.smtp_password)
+    settings.smtp_port, settings.smtp_security = 465, "starttls"
+    assert mailer.effective_security() == "ssl"  # 465 is implicit TLS
+    settings.smtp_port = 587
+    for raw, want in (("tls", "starttls"), ("STARTTLS", "starttls"), ("ssl", "ssl"), ("none", "none"), ('"starttls"', "starttls")):
+        settings.smtp_security = raw
+        assert mailer.effective_security() == want, (raw, mailer.effective_security())
+    settings.smtp_host, settings.smtp_password = ' "smtp.gmail.com" ', "'abcd efgh ijkl mnop'"
+    assert mailer._host() == "smtp.gmail.com" and mailer._password() == "abcdefghijklmnop"
+    settings.smtp_port, settings.smtp_security, settings.smtp_host, settings.smtp_password = saved
+    print("[PASS] SMTP settings: quotes/spaces stripped, Gmail app-password spaces removed, 465 => ssl")
 
     # nothing logged since the provider-failure section ever carries the SMTP
     # password, the SMTP login or a recipient address

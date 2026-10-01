@@ -601,7 +601,39 @@
     "adminHome": {
       "title": "Admin Home",
       "subtitle": "Overview of registered ChineseVerse accounts.",
-      "registeredUsers": "Registered Users"
+      "registeredUsers": "Registered Users",
+      "email": {
+        "title": "Email delivery",
+        "sendTest": "Send test email",
+        "retryNow": "Retry now",
+        "refresh": "Refresh",
+        "testOk": "Test email sent to your own address. Check your inbox (and Spam).",
+        "retryQueued": "Retry started. Refreshing in a few seconds…",
+        "disabledHint": "Email is OFF in the running backend: SMTP_HOST and SMTP_FROM/SMTP_USERNAME were not loaded. Add them to backend/.env and recreate the backend container.",
+        "enabled": "Email enabled",
+        "host": "SMTP host",
+        "portSecurity": "Port · security",
+        "username": "Login set",
+        "password": "Password set",
+        "from": "Sender set",
+        "fromMatches": "Sender matches login",
+        "sweep": "Retry sweep running",
+        "yes": "yes",
+        "no": "no",
+        "renotifyHint": "Unfollowing and following the same person again within {{hours}} h creates no new notification or email (anti-spam).",
+        "colCreated": "Created",
+        "colStatus": "Email",
+        "colAttempts": "Attempts",
+        "colError": "Last error",
+        "none": "No notifications yet.",
+        "noAddress": "Recipient has no email address",
+        "status_pending": "pending",
+        "status_sending": "sending",
+        "status_sent": "sent",
+        "status_failed": "failed",
+        "status_skipped": "skipped (old)",
+        "status_no_address": "no address"
+      }
     }
   },
   "lessonStatus": {

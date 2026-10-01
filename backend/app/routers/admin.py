@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, time
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy import func, or_
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, joinedload
@@ -11,6 +11,7 @@ from app.config import settings
 from app.crud import delete_user_cascade_safe
 from app.database import get_db
 from app.deps import require_admin
+from app.services import notifications as notification_svc
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -153,6 +154,41 @@ def admin_dashboard(
     _admin: models.User = Depends(require_admin),
 ):
     return schemas.AdminDashboardResponse(total_users=db.query(models.User).count())
+
+
+# Email delivery diagnostics. Shows whether the RUNNING backend actually
+# loaded SMTP settings (presence only, never their values), whether the
+# retry sweep is alive, and each recent notification email's status and
+# last (masked) error -- so "the follow email never arrived" can be
+# answered from the admin page instead of from docker logs.
+@router.get("/email")
+def email_status(
+    db: Session = Depends(get_db),
+    _admin: models.User = Depends(require_admin),
+):
+    return notification_svc.email_diagnostics(db)
+
+
+@router.post("/email/test")
+def email_test(admin: models.User = Depends(require_admin)):
+    """Sends one real email to the signed-in admin's own registered address
+    (never to an address from the request) and reports the SMTP result."""
+    if not admin.email:
+        raise HTTPException(status_code=422, detail="Your account has no email address")
+    error = notification_svc.send_test_email(admin.email)
+    return {"ok": error is None, "error": error}
+
+
+@router.post("/email/retry")
+def email_retry(
+    background: BackgroundTasks,
+    _admin: models.User = Depends(require_admin),
+):
+    """Retry undelivered notification emails now instead of at the next
+    15-minute sweep. Runs after the response; claims make it safe to
+    overlap with the sweep (nothing is sent twice)."""
+    background.add_task(notification_svc.retry_undelivered)
+    return {"queued": True}
 
 
 @router.delete("/users/{user_id}", status_code=204)

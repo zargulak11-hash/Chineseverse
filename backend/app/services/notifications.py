@@ -232,10 +232,12 @@ def deliver_email(notification_id: int, retry_delays: tuple[int, ...] | None = N
                     mailer.send_email(n.recipient.email, subject, text, body)
                 except mailer.EmailSendError as exc:
                     log.warning("notification %s email attempt %s failed (%s)", n.id, n.email_attempts, exc)
+                    n.email_error = str(exc)[:200]
                     db.commit()
                     continue
                 n.email_status = "sent"
                 n.emailed_at = datetime.utcnow()
+                n.email_error = None
                 db.commit()
                 log.info("notification %s emailed", n.id)
                 return n.email_status
@@ -295,6 +297,13 @@ def _sweep_forever() -> None:
         time.sleep(SWEEP_INTERVAL_SECONDS)
 
 
+_sweep_thread: threading.Thread | None = None
+
+
+def sweep_running() -> bool:
+    return _sweep_thread is not None and _sweep_thread.is_alive()
+
+
 def start_retry_sweep() -> None:
     """Startup (from the lifespan, before serving): release rows a stopped
     process left mid-delivery, then -- in the background -- deliver what
@@ -308,4 +317,82 @@ def start_retry_sweep() -> None:
         _release_stuck()
     except Exception as exc:  # never block startup over email bookkeeping
         log.error("could not release stuck notification emails (%s)", type(exc).__name__)
-    threading.Thread(target=_sweep_forever, name="notification-email-sweep", daemon=True).start()
+    global _sweep_thread
+    _sweep_thread = threading.Thread(target=_sweep_forever, name="notification-email-sweep", daemon=True)
+    _sweep_thread.start()
+
+
+# --------------------------------------------------------------------------- admin diagnostics
+
+def email_diagnostics(db: Session, limit: int = 20) -> dict:
+    """What an admin needs to tell why a follow email did not arrive,
+    without container logs: whether THIS running process actually has SMTP
+    settings (presence only -- never a login, password or sender address),
+    whether the retry sweep is alive, and the delivery state of the latest
+    notifications. Recipient addresses are not included."""
+    from sqlalchemy import func
+
+    login = mailer._username() or ""
+    sender = mailer._from() or ""
+    counts = dict(
+        db.query(models.Notification.email_status, func.count(models.Notification.id))
+        .group_by(models.Notification.email_status)
+        .all()
+    )
+    rows = (
+        db.query(models.Notification)
+        .order_by(models.Notification.id.desc())
+        .limit(limit)
+        .all()
+    )
+    return {
+        "config": {
+            "enabled": mailer.email_enabled(),
+            "host": mailer._host(),
+            "port": settings.smtp_port,
+            "security": mailer.effective_security(),
+            "username_set": bool(login),
+            "password_set": bool(mailer._password()),
+            "from_set": bool(sender),
+            # Gmail only sends as the signed-in account (or a verified alias).
+            "from_matches_username": bool(login) and (not sender or login.lower() in sender.lower()),
+            "timeout_seconds": settings.smtp_timeout_seconds,
+            "public_app_url": settings.public_app_url,
+        },
+        "sweep_running": sweep_running(),
+        "renotify_after_hours": int(RENOTIFY_AFTER.total_seconds() // 3600),
+        "max_attempts": MAX_EMAIL_ATTEMPTS,
+        "counts": {k: v for k, v in counts.items()},
+        "recent": [
+            {
+                "id": n.id,
+                "type": n.type,
+                "created_at": n.created_at,
+                "actor_id": n.actor_id,
+                "recipient_id": n.recipient_id,
+                "recipient_has_email": bool(n.recipient and n.recipient.email),
+                "email_status": n.email_status,
+                "email_attempts": n.email_attempts,
+                "emailed_at": n.emailed_at,
+                "email_error": n.email_error,
+            }
+            for n in rows
+        ],
+    }
+
+
+def send_test_email(to: str) -> str | None:
+    """Admin check: one real email through the configured SMTP server to the
+    admin's own registered address. Returns None on success, else the
+    masked error description."""
+    if not mailer.email_enabled():
+        return "EmailNotConfigured: SMTP_HOST and SMTP_FROM/SMTP_USERNAME are not set in this backend"
+    try:
+        mailer.send_email(
+            to,
+            "ChineseVerse email test",
+            "This is a test email from ChineseVerse. SMTP delivery works.\n",
+        )
+    except mailer.EmailSendError as exc:
+        return str(exc)
+    return None

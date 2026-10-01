@@ -600,7 +600,39 @@
     "adminHome": {
       "title": "管理主页",
       "subtitle": "ChineseVerse已注册账户概览。",
-      "registeredUsers": "注册用户数"
+      "registeredUsers": "注册用户数",
+      "email": {
+        "title": "邮件发送",
+        "sendTest": "发送测试邮件",
+        "retryNow": "立即重试",
+        "refresh": "刷新",
+        "testOk": "测试邮件已发送到你自己的邮箱，请查看收件箱（以及垃圾邮件）。",
+        "retryQueued": "已开始重试，几秒后刷新…",
+        "disabledHint": "当前运行的后端未启用邮件：未加载 SMTP_HOST 和 SMTP_FROM/SMTP_USERNAME。请将它们加入 backend/.env 并重新创建 backend 容器。",
+        "enabled": "邮件已启用",
+        "host": "SMTP 服务器",
+        "portSecurity": "端口 · 加密",
+        "username": "已设置登录名",
+        "password": "已设置密码",
+        "from": "已设置发件人",
+        "fromMatches": "发件人与登录名一致",
+        "sweep": "重试任务运行中",
+        "yes": "是",
+        "no": "否",
+        "renotifyHint": "在 {{hours}} 小时内取消关注后再次关注同一个人，不会产生新的通知或邮件（防骚扰）。",
+        "colCreated": "创建时间",
+        "colStatus": "邮件",
+        "colAttempts": "尝试次数",
+        "colError": "最近错误",
+        "none": "暂无通知。",
+        "noAddress": "收件人没有邮箱地址",
+        "status_pending": "等待中",
+        "status_sending": "发送中",
+        "status_sent": "已发送",
+        "status_failed": "失败",
+        "status_skipped": "已跳过（旧）",
+        "status_no_address": "无地址"
+      }
     }
   },
   "lessonStatus": {

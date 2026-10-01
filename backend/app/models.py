@@ -181,6 +181,10 @@ class Notification(Base):
     email_status = Column(String(12), nullable=False, server_default="pending", default="pending")
     email_attempts = Column(Integer, nullable=False, server_default="0", default=0)
     emailed_at = Column(DateTime, nullable=True)
+    # Why the last attempt failed (exception class + SMTP code/text, with
+    # credentials and addresses masked), so admins can diagnose delivery
+    # from the app instead of from container logs.
+    email_error = Column(String(200), nullable=True)
 
     recipient = relationship("User", foreign_keys=[recipient_id])
     actor = relationship("User", foreign_keys=[actor_id])
