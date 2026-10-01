@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 from app.security import decode_access_token
-from app.services.localization import SUPPORTED_LOCALES
+from app.services.localization import SUPPORTED_LOCALES, base_locale
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -16,9 +16,8 @@ def get_locale(x_locale: str | None = Header(default=None)) -> str:
     the UI chrome already does. Anything not in SUPPORTED_LOCALES (English,
     missing header, unrecognized value) just means "use the original
     English column" -- routers never need to special-case "en" themselves."""
-    if x_locale and x_locale.lower() in SUPPORTED_LOCALES:
-        return x_locale.lower()
-    return "en"
+    loc = base_locale(x_locale)  # "ru-RU" from a browser-detected language counts as "ru"
+    return loc if loc in SUPPORTED_LOCALES else "en"
 
 
 def get_current_user(

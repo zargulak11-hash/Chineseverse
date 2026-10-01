@@ -133,8 +133,11 @@ def unread_count(db: Session, user: models.User) -> int:
 
 def remember_locale(db: Session, user: models.User, raw: str | None) -> None:
     """Store the UI language the learner is using now, so emails sent while
-    they are away use it. Only an explicit, known header value counts."""
-    loc = (raw or "").strip().lower()
+    they are away use it. Only a known language counts; regional codes
+    ("ru-RU", "zh-CN") count as their language."""
+    from app.services.localization import base_locale
+
+    loc = base_locale(raw)
     if loc in UI_LOCALES and user.locale != loc:
         user.locale = loc
         db.commit()

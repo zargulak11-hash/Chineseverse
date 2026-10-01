@@ -341,6 +341,20 @@ with TestClient(app) as client:
         m = sent[-1]
         assert m["To"] == f"loc_{loc}@example.com" and m["Subject"] == subject, (loc, m["Subject"])
         assert phrase in body_of(m) and "carol_c" in body_of(m), (loc, body_of(m))
+    # a browser-detected regional code is the same language (it used to be
+    # ignored, so these learners got English emails)
+    for raw, want in (("ru-RU", "ru"), ("zh-CN", "zh"), ("tg_TJ", "tg"), ("EN-us", "en")):
+        expect(client, "get", "/api/notifications/unread-count", 200, headers={**hdr, "X-Locale": raw})
+        with SessionLocal() as db:
+            assert db.query(models.User).filter_by(username="loc_zh").one().locale == want, (raw, want)
+    rr_id, rr = register(client, "regional_ru")
+    expect(client, "get", "/api/me", 200, headers={**rr, "X-Locale": "ru-RU"})
+    expect(client, "post", f"/api/users/{rr_id}/follow", 201, headers=c)
+    assert sent[-1]["To"] == "regional_ru@example.com" and sent[-1]["Subject"] == "У вас новый подписчик в ChineseVerse"
+    from app.deps import get_locale
+    assert [get_locale(x) for x in ("zh-CN", "ru_RU", "tg", "fr-FR", "en-US", None, "")] == ["zh", "ru", "tg", "en", "en", "en", "en"]
+    print("[PASS] regional locale codes (ru-RU, zh-CN, tg_TJ) select the right email and content language")
+    expect(client, "get", "/api/notifications/unread-count", 200, headers={**hdr, "X-Locale": "zh"})
     # unknown header keeps the stored language
     expect(client, "get", "/api/notifications/unread-count", 200, headers={**hdr, "X-Locale": "xx"})
     with SessionLocal() as db:

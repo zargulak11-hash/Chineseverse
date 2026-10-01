@@ -36,6 +36,12 @@ i18n
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],
       lookupLocalStorage: "chineseverse_ui_lang",
+      // Browsers report regional codes ("ru-RU", "zh-CN"). Without this,
+      // i18n.language stayed "ru-RU" for anyone who never picked a
+      // language in the app: the X-Locale header then wasn't recognized
+      // (English content and notification emails) and per-language lookups
+      // such as date formats missed. Keep only the language itself.
+      convertDetectedLanguage: (lng) => (lng || "").replace("_", "-").split("-")[0].toLowerCase(),
     },
   });
 

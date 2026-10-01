@@ -16,6 +16,15 @@ from app import models
 SUPPORTED_LOCALES = {"ru", "tg", "zh"}
 
 
+def base_locale(raw: str | None) -> str:
+    """The primary language subtag of an X-Locale value: "ru-RU" -> "ru",
+    "zh_Hans" -> "zh". Browsers report regional codes, and i18next keeps
+    them as-is when the language was detected rather than picked, so a
+    learner whose UI was Russian sent "ru-RU" -- which used to be treated
+    as unknown, i.e. English content and English emails."""
+    return (raw or "").strip().replace("_", "-").split("-")[0].lower()
+
+
 def load_translations(
     db: Session, content_type: str, keys: list[str], locale: str
 ) -> dict[str, dict[str, str]]:
