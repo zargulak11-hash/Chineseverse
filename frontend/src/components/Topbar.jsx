@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import { usePrefs } from "../prefs.jsx";
 import { useTheme } from "../theme.jsx";
@@ -71,9 +71,10 @@ function useGlobalSearch(t) {
 }
 
 // How often the bell re-checks the real unread count while the app is open
-// (and on tab focus). Stored notifications don't need the learner online --
-// this only refreshes the badge for someone who is.
-const NOTIF_POLL_MS = 60_000;
+// (also on every page change and when the tab/window regains focus).
+// Stored notifications don't need the learner online -- this only
+// refreshes the badge for someone who is.
+const NOTIF_POLL_MS = 20_000;
 
 function timeAgo(iso, lang) {
   if (!iso) return "";
@@ -94,9 +95,14 @@ function timeAgo(iso, lang) {
 // and today's derived reminders (open quests, mistakes due) that come from
 // the dashboard. Opening the dropdown never marks anything read; clicking
 // one notification marks THAT one read (PATCH) and opens its link.
-function NotifBell({ dashboard }) {
+// showReminders is the Settings toggle: it only hides the derived
+// reminders. Notifications from other people (e.g. a new follower) are
+// always shown -- that toggle used to hide the whole bell, so on a device
+// where it was off, follows never appeared.
+function NotifBell({ dashboard, showReminders = true }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState(null);
@@ -122,12 +128,15 @@ function NotifBell({ dashboard }) {
     const id = setInterval(check, NOTIF_POLL_MS);
     const onFocus = () => document.visibilityState === "visible" && check();
     document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
     return () => {
       alive = false;
       clearInterval(id);
       document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
     };
-  }, [i18n.language]); // the call also tells the server the current UI language
+    // the call also tells the server the current UI language
+  }, [i18n.language, location.pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,8 +163,8 @@ function NotifBell({ dashboard }) {
     if (n.link) navigate(n.link);
   }
 
-  const openQuests = (dashboard?.quests_today || []).filter((q) => !q.completed);
-  const mistakeCount = dashboard?.recent_mistakes?.length || 0;
+  const openQuests = showReminders ? (dashboard?.quests_today || []).filter((q) => !q.completed) : [];
+  const mistakeCount = showReminders ? dashboard?.recent_mistakes?.length || 0 : 0;
   const reminders = openQuests.length + (mistakeCount > 0 ? 1 : 0);
   const stored = items || [];
 
@@ -306,7 +315,7 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
       </div>
 
       <div className="topbar-actions">
-        {notifEnabled !== false && <NotifBell dashboard={dashboard} />}
+        <NotifBell dashboard={dashboard} showReminders={notifEnabled !== false} />
         <span className="chip">
           <Icon name="flame" size={13} />
           {streak} {t("common.day")}
