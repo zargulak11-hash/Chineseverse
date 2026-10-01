@@ -26,6 +26,8 @@ from app.config import settings  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services import ai_client  # noqa: E402
+from app.services.dna import bump_skill  # noqa: E402
+from app.services.gamification import ensure_user_skills  # noqa: E402
 
 CYRILLIC = re.compile(r"[А-Яа-яЁё]")
 TAJIK = re.compile(r"[ҲҳӢӣҶҷӮӯҒғҚқ]")
@@ -163,6 +165,11 @@ with TestClient(app) as client:
             ("en", "What is AI?"),
             ("zh", "我的HSK水平和最薄弱的技能是什么？"),
             ("en", "What is my current HSK level and weakest skill?"),
+            ("ru", "Как подготовиться к HSK 3?"),
+            ("ru", "Что посмотреть в Китае?"),
+            ("ru", "Какой у меня прогресс?"),
+            ("ru", "Какой у меня самый слабый навык?"),
+            ("ru", "Что ты умеешь?"),
         ]
         for locale, text in cases:
             body = chat(client, h, text, locale)
@@ -186,9 +193,38 @@ with TestClient(app) as client:
         assert "grammar 了 vs 过 (answered 过, correct 了)" in prompt, prompt
         assert "lessons completed: 0" in prompt, prompt
         assert "main companion: none chosen yet" in prompt, prompt
+        assert "Learning DNA overall: 0.0%" in prompt and "vocabulary words mastered: 0" in prompt, prompt
+        # No practice yet: every skill is 0, so there is no weakest one to name.
+        assert "weakest Learning DNA skills: not enough practice yet to tell" in prompt, prompt
+        assert "skill mastery" not in prompt, prompt
         assert "secret" not in prompt.lower() and "api_key" not in prompt.lower()
         assert captured[-1]["max_tokens"] >= 500  # room for a real answer
         print("[PASS] system prompt is open, carries only real database context, and no secrets")
+
+        # Real Learning DNA data reaches the model once it exists (written
+        # through the same bump_skill the practice grader uses).
+        db = SessionLocal()
+        u = db.get(models.User, user_id)
+        ensure_user_skills(db, u)
+        bump_skill(u, "speaking", 55)
+        bump_skill(u, "grammar", 12)
+        db.commit()
+        db.close()
+        chat(client, h, "Какой у меня самый слабый навык?", "ru")
+        prompt = captured[-1]["messages"][0]["content"]
+        weak_line = next(l for l in prompt.splitlines() if l.startswith("- weakest Learning DNA skills:"))
+        assert "not enough practice" not in weak_line and "Speaking" not in weak_line, weak_line
+        mastery_line = next(l for l in prompt.splitlines() if l.startswith("- Learning DNA skill mastery:"))
+        assert "12%" in mastery_line and "55%" in mastery_line, mastery_line
+        assert mastery_line.index("12%") < mastery_line.index("55%")  # weakest first
+        print("[PASS] real Learning DNA skill mastery is passed, weakest first, in the selected language")
+
+        # Snapshot after the deliberate DNA write: chatting itself must not move anything.
+        db = SessionLocal()
+        u = db.get(models.User, user_id)
+        skills_before = {s.skill_id: s.mastery for s in u.user_skills}
+        streak_before = u.streak.current_streak if u.streak else None
+        db.close()
 
         # Conversation history is forwarded so follow-ups make sense.
         history = [{"role": "user", "content": "Что такое 了?"}, {"role": "assistant", "content": "…"}]
@@ -196,56 +232,88 @@ with TestClient(app) as client:
         assert captured[-1]["messages"][1:] == history + [{"role": "user", "content": "А приведи ещё пример"}]
         print("[PASS] conversation history reaches the model")
 
-        # Provider failure (429 quota, network, blocked/empty reply) -> localized fallback, no 500.
-        def quota(messages, **kw):
-            req = httpx.Request("POST", "https://example.invalid/models/x:generateContent")
-            raise httpx.HTTPStatusError("429", request=req, response=httpx.Response(429, request=req))
+        # Provider failure -> localized fallback in the same response shape, no 500.
+        def http_error(status):
+            def fail(messages, **kw):
+                req = httpx.Request("POST", "https://example.invalid/models/x:generateContent")
+                raise httpx.HTTPStatusError(str(status), request=req, response=httpx.Response(status, request=req))
+            return fail
         def unreachable(messages, **kw):
             raise httpx.ConnectError("unreachable")
+        def timeout(messages, **kw):
+            raise httpx.ReadTimeout("timed out")
         def empty(messages, **kw):
-            raise ValueError("AI provider returned an empty reply")
-        for failure in (quota, unreachable, empty):
+            raise ValueError("Gemini returned no text")
+        failures = (http_error(429), http_error(503), http_error(401), http_error(403), unreachable, timeout, empty)
+        for failure in failures:
             ai_client._gemini_chat = failure
             for locale in ("en", "ru", "tg", "zh"):
                 body = chat(client, h, "Какие места стоит посетить в Китае?", locale)
-                assert body["source"] == "offline", body
+                assert set(body) == {"reply", "source"} and body["source"] == "offline", body
                 assert body["reply"].startswith(ai_client.ASSISTANT_OFFLINE[locale]["unavailable"]), body
                 assert_language(body["reply"], locale)
-        print("[PASS] AI failure degrades to a localized 'temporarily unavailable' fallback")
+        print("[PASS] 429/503/401/403/network/timeout/empty all degrade to the localized fallback")
     finally:
         ai_client._active_provider, ai_client._gemini_chat = orig_provider, orig_chat
 
-    # The assistant is read-only: dozens of chats changed no XP or lesson progress.
+    # Missing key: offline straight away, without attempting a request.
+    saved_key = settings.gemini_api_key
+    settings.ai_provider, settings.gemini_api_key = "gemini", None
+    try:
+        body = chat(client, h, "Что ты умеешь?", "ru")
+        assert body["source"] == "offline" and body["reply"].startswith(ai_client.ASSISTANT_OFFLINE["ru"]["unavailable"])
+    finally:
+        settings.ai_provider, settings.gemini_api_key = "offline", saved_key
+    print("[PASS] missing Gemini key -> localized fallback")
+
+    # The assistant is read-only: dozens of chats changed no XP, lesson
+    # progress, Learning DNA mastery or streak.
     db = SessionLocal()
-    assert db.get(models.User, user_id).total_xp == xp_before
+    u = db.get(models.User, user_id)
+    assert u.total_xp == xp_before
     assert db.query(models.Progress).filter_by(user_id=user_id).count() == progress_before
+    assert {s.skill_id: s.mastery for s in u.user_skills} == skills_before
+    assert (u.streak.current_streak if u.streak else None) == streak_before
     db.close()
-    print("[PASS] chatting never changes XP or progress")
+    print("[PASS] chatting never changes XP, progress, Learning DNA or streak")
 
     assert client.post("/api/assistant/chat", json={"messages": [{"role": "user", "content": "hi"}]}).status_code == 401
     print("[PASS] assistant requires authentication")
 
 # --- transport: the real Gemini request the app sends (httpx mocked) --------
 sent = {}
+calls = []          # every outgoing request URL, in order
+script = []         # queued per-call outcomes: int status, "timeout", or a JSON body
+OK = {"candidates": [{"content": {"role": "model", "parts": [{"text": "  Салом! "}, {"text": "Биёед оғоз кунем."}]},
+                      "finishReason": "STOP"}]}
 
 
 def fake_post(url, headers=None, json=None, timeout=None):
     sent.update(url=url, headers=headers, json=json)
+    calls.append(url)
     req = httpx.Request("POST", url)
-    if "response" in sent:
-        return httpx.Response(200, request=req, json=sent["response"])
-    return httpx.Response(200, request=req, json={
-        "candidates": [{"content": {"role": "model", "parts": [{"text": "  Салом! "}, {"text": "Биёед оғоз кунем."}]},
-                        "finishReason": "STOP"}]})
+    outcome = script.pop(0) if script else OK
+    if outcome == "timeout":
+        raise httpx.ReadTimeout("timed out", request=req)
+    if isinstance(outcome, int):
+        return httpx.Response(outcome, request=req, json={"error": {"code": outcome}})
+    return httpx.Response(200, request=req, json=outcome)
 
 
-orig_post = httpx.post
-saved = (settings.ai_provider, settings.gemini_api_key, settings.gemini_model, settings.gemini_base_url)
+def model_of(url):
+    return url.rsplit("/models/", 1)[1].split(":")[0]
+
+
+BASE = "https://generativelanguage.googleapis.com/v1beta"
+orig_post, orig_sleep = httpx.post, ai_client.time.sleep
+saved = (settings.ai_provider, settings.gemini_api_key, settings.gemini_model,
+         settings.gemini_fallback_models, settings.gemini_base_url)
 httpx.post = fake_post
+ai_client.time.sleep = lambda s: None
 try:
     settings.ai_provider, settings.gemini_api_key = "gemini", "test-gemini-key"
-    settings.gemini_model = "gemini-2.5-flash"
-    settings.gemini_base_url = "https://generativelanguage.googleapis.com/v1beta"
+    settings.gemini_model, settings.gemini_base_url = "gemini-3.8-flash", BASE
+    settings.gemini_fallback_models = ["gemini-3.5-flash", "gemini-flash-lite-latest"]
     assert ai_client._active_provider() == "gemini"
 
     # End to end through the real endpoint: the HTTP request that leaves the
@@ -258,7 +326,7 @@ try:
         r = client.post("/api/assistant/chat", headers=hh, json={"messages": history + [
             {"role": "user", "content": "Ман мехоҳам забони чиниро омӯзам"}]})
         assert r.status_code == 200 and r.json() == {"reply": "Салом! Биёед оғоз кунем.", "source": "ai"}, r.text
-    assert sent["url"] == "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", sent["url"]
+    assert sent["url"] == f"{BASE}/models/gemini-3.8-flash:generateContent", sent["url"]
     assert "key=" not in sent["url"]  # key travels in a header, never the URL
     assert sent["headers"] == {"x-goog-api-key": "test-gemini-key"}
     body = sent["json"]
@@ -267,27 +335,67 @@ try:
         {"role": "model", "parts": [{"text": "Салом!"}]},
         {"role": "user", "parts": [{"text": "Ман мехоҳам забони чиниро омӯзам"}]},
     ], body["contents"]
-    assert "always reply in Tajik" in body["systemInstruction"]["parts"][0]["text"]
-    assert body["generationConfig"]["maxOutputTokens"] == 700
-    assert body["generationConfig"]["thinkingConfig"] == {"thinkingBudget": 0}
+    system_text = body["systemInstruction"]["parts"][0]["text"]
+    assert "always reply in Tajik" in system_text and "current HSK level" in system_text
+    # Visible answer budget + headroom for the model's hidden thinking, and
+    # no model-specific thinking flags (gemini-3.x rejects some of them).
+    assert body["generationConfig"]["maxOutputTokens"] == 700 + ai_client.THINKING_HEADROOM
+    assert "thinkingConfig" not in body["generationConfig"]
     assert "responseMimeType" not in body["generationConfig"]
-    print("[PASS] assistant endpoint sends a real Gemini generateContent request (URL, header auth, roles, locale)")
+    print("[PASS] assistant endpoint sends a real Gemini generateContent request (URL, header auth, roles, context, locale)")
+
+    msg = [{"role": "user", "content": "hi"}]
+
+    def run(*outcomes):
+        calls.clear()
+        script[:] = list(outcomes)
+        try:
+            return ai_client._gemini_chat(msg), [model_of(u) for u in calls]
+        finally:
+            script.clear()
+
+    # Retired model (404) / daily quota (429) -> next model in the chain.
+    assert run(404) == ("Салом! Биёед оғоз кунем.", ["gemini-3.8-flash", "gemini-3.5-flash"])
+    assert run(429, 429) == ("Салом! Биёед оғоз кунем.",
+                             ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-lite-latest"])
+    # Overload: one quick retry on the same model first.
+    assert run(503)[1] == ["gemini-3.8-flash", "gemini-3.8-flash"]
+    assert run(503, 503)[1] == ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.5-flash"]
+    # Timeout -> next model.
+    assert run("timeout")[1] == ["gemini-3.8-flash", "gemini-3.5-flash"]
+    # Bad key / bad request won't be fixed by another model: fail fast.
+    for status in (400, 401, 403):
+        try:
+            run(status)
+            raise AssertionError(f"{status} must raise")
+        except httpx.HTTPStatusError:
+            assert [model_of(u) for u in calls] == ["gemini-3.8-flash"], calls
+    # Every model exhausted -> the last error is raised (callers fall back).
+    try:
+        run(429, 429, 429)
+        raise AssertionError("must raise when every model fails")
+    except httpx.HTTPStatusError as exc:
+        assert exc.response.status_code == 429
+    assert len(calls) == 3
+    print("[PASS] model chain: 404/429/timeout -> next model, 503 retried once, 4xx auth errors fail fast")
 
     # JSON graders ask Gemini for JSON output.
-    sent["response"] = {"candidates": [{"content": {"parts": [{"text": '{"solved": true, "feedback": "对"}'}]}}]}
+    script[:] = [{"candidates": [{"content": {"parts": [{"text": '{"solved": true, "feedback": "对"}'}]}}]}]
     assert ai_client.evaluate_case_solution("案情", "是他", ["他"])["solved"] is True
     assert sent["json"]["generationConfig"]["responseMimeType"] == "application/json"
 
     # Blocked prompt (no candidates) / empty text -> ValueError -> callers fall back.
     for bad in ({"promptFeedback": {"blockReason": "SAFETY"}},
                 {"candidates": [{"finishReason": "SAFETY"}]},
-                {"candidates": [{"content": {"parts": [{"text": "   "}]}}]}):
-        sent["response"] = bad
+                {"candidates": [{"content": {"parts": [{"text": "   "}]}}]},
+                {"candidates": [{"content": {"parts": [{"text": "hidden", "thought": True}]}}]}):
+        script[:] = [bad]
         try:
-            ai_client._gemini_chat([{"role": "user", "content": "hi"}])
+            ai_client._gemini_chat(msg)
             raise AssertionError(f"must raise for {bad}")
         except ValueError:
             pass
+    script[:] = [{"candidates": []}]
     assert ai_client.evaluate_case_solution("案情", "是他", ["他"]) == {"solved": True, "feedback": ""}
     print("[PASS] blocked/empty Gemini responses raise and callers degrade offline")
 
@@ -301,7 +409,8 @@ try:
     assert ai_client._active_provider() == "offline"
     print("[PASS] provider resolution: Gemini with a key, offline otherwise")
 finally:
-    httpx.post = orig_post
-    settings.ai_provider, settings.gemini_api_key, settings.gemini_model, settings.gemini_base_url = saved
+    httpx.post, ai_client.time.sleep = orig_post, orig_sleep
+    (settings.ai_provider, settings.gemini_api_key, settings.gemini_model,
+     settings.gemini_fallback_models, settings.gemini_base_url) = saved
 
 print("ALL ASSISTANT TESTS PASSED")

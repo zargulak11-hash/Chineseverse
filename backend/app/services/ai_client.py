@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from typing import List, Optional
 
 import httpx
@@ -268,6 +269,30 @@ def _offline_chat(
 # ---------------------------------------------------------------------------
 
 
+# Gemini models "think" before answering and those hidden tokens are counted
+# against maxOutputTokens. On gemini-3.x the old `thinkingBudget: 0` switch
+# is ignored (~200 thought tokens still spent) and `thinkingLevel: minimal`
+# is rejected with a 400, so a 200-token cap returned two-word, MAX_TOKENS-
+# truncated replies. Instead of model-specific thinking flags, each caller's
+# max_tokens stays the size of the visible answer and this headroom is added
+# on top for the thinking.
+THINKING_HEADROOM = 2048
+
+# Statuses that mean "this model can't answer right now, another might":
+#   404  model retired -- how the assistant first broke: gemini-2.5-flash
+#        became "no longer available to new users" and every request
+#        silently fell back to offline;
+#   429  quota -- free-tier keys get only ~20 requests/day PER MODEL on the
+#        top Flash model, and quotas are counted per model;
+#   5xx  "model is experiencing high demand" overloads, which are common.
+# On these the call moves to the next model in GEMINI_FALLBACK_MODELS.
+# Anything else -- 400 bad request, 401/403 bad key -- won't fix itself on
+# another model, so it fails fast to the offline fallback.
+_NEXT_MODEL = {404, 429, 500, 503, 504}
+_OVERLOADED = {500, 503, 504}
+_RETRY_DELAY_S = 1.5
+
+
 def _gemini_payload(
     messages: List[dict],
     max_tokens: int,
@@ -283,12 +308,7 @@ def _gemini_payload(
         for m in messages
         if m.get("role") in ("user", "assistant")
     ]
-    config: dict = {"temperature": temperature, "maxOutputTokens": max_tokens}
-    if "flash" in settings.gemini_model:
-        # 2.5 Flash "thinks" by default and those hidden tokens are taken
-        # out of maxOutputTokens, which left short replies empty. Flash
-        # models accept a zero budget (Pro models don't, so only here).
-        config["thinkingConfig"] = {"thinkingBudget": 0}
+    config: dict = {"temperature": temperature, "maxOutputTokens": max_tokens + THINKING_HEADROOM}
     if json_mode:
         # The graders json.loads() the reply; without this Gemini tends to
         # wrap it in a ```json fence.
@@ -299,42 +319,75 @@ def _gemini_payload(
     return body
 
 
+def _gemini_text(data: dict) -> str:
+    try:
+        candidate = data["candidates"][0]
+        parts = candidate.get("content", {}).get("parts") or []
+        # Skip thought-summary parts if a model ever returns them.
+        content = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+    except (KeyError, IndexError, TypeError, AttributeError) as exc:
+        # A blocked prompt comes back with no candidates at all. Every
+        # caller already degrades to offline on ValueError.
+        raise ValueError(f"Unexpected Gemini response shape: {type(exc).__name__}") from exc
+    if not content.strip():
+        # e.g. finishReason SAFETY / MAX_TOKENS with no text
+        raise ValueError(f"Gemini returned no text (finishReason={candidate.get('finishReason')})")
+    return content.strip()
+
+
 def _gemini_chat(
     messages: List[dict],
     max_tokens: int = 200,
     temperature: float = 0.8,
     json_mode: bool = False,
 ) -> str:
-    url = f"{settings.gemini_base_url.rstrip('/')}/models/{settings.gemini_model}:generateContent"
-    try:
-        resp = httpx.post(
-            url,
-            # Key in a header, not the ?key= query string, so it can't end up
-            # in URL logs or exception messages.
-            headers={"x-goog-api-key": settings.gemini_api_key or ""},
-            json=_gemini_payload(messages, max_tokens, temperature, json_mode),
-            timeout=30,
-        )
-        resp.raise_for_status()
+    """One generateContent call. Tries GEMINI_MODEL, then each of
+    GEMINI_FALLBACK_MODELS when a model is retired, out of quota or
+    overloaded (one short retry on the first overload). Raises
+    httpx.HTTPError / ValueError on failure -- every caller turns those into
+    its offline fallback."""
+    payload = _gemini_payload(messages, max_tokens, temperature, json_mode)
+    base = settings.gemini_base_url.rstrip("/")
+    models = list(dict.fromkeys([settings.gemini_model, *settings.gemini_fallback_models]))
+    retried = False
+    last_exc: Exception | None = None
+    queue = list(models)
+    while queue:
+        model = queue[0]
         try:
-            candidate = resp.json()["candidates"][0]
-            parts = candidate.get("content", {}).get("parts") or []
-            content = "".join(p.get("text", "") for p in parts)
-        except (KeyError, IndexError, TypeError, AttributeError) as exc:
-            # A blocked prompt comes back with no candidates at all. Every
-            # caller already degrades to offline on ValueError.
-            raise ValueError(f"Unexpected Gemini response shape: {type(exc).__name__}") from exc
-    except httpx.HTTPStatusError as exc:
-        # Log the status only -- never the request (it carries the key).
-        logger.warning("Gemini returned HTTP %s", exc.response.status_code)
-        raise
-    except httpx.HTTPError as exc:
-        logger.warning("Gemini unreachable: %s", type(exc).__name__)
-        raise
-    if not content.strip():
-        # e.g. finishReason SAFETY / MAX_TOKENS with no text
-        raise ValueError(f"Gemini returned no text (finishReason={candidate.get('finishReason')})")
-    return content.strip()
+            resp = httpx.post(
+                f"{base}/models/{model}:generateContent",
+                # Key in a header, not the ?key= query string, so it can't
+                # end up in URL logs or exception messages.
+                headers={"x-goog-api-key": settings.gemini_api_key or ""},
+                json=payload,
+                # gemini-3.x replies took 7-14s in testing; 30s was too tight
+                # once thinking is included.
+                timeout=45,
+            )
+            resp.raise_for_status()
+            return _gemini_text(resp.json())
+        except httpx.HTTPStatusError as exc:
+            last_exc = exc
+            status = exc.response.status_code
+            # Log the status only -- never the request (it carries the key).
+            logger.warning("Gemini %s returned HTTP %s", model, status)
+            if status not in _NEXT_MODEL:
+                raise
+            if status in _OVERLOADED and not retried:
+                retried = True
+                time.sleep(_RETRY_DELAY_S)
+                continue  # same model once more
+            queue.pop(0)
+        except httpx.TimeoutException as exc:
+            last_exc = exc
+            logger.warning("Gemini %s timed out", model)
+            queue.pop(0)
+        except httpx.HTTPError as exc:
+            logger.warning("Gemini unreachable: %s", type(exc).__name__)
+            raise
+    assert last_exc is not None
+    raise last_exc
 
 
 # ---------------------------------------------------------------------------
@@ -534,7 +587,9 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "lessons, and must never claim you did. Progress only changes when the "
     "learner practises in the app.\n"
     "- Keep answers focused: usually a short paragraph or a few bullet points; "
-    "go longer only when the learner asks for depth. Plain text, no tables.\n\n"
+    "go longer only when the learner asks for depth. Formatting: only short "
+    "paragraphs, '* ' bullet lines and **bold** (the chat renders just "
+    "these); no tables, headings or code blocks.\n\n"
     "Learner data (from the ChineseVerse database):\n{learner}\n\n"
     "LANGUAGE: always reply in {language} -- the language this learner selected "
     "in the app -- even if they write to you in another language. Chinese "
@@ -566,8 +621,16 @@ def _learner_block(context: dict) -> str:
         lines.append(f"- unresolved mistakes in the mistake bank: {context['open_mistakes']}")
     if context.get("recent_mistakes"):
         lines.append("- most recent mistakes: " + "; ".join(context["recent_mistakes"]))
+    if context.get("dna_overall") is not None:
+        lines.append(f"- Learning DNA overall: {context['dna_overall']}%")
+    if context.get("skill_mastery"):
+        lines.append("- Learning DNA skill mastery: " + ", ".join(context["skill_mastery"]))
     if context.get("weak_skills"):
         lines.append("- weakest Learning DNA skills: " + ", ".join(context["weak_skills"]))
+    else:
+        lines.append("- weakest Learning DNA skills: not enough practice yet to tell")
+    if context.get("words_mastered") is not None:
+        lines.append(f"- vocabulary words mastered: {context['words_mastered']}")
     if context.get("completed_lessons") is not None:
         lines.append(f"- lessons completed: {context['completed_lessons']}")
     lines.append(f"- main companion: {context.get('companion') or 'none chosen yet'}")

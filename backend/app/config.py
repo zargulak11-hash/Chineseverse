@@ -34,7 +34,13 @@ class Settings(BaseSettings):
     # ignored -- an OpenAI key must never be sent to Google.
     ai_provider: str = "auto"
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash"
+    # gemini-2.5-flash now 404s ("no longer available to new users"); Google
+    # points to gemini-3.8-flash. When the model is retired, out of quota
+    # (free tier: ~20 requests/day per model) or overloaded, ai_client moves
+    # on to the fallback models in order. Override with
+    # GEMINI_FALLBACK_MODELS='["model-a","model-b"]'.
+    gemini_model: str = "gemini-3.8-flash"
+    gemini_fallback_models: list[str] = ["gemini-3.5-flash", "gemini-flash-lite-latest"]
     gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
 
     # Outgoing email (notification emails). Credentials only ever come from

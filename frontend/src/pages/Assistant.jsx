@@ -12,6 +12,32 @@ import { popIn } from "../motion.js";
 
 const SUGGESTIONS = ["suggestion1", "suggestion2", "suggestion3"];
 
+// The model answers in light Markdown (**bold**, "* " bullets, "# " headings).
+// Render just those as React elements -- never as HTML, so a reply can't
+// inject markup -- instead of showing the raw asterisks.
+function renderInline(text, keyBase) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**") && part.length > 4
+      ? <strong key={`${keyBase}-${i}`}>{part.slice(2, -2)}</strong>
+      : part.replace(/(^|\s)\*([^*\s][^*]*)\*(?=\s|$|[.,!?;:])/g, "$1$2")
+  );
+}
+
+function renderReply(text) {
+  return text.split("\n").map((line, i, lines) => {
+    const bullet = line.match(/^\s*[*-]\s+(.*)$/);
+    const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+    const body = bullet ? `• ${bullet[1]}` : heading ? heading[1] : line;
+    const content = renderInline(body, i);
+    return (
+      <span key={i}>
+        {heading ? <strong>{content}</strong> : content}
+        {i < lines.length - 1 ? "\n" : null}
+      </span>
+    );
+  });
+}
+
 export default function Assistant() {
   const { t } = useTranslation();
   const { dashboard } = useDashboard() || {};
@@ -114,7 +140,7 @@ export default function Assistant() {
                     className={`bubble ${m.role === "user" ? "me" : "npc"}`}
                     style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start" }}
                   >
-                    {m.content}
+                    {m.role === "user" ? m.content : renderReply(m.content)}
                   </motion.div>
                 ))}
               </AnimatePresence>

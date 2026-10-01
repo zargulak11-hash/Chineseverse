@@ -6,6 +6,7 @@ from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import ai_client
+from app.services.dna import compute_dna
 from app.services.gamification import ensure_user_skills, user_rank
 from app.services.localization import load_translations, tr
 from app.services.practice import review_counts
@@ -38,19 +39,25 @@ def chat(
 ):
     ensure_user_skills(db, user)
     level, mastery = user_rank(db, user)
-    weakest = sorted(
-        (s for s in user.user_skills if s.skill), key=lambda s: s.mastery
-    )[:2]
-    skill_tr = load_translations(db, "skill", [str(s.skill.id) for s in weakest], locale)
+    skills = sorted((s for s in user.user_skills if s.skill), key=lambda s: s.mastery)
+    skill_tr = load_translations(db, "skill", [str(s.skill.id) for s in skills], locale)
+    # Same localized skill names the dashboard/DNA pages show, so a reply
+    # in the selected language doesn't splice in English skill names.
+    skill_name = {s.id: tr(skill_tr, s.skill.id, "name", s.skill.name) for s in skills}
+    practised = any(s.mastery > 0 for s in skills)
+    dna = compute_dna(user)
 
     context = {
         "username": user.username,
         "hsk_level": level,
         "mastery": mastery,
         "streak": user.streak.current_streak if user.streak else 0,
-        # Same localized skill names the dashboard/DNA pages show, so a reply
-        # in the selected language doesn't splice in English skill names.
-        "weak_skills": [tr(skill_tr, s.skill.id, "name", s.skill.name) for s in weakest],
+        # With every skill still at 0 there is no "weakest" -- naming two
+        # arbitrary ones would hand the model a fact that isn't true.
+        "weak_skills": [skill_name[s.id] for s in skills[:2]] if practised else [],
+        "skill_mastery": [f"{skill_name[s.id]} {round(s.mastery)}%" for s in skills] if practised else [],
+        "dna_overall": dna["overall"],
+        "words_mastered": dna["words_mastered"],
         "companion": user.animal.name if user.animal else None,
     }
     # Read-only: these are the same counts the dashboard and Review page show,
