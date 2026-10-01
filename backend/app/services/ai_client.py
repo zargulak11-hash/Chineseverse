@@ -577,6 +577,7 @@ def evaluate_case_solution(
 # ---------------------------------------------------------------------------
 
 ASSISTANT_SYSTEM_TEMPLATE = (
+    "REPLY LANGUAGE: {language}.{language_detail}\n\n"
     "You are the ChineseVerse assistant, built into ChineseVerse, a gamified "
     "app for learning Mandarin Chinese (HSK 1-9 roadmap, lessons, vocabulary, "
     "Hanzi, grammar, server-graded practice, spaced-repetition Review, "
@@ -608,12 +609,69 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "LANGUAGE: always reply in {language} -- the language this learner selected "
     "in the app -- even if they write to you in another language. Chinese "
     "examples (characters, pinyin) stay in Chinese; everything else is {language}."
+    "{language_detail}"
 )
 
 # The app's selected UI language (X-Locale) decides the assistant's reply
 # language, the same way it localizes every other screen. Names are written
 # in English because they go into the English system prompt above.
 ASSISTANT_LANGUAGE_NAMES = {"en": "English", "ru": "Russian", "tg": "Tajik", "zh": "Simplified Chinese"}
+
+# A bare "Tajik" wasn't enough: with TG selected and a question typed in
+# English, gemini-flash-lite answered in Uzbek written in Latin script
+# ("Sun'iy intellekt ... bu kompyuter tizimlari ..."). Tajik is also easy to
+# confuse with Russian (same Cyrillic base) and with Persian (same language
+# family, Arabic script), so the TG rule names the script and the letters
+# that only Tajik Cyrillic has, and rules the look-alikes out. The rule is
+# stated at the top and again at the end of the prompt, since lighter
+# fallback models weigh the opening instruction most.
+ASSISTANT_LANGUAGE_DETAIL = {
+    "tg": (
+        " Write in Tajik (тоҷикӣ), the official language of Tajikistan, in the "
+        "Tajik Cyrillic alphabet, using its own letters ғ, ӣ, қ, ӯ, ҳ, ҷ where "
+        "Tajik spelling needs them (e.g. «ҳа», «бо ҷонам», «забони чинӣ»). Do NOT "
+        "answer in Russian, Uzbek, Persian/Farsi or Dari, and never use Latin or "
+        "Arabic script for the answer -- even when the learner writes in "
+        "Russian, English or another language."
+    ),
+    "ru": " Write in Russian (Cyrillic), even if the learner writes in another language.",
+    "zh": " Write in Simplified Chinese characters (简体中文), not Traditional.",
+}
+
+# Even with that rule, the lighter fallback model now and then emits a
+# single foreign letter INSIDE an otherwise Cyrillic Tajik word -- seen
+# live: «Бо کмоли» (Arabic kaf for к), «супуrтани» (Latin r for р). Only such
+# mixed-script words are touched, letter by letter; whole Latin words
+# (ChineseVerse, HSK, pinyin such as Běijīng) and Chinese stay as they are,
+# so the model's answer itself is never rewritten.
+_TG_LATIN = dict(zip("abcdefghijklmnopqrstuvwxyz", "абсдефгҳиҷклмнопқрстуввхйз"))
+_TG_ARABIC = {
+    "ا": "а", "ب": "б", "پ": "п", "ت": "т", "ج": "ҷ", "چ": "ч", "ح": "ҳ", "خ": "х",
+    "د": "д", "ر": "р", "ز": "з", "ژ": "ж", "س": "с", "ش": "ш", "ع": "ъ", "غ": "ғ",
+    "ف": "ф", "ق": "қ", "ک": "к", "ك": "к", "گ": "г", "ل": "л", "م": "м", "ن": "н",
+    "و": "в", "ه": "ҳ", "ی": "и", "ي": "и",
+}
+_CYRILLIC_RE = re.compile(r"[Ѐ-ӿ]")
+_FOREIGN_RE = re.compile(r"[A-Za-z؀-ۿ]")
+_WORD_RE = re.compile(r"[\w؀-ۿ]+")
+
+
+def _tg_clean_mixed_script(text: str) -> str:
+    def fix(match: re.Match) -> str:
+        word = match.group(0)
+        if not (_CYRILLIC_RE.search(word) and _FOREIGN_RE.search(word)):
+            return word
+        out = []
+        for ch in word:
+            low = ch.lower()
+            if low in _TG_LATIN:
+                rep = _TG_LATIN[low]
+                out.append(rep.upper() if ch.isupper() else rep)
+            else:
+                out.append(_TG_ARABIC.get(ch, ch))
+        return "".join(out)
+
+    return _WORD_RE.sub(fix, text)
 
 
 def _learner_block(context: dict) -> str:
@@ -844,12 +902,15 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
             system = ASSISTANT_SYSTEM_TEMPLATE.format(
                 learner=_learner_block(context),
                 language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
+                language_detail=ASSISTANT_LANGUAGE_DETAIL.get(locale, ""),
             )
             reply = _gemini_chat(
                 [{"role": "system", "content": system}] + messages,
                 max_tokens=700,
                 temperature=0.7,
             )
+            if locale == "tg":
+                reply = _tg_clean_mixed_script(reply)
             return reply, "ai"
         except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
             # Unreachable API, exhausted credits (429) or a malformed reply:

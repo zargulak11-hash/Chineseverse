@@ -187,6 +187,36 @@ with TestClient(app) as client:
             assert f"always reply in {name}" in system["content"], system["content"]
         print("[PASS] greetings, Chinese questions and general questions all go to the model, in the selected language")
 
+        # TG: the rule pins Tajik Cyrillic and rules out the look-alike
+        # languages, at the very top of the prompt and again at the end.
+        chat(client, h, "What is artificial intelligence?", "tg")
+        tg_system = captured[-1]["messages"][0]["content"]
+        assert tg_system.startswith("REPLY LANGUAGE: Tajik. Write in Tajik (тоҷикӣ)"), tg_system[:200]
+        assert tg_system.count("Tajik Cyrillic alphabet") == 2, tg_system
+        for word in ("ғ, ӣ, қ, ӯ, ҳ, ҷ", "Russian, Uzbek, Persian/Farsi", "Latin or"):
+            assert word in tg_system, word
+        chat(client, h, "Hello", "en")
+        assert "Tajik" not in captured[-1]["messages"][0]["content"]
+        print("[PASS] TG prompt pins Tajik Cyrillic (not Russian/Uzbek/Persian), top and bottom")
+
+        # Mixed-script letters inside Tajik words are repaired -- the two
+        # glitches seen live from gemini-flash-lite -- while whole Latin words,
+        # pinyin and Chinese are left untouched.
+        clean = ai_client._tg_clean_mixed_script
+        assert clean("Бо کмоли майл") == "Бо кмоли майл"  # Arabic kaf -> Cyrillic к
+        assert clean("супуrтани имтиҳон") == "супуртани имтиҳон"
+        assert clean("ChineseVerse, HSK 1, 北京 (Běijīng), streak") == "ChineseVerse, HSK 1, 北京 (Běijīng), streak"
+        assert clean("**了 (le)** — ҳиссача") == "**了 (le)** — ҳиссача"
+
+        def glitchy(messages, **kw):
+            captured.append({"messages": messages, "max_tokens": kw.get("max_tokens")})
+            return "Барои супуrтани HSK (Hànyǔ)"
+        ai_client._gemini_chat = glitchy
+        assert chat(client, h, "Салом", "tg")["reply"] == "Барои супуртани HSK (Hànyǔ)"
+        assert chat(client, h, "Привет", "ru")["reply"] == "Барои супуrтани HSK (Hànyǔ)"  # other locales untouched
+        ai_client._gemini_chat = fake_model
+        print("[PASS] stray Latin/Arabic letters inside Tajik words are repaired for TG only")
+
         prompt = captured[-1]["messages"][0]["content"]
         assert "ONLY help" not in prompt and "decline" not in prompt, prompt
         assert "Do not refuse them" in prompt
