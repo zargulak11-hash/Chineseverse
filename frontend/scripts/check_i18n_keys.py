@@ -22,6 +22,18 @@ DYNAMIC = (
     + [f"companionReact.{m}" for m in ("happy", "excited", "proud", "celebrating", "encouraging",
                                        "worried", "lessonComplete", "reviewClear")]
     + [f"companionReact.context.{c}" for c in ("vocab", "hanzi", "grammar")]
+    + [f"pages.duels.focusType.{f}" for f in ("mix", "vocab", "listening", "hanzi", "tones", "grammar")]
+    + [f"pages.duels.status.{s}" for s in ("pending", "active", "completed", "declined", "cancelled", "expired")]
+    + [f"pages.duels.outcome.{o}" for o in ("win", "loss", "draw")]
+    + [f"pages.duels.{k}" for k in ("incoming", "inProgress", "outgoing", "history")]
+    + [f"pages.duels.errors.{e}" for e in ("generic", "not_found", "not_allowed", "cannot_challenge_self",
+                                           "opponent_not_found", "duel_already_open", "invalid_level",
+                                           "not_enough_content", "not_started", "no_such_question",
+                                           "already_answered", "out_of_order", "invalid_option", "time_up",
+                                           "already_finished", "not_pending", "not_active")]
+    + [f"pages.duelBattle.{s}" for s in ("declined", "cancelled", "expired")]
+    + [f"pages.duelBattle.decidedBy.{d}" for d in ("correct", "score", "time", "draw")]
+    + [f"pages.duelBattle.finish.{f}" for f in ("completed", "timeout", "forfeit", "no_show")]
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

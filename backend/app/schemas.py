@@ -645,25 +645,6 @@ class MistakePatch(BaseModel):
 
 
 # --------------------------------------------------------------------------- DNA / HSK derived
-class DuelCreate(BaseModel):
-    opponent_username: str = Field(min_length=1, max_length=50)
-    challenge_type: Optional[str] = None  # None = pick weakest
-
-
-class DuelAnswer(BaseModel):
-    index: int = Field(ge=0)
-    answer: str = Field(min_length=1, max_length=200)
-    response_time_ms: int = Field(default=1000, ge=0)
-
-
-class DuelQuestion(BaseModel):
-    index: int
-    type: str
-    prompt: str
-    options: Optional[list] = None
-    tts_text: Optional[str] = None
-
-
 class PlacementQuestion(BaseModel):
     index: int
     level: int
@@ -693,25 +674,6 @@ class PlacementResultResponse(BaseModel):
     total_count: int
     placed_level: int
     overall_mastery: float
-
-
-class DuelResponse(BaseModel):
-    id: int
-    status: str
-    challenge_type: Optional[str]
-    questions: list[DuelQuestion] = []
-    opponent: Optional[str] = None
-    is_ai_opponent: bool = True
-    my_score: Optional[int] = None
-    opp_score: Optional[int] = None
-    finished: bool = False
-    # True once you've finished your side but a REAL (non-AI) opponent
-    # hasn't played yet — the duel stays "active" and unscored for them
-    # rather than inventing a result. See duels.py:finish_duel.
-    awaiting_opponent: bool = False
-    winner: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class AchievementResponse(BaseModel):
@@ -876,4 +838,4 @@ class AdminUserListResponse(BaseModel):
 
 
 class AdminDashboardResponse(BaseModel):
-    total_users: int
+    total_users: int

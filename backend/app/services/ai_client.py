@@ -744,7 +744,7 @@ ASSISTANT_OFFLINE = {
         "xp": "You earn XP and coins from voice attempts, quests, missions and duels — the Quests page usually has today's easiest wins.",
         "companion": "Your companion is {companion}. Each one biases your daily quests and missions toward its own specialty — see the Companion page.",
         "no_companion": "no companion chosen yet",
-        "duel": "Duels test your weakest strand under a timer. Start one from the Duels page — losing still counts as practice.",
+        "duel": "A duel is 1-vs-1 with another learner: you both get the same questions and your own clock. Challenge someone from the Duels page — every answer still counts as practice.",
         "general": (
             "Please try your question again in a little while. Meanwhile, your next step: "
             "you're at HSK {hsk_level} and have {due} item(s) waiting in Review."
@@ -777,7 +777,7 @@ ASSISTANT_OFFLINE = {
         "xp": "Опыт и монеты даются за голосовые попытки, квесты, миссии и дуэли — на странице квестов обычно есть самые лёгкие задания на сегодня.",
         "companion": "Твой компаньон — {companion}. Каждый компаньон смещает ежедневные квесты и миссии в сторону своей специализации — загляни на страницу компаньона.",
         "no_companion": "компаньон пока не выбран",
-        "duel": "Дуэли проверяют твой самый слабый навык на время. Начни дуэль на странице дуэлей — даже проигрыш засчитывается как практика.",
+        "duel": "Дуэль — это один на один с другим учеником: у вас одинаковые вопросы и у каждого свой таймер. Вызови кого-нибудь на странице дуэлей — каждый ответ всё равно засчитывается как практика.",
         "general": (
             "Попробуй задать вопрос ещё раз чуть позже. А пока следующий шаг: "
             "ты на уровне HSK {hsk_level}, в повторении ждут элементов: {due}."
@@ -810,7 +810,7 @@ ASSISTANT_OFFLINE = {
         "xp": "Таҷриба ва тангаҳоро барои кӯшишҳои овозӣ, супоришҳо, миссияҳо ва дуэлҳо мегиред — дар саҳифаи супоришҳо одатан осонтарин вазифаҳои имрӯза ҳастанд.",
         "companion": "Ҳамроҳи шумо — {companion}. Ҳар ҳамроҳ супоришҳо ва миссияҳои ҳаррӯзаро ба самти тахассуси худ майл медиҳад — саҳифаи ҳамроҳро бинед.",
         "no_companion": "ҳамроҳ ҳоло интихоб нашудааст",
-        "duel": "Дуэлҳо заифтарин маҳорати шуморо бо вақт месанҷанд. Дуэлро аз саҳифаи дуэлҳо оғоз кунед — ҳатто бохт ҳамчун машқ ҳисоб мешавад.",
+        "duel": "Дуэл бозии як ба як бо омӯзандаи дигар аст: саволҳо якхелаанд ва ҳар кас вақти худро дорад. Касеро аз саҳифаи дуэлҳо даъват кунед — ҳар ҷавоб ҳамчун машқ ҳисоб мешавад.",
         "general": (
             "Лутфан саволатонро каме баъдтар боз диҳед. Ҳоло қадами навбатӣ: "
             "шумо дар сатҳи HSK {hsk_level} ҳастед ва дар такрор {due} унсур интизор аст."
@@ -833,7 +833,7 @@ ASSISTANT_OFFLINE = {
         "xp": "语音练习、任务、使命和对战都能获得经验值和金币——任务页面通常有今天最容易完成的奖励。",
         "companion": "你的伙伴是{companion}。每个伙伴都会让每日任务和使命偏向它的专长——请查看伙伴页面。",
         "no_companion": "还没有选择伙伴",
-        "duel": "对战会在限时内考查你最薄弱的方面。从对战页面开始一局吧——输了也算练习。",
+        "duel": "对决是与另一位学习者一对一：题目相同，各自计时。在对决页面挑战别人吧——每个回答都算作练习。",
         "general": "请稍后再问一次。现在的下一步：你是 HSK {hsk_level}，复习中有 {due} 项等着你。",
     },
 }

@@ -125,14 +125,12 @@ right = call("POST", "/api/world/scenarios/the-missing-bill/solve", {"conclusion
 assert wrong["solved"] is False and right["solved"] is True
 print(f"  OK wrong={wrong['solved']} right={right['solved']}")
 
-print("\n== Duel vs Buddy (create / answer / finish) ==")
-d = call("POST", "/api/duels", {"opponent_username": "Buddy"}, headers=H)
-assert d["opponent"] == "Buddy" and len(d["questions"]) == 5
-for i, q in enumerate(d["questions"]):
-    call("POST", f"/api/duels/{d['id']}/answer", {"index": i, "answer": (q["options"] or ["?"])[0], "response_time_ms": 900}, headers=H)
-fin = call("POST", f"/api/duels/{d['id']}/finish", headers=H)
-assert fin["finished"] is True and fin["opponent"] == "Buddy"
-print("  OK duel finished, winner:", fin["winner"])
+print("\n== Real 1-vs-1 duel (challenge / accept / start / answer, both players) ==")
+from quest_helpers import play_real_duel  # noqa: E402
+
+fin = play_real_duel(call, H)
+assert fin["result"]["outcome"] in ("win", "loss", "draw")
+print("  OK duel completed, outcome:", fin["result"]["outcome"], "decided by", fin["result"]["decided_by"])
 
 print("\n== Quests + claim (guaranteed-completable path) ==")
 qs = call("GET", "/api/quests/today", headers=H)

@@ -45,11 +45,31 @@ def drive_quest(call, H, q):
             headers=H,
         )
     elif kind == "duel":
-        d = call("POST", "/api/duels", {"opponent_username": "Buddy"}, headers=H)
-        for i, qq in enumerate(d["questions"]):
-            options = qq.get("options") or ["好"]
-            call("POST", f"/api/duels/{d['id']}/answer", {"index": i, "answer": options[0], "response_time_ms": 800}, headers=H)
-        call("POST", f"/api/duels/{d['id']}/finish", headers=H)
+        for _ in range(need):
+            play_real_duel(call, H)
+
+
+def play_real_duel(call, H):
+    """A complete real 1-vs-1 duel through the HTTP API: registers a fresh
+    sparring account (duels are between two real users), challenges it,
+    accepts as it, and both play every question (first option each)."""
+    import uuid
+
+    name = f"duelpartner_{uuid.uuid4().hex[:8]}"
+    reg = call("POST", "/api/auth/register",
+               {"username": name, "email": f"{name}@example.com", "password": "secret1"})
+    P = {"Authorization": f"Bearer {reg['access_token']}"}
+    d = call("POST", "/api/duels", {"opponent_id": reg["user"]["id"], "hsk_level": 1}, headers=H)
+    call("POST", f"/api/duels/{d['id']}/accept", headers=P)
+    for headers in (H, P):
+        state = call("POST", f"/api/duels/{d['id']}/start", headers=headers)
+        while state["current"] is not None:
+            q = state["current"]
+            state = call("POST", f"/api/duels/{d['id']}/answer",
+                         {"index": q["index"], "choice_id": q["options"][0]["id"]}, headers=headers)["duel"]
+    final = call("GET", f"/api/duels/{d['id']}", headers=H)
+    assert final["status"] == "completed" and final["result"] is not None, final
+    return final
 
 
 def complete_any(call, H, quests):

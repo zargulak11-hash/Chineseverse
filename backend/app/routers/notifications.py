@@ -30,6 +30,7 @@ class NotificationOut(BaseModel):
     read: bool
     read_at: datetime | None = None
     created_at: datetime | None = None
+    duel_id: int | None = None
     link: str | None = None
 
 

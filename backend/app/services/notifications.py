@@ -40,7 +40,16 @@ from app.services import email as mailer
 log = logging.getLogger("app.notifications")
 
 FOLLOW = "follow"
-TYPES = (FOLLOW,)
+DUEL_CHALLENGE = "duel_challenge"
+DUEL_ACCEPTED = "duel_accepted"
+DUEL_DECLINED = "duel_declined"
+DUEL_COMPLETED = "duel_completed"
+DUEL_TYPES = (DUEL_CHALLENGE, DUEL_ACCEPTED, DUEL_DECLINED, DUEL_COMPLETED)
+TYPES = (FOLLOW,) + DUEL_TYPES
+# Duel notifications are in-app only: a challenge is time-boxed and lives in
+# the app, so it gets no email copy. This status is outside RETRYABLE, so
+# neither the background task nor the sweep ever picks these rows up.
+IN_APP_ONLY = "in_app_only"
 UI_LOCALES = ("en", "ru", "tg", "zh")
 
 # Following, unfollowing and following again must not become a way to spam
@@ -97,6 +106,36 @@ def create_follow_notification(db: Session, actor: models.User, recipient: model
     return n
 
 
+def create_duel_notification(
+    db: Session, kind: str, actor: models.User | None, recipient: models.User, duel_id: int
+) -> models.Notification | None:
+    """Adds (does not commit) an in-app duel notification. The caller
+    commits it in the same transaction as the duel change it reports."""
+    if kind not in DUEL_TYPES or recipient is None:
+        return None
+    if actor is not None and actor.id == recipient.id:
+        return None
+    n = models.Notification(
+        recipient_id=recipient.id,
+        actor_id=actor.id if actor is not None else None,
+        type=kind,
+        duel_id=duel_id,
+        email_status=IN_APP_ONLY,
+    )
+    db.add(n)
+    return n
+
+
+def mark_duel_notifications_read(db: Session, recipient_id: int, duel_id: int, kind: str) -> None:
+    """A challenge the recipient already answered is no longer "unread"."""
+    db.query(models.Notification).filter(
+        models.Notification.recipient_id == recipient_id,
+        models.Notification.duel_id == duel_id,
+        models.Notification.type == kind,
+        models.Notification.read_at.is_(None),
+    ).update({models.Notification.read_at: datetime.utcnow()}, synchronize_session=False)
+
+
 # --------------------------------------------------------------------------- reading
 
 def serialize(n: models.Notification) -> dict:
@@ -119,7 +158,12 @@ def serialize(n: models.Notification) -> dict:
         "read": n.read_at is not None,
         "read_at": n.read_at,
         "created_at": n.created_at,
-        "link": f"/u/{actor.id}" if actor is not None and n.type == FOLLOW else None,
+        "duel_id": n.duel_id,
+        "link": (
+            f"/duels/{n.duel_id}" if n.type in DUEL_TYPES and n.duel_id
+            else f"/u/{actor.id}" if actor is not None and n.type == FOLLOW
+            else None
+        ),
     }
 
 
@@ -392,6 +436,7 @@ def email_diagnostics(db: Session, limit: int = 20) -> dict:
     )
     rows = (
         db.query(models.Notification)
+        .filter(models.Notification.email_status != IN_APP_ONLY)  # no email copy to diagnose
         .order_by(models.Notification.id.desc())
         .limit(limit)
         .all()

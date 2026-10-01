@@ -13,6 +13,7 @@ HSK level → Lesson → Vocabulary / Hanzi / Grammar → Practice → Result
 
 - **Curriculum**: 11,334 vocabulary items, 3,000 Hanzi with stroke data, 600 grammar points, 111 lessons, and ru/tg/zh translations. HSK 7–9 is one shared advanced pool, as in the official standard.
 - **Practice** (`/practice`, `POST /api/practice/sessions`): the server builds and grades each round. Question types are word ↔ meaning, listening, Hanzi meaning, Hanzi pinyin (with tone distractors) and grammar-in-context. The client only sends the option id it chose.
+- **Duels** (`/duels`): a real 1-vs-1 between two users. A challenge is accepted or declined by the invited player; both then get the same server-stored questions and their own server-timed clock, and the server decides the winner (correct answers, then score, then time).
 - **Review** (`/review`): items due under spaced repetition, plus unresolved mistakes. Mistakes come from practice, duels, voice and Hanzi tracing.
 - **Lessons**: a lesson links to the words and grammar it teaches (`GET /api/lessons/{id}/items`). It counts as completed only when its practice round scores at least 70%.
 - **Learning DNA**: nine skills. Speaking, Listening, Reading, Writing, Vocabulary, Grammar, Tones, Memory and Reaction Speed are all updated from graded activity.
@@ -66,6 +67,8 @@ python tests/smoke_test.py              # CRUD + authorization (401/403/ownershi
 python tests/google_auth_test.py        # identity chain, account linking, admin allowlist
 python tests/practice_test.py           # server-graded practice, review, lesson completion, DNA
 python tests/curriculum_parity_test.py  # fresh DB gets the full curriculum, idempotently
+python tests/duel_test.py               # real 1-vs-1 duels: lifecycle, per-player clocks, scoring, authorization
+python tests/duel_migration_test.py     # legacy duels survive the real-duel migration
 python tests/admin_dashboard_test.py
 PYTHONPATH=. python tests/phase2_boot_test.py
 # admin_users_test.py runs against a live API (default http://127.0.0.1:8001) on a throwaway database

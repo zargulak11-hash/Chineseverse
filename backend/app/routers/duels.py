@@ -1,64 +1,35 @@
+"""/api/duels -- real 1-vs-1 duels between two users.
+
+All rules live in services/duel.py; this module is the HTTP layer. Every
+route authenticates, and every route that names a duel resolves it through
+duel_svc.load_for(), which 404s for anyone who is not one of its two
+participants. Nothing about the result (correctness, time, score, winner)
+is accepted from the client.
+"""
+
 import random
-from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import flag_modified
 
-from app import models, schemas
+from app import models
 from app.database import get_db
-from app.deps import get_current_user
-from app.services.activity import log_activity
-from app.services.dna import bump_skill, compute_dna
-from app.services.gamification import (
-    animal_bias,
-    check_achievements,
-    ensure_user_skills,
-    progress_missions,
-    progress_quests,
-    record_mistake,
-    reinforce_mistake,
-    user_rank,
-)
+from app.deps import get_current_user, get_locale
+from app.services import duel as duel_svc
+from app.services.gamification import user_rank
 
 router = APIRouter(prefix="/api/duels", tags=["duels"])
 
+
+# ---------------------------------------------------------------------------
+# Placement-test question builder (used by routers/onboarding.py). This is the
+# original duel question generator; real duels now use the server-graded
+# practice engine via services/duel.py.
+# ---------------------------------------------------------------------------
+
 QUESTION_COUNT = 5
-
-# Which Learning DNA skill and LearningMistake bucket each duel question
-# type feeds — this is what makes a duel a Learning-DNA activity instead of
-# an isolated vocab quiz.
-TYPE_SKILL = {
-    "pinyin": "vocabulary",
-    "meaning": "vocabulary",
-    "translate": "vocabulary",
-    "recognition": "speaking",
-    "tone": "tones",
-    "character": "reading",
-    "memory": "memory",
-    "listening": "listening",
-    "reaction": "reaction_speed",
-}
-TYPE_MISTAKE = {
-    "pinyin": "pinyin",
-    "tone": "tone",
-    "character": "character",
-}
-
-# The inverse of TYPE_SKILL, picking one representative duel type per
-# skill — used to auto-focus a duel on whichever skill is currently weakest
-# when the player doesn't request a specific challenge type.
-SKILL_TO_FOCUS = {
-    "tones": "tone",
-    "listening": "listening",
-    "memory": "memory",
-    "reaction_speed": "reaction",
-    "speaking": "recognition",
-    "reading": "character",
-    "vocabulary": "meaning",
-    "grammar": "translate",
-    "writing": "translate",
-}
 
 TONE_LABELS = {1: "1st tone", 2: "2nd tone", 3: "3rd tone", 4: "4th tone", 5: "neutral tone"}
 _TONE_MARKS = {1: "āēīōūǖ", 2: "áéíóúǘ", 3: "ǎěǐǒǔǚ", 4: "àèìòùǜ"}
@@ -180,310 +151,175 @@ def _build_questions(
     return questions
 
 
-def _personalized_word_pool(db: Session, user: models.User, level: int) -> list[models.VocabularyWord]:
-    """Bias the duel toward the challenger's own weak/unseen vocabulary at
-    their current HSK level — this is what makes a duel a Learning-DNA
-    challenge instead of a generic quiz everyone gets the same version of.
-    Words whose spaced-repetition schedule says they're due for review are
-    surfaced first (Memory of the World actually resurfacing things), then
-    the rest by weakest mastery as before."""
-    level_obj = db.query(models.HSKLevel).filter_by(level=level).first()
-    query = db.query(models.VocabularyWord)
-    if level_obj is not None:
-        query = query.filter(models.VocabularyWord.hsk_level_id == level_obj.id)
-    words = query.all()
-    if not words:
-        words = db.query(models.VocabularyWord).all()
-
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    uv_by_word = {uv.word_id: uv for uv in user.user_vocabulary}
-    mastery_by_word = {wid: uv.mastery for wid, uv in uv_by_word.items()}
-
-    def is_due(w):
-        uv = uv_by_word.get(w.id)
-        return bool(uv and uv.next_review_at and uv.next_review_at <= now)
-
-    words.sort(key=lambda w: (not is_due(w), mastery_by_word.get(w.id, 0.0)))
-    return words[:40] or words
+# ---------------------------------------------------------------------------
+# Real duels
+# ---------------------------------------------------------------------------
 
 
-def _buddy(db: Session) -> models.User:
-    """Get-or-create the system 'Buddy' sparring partner."""
-    buddy = db.query(models.User).filter_by(username="__buddy_ai__").first()
-    if buddy is None:
-        buddy = models.User(
-            username="__buddy_ai__",
-            email="buddy.ai@linguaverse.internal",
-            password_hash="!",
-        )
-        db.add(buddy)
-        db.flush()
-    return buddy
+class DuelCreate(BaseModel):
+    opponent_id: int = Field(ge=1)
+    hsk_level: int | None = Field(default=None, ge=1, le=9)
+    focus: str | None = Field(default=None, max_length=20)
 
 
-@router.post("", response_model=schemas.DuelResponse, status_code=201)
-def create_duel(
-    payload: schemas.DuelCreate,
+class DuelAnswerIn(BaseModel):
+    index: int = Field(ge=0)
+    choice_id: int
+
+
+def _error(exc: duel_svc.DuelError) -> JSONResponse:
+    # `detail` stays a readable sentence (what api.js shows by default);
+    # `code` lets the UI show it in the learner's language.
+    return JSONResponse(status_code=exc.status, content={"detail": exc.detail, "code": exc.code})
+
+
+def _guard(fn):
+    """Turns a DuelError anywhere in the route into a {detail, code} reply."""
+    import functools
+    import inspect
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except duel_svc.DuelError as exc:
+            return _error(exc)
+
+    wrapper.__signature__ = inspect.signature(fn)
+    return wrapper
+
+
+def _load(db: Session, duel_id: int, user: models.User) -> models.Duel:
+    return duel_svc.load_for(db, duel_id, user)
+
+
+@router.get("/opponents")
+def list_opponents(
+    q: str | None = Query(default=None, max_length=50),
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    opponent = (
-        db.query(models.User)
-        .filter(models.User.username == payload.opponent_username)
-        .first()
-    )
-    if payload.opponent_username.lower() == "buddy" or opponent is None:
-        opponent = None
-
-    ensure_user_skills(db, user)
-    level, _mastery = user_rank(db, user)
-    word_pool = _personalized_word_pool(db, user, level)
-
-    focus_type = payload.challenge_type if payload.challenge_type in VALID_FOCUS_TYPES else None
-    challenge_label = payload.challenge_type
-    if focus_type is None:
-        # An explicit request always wins. Otherwise prefer the companion's
-        # own mechanic (Fox -> reaction, Snake -> memory, ...) so different
-        # animals produce observably different duels even at equal DNA;
-        # DNA-weakest is still the fallback for animals with no strong
-        # signal (e.g. Panda, or none chosen yet).
-        animal_focus = animal_bias(user)["duel_focus"]
-        if animal_focus:
-            focus_type = animal_focus
-            challenge_label = f"{user.animal.name}'s favorite · {animal_focus}" if user.animal else animal_focus
-        else:
-            weakest = compute_dna(user).get("weakest_skill")
-            focus_type = SKILL_TO_FOCUS.get(weakest)
-            challenge_label = f"weakest strand · {weakest}" if weakest else None
-
-    questions = _build_questions(db, None, word_pool=word_pool, focus_type=focus_type)
-
-    duel = models.Duel(
-        status="active",
-        challenge_type=challenge_label,
-        question_data={"questions": questions},
-    )
-    db.add(duel)
-    db.flush()
-
-    db.add(models.DuelParticipant(duel_id=duel.id, user_id=user.id, role="challenger"))
-    if opponent is not None:
-        db.add(models.DuelParticipant(duel_id=duel.id, user_id=opponent.id, role="opponent"))
-    else:
-        buddy = _buddy(db)
-        db.add(models.DuelParticipant(duel_id=duel.id, user_id=buddy.id, role="opponent"))
-
+    """Who can be challenged: the user's following/followers, or anyone by
+    username search. Each entry says whether a duel with them is already
+    open (one open duel per pair) and their current HSK level."""
+    out = []
+    for u in duel_svc.opponent_candidates(db, user, q):
+        open_duel = duel_svc.open_duel_between(db, user.id, u.id)
+        out.append({
+            "id": u.id,
+            "username": u.username,
+            "avatar_url": u.profile.avatar_url if u.profile else None,
+            "animal_slug": u.animal.slug if u.animal else None,
+            "hsk_level": user_rank(db, u)[0],
+            "open_duel_id": open_duel.id if open_duel else None,
+        })
     db.commit()
-    return _serialize(db, duel, user)
+    return {
+        "my_level": user_rank(db, user)[0],
+        "rules": {"question_count": duel_svc.QUESTION_COUNT, "time_limit_seconds": duel_svc.TIME_LIMIT_SECONDS},
+        "opponents": out,
+    }
 
 
-@router.get("", response_model=list[schemas.DuelResponse])
+@router.post("", status_code=201)
+def create_duel(
+    payload: DuelCreate,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    try:
+        duel = duel_svc.create(db, user, payload.opponent_id, payload.hsk_level, payload.focus)
+    except duel_svc.DuelError as exc:
+        db.rollback()
+        return _error(exc)
+    return duel_svc.view(db, duel, user, locale)
+
+
+@router.get("")
 def list_duels(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
-    participant_ids = {p.duel_id for p in user.participants}
+    ids = [p.duel_id for p in db.query(models.DuelParticipant).filter_by(user_id=user.id)]
     duels = (
         db.query(models.Duel)
-        .filter(models.Duel.id.in_(list(participant_ids) or [0]))
-        .order_by(models.Duel.created_at.desc())
+        .filter(models.Duel.id.in_(ids or [0]))
+        .order_by(models.Duel.created_at.desc(), models.Duel.id.desc())
+        .limit(100)
         .all()
     )
-    return [_serialize(db, d, user) for d in duels]
+    changed = False
+    for d in duels:
+        if d.status in duel_svc.OPEN_STATUSES:
+            changed = duel_svc.refresh(db, d) or changed
+    if changed:
+        db.commit()
+    return [duel_svc.view(db, d, user, locale, with_questions=False) for d in duels]
 
 
-@router.get("/{duel_id}", response_model=schemas.DuelResponse)
+@router.get("/{duel_id}")
+@_guard
 def get_duel(
     duel_id: int,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
-    duel = db.get(models.Duel, duel_id)
-    if duel is None:
-        raise HTTPException(status_code=404, detail="Duel not found")
-    return _serialize(db, duel, user)
-
-
-def _is_ai(opp_user: models.User | None) -> bool:
-    return opp_user is None or opp_user.username == "__buddy_ai__"
-
-
-def _serialize(db: Session, duel: models.Duel, user: models.User) -> schemas.DuelResponse:
-    questions = (duel.question_data or {}).get("questions", [])
-    me = next((p for p in duel.participants if p.user_id == user.id), None)
-    opp = next((p for p in duel.participants if p.user_id != user.id), None)
-    opp_user = db.get(models.User, opp.user_id) if opp else None
-    is_ai = _is_ai(opp_user)
-    opp_name = "Buddy" if is_ai else opp_user.username
-    winner = None
-    if duel.status == "finished" and duel.winner_id:
-        winner_user = db.get(models.User, duel.winner_id)
-        if winner_user:
-            winner = (
-                "Buddy"
-                if winner_user.username == "__buddy_ai__"
-                else winner_user.username
-            )
-    awaiting_opponent = (
-        duel.status != "finished"
-        and not is_ai
-        and bool(me and me.finished)
-        and not bool(opp and opp.finished)
-    )
-    return schemas.DuelResponse(
-        id=duel.id, status=duel.status, challenge_type=duel.challenge_type,
-        questions=[schemas.DuelQuestion(**q) for q in questions],
-        opponent=opp_name,
-        is_ai_opponent=is_ai,
-        my_score=me.score if me else None,
-        opp_score=(opp.score if opp else None) if (is_ai or (opp and opp.finished)) else None,
-        finished=duel.status == "finished",
-        awaiting_opponent=awaiting_opponent,
-        winner=winner,
-    )
-
-
-@router.post("/{duel_id}/answer", response_model=dict)
-def answer_question(
-    duel_id: int,
-    payload: schemas.DuelAnswer,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    duel = db.get(models.Duel, duel_id)
-    if duel is None:
-        raise HTTPException(status_code=404, detail="Duel not found")
-    me = next((p for p in duel.participants if p.user_id == user.id), None)
-    if me is None:
-        raise HTTPException(status_code=403, detail="Not your duel")
-    if duel.status == "finished":
-        raise HTTPException(status_code=409, detail="Duel already finished")
-
-    questions = (duel.question_data or {}).get("questions", [])
-    if payload.index >= len(questions):
-        raise HTTPException(status_code=400, detail="Question index out of range")
-
-    # Re-submitting an already-answered index (double-click, retry, replay)
-    # must not re-score or re-bump DNA/mistakes — each question counts once
-    # per participant. Tracked in the duel's own JSON blob rather than a new
-    # column/table, since nothing else needs this outside this endpoint.
-    answered_map = dict((duel.question_data or {}).get("answered") or {})
-    already = set(answered_map.get(str(user.id), []))
-    if payload.index in already:
-        raise HTTPException(status_code=409, detail="Question already answered")
-
-    q = questions[payload.index]
-    qtype = q.get("type", "meaning")
-    correct = (payload.answer or "").strip().lower() == (q.get("answer") or "").strip().lower()
-
-    ensure_user_skills(db, user)
-    if correct:
-        base = 10
-        if qtype == "reaction":
-            # Reward speed on top of correctness — the whole point of this type.
-            speed_bonus = round(max(0.0, 1 - payload.response_time_ms / 6000) * 8)
-            base += speed_bonus
-        me.score += base
-        me.correct_count += 1
-        bump_skill(user, TYPE_SKILL.get(qtype, "vocabulary"), 2.0)
-    else:
-        me.score += 2
-        bump_skill(user, TYPE_SKILL.get(qtype, "vocabulary"), -0.3)
-    me.answered += 1
-
-    already.add(payload.index)
-    answered_map[str(user.id)] = sorted(already)
-    duel.question_data = {**(duel.question_data or {}), "answered": answered_map}
-    flag_modified(duel, "question_data")
-
-    mistake_type = TYPE_MISTAKE.get(qtype)
-    if mistake_type:
-        reference = q.get("prompt") or (q.get("answer") or "")[:300]
-        if correct:
-            reinforce_mistake(db, user, mistake_type, reference)
-        else:
-            record_mistake(
-                db, user, mistake_type, reference,
-                question_text=q.get("prompt"), answer_given=payload.answer,
-                correct_answer=q.get("answer"),
-            )
-
+    duel = _load(db, duel_id, user)
+    duel_svc.refresh(db, duel)
     db.commit()
-
-    return {
-        "index": payload.index,
-        "answer": q.get("answer"),
-        "correct": correct,
-        "my_score": me.score,
-    }
+    return duel_svc.view(db, duel, user, locale)
 
 
-@router.post("/{duel_id}/finish", response_model=schemas.DuelResponse)
-def finish_duel(
-    duel_id: int,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    duel = db.get(models.Duel, duel_id)
-    if duel is None:
-        raise HTTPException(status_code=404, detail="Duel not found")
-    if duel.status == "finished":
-        return _serialize(db, duel, user)
+def _act(db, duel_id, user, locale, fn, *args):
+    duel = _load(db, duel_id, user)
+    result = fn(db, duel, user, *args)
+    duel = _load(db, duel_id, user)
+    return result, duel_svc.view(db, duel, user, locale)
 
-    me = next((p for p in duel.participants if p.user_id == user.id), None)
-    opp = next((p for p in duel.participants if p.user_id != user.id), None)
-    if me is None:
-        raise HTTPException(status_code=403, detail="Not your duel")
 
-    me.finished = True
-    opp_user = db.get(models.User, opp.user_id) if opp else None
+@router.post("/{duel_id}/accept")
+@_guard
+def accept_duel(duel_id: int, user: models.User = Depends(get_current_user),
+                db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    return _act(db, duel_id, user, locale, duel_svc.accept)[1]
 
-    if _is_ai(opp_user):
-        # Buddy is an explicit, always-labeled AI opponent (see opponent /
-        # is_ai_opponent in the response) — simulating its play is honest
-        # practice, not a fabricated human result. Accuracy rubber-bands
-        # around the challenger's own performance (55-85%) so the duel
-        # feels competitive instead of a fixed pushover/wall.
-        total = len((duel.question_data or {}).get("questions", []))
-        if opp and opp.answered == 0:
-            my_accuracy = (me.correct_count / me.answered) if me.answered else 0.7
-            target_accuracy = max(0.55, min(0.85, my_accuracy + random.uniform(-0.1, 0.1)))
-            opp_correct = round(total * target_accuracy)
-            opp.score = opp_correct * 10 + (total - opp_correct) * 2
-            opp.correct_count = opp_correct
-            opp.answered = total
-        if opp:
-            opp.finished = True
-    elif opp and not opp.finished:
-        # A REAL opponent who hasn't played yet: never invent a score for
-        # them. The duel simply stays active — whoever they are can still
-        # open it later, answer, and call /finish themselves; scoring only
-        # happens once here, below, once both sides have actually finished.
-        db.commit()
-        db.refresh(duel)
-        return _serialize(db, duel, user)
 
-    duel.status = "finished"
-    duel.finished_at = datetime.now(timezone.utc)
-    winner = None
-    if me and opp:
-        if me.score > opp.score:
-            winner = me
-        elif opp.score > me.score:
-            winner = opp
-        # else: a genuine tie stays a draw (winner=None), regardless of
-        # which side happened to call /finish last.
-    elif me and me.score > 0:
-        winner = me
-    if winner is not None and winner.user_id > 0:
-        duel.winner_id = winner.user_id
-    log_activity(db, user, "duel_finish")
-    db.commit()
+@router.post("/{duel_id}/decline")
+@_guard
+def decline_duel(duel_id: int, user: models.User = Depends(get_current_user),
+                 db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    return _act(db, duel_id, user, locale, duel_svc.decline)[1]
 
-    if winner is not None and winner.user_id == user.id:
-        progress_quests(db, user, "duel", amount=1)
-        progress_missions(db, user, "duel")
-        check_achievements(db, user)
-        db.commit()
 
-    return _serialize(db, duel, user)
+@router.post("/{duel_id}/cancel")
+@_guard
+def cancel_duel(duel_id: int, user: models.User = Depends(get_current_user),
+                db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    return _act(db, duel_id, user, locale, duel_svc.cancel)[1]
+
+
+@router.post("/{duel_id}/start")
+@_guard
+def start_duel(duel_id: int, user: models.User = Depends(get_current_user),
+               db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    """Starts the caller's own clock (idempotent)."""
+    return _act(db, duel_id, user, locale, duel_svc.start_attempt)[1]
+
+
+@router.post("/{duel_id}/answer")
+@_guard
+def answer_duel(duel_id: int, payload: DuelAnswerIn, user: models.User = Depends(get_current_user),
+                db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    graded, state = _act(db, duel_id, user, locale, duel_svc.answer, payload.index, payload.choice_id)
+    return {"answer": graded, "duel": state}
+
+
+@router.post("/{duel_id}/forfeit")
+@_guard
+def forfeit_duel(duel_id: int, user: models.User = Depends(get_current_user),
+                 db: Session = Depends(get_db), locale: str = Depends(get_locale)):
+    """Ends the caller's own attempt early; the opponent keeps playing."""
+    return _act(db, duel_id, user, locale, duel_svc.forfeit)[1]

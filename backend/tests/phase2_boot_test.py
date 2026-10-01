@@ -103,19 +103,21 @@ with TestClient(app) as client:
     r = client.get("/api/achievements", headers=h)
     check("achievements", r.status_code == 200 and len(r.json()) >= 10)
 
-    # Duel vs Buddy
-    r = client.post("/api/duels", json={"opponent_username": "Buddy"}, headers=h)
-    check("duel create", r.status_code == 201 and len(r.json()["questions"]) == 5)
+    # Real 1-vs-1 duel between two registered users
+    r = client.post("/api/auth/register", json={"username": "boot_duel_rival", "email": "boot_duel_rival@example.com", "password": "secret1"})
+    rival_id, rh = r.json()["user"]["id"], {"Authorization": f"Bearer {r.json()['access_token']}"}
+    r = client.post("/api/duels", json={"opponent_id": rival_id, "hsk_level": 1}, headers=h)
+    check("duel create (pending challenge)", r.status_code == 201 and r.json()["status"] == "pending")
     duel_id = r.json()["id"]
-    q0 = r.json()["questions"][0]
-    # "recognition"-type questions are voice-only and carry no options.
-    answer_value = q0["options"][0] if q0.get("options") else "placeholder"
-    r = client.post(f"/api/duels/{duel_id}/answer", json={
-        "index": 0, "answer": answer_value, "response_time_ms": 1200,
-    }, headers=h)
-    check("duel answer", r.status_code == 200 and "my_score" in r.json())
-    r = client.post(f"/api/duels/{duel_id}/finish", headers=h)
-    check("duel finish", r.status_code == 200 and r.json()["finished"] is True)
+    r = client.post(f"/api/duels/{duel_id}/accept", headers=rh)
+    check("duel accept", r.status_code == 200 and r.json()["status"] == "active")
+    for hh in (h, rh):
+        state = client.post(f"/api/duels/{duel_id}/start", headers=hh).json()
+        while state["current"] is not None:
+            q = state["current"]
+            state = client.post(f"/api/duels/{duel_id}/answer", json={"index": q["index"], "choice_id": q["options"][0]["id"]}, headers=hh).json()["duel"]
+    r = client.get(f"/api/duels/{duel_id}", headers=h)
+    check("duel finish", r.status_code == 200 and r.json()["status"] == "completed" and r.json()["result"] is not None)
 
     # Case solve
     r = client.get("/api/world/scenarios/the-missing-bill")

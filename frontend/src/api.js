@@ -55,7 +55,12 @@ async function request(method, path, body) {
     const message =
       typeof detail === "string" ? detail : `Request failed (${res.status})`;
     if (res.status === 401) clearSession();
-    throw new Error(message);
+    const err = new Error(message);
+    // Some endpoints (duels) add a stable machine code next to `detail` so
+    // the page can show the message in the learner's language.
+    err.status = res.status;
+    if (data && typeof data.code === "string") err.code = data.code;
+    throw err;
   }
   return data;
 }

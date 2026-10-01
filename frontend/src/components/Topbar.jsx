@@ -90,6 +90,26 @@ function timeAgo(iso, lang) {
   return new Intl.DateTimeFormat(DATE_LOCALE[lang] || "en-US", { month: "short", day: "numeric" }).format(new Date(then));
 }
 
+// Text for a stored notification, in the reader's language. Literal keys
+// (not a template) so the i18n checker sees every one of them.
+function notificationText(t, n) {
+  const name = n.actor?.username || t("notifications.someone");
+  switch (n.type) {
+    case "follow":
+      return t("notifications.follow", { name });
+    case "duel_challenge":
+      return t("notifications.duel_challenge", { name });
+    case "duel_accepted":
+      return t("notifications.duel_accepted", { name });
+    case "duel_declined":
+      return t("notifications.duel_declined", { name });
+    case "duel_completed":
+      return t("notifications.duel_completed", { name });
+    default:
+      return t("notifications.generic");
+  }
+}
+
 // The bell shows two kinds of things: stored notifications from other
 // people (GET /api/notifications -- persistent, per-user, with read state)
 // and today's derived reminders (open quests, mistakes due) that come from
@@ -200,9 +220,7 @@ function NotifBell({ dashboard, showReminders = true }) {
               <UserAvatar url={n.actor?.avatar_url} name={n.actor?.username} size={28} />
               <span className="notif-text">
                 <span>
-                  {n.type === "follow"
-                    ? t("notifications.follow", { name: n.actor?.username || t("notifications.someone") })
-                    : t("notifications.generic")}
+                  {notificationText(t, n)}
                 </span>
                 <span className="notif-time">{timeAgo(n.created_at, i18n.language)}</span>
               </span>
