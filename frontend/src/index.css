@@ -401,6 +401,34 @@ a {
   user-select: none;
 }
 
+/* The lockup's two copies (BrandLogo.jsx): one clipped to the wordmark, one
+   to the emblem. Measured from the 1753x591 matte, the emblem is everything
+   left of x 632.5 plus its cloud tail, which reaches x 671 but stays above
+   y 268, while the wordmark's "C" starts at x 633 below y 290. So the
+   emblem's shape is that column plus a box to x 680 / y 278, and the
+   wordmark is its complement — both edges run through empty space, every
+   pixel lands on the right side (verified: 0 misassigned), and the halves
+   recompose into the original exactly. */
+.brand-logo__img--word {
+  clip-path: polygon(38.79% 0, 100% 0, 100% 100%, 36.08% 100%, 36.08% 47.04%, 38.79% 47.04%);
+}
+
+.brand-logo__img--emblem {
+  position: absolute;
+  left: 0;
+  top: 0;
+  clip-path: polygon(0 0, 38.79% 0, 38.79% 47.04%, 36.08% 47.04%, 36.08% 100%, 0 100%);
+  pointer-events: none;
+}
+
+/* Dark theme only: the "ChineseVerse" text goes to pure white (#fff) —
+   brightness(0) flattens every pixel to black, invert(1) to white, and the
+   alpha (the letter shapes and their antialiasing) is left untouched. The
+   emblem copy is never filtered. */
+[data-theme="ink"] .brand-logo__img--word {
+  filter: brightness(0) invert(1);
+}
+
 /* Full lockup — height-driven, width follows the 1753:591 (~2.97:1) ratio. */
 .brand-logo--lockup {
   --logo-h: 44px;

@@ -15,6 +15,13 @@ import logoUrl from "../assets/chineseverse-logo-matte.png";
 // The matte is shown with no background at all, straight on the page in
 // both themes; the favicons are the same transparent emblem.
 //
+// The lockup renders as two stacked copies of the SAME file, each clipped to
+// one part (emblem / wordmark), so the dark theme can turn only the
+// "ChineseVerse" text white while the emblem keeps its colours. The clip
+// shapes run through empty space only, so on the light theme the two copies
+// recompose into the untouched image (see .brand-logo__img--word in
+// index.css).
+//
 // Sizing lives entirely in CSS (.brand-logo* in index.css) so the image
 // is always driven by a single dimension with the other left to `auto` —
 // the browser preserves the intrinsic 1753:591 ratio, so the logo can't be
@@ -22,14 +29,35 @@ import logoUrl from "../assets/chineseverse-logo-matte.png";
 export default function BrandLogo({ variant = "lockup", className = "", ...rest }) {
   return (
     <span className={`brand-logo brand-logo--${variant}${className ? ` ${className}` : ""}`}>
-      <img
-        className="brand-logo__img"
-        src={logoUrl}
-        alt="ChineseVerse"
-        draggable="false"
-        decoding="async"
-        {...rest}
-      />
+      {variant === "mark" ? (
+        <img
+          className="brand-logo__img"
+          src={logoUrl}
+          alt="ChineseVerse"
+          draggable="false"
+          decoding="async"
+          {...rest}
+        />
+      ) : (
+        <>
+          <img
+            className="brand-logo__img brand-logo__img--word"
+            src={logoUrl}
+            alt="ChineseVerse"
+            draggable="false"
+            decoding="async"
+            {...rest}
+          />
+          <img
+            className="brand-logo__img brand-logo__img--emblem"
+            src={logoUrl}
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+            decoding="async"
+          />
+        </>
+      )}
     </span>
   );
 }
