@@ -3,14 +3,14 @@
 //   node scripts/build_brand_assets.mjs        (run from frontend/)
 //
 // The source PNG is opaque on a near-white ground, and the UI shows the logo
-// on a mint tile (--logo-bg in src/index.css). A CSS blend can't put a colour
-// behind an opaque image without also recolouring the artwork (multiply
+// with no background at all, straight on the page. CSS can't make an opaque
+// image's ground transparent without also recolouring the artwork (multiply
 // shifts every pixel; darken clips a third of them), so this script lifts the
 // white ground out once and writes:
 //
 //   src/assets/chineseverse-logo-matte.png   the logo, background transparent
 //   public/favicon-{16,32,48,64}.png, favicon.ico, apple-touch-icon.png,
-//   public/icon-512.png                      the emblem on the mint tile
+//   public/icon-512.png                      the emblem, background transparent
 //
 // The artwork itself is never redrawn: every pixel away from the background
 // keeps its exact colour and full opacity. Only background pixels become
@@ -26,10 +26,6 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = path.join(ROOT, "photo", "Chineseverse logo 🎀❤️✨.png");
 
-// Keep in sync with --logo-bg in src/index.css. Sampled from the browser's
-// mint tab strip the tile was matched to.
-const LOGO_BG = [0xcc, 0xe8, 0xe3];
-
 // A pixel whose darkest channel is at least this bright is background.
 const BG_MIN = 240;
 // Un-mixing only touches the rim this many pixels from the background, so
@@ -38,6 +34,12 @@ const RIM = 2;
 // Rim pixels whose darkest channel is at or below 255 * (1 - ALPHA_FULL) are
 // solid ink and stay fully opaque; lighter rim pixels get partial alpha.
 const ALPHA_FULL = 0.6;
+// Off-white noise in the source (mostly inside letter counters) survives the
+// background test as a few faint, disconnected pixels. Islands smaller than
+// SPECK_PX whose strongest pixel is under SPECK_ALPHA are background residue,
+// not artwork — every real part of the logo is far larger and fully opaque.
+const SPECK_PX = 64;
+const SPECK_ALPHA = 64;
 
 // The emblem crop used for the icons — the same square as the collapsed
 // sidebar mark (.brand-logo--mark in index.css): x 68..632, y 24..588, which
@@ -205,13 +207,46 @@ function matte({ w, h, px }) {
     }
     out[o + 3] = Math.round(a * 255);
   }
+  dropSpecks(w, h, out);
   return { w, h, px: out };
 }
 
+function dropSpecks(w, h, px) {
+  const seen = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    if (seen[i] || px[i * 4 + 3] === 0) continue;
+    const island = [];
+    const stack = [i];
+    seen[i] = 1;
+    let maxAlpha = 0;
+    while (stack.length) {
+      const j = stack.pop();
+      island.push(j);
+      maxAlpha = Math.max(maxAlpha, px[j * 4 + 3]);
+      const x = j % w, y = (j / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+          const k = yy * w + xx;
+          if (!seen[k] && px[k * 4 + 3] > 0) {
+            seen[k] = 1;
+            stack.push(k);
+          }
+        }
+      }
+    }
+    if (island.length < SPECK_PX && maxAlpha < SPECK_ALPHA) {
+      for (const j of island) px[j * 4] = px[j * 4 + 1] = px[j * 4 + 2] = px[j * 4 + 3] = 0;
+    }
+  }
+}
+
 // ---------- icons ----------
-// Crop the emblem square, composite it over the mint tile, and box-filter it
-// down to `size` (area-averaged, so small sizes stay clean instead of
-// aliasing).
+// Crop the emblem square and box-filter it down to `size`, keeping the
+// transparent background. Colour is averaged premultiplied by alpha so the
+// rim never picks up a dark or light fringe, and area-averaging keeps small
+// sizes clean instead of aliasing.
 function icon(img, size) {
   const { w, px } = img;
   const out = Buffer.alloc(size * size * 4);
@@ -220,7 +255,7 @@ function icon(img, size) {
     for (let ox = 0; ox < size; ox++) {
       const x0 = MARK.x + ox * scale, x1 = x0 + scale;
       const y0 = MARK.y + oy * scale, y1 = y0 + scale;
-      let r = 0, g = 0, b = 0, wsum = 0;
+      let r = 0, g = 0, b = 0, alpha = 0, wsum = 0;
       for (let sy = Math.floor(y0); sy < Math.ceil(y1); sy++) {
         const wy = Math.min(y1, sy + 1) - Math.max(y0, sy);
         for (let sx = Math.floor(x0); sx < Math.ceil(x1); sx++) {
@@ -228,17 +263,20 @@ function icon(img, size) {
           const wt = wx * wy;
           const o = (sy * w + sx) * 4;
           const a = px[o + 3] / 255;
-          r += wt * (px[o] * a + LOGO_BG[0] * (1 - a));
-          g += wt * (px[o + 1] * a + LOGO_BG[1] * (1 - a));
-          b += wt * (px[o + 2] * a + LOGO_BG[2] * (1 - a));
+          r += wt * px[o] * a;
+          g += wt * px[o + 1] * a;
+          b += wt * px[o + 2] * a;
+          alpha += wt * a;
           wsum += wt;
         }
       }
       const o = (oy * size + ox) * 4;
-      out[o] = Math.round(r / wsum);
-      out[o + 1] = Math.round(g / wsum);
-      out[o + 2] = Math.round(b / wsum);
-      out[o + 3] = 255;
+      const a = Math.round((alpha / wsum) * 255);
+      if (a === 0) continue;
+      out[o] = Math.round(r / alpha);
+      out[o + 1] = Math.round(g / alpha);
+      out[o + 2] = Math.round(b / alpha);
+      out[o + 3] = a;
     }
   }
   return encodePng({ w: size, h: size, px: out });

@@ -12,8 +12,8 @@ import logoUrl from "../assets/chineseverse-logo-matte.png";
 //     the collapsed sidebar. Keeping it a crop means the sidebar mark can
 //     never drift out of sync with the full logo.
 //
-// The matte goes on a mint tile (--logo-bg in index.css) — the same tone
-// in both themes and in the favicons, so the logo looks the same everywhere.
+// The matte is shown with no background at all, straight on the page in
+// both themes; the favicons are the same transparent emblem.
 //
 // Sizing lives entirely in CSS (.brand-logo* in index.css) so the image
 // is always driven by a single dimension with the other left to `auto` —

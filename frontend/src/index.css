@@ -73,11 +73,6 @@
   --bad-dim: rgba(193, 68, 58, 0.15);
   --seal: #b83227;
 
-  /* ---- Brand logo tile: one mint tone behind the logo in both themes and
-     baked into the favicons. Keep in sync with LOGO_BG in
-     scripts/build_brand_assets.mjs. ---- */
-  --logo-bg: #cce8e3;
-
   /* ---- Back-compat aliases: older per-page code still references these
      names (accent2/indigo/warn) — keep them defined so nothing breaks,
      but resolve them into the Ink & Jade system instead of the old
@@ -378,17 +373,15 @@ a {
    ratio. The logo is sized, never scaled into a box, and so can never be
    stretched or squashed on any screen.
 
-   The artwork is never redrawn or recoloured. It sits on one mint tile
-   (--logo-bg) in both themes and every placement, the same tone baked into
-   the favicons, so the brand reads identically everywhere.
+   The artwork is never redrawn or recoloured, and it has no background,
+   tile or border of any kind: it sits straight on the page in both themes.
 
    The source PNG is opaque on a near-white ground, so the UI uses the
    matte derived from it by scripts/build_brand_assets.mjs
    (src/assets/chineseverse-logo-matte.png): background pixels transparent,
    every artwork pixel its exact original colour. A CSS blend can't do this
    — multiply shifts every pixel of the artwork and darken clips about a
-   third of them — and filtering it onto the dark Ink page would need an
-   invert that turns the brand red pink. */
+   third of them. */
 .brand-logo {
   position: relative;
   display: inline-flex;
@@ -408,11 +401,6 @@ a {
   user-select: none;
 }
 
-.brand-logo--lockup .brand-logo__img {
-  border-radius: var(--radius-sm);
-  background: var(--logo-bg);
-}
-
 /* Full lockup — height-driven, width follows the 1753:591 (~2.97:1) ratio. */
 .brand-logo--lockup {
   --logo-h: 44px;
@@ -420,7 +408,7 @@ a {
 
 /* Emblem only, for the collapsed sidebar. Cropped out of the same logo file
    rather than shipped as a second asset, so the two can never drift.
-   The tile background sits on the span, which clips the crop to it.
+   The span is the crop window: overflow:hidden clips the image to it.
 
    Measured from the PNG: the pagoda-and-book emblem occupies x 71..628 and
    y 110..504 of the 1753x591 canvas, and the wordmark's "C" starts at
@@ -435,8 +423,6 @@ a {
   overflow: hidden;
   width: var(--logo-mark);
   height: var(--logo-mark);
-  border-radius: var(--radius-sm);
-  background: var(--logo-bg);
 }
 
 .brand-logo--mark .brand-logo__img {
@@ -469,11 +455,6 @@ a {
 
 .brand-logo--hero {
   --logo-h: clamp(54px, 12vw, 112px);
-}
-
-/* At hero size the small-tile corner reads as square; use the card radius. */
-.brand-logo--hero .brand-logo__img {
-  border-radius: var(--radius-md);
 }
 
 .brand-logo--boot {
