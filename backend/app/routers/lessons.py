@@ -9,7 +9,7 @@ from app.deps import get_current_user, get_locale, get_user_or_none, require_adm
 from app.services import lesson_path
 from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
-from app.services.practice import lesson_items
+from app.services.practice import lesson_body, lesson_items
 
 router = APIRouter(prefix="/api/lessons", tags=["lessons"])
 
@@ -143,6 +143,12 @@ def get_lesson(
         return locked
     translations = load_translations(db, "lesson", [str(lesson_id)], locale)
     out = _localize(db, lesson, translations)
+    # Learners read the lesson without its trailing "New vocabulary:" word
+    # list: /items shows those same words as localized cards. Admins author
+    # lessons, so they get the stored text whole (a GET -> PUT round trip
+    # must never drop the list practice is built from).
+    if not user.is_admin:
+        out.content = lesson_body(out.content)
     out.path_status = entry.status if entry else None
     return out
 

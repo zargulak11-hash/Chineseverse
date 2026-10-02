@@ -19,6 +19,14 @@ translation, which is used as is; zh uses the Chinese head ("是") alone. A
 point that is an official Chinese syllabus title stays as it is. If any
 point has no translation, that summary is left alone (never half-English).
 
+The four hand-written grammar lessons (HSK1 Grammar 1-2, HSK2 Grammar 1,
+HSK3 Grammar 1) also get their body translated the same way: each point's
+title line uses its existing title translation, and the pattern lines
+("不 + verb/adjective") translate only the six grammar terms of PATTERN_TERMS.
+Chinese text is never touched, and a body with any line still in English
+after that is not translated at all. The trailing "New vocabulary:" list is
+kept as it is (practice reads the stored text; learners never see it).
+
 Insert-only: an existing translation (e.g. one an admin edited) is never
 touched. Then re-export the curriculum snapshot so every database gets it:
     python scripts/seed_lesson_title_translations.py
@@ -47,6 +55,41 @@ def localized(title: str, locale: str) -> str | None:
     return f"{text}{COLON[locale]}{category}" if category else text
 
 
+# The only English words in those lessons' pattern lines.
+PATTERN_TERMS = {
+    "V/Adj": {"ru": "глагол/прилагательное", "tg": "феъл/сифат", "zh": "动词/形容词"},
+    "measure word": {"ru": "счётное слово", "tg": "калимаи ченак", "zh": "量词"},
+    "small numbers": {"ru": "небольшие числа", "tg": "рақамҳои хурд", "zh": "小数目"},
+    "any size": {"ru": "любое число", "tg": "ҳар гуна рақам", "zh": "任何数目"},
+    "adjective": {"ru": "прилагательное", "tg": "сифат", "zh": "形容词"},
+    "verb": {"ru": "глагол", "tg": "феъл", "zh": "动词"},
+}
+ENGLISH = re.compile(r"[A-Za-z]{2,}")
+
+
+def localized_body(content: str, topics: dict[str, int], topic_titles: dict, locale: str) -> str | None:
+    body, sep, word_list = content.partition("\nNew vocabulary:")
+    lines = body.split("\n")
+    if not any(line in topics and " — " in line for line in lines):
+        return None
+    out = []
+    for line in lines:
+        if line in topics and " — " in line:
+            if locale == "zh":
+                line = line.split(" — ")[0]
+            elif (topics[line], locale) in topic_titles:
+                line = topic_titles[(topics[line], locale)]
+            else:
+                return None
+        else:
+            for term, by_locale in PATTERN_TERMS.items():
+                line = line.replace(term, by_locale[locale])
+        if ENGLISH.search(line.replace("A ", "").replace(" B", "")):
+            return None
+        out.append(line)
+    return "\n".join(out) + sep + word_list
+
+
 def localized_summary(summary: str, topics: dict[str, int], topic_titles: dict, locale: str) -> str | None:
     parts = [p.strip() for p in summary.split(";")]
     if not any(" — " in p for p in parts) or not all(p in topics for p in parts):
@@ -70,7 +113,7 @@ def main() -> None:
         (t.content_key, t.field, t.locale)
         for t in db.query(models.ContentTranslation).filter(
             models.ContentTranslation.content_type == "lesson",
-            models.ContentTranslation.field.in_(("title", "summary")),
+            models.ContentTranslation.field.in_(("title", "summary", "content")),
         )
     }
     topic_titles = {
@@ -85,6 +128,8 @@ def main() -> None:
                 "title": localized(lesson.title, locale),
                 "summary": localized_summary(lesson.summary or "", topics, topic_titles, locale)
                 if lesson.lesson_type == "grammar" else None,
+                "content": localized_body(lesson.content or "", topics, topic_titles, locale)
+                if lesson.lesson_type == "grammar" else None,
             }
             for field, text in fields.items():
                 if text is None or (str(lesson.id), field, locale) in have:
@@ -94,7 +139,7 @@ def main() -> None:
                 ))
                 added += 1
     db.commit()
-    print(f"Added {added} lesson title/summary translations.")
+    print(f"Added {added} lesson title/summary/content translations.")
 
 
 if __name__ == "__main__":

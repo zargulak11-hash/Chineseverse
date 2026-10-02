@@ -794,7 +794,7 @@
     "q": {
       "meaning_to_word": "哪个词是这个意思？",
       "word_to_meaning": "这个词是什么意思？",
-      "listen_to_word": "听一听，选出你听到的词。",
+      "listen_to_word": "听一听，选出你听到的词的意思。",
       "char_to_meaning": "这个汉字是什么意思？",
       "char_to_pinyin": "这个汉字怎么读？",
       "example_to_point": "这个句子用了哪个语法点？"

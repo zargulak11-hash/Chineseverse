@@ -64,6 +64,21 @@ _LESSON_BARE = re.compile(
     r"([㐀-鿿]{1,6})[ \t]+((?:[a-zA-ZÀ-ɏǍ-ǜ']+[ \t]?){1,4}?)(?=[ \t]*(?:=|,|，|\.|。|\n|$))"
 )
 _TONED = re.compile(r"[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")
+# The generated grammar lessons end with a machine-readable word list:
+#   "New vocabulary:\n客人 (kè'rén) = guest\n..."
+# lesson_items reads the lesson's words from it, so it stays in the stored
+# content. Learners never need to see it: the lesson page shows the same
+# words as structured, localized cards (/lessons/{id}/items), and the list
+# itself is English-only.
+_VOCAB_LIST = re.compile(r"\n[ \t]*New vocabulary:[ \t]*\n.*\Z", re.S)
+
+
+def lesson_body(content: str | None) -> str | None:
+    """The lesson text a learner reads: the stored content without its
+    trailing "New vocabulary:" word list."""
+    if not content:
+        return content
+    return _VOCAB_LIST.sub("", content).rstrip()
 _SEGMENT_MAX = 4  # longest word tried when splitting a phrase into known words
 _TONE_MARKS = str.maketrans(
     "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü", "aaaaeeeeiiiioooouuuuvvvvv"
@@ -108,11 +123,19 @@ def _records(db: Session, user: models.User, item_type: str, ids: list[int] | No
     return {getattr(r, fk): r for r in q}
 
 
+# Lines of the official syllabus that are not examples: sub-headings
+# ("（1）是非问句", "①疑问代词+都") and notes ("※ 序数词（见【二72】...）").
+_SYLLABUS_NOTE = re.compile(r"^(?:[（(]\d+[)）]|[①-⑳]|※)|见【")
+
+
 def _grammar_example(topic: models.GrammarTopic) -> str | None:
-    """First Chinese example sentence of a grammar point (not its title)."""
+    """First Chinese example sentence of a grammar point (not its title, a
+    sub-heading or a cross-reference note -- a question built on those would
+    show a label instead of Chinese to read)."""
     for line in (topic.examples or "").splitlines():
         line = line.strip()
-        if len(_CJK.findall(line)) >= 2 and line != topic.title and len(line) <= 80:
+        if (len(_CJK.findall(line)) >= 2 and line != topic.title and len(line) <= 80
+                and not _SYLLABUS_NOTE.search(line)):
             return line
     return None
 
@@ -241,9 +264,9 @@ def _pick_type(item_type: str, index: int) -> str:
 def _option_label_key(qtype: str, row) -> str:
     """The text an option shows -- options must be pairwise distinct on it,
     or two "different" answers would look identical and grading be unfair."""
-    if qtype in ("meaning_to_word", "listen_to_word"):
+    if qtype == "meaning_to_word":
         return row.simplified
-    if qtype == "word_to_meaning":
+    if qtype in ("word_to_meaning", "listen_to_word"):
         return (row.meanings or "").strip().lower()
     if qtype == "char_to_meaning":
         return (row.meaning or "").strip().lower()
@@ -433,7 +456,17 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
     ):
         rows = db.query(_MODEL[item_type][0]).filter(_MODEL[item_type][0].id.in_(ids[item_type] or {0})).all()
         trs = load_translations(db, content_type, [str(r.id) for r in rows], locale)
-        out[item_type] = {r.id: tr(trs, r.id, field, getattr(r, field)) for r in rows}
+        out[item_type] = {}
+        for r in rows:
+            label = tr(trs, r.id, field, getattr(r, field))
+            # The zh "meaning" of a word is the word itself (a mirror, see
+            # scripts/seed_vocab_zh_mirror.py). As a quiz label it gives the
+            # answer away -- "which word means 喝?" with 喝 among the options --
+            # so a question uses the real gloss instead.
+            own = getattr(r, "simplified", None) or getattr(r, "character", None)
+            if item_type != "grammar" and own and (label or "").strip() == own:
+                label = getattr(r, field)
+            out[item_type][r.id] = label
     return out
 
 
@@ -448,9 +481,13 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
             r = _row(db, item_type, oid)
             if r is None:
                 continue
-            if qtype in ("meaning_to_word", "listen_to_word"):
+            if qtype == "meaning_to_word":
                 label = r.simplified
-            elif qtype == "word_to_meaning":
+            elif qtype in ("word_to_meaning", "listen_to_word"):
+                # A listening question is answered by meaning: the browser has
+                # to be sent the word to speak it (prompt.speak), so options
+                # in Chinese would let the answer be read straight off the
+                # payload. Hearing it and knowing what it means is the task.
                 label = _short(labels["vocab"].get(r.id))
             elif qtype == "char_to_meaning":
                 label = _short(labels["hanzi"].get(r.id))

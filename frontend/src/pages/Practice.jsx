@@ -341,7 +341,7 @@ export default function Practice({ forceSource }) {
                   if (o.id === result.correct_id) cls += " is-correct";
                   else if (o.id === result.choice_id) cls += " is-wrong";
                 }
-                const cjk = ["meaning_to_word", "listen_to_word"].includes(question.type);
+                const cjk = question.type === "meaning_to_word";
                 return (
                   <button key={o.id} type="button" className={cls} disabled={busy || !!result} onClick={() => choose(o.id)}>
                     <span className={cjk ? "practice-option-hanzi" : ""}>{o.label}</span>

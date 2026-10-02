@@ -1,0 +1,4130 @@
+[
+ [
+  1,
+  "白",
+  "Bái",
+  "surname Bai",
+  "bái",
+  "white; snowy; pure"
+ ],
+ [
+  1,
+  "百",
+  "Bǎi",
+  "surname Bai",
+  "bǎi",
+  "hundred; numerous; all kinds of"
+ ],
+ [
+  1,
+  "班",
+  "Bān",
+  "surname Ban",
+  "bān",
+  "team; class; grade; (military) squad; work shift"
+ ],
+ [
+  1,
+  "帮",
+  "bāng",
+  "old variant of 帮",
+  "bāng",
+  "to help; to assist; to support"
+ ],
+ [
+  1,
+  "包",
+  "Bāo",
+  "surname Bao",
+  "bāo",
+  "to cover; to wrap; to hold"
+ ],
+ [
+  1,
+  "别",
+  "Bié",
+  "surname Bie",
+  "bié",
+  "don't ...!; (bound form) other; another; different; to leave; to part (from)"
+ ],
+ [
+  1,
+  "常",
+  "Cháng",
+  "surname Chang",
+  "cháng",
+  "always; ever; often"
+ ],
+ [
+  1,
+  "车",
+  "Chē",
+  "surname Che",
+  "chē",
+  "car; vehicle; machine"
+ ],
+ [
+  1,
+  "从",
+  "cóng",
+  "variant of 从",
+  "cóng",
+  "from; through; via"
+ ],
+ [
+  1,
+  "错",
+  "Cuò",
+  "surname Cuo",
+  "cuò",
+  "mistake; wrong; bad"
+ ],
+ [
+  1,
+  "东",
+  "Dōng",
+  "surname Dong",
+  "dōng",
+  "east; host (i.e. sitting on east side of guest); landlord"
+ ],
+ [
+  1,
+  "干",
+  "gān",
+  "old variant of 干",
+  "gàn",
+  "to do; to work; capable"
+ ],
+ [
+  1,
+  "高",
+  "Gāo",
+  "surname Gao",
+  "gāo",
+  "high; tall; above average"
+ ],
+ [
+  1,
+  "个",
+  "gě",
+  "used in 自个儿",
+  "gè",
+  "(classifier used before a noun that has no specific classifier); (bound form) individual"
+ ],
+ [
+  1,
+  "关",
+  "Guān",
+  "surname Guan",
+  "guān",
+  "mountain pass; to close; to shut; to turn off; to confine; to lock (sb) up; to shut (sb in a room, a bird in a cage etc)"
+ ],
+ [
+  1,
+  "国",
+  "Guó",
+  "surname Guo",
+  "guó",
+  "country; nation; state; (bound form) national"
+ ],
+ [
+  1,
+  "过",
+  "Guō",
+  "surname Guo",
+  "guò",
+  "to cross; to go over; to pass (time)"
+ ],
+ [
+  1,
+  "还",
+  "Huán",
+  "surname Huan",
+  "hái",
+  "still; still in progress; still more"
+ ],
+ [
+  1,
+  "后",
+  "Hòu",
+  "surname Hou",
+  "hòu",
+  "back; behind; rear"
+ ],
+ [
+  1,
+  "花",
+  "Huā",
+  "surname Hua",
+  "huā",
+  "flower; blossom; fancy pattern"
+ ],
+ [
+  1,
+  "教",
+  "Jiào",
+  "surname Jiao",
+  "jiāo",
+  "to teach"
+ ],
+ [
+  1,
+  "楼",
+  "Lóu",
+  "surname Lou",
+  "lóu",
+  "house with more than 1 story; storied building; floor"
+ ],
+ [
+  1,
+  "路",
+  "Lù",
+  "surname Lu",
+  "lù",
+  "road; journey; route"
+ ],
+ [
+  1,
+  "毛",
+  "Máo",
+  "surname Mao",
+  "máo",
+  "hair; feather; down"
+ ],
+ [
+  1,
+  "门",
+  "Mén",
+  "surname Men",
+  "mén",
+  "gate; door; gateway"
+ ],
+ [
+  1,
+  "拿",
+  "ná",
+  "old variant of 拿",
+  "ná",
+  "to hold; to seize; to catch"
+ ],
+ [
+  1,
+  "南",
+  "Nán",
+  "surname Nan",
+  "nán",
+  "south"
+ ],
+ [
+  1,
+  "日",
+  "Rì",
+  "abbr. for 本, Japan",
+  "rì",
+  "sun; day; date, day of the month"
+ ],
+ [
+  1,
+  "山",
+  "Shān",
+  "surname Shan",
+  "shān",
+  "mountain; hill; (coll.) small bundle of straw for silkworms to spin cocoons on"
+ ],
+ [
+  1,
+  "笑",
+  "xiào",
+  "old variant of 笑",
+  "xiào",
+  "to laugh; to smile; to laugh at"
+ ],
+ [
+  1,
+  "也",
+  "Yě",
+  "surname Ye",
+  "yě",
+  "(adverb) also; both ... and ... (before predicates only); (literary) particle having functions similar to 啊"
+ ],
+ [
+  1,
+  "这里",
+  "zhè lǐ",
+  "variant of 这里",
+  "zhè lǐ",
+  "here"
+ ],
+ [
+  1,
+  "最",
+  "zuì",
+  "variant of 最",
+  "zuì",
+  "most; the most; -est (superlative suffix)"
+ ],
+ [
+  1,
+  "左",
+  "Zuǒ",
+  "surname Zuo",
+  "zuǒ",
+  "left; the Left (politics); east"
+ ],
+ [
+  2,
+  "背",
+  "bēi",
+  "variant of 背",
+  "bēi",
+  "to be burdened; to carry on the back or shoulder"
+ ],
+ [
+  2,
+  "遍",
+  "biàn",
+  "variant of 遍",
+  "biàn",
+  "everywhere; all over; classifier for actions: one time"
+ ],
+ [
+  2,
+  "草",
+  "cǎo",
+  "variant of 草",
+  "cǎo",
+  "grass; straw; manuscript"
+ ],
+ [
+  2,
+  "查",
+  "Zhā",
+  "surname Zha",
+  "chá",
+  "to research; to check; to investigate"
+ ],
+ [
+  2,
+  "成",
+  "Chéng",
+  "surname Cheng",
+  "chéng",
+  "to succeed; to finish; to complete"
+ ],
+ [
+  2,
+  "船",
+  "chuán",
+  "variant of 船",
+  "chuán",
+  "boat; vessel; ship"
+ ],
+ [
+  2,
+  "词",
+  "cí",
+  "old variant of 词",
+  "cí",
+  "word; statement; speech"
+ ],
+ [
+  2,
+  "蛋",
+  "Dàn",
+  "variant of 蜑",
+  "dàn",
+  "egg; oval-shaped thing"
+ ],
+ [
+  2,
+  "段",
+  "Duàn",
+  "surname Duan",
+  "duàn",
+  "paragraph; section; segment"
+ ],
+ [
+  2,
+  "封",
+  "Fēng",
+  "surname Feng",
+  "fēng",
+  "to confer; to grant; to bestow a title"
+ ],
+ [
+  2,
+  "海",
+  "Hǎi",
+  "surname Hai",
+  "hǎi",
+  "ocean; sea; great number of people or things"
+ ],
+ [
+  2,
+  "花",
+  "Huā",
+  "surname Hua",
+  "huā",
+  "to spend (money, time); flower; blossom"
+ ],
+ [
+  2,
+  "家",
+  "jiā",
+  "used in 家伙 and 家俱",
+  "jiā",
+  "home; family; (polite) my (sister, uncle etc)"
+ ],
+ [
+  2,
+  "假",
+  "gēi",
+  "used in 掰",
+  "jiǎ",
+  "fake; false; artificial"
+ ],
+ [
+  2,
+  "角",
+  "Jué",
+  "surname Jue",
+  "jiǎo",
+  "unit of money equal to 0.1 yuan, or 10 cents (a dime); angle; corner"
+ ],
+ [
+  2,
+  "节",
+  "jiē",
+  "see 节骨眼",
+  "jié",
+  "joint; node; (bound form) section; segment; solar term (one of the 24 divisions of the year in the traditional Chinese calendar)"
+ ],
+ [
+  2,
+  "举",
+  "jǔ",
+  "variant of 举",
+  "jǔ",
+  "to lift; to hold up; to cite"
+ ],
+ [
+  2,
+  "句",
+  "gōu",
+  "variant of 勾",
+  "jù",
+  "sentence; clause; phrase"
+ ],
+ [
+  2,
+  "克",
+  "Kè",
+  "abbr. for 克罗地亚, Croatia; (Tw) abbr. for 克罗埃西亚, Croatia",
+  "kè",
+  "gram; to overcome; to subdue"
+ ],
+ [
+  2,
+  "蓝",
+  "Lán",
+  "surname Lan",
+  "lán",
+  "blue; indigo plant"
+ ],
+ [
+  2,
+  "留",
+  "liú",
+  "old variant of 留",
+  "liú",
+  "to leave (a message etc); to retain; to stay"
+ ],
+ [
+  2,
+  "米",
+  "Mǐ",
+  "surname Mi",
+  "mǐ",
+  "rice; meter (classifier)"
+ ],
+ [
+  2,
+  "那",
+  "Nā",
+  "surname Na",
+  "nà",
+  "(specifier) that; the; those (colloquial pr. [nèi]); (pronoun) that (referring to persons, things or situations); then (in that case)"
+ ],
+ [
+  2,
+  "鸟",
+  "diǎo",
+  "variant of 屌; penis",
+  "niǎo",
+  "bird; \"bird\" radical in Chinese characters (Kangxi radical 196); (dialect) to pay attention to"
+ ],
+ [
+  2,
+  "怕",
+  "Pà",
+  "surname Pa",
+  "pà",
+  "to be afraid; to fear; to dread"
+ ],
+ [
+  2,
+  "碰",
+  "pèng",
+  "variant of 碰",
+  "pèng",
+  "to touch; to meet with; to bump"
+ ],
+ [
+  2,
+  "平",
+  "Píng",
+  "surname Ping",
+  "píng",
+  "flat; level; equal"
+ ],
+ [
+  2,
+  "墙",
+  "qiáng",
+  "variant of 墙, wall",
+  "qiáng",
+  "wall"
+ ],
+ [
+  2,
+  "全",
+  "Quán",
+  "surname Quan",
+  "quán",
+  "all; whole; entire"
+ ],
+ [
+  2,
+  "提",
+  "dī",
+  "used in 防 and 溜",
+  "tí",
+  "to carry (hanging down from the hand); to lift; to put forward"
+ ],
+ [
+  2,
+  "题",
+  "Tí",
+  "surname Ti",
+  "tí",
+  "topic; problem for discussion; exam question"
+ ],
+ [
+  2,
+  "碗",
+  "wǎn",
+  "variant of 碗",
+  "wǎn",
+  "bowl; cup"
+ ],
+ [
+  2,
+  "万",
+  "mò",
+  "used in 俟",
+  "wàn",
+  "ten thousand; a great number"
+ ],
+ [
+  2,
+  "闻",
+  "Wén",
+  "surname Wen",
+  "wén",
+  "to hear; news; well-known"
+ ],
+ [
+  2,
+  "姓名",
+  "xìng míng",
+  "surname and given name; full name",
+  "xìng míng",
+  "full name"
+ ],
+ [
+  2,
+  "雪",
+  "Xuě",
+  "surname Xue",
+  "xuě",
+  "snow; (literary) to wipe away (a humiliation etc)"
+ ],
+ [
+  2,
+  "夜",
+  "yè",
+  "variant of 夜",
+  "yè",
+  "night"
+ ],
+ [
+  2,
+  "阴",
+  "Yīn",
+  "surname Yin",
+  "yīn",
+  "overcast (weather); cloudy; shady"
+ ],
+ [
+  2,
+  "咱",
+  "zán",
+  "variant of 咱",
+  "zán",
+  "I or me; we (including both the speaker and the person spoken to)"
+ ],
+ [
+  2,
+  "占",
+  "zhàn",
+  "variant of 占",
+  "zhàn",
+  "to take possession of; to occupy; to take up"
+ ],
+ [
+  2,
+  "纸",
+  "zhǐ",
+  "variant of 纸",
+  "zhǐ",
+  "paper; classifier for documents, letter etc"
+ ],
+ [
+  2,
+  "周",
+  "Zhōu",
+  "surname Zhou; Zhou Dynasty (1046-256 BC)",
+  "zhōu",
+  "week; weekly"
+ ],
+ [
+  2,
+  "组",
+  "Zǔ",
+  "surname Zu",
+  "zǔ",
+  "to form; to organize; group"
+ ],
+ [
+  3,
+  "白",
+  "Bái",
+  "surname Bai",
+  "bái",
+  "in vain; gratuitous; free of charge"
+ ],
+ [
+  3,
+  "背",
+  "bēi",
+  "variant of 背",
+  "bèi",
+  "the back of a body or object; to turn one's back; to hide something from"
+ ],
+ [
+  3,
+  "布",
+  "bù",
+  "variant of 布; to announce; to spread",
+  "bù",
+  "cloth; to declare; to announce"
+ ],
+ [
+  3,
+  "步",
+  "Bù",
+  "surname Bu",
+  "bù",
+  "a step; a pace; walk"
+ ],
+ [
+  3,
+  "朝",
+  "Cháo",
+  "abbr. for 朝鲜 Korea",
+  "cháo",
+  "facing; towards; dynasty"
+ ],
+ [
+  3,
+  "刀",
+  "Dāo",
+  "surname Dao",
+  "dāo",
+  "knife; blade; single-edged sword"
+ ],
+ [
+  3,
+  "反复",
+  "fǎn fù",
+  "variant of 反复",
+  "fǎn fù",
+  "repeatedly; over and over; to upend"
+ ],
+ [
+  3,
+  "费",
+  "Fèi",
+  "surname Fei",
+  "fèi",
+  "to cost; to spend; fee"
+ ],
+ [
+  3,
+  "福",
+  "Fú",
+  "surname Fu; abbr. for Fujian province 省",
+  "fú",
+  "good fortune; happiness; luck"
+ ],
+ [
+  3,
+  "付",
+  "Fù",
+  "surname Fu",
+  "fù",
+  "to pay; to hand over to; classifier for pairs or sets of things"
+ ],
+ [
+  3,
+  "富",
+  "Fù",
+  "surname Fu",
+  "fù",
+  "rich; abundant; wealthy"
+ ],
+ [
+  3,
+  "古",
+  "Gǔ",
+  "surname Gu",
+  "gǔ",
+  "ancient; old; paleo-"
+ ],
+ [
+  3,
+  "管",
+  "guǎn",
+  "variant of 管",
+  "guǎn",
+  "to take care (of); to control; to manage"
+ ],
+ [
+  3,
+  "化",
+  "huā",
+  "variant of 花",
+  "huà",
+  "to make into; to change into; -ization"
+ ],
+ [
+  3,
+  "环",
+  "Huán",
+  "surname Huan",
+  "huán",
+  "ring; hoop; loop"
+ ],
+ [
+  3,
+  "火",
+  "Huǒ",
+  "surname Huo",
+  "huǒ",
+  "fire; urgent; ammunition"
+ ],
+ [
+  3,
+  "纪录",
+  "jì lù",
+  "variant of 记录 (but in Taiwan, not for the verb sense \"to record\")",
+  "jì lù",
+  "to record; record (written account); note-taker"
+ ],
+ [
+  3,
+  "金",
+  "Jīn",
+  "surname Jin; surname Kim (Korean); Jurchen Jin dynasty (1115-1234)",
+  "jīn",
+  "gold; chemical element Au; generic term for lustrous and ductile metals"
+ ],
+ [
+  3,
+  "救",
+  "jiù",
+  "variant of 救",
+  "jiù",
+  "to save; to assist; to rescue"
+ ],
+ [
+  3,
+  "老板",
+  "lǎo bǎn",
+  "variant of 老板",
+  "lǎo bǎn",
+  "boss; business proprietor"
+ ],
+ [
+  3,
+  "乐",
+  "Lè",
+  "surname Le",
+  "lè",
+  "happy; cheerful; to laugh"
+ ],
+ [
+  3,
+  "力",
+  "Lì",
+  "surname Li",
+  "lì",
+  "power; force; strength"
+ ],
+ [
+  3,
+  "连",
+  "Lián",
+  "surname Lian",
+  "lián",
+  "to link; to join; to connect"
+ ],
+ [
+  3,
+  "联系",
+  "lián xì",
+  "variant of 联系",
+  "lián xì",
+  "connection; contact; relation"
+ ],
+ [
+  3,
+  "龙",
+  "Lóng",
+  "surname Long",
+  "lóng",
+  "dragon; imperial"
+ ],
+ [
+  3,
+  "毛",
+  "Máo",
+  "surname Mao",
+  "máo",
+  "hair; feather; down"
+ ],
+ [
+  3,
+  "米",
+  "Mǐ",
+  "surname Mi",
+  "mǐ",
+  "rice; meter (classifier)"
+ ],
+ [
+  3,
+  "念",
+  "niàn",
+  "variant of 念, to read aloud",
+  "niàn",
+  "to read; to study (a subject); to attend (a school)"
+ ],
+ [
+  3,
+  "牛",
+  "Niú",
+  "surname Niu",
+  "niú",
+  "ox; cow; bull"
+ ],
+ [
+  3,
+  "怕",
+  "Pà",
+  "surname Pa",
+  "pà",
+  "to be afraid; to fear; to dread"
+ ],
+ [
+  3,
+  "皮",
+  "Pí",
+  "surname Pi",
+  "pí",
+  "leather; skin; fur"
+ ],
+ [
+  3,
+  "期",
+  "qī",
+  "variant of 期; period; cycle",
+  "qī",
+  "a period of time; phase; stage"
+ ],
+ [
+  3,
+  "强",
+  "Qiáng",
+  "surname Qiang",
+  "qiáng",
+  "strong; powerful; better"
+ ],
+ [
+  3,
+  "区",
+  "Oū",
+  "surname Ou",
+  "qū",
+  "area; region; district"
+ ],
+ [
+  3,
+  "群",
+  "qún",
+  "variant of 群",
+  "qún",
+  "group; crowd; flock, herd, pack etc"
+ ],
+ [
+  3,
+  "任",
+  "Rén",
+  "surname Ren; Ren County 任县 in Hebei",
+  "rèn",
+  "to assign; to appoint; to take up a post"
+ ],
+ [
+  3,
+  "深",
+  "shēn",
+  "old variant of 深",
+  "shēn",
+  "deep (lit. and fig.)"
+ ],
+ [
+  3,
+  "时",
+  "shí",
+  "old variant of 时",
+  "shí",
+  "o'clock; time; when"
+ ],
+ [
+  3,
+  "室",
+  "Shì",
+  "surname Shi",
+  "shì",
+  "room; work unit; grave"
+ ],
+ [
+  3,
+  "束",
+  "Shù",
+  "surname Shu",
+  "shù",
+  "to bind; bunch; bundle"
+ ],
+ [
+  3,
+  "双",
+  "Shuāng",
+  "surname Shuang",
+  "shuāng",
+  "two; double; pair"
+ ],
+ [
+  3,
+  "随",
+  "Suí",
+  "surname Sui",
+  "suí",
+  "to follow; to comply with; varying according to..."
+ ],
+ [
+  3,
+  "谈",
+  "Tán",
+  "surname Tan",
+  "tán",
+  "to speak; to talk; to converse"
+ ],
+ [
+  3,
+  "汤",
+  "Tāng",
+  "surname Tang",
+  "tāng",
+  "soup; hot or boiling water; decoction of medicinal herbs"
+ ],
+ [
+  3,
+  "铁",
+  "Tiě",
+  "surname Tie",
+  "tiě",
+  "iron (metal); arms; weapons"
+ ],
+ [
+  3,
+  "围",
+  "Wéi",
+  "surname Wei",
+  "wéi",
+  "to encircle; to surround; all around"
+ ],
+ [
+  3,
+  "线",
+  "xiàn",
+  "variant of 线",
+  "xiàn",
+  "thread; string; wire"
+ ],
+ [
+  3,
+  "修",
+  "Xiū",
+  "surname Xiu",
+  "xiū",
+  "to decorate; to embellish; to repair"
+ ],
+ [
+  3,
+  "羊",
+  "Yáng",
+  "surname Yang",
+  "yáng",
+  "sheep; goat"
+ ],
+ [
+  3,
+  "游",
+  "Yóu",
+  "surname You",
+  "yóu",
+  "to swim"
+ ],
+ [
+  3,
+  "张",
+  "Zhāng",
+  "surname Zhang",
+  "zhāng",
+  "to open up; to spread; sheet of paper"
+ ],
+ [
+  3,
+  "照",
+  "zhào",
+  "variant of 照; to shine; to illuminate",
+  "zhào",
+  "according to; in accordance with; to shine"
+ ],
+ [
+  3,
+  "支",
+  "Zhī",
+  "surname Zhi",
+  "zhī",
+  "to support; to sustain; to erect"
+ ],
+ [
+  3,
+  "直",
+  "Zhí",
+  "surname Zhi; Zhi (c. 2000 BC), fifth of the legendary Flame Emperors 帝 descended from Shennong 神农 Farmer God",
+  "zhí",
+  "straight; to straighten; fair and reasonable"
+ ],
+ [
+  3,
+  "钟",
+  "Zhōng",
+  "surname Zhong",
+  "zhōng",
+  "clock; o'clock; time as measured in hours and minutes"
+ ],
+ [
+  3,
+  "祝",
+  "Zhù",
+  "surname Zhu",
+  "zhù",
+  "to pray for; to wish (sb bon voyage, happy birthday etc); person who invokes the spirits during sacrificial ceremonies"
+ ],
+ [
+  3,
+  "转",
+  "zhuǎi",
+  "see 转文",
+  "zhuǎn",
+  "to turn; to change direction; to transfer"
+ ],
+ [
+  4,
+  "安",
+  "Ān",
+  "surname An",
+  "ān",
+  "(bound form) calm; peaceful; to calm; to set at ease; safe; secure; in good health"
+ ],
+ [
+  4,
+  "暗",
+  "àn",
+  "variant of 暗",
+  "àn",
+  "dark; to turn dark; secret; hidden"
+ ],
+ [
+  4,
+  "薄",
+  "Bó",
+  "surname Bo",
+  "báo",
+  "thin; cold in manner; indifferent"
+ ],
+ [
+  4,
+  "宝",
+  "bǎo",
+  "variant of 宝",
+  "bǎo",
+  "jewel; gem; treasure"
+ ],
+ [
+  4,
+  "别",
+  "Bié",
+  "surname Bie",
+  "bié",
+  "to fasten with a pin or clip; to stick in; to insert (in order to hinder movement); to leave; to part (from)"
+ ],
+ [
+  4,
+  "曾",
+  "Zēng",
+  "surname Zeng",
+  "céng",
+  "once; already; ever (in the past)"
+ ],
+ [
+  4,
+  "词汇",
+  "cí huì",
+  "variant of 词汇",
+  "cí huì",
+  "vocabulary; list of words (e.g. for language teaching purposes); word"
+ ],
+ [
+  4,
+  "戴",
+  "Dài",
+  "surname Dai",
+  "dài",
+  "to put on or wear (glasses, hat, gloves etc); to respect; to bear"
+ ],
+ [
+  4,
+  "单",
+  "Shàn",
+  "surname Shan",
+  "dān",
+  "bill; list; form"
+ ],
+ [
+  4,
+  "恶心",
+  "ě xīn",
+  "variant of 恶心",
+  "ě xīn",
+  "nausea; to feel sick; disgust"
+ ],
+ [
+  4,
+  "法",
+  "fǎ",
+  "variant of 法",
+  "fǎ",
+  "law; method; way"
+ ],
+ [
+  4,
+  "方",
+  "Fāng",
+  "surname Fang",
+  "fāng",
+  "square; power or involution (math.); upright"
+ ],
+ [
+  4,
+  "非",
+  "Fēi",
+  "abbr. for 洲, Africa",
+  "fēi",
+  "to not be; not; wrong; incorrect; non-; un-; in-; de-"
+ ],
+ [
+  4,
+  "盖",
+  "Gě",
+  "surname Ge",
+  "gài",
+  "lid; top; cover"
+ ],
+ [
+  4,
+  "关",
+  "Guān",
+  "surname Guan",
+  "guān",
+  "mountain pass; to close; to shut; to turn off; to confine; to lock (sb) up; to shut (sb in a room, a bird in a cage etc)"
+ ],
+ [
+  4,
+  "官",
+  "Guān",
+  "surname Guan",
+  "guān",
+  "government official; governmental; official"
+ ],
+ [
+  4,
+  "归",
+  "Guī",
+  "surname Gui",
+  "guī",
+  "to return; to go back to; to give back to"
+ ],
+ [
+  4,
+  "花",
+  "Huā",
+  "surname Hua",
+  "huā",
+  "flower; blossom; fancy pattern"
+ ],
+ [
+  4,
+  "火",
+  "Huǒ",
+  "surname Huo",
+  "huǒ",
+  "fire; urgent; ammunition"
+ ],
+ [
+  4,
+  "季",
+  "Jì",
+  "surname Ji",
+  "jì",
+  "season; the last month of a season; fourth or youngest amongst brothers"
+ ],
+ [
+  4,
+  "江",
+  "Jiāng",
+  "surname Jiang",
+  "jiāng",
+  "river"
+ ],
+ [
+  4,
+  "宽",
+  "Kuān",
+  "surname Kuan",
+  "kuān",
+  "wide; broad; loose"
+ ],
+ [
+  4,
+  "辣",
+  "là",
+  "old variant of 辣",
+  "là",
+  "hot (spicy); pungent; (of chili pepper, raw onions etc) to sting"
+ ],
+ [
+  4,
+  "密",
+  "Mì",
+  "surname Mi; name of an ancient state",
+  "mì",
+  "secret; confidential; close"
+ ],
+ [
+  4,
+  "闹",
+  "nào",
+  "variant of 闹",
+  "nào",
+  "noisy; cacophonous; to make noise"
+ ],
+ [
+  4,
+  "却",
+  "què",
+  "old variant of 却",
+  "què",
+  "but; yet; however"
+ ],
+ [
+  4,
+  "散",
+  "sàn",
+  "variant of 散",
+  "sàn",
+  "to scatter; to break up (a meeting etc); to disperse"
+ ],
+ [
+  4,
+  "晒",
+  "shài",
+  "variant of 晒",
+  "shài",
+  "(of the sun) to shine on; to bask in (the sunshine); to dry (clothes, grain etc) in the sun"
+ ],
+ [
+  4,
+  "闪",
+  "Shǎn",
+  "surname Shan",
+  "shǎn",
+  "to dodge; to duck out of the way; to beat it"
+ ],
+ [
+  4,
+  "诗",
+  "Shī",
+  "abbr. for Shijing 诗经, the Book of Songs",
+  "shī",
+  "poem; poetry; verse"
+ ],
+ [
+  4,
+  "湿",
+  "shī",
+  "variant of 湿",
+  "shī",
+  "moist; wet"
+ ],
+ [
+  4,
+  "收获",
+  "shōu huò",
+  "variant of 收获",
+  "shōu huò",
+  "to harvest; to reap; to gain"
+ ],
+ [
+  4,
+  "帅",
+  "Shuài",
+  "surname Shuai",
+  "shuài",
+  "(bound form) commander-in-chief; (bound form) to lead; to command; handsome; graceful; dashing; elegant"
+ ],
+ [
+  4,
+  "松",
+  "Sōng",
+  "surname Song",
+  "sōng",
+  "loose; to loosen; to relax"
+ ],
+ [
+  4,
+  "王",
+  "Wáng",
+  "surname Wang",
+  "wáng",
+  "king or monarch; best or strongest of its type; grand"
+ ],
+ [
+  4,
+  "鲜",
+  "xiǎn",
+  "variant of 鲜",
+  "xiān",
+  "fresh; bright (in color); delicious"
+ ],
+ [
+  4,
+  "咸",
+  "Xián",
+  "surname Xian",
+  "xián",
+  "salted; salty; stingy"
+ ],
+ [
+  4,
+  "项",
+  "Xiàng",
+  "surname Xiang",
+  "xiàng",
+  "back of neck; item; thing"
+ ],
+ [
+  4,
+  "严",
+  "Yán",
+  "surname Yan",
+  "yán",
+  "tight (closely sealed); stern; strict"
+ ],
+ [
+  4,
+  "阳台",
+  "yáng tái",
+  "variant of 阳台",
+  "yáng tái",
+  "balcony; porch"
+ ],
+ [
+  4,
+  "摇",
+  "Yáo",
+  "surname Yao",
+  "yáo",
+  "to shake; to rock; to row"
+ ],
+ [
+  4,
+  "应",
+  "Yīng",
+  "surname Ying; Taiwan pr. [Yìng]",
+  "yīng",
+  "to agree (to do sth); should; ought to"
+ ],
+ [
+  4,
+  "遇",
+  "Yù",
+  "surname Yu",
+  "yù",
+  "to meet; to encounter; to treat"
+ ],
+ [
+  4,
+  "支",
+  "Zhī",
+  "surname Zhi",
+  "zhī",
+  "to support; to sustain; to erect"
+ ],
+ [
+  5,
+  "岸",
+  "àn",
+  "variant of 岸",
+  "àn",
+  "bank; shore; beach; coast"
+ ],
+ [
+  5,
+  "乘",
+  "Chéng",
+  "surname Cheng",
+  "chéng",
+  "to ride; to mount; to make use of"
+ ],
+ [
+  5,
+  "迟",
+  "Chí",
+  "surname Chi",
+  "chí",
+  "late; delayed; slow"
+ ],
+ [
+  5,
+  "丑",
+  "Chǒu",
+  "surname Chou",
+  "chǒu",
+  "shameful; ugly; disgraceful"
+ ],
+ [
+  5,
+  "脆",
+  "cuì",
+  "old variant of 脆",
+  "cuì",
+  "brittle; fragile; crisp"
+ ],
+ [
+  5,
+  "答复",
+  "dá fù",
+  "variant of 答复",
+  "dá fù",
+  "to answer; to reply; Reply to: (in email header)"
+ ],
+ [
+  5,
+  "封",
+  "Fēng",
+  "surname Feng",
+  "fēng",
+  "to confer; to grant; to bestow a title"
+ ],
+ [
+  5,
+  "鼓",
+  "gǔ",
+  "old variant of 鼓",
+  "gǔ",
+  "drum; to drum; to strike"
+ ],
+ [
+  5,
+  "汗",
+  "hán",
+  "see 汗, 汗国",
+  "hàn",
+  "perspiration; sweat; to be speechless (out of helplessness, embarrassment etc) (Internet slang used as an interjection)"
+ ],
+ [
+  5,
+  "合并",
+  "hé bìng",
+  "variant of 合并",
+  "hé bìng",
+  "to merge; to annex"
+ ],
+ [
+  5,
+  "滑",
+  "Huá",
+  "surname Hua",
+  "huá",
+  "to slip; to slide; slippery; smooth; sly; slippery; not to be trusted"
+ ],
+ [
+  5,
+  "回避",
+  "huí bì",
+  "variant of 回避",
+  "huí bì",
+  "to shun; to avoid (sb); to skirt"
+ ],
+ [
+  5,
+  "剪",
+  "Jiǎn",
+  "surname Jian",
+  "jiǎn",
+  "scissors; shears; clippers"
+ ],
+ [
+  5,
+  "礼",
+  "Lǐ",
+  "surname Li; abbr. for 礼记, Classic of Rites",
+  "lǐ",
+  "gift; rite; ceremony"
+ ],
+ [
+  5,
+  "立",
+  "Lì",
+  "surname Li",
+  "lì",
+  "to stand; to set up; to establish"
+ ],
+ [
+  5,
+  "令",
+  "líng",
+  "used in 令; used in 狐 (Taiwan pr. [lìng])",
+  "lìng",
+  "to order; to command; an order"
+ ],
+ [
+  5,
+  "冒",
+  "mào",
+  "old variant of 冒",
+  "mào",
+  "to emit; to give off; to send out (or up, forth)"
+ ],
+ [
+  5,
+  "牛",
+  "Niú",
+  "surname Niu",
+  "niú",
+  "ox; cow; bull"
+ ],
+ [
+  5,
+  "暖",
+  "nuǎn",
+  "old variant of 暖",
+  "nuǎn",
+  "warm; to warm"
+ ],
+ [
+  5,
+  "凭",
+  "píng",
+  "variant of 凭",
+  "píng",
+  "to lean against; to rely on; on the basis of"
+ ],
+ [
+  5,
+  "枪",
+  "Qiāng",
+  "surname Qiang",
+  "qiāng",
+  "gun; firearm; rifle"
+ ],
+ [
+  5,
+  "青",
+  "Qīng",
+  "abbr. for 海, Qinghai Province",
+  "qīng",
+  "green; blue; black"
+ ],
+ [
+  5,
+  "散",
+  "sàn",
+  "variant of 散",
+  "sǎn",
+  "scattered; loose; to come loose"
+ ],
+ [
+  5,
+  "蛇",
+  "shé",
+  "variant of 蛇",
+  "shé",
+  "snake; serpent"
+ ],
+ [
+  5,
+  "射",
+  "shè",
+  "old variant of 射",
+  "shè",
+  "to shoot; to launch; to allude to"
+ ],
+ [
+  5,
+  "兔",
+  "tù",
+  "variant of 兔",
+  "tù",
+  "rabbit"
+ ],
+ [
+  5,
+  "戏",
+  "xì",
+  "variant of 戏",
+  "xì",
+  "trick; drama; play"
+ ],
+ [
+  5,
+  "熊",
+  "Xióng",
+  "surname Xiong",
+  "xióng",
+  "bear; (coll.) to scold; to rebuke"
+ ],
+ [
+  5,
+  "应",
+  "Yīng",
+  "surname Ying; Taiwan pr. [Yìng]",
+  "yìng",
+  "to answer; to respond; to comply with"
+ ],
+ [
+  5,
+  "挣",
+  "zhēng",
+  "used in 挣扎",
+  "zhèng",
+  "to struggle to get free; to strive to acquire; to make (money)"
+ ],
+ [
+  6,
+  "逼",
+  "bī",
+  "variant of 逼; to compel; to pressure",
+  "bī",
+  "to force (sb to do sth); to compel; to press for"
+ ],
+ [
+  6,
+  "扁",
+  "Piān",
+  "surname Pian",
+  "biǎn",
+  "flat; (coll.) to beat (sb) up"
+ ],
+ [
+  6,
+  "踩",
+  "cǎi",
+  "variant of 踩",
+  "cǎi",
+  "to step on; to tread; to stamp"
+ ],
+ [
+  6,
+  "成",
+  "Chéng",
+  "surname Cheng",
+  "chéng",
+  "to succeed; to finish; to complete"
+ ],
+ [
+  6,
+  "冲击",
+  "chōng jī",
+  "variant of 冲击",
+  "chōng jī",
+  "to attack; to batter; (of waves) to pound against"
+ ],
+ [
+  6,
+  "党",
+  "Dǎng",
+  "surname Dang",
+  "dǎng",
+  "party; association; club"
+ ],
+ [
+  6,
+  "岛",
+  "dǎo",
+  "variant of 岛",
+  "dǎo",
+  "island"
+ ],
+ [
+  6,
+  "番",
+  "Pān",
+  "surname Pan",
+  "fān",
+  "foreign (non-Chinese); barbarian; classifier for occurrences (of an event, action or speech utterance)"
+ ],
+ [
+  6,
+  "仿佛",
+  "fǎng fú",
+  "variant of 仿佛",
+  "fǎng fú",
+  "to seem; as if; alike"
+ ],
+ [
+  6,
+  "宫",
+  "Gōng",
+  "surname Gong",
+  "gōng",
+  "palace; temple; castration (as corporal punishment)"
+ ],
+ [
+  6,
+  "顾",
+  "Gù",
+  "surname Gu",
+  "gù",
+  "to look after; to take into consideration; to attend to"
+ ],
+ [
+  6,
+  "揭",
+  "Jiē",
+  "surname Jie",
+  "jiē",
+  "to take the lid off; to expose; to unmask"
+ ],
+ [
+  6,
+  "节",
+  "jiē",
+  "see 节骨眼",
+  "jié",
+  "joint; node; (bound form) section; segment; solar term (one of the 24 divisions of the year in the traditional Chinese calendar)"
+ ],
+ [
+  6,
+  "解",
+  "Xiè",
+  "surname Xie",
+  "jiě",
+  "to divide; to break up; to split"
+ ],
+ [
+  6,
+  "景",
+  "Jǐng",
+  "surname Jing",
+  "jǐng",
+  "(bound form) scenery; circumstance; situation"
+ ],
+ [
+  6,
+  "净",
+  "jìng",
+  "variant of 净",
+  "jìng",
+  "clean; completely; only"
+ ],
+ [
+  6,
+  "据",
+  "jù",
+  "variant of 据",
+  "jù",
+  "according to; to act in accordance with; to depend on"
+ ],
+ [
+  6,
+  "肯",
+  "kěn",
+  "old variant of 肯",
+  "kěn",
+  "to agree; to consent; to be willing to"
+ ],
+ [
+  6,
+  "阔",
+  "kuò",
+  "variant of 阔",
+  "kuò",
+  "rich; wide; broad"
+ ],
+ [
+  6,
+  "赖",
+  "Lài",
+  "surname Lai; (Tw) (coll.) LINE messaging app",
+  "lài",
+  "to depend on; to hang on in a place; bad"
+ ],
+ [
+  6,
+  "懒",
+  "lǎn",
+  "variant of 懒",
+  "lǎn",
+  "lazy"
+ ],
+ [
+  6,
+  "力",
+  "Lì",
+  "surname Li",
+  "lì",
+  "power; force; strength"
+ ],
+ [
+  6,
+  "利",
+  "Lì",
+  "surname Li",
+  "lì",
+  "sharp; favorable; advantage"
+ ],
+ [
+  6,
+  "露",
+  "Lù",
+  "surname Lu",
+  "lòu",
+  "to show; to reveal; to betray"
+ ],
+ [
+  6,
+  "嘛",
+  "má",
+  "used in 吽; (Tw) (coll.) what?",
+  "ma",
+  "modal particle indicating that sth is obvious; particle indicating a pause for emphasis"
+ ],
+ [
+  6,
+  "铺",
+  "pù",
+  "variant of 铺; store",
+  "pū",
+  "to spread; to display; to set up"
+ ],
+ [
+  6,
+  "权",
+  "Quán",
+  "surname Quan",
+  "quán",
+  "authority; power; right"
+ ],
+ [
+  6,
+  "商城",
+  "Shāng chéng",
+  "see 商城县",
+  "shāng chéng",
+  "shopping center; department store"
+ ],
+ [
+  6,
+  "踏",
+  "tā",
+  "see 踏实",
+  "tà",
+  "to tread; to stamp; to step on"
+ ],
+ [
+  6,
+  "趟",
+  "tāng",
+  "old variant of 趟",
+  "tàng",
+  "classifier for times, round trips or rows; a time; a trip"
+ ],
+ [
+  6,
+  "田",
+  "Tián",
+  "surname Tian",
+  "tián",
+  "field; farm"
+ ],
+ [
+  6,
+  "拖",
+  "tuō",
+  "variant of 拖",
+  "tuō",
+  "to drag; to tow; to trail"
+ ],
+ [
+  6,
+  "仰",
+  "Yǎng",
+  "surname Yang",
+  "yǎng",
+  "to face upward; to look up; to admire"
+ ],
+ [
+  6,
+  "野",
+  "yě",
+  "old variant of 野",
+  "yě",
+  "field; plain; open space"
+ ],
+ [
+  6,
+  "因",
+  "yīn",
+  "old variant of 因",
+  "yīn",
+  "cause; reason; because"
+ ],
+ [
+  6,
+  "印",
+  "Yìn",
+  "surname Yin; abbr. for 度",
+  "yìn",
+  "to print; to mark; to engrave"
+ ],
+ [
+  6,
+  "于",
+  "Yú",
+  "surname Yu",
+  "yú",
+  "(of time or place) in; at; on; (indicating any indirect relation) to; toward; vis-à-vis; with regard to; for; (indicating a source) from; out of"
+ ],
+ [
+  6,
+  "与",
+  "yú",
+  "variant of 欤",
+  "yǔ",
+  "and; to give; together with"
+ ],
+ [
+  6,
+  "园",
+  "Yuán",
+  "surname Yuan",
+  "yuán",
+  "land used for growing plants; site used for public recreation"
+ ],
+ [
+  6,
+  "原",
+  "Yuán",
+  "surname Yuan; (Japanese surname) Hara",
+  "yuán",
+  "former; original; primary"
+ ],
+ [
+  6,
+  "杂",
+  "zá",
+  "variant of 杂",
+  "zá",
+  "mixed; miscellaneous; various"
+ ],
+ [
+  6,
+  "章",
+  "Zhāng",
+  "surname Zhang",
+  "zhāng",
+  "chapter; section; clause"
+ ],
+ [
+  6,
+  "粥",
+  "yù",
+  "used in 荤粥",
+  "zhōu",
+  "congee; gruel; porridge"
+ ],
+ [
+  6,
+  "煮",
+  "zhǔ",
+  "variant of 煮",
+  "zhǔ",
+  "to cook; to boil"
+ ],
+ [
+  6,
+  "转",
+  "zhuǎi",
+  "see 转文",
+  "zhuàn",
+  "to revolve; to turn; to circle about"
+ ],
+ [
+  6,
+  "钻",
+  "zuàn",
+  "variant of 钻",
+  "zuān",
+  "to drill; to bore; to get into"
+ ],
+ [
+  7,
+  "奥运会",
+  "Aò yùn huì",
+  "abbr. for 奥林匹克运动会; Olympic Games; the Olympics",
+  "Aò yùn huì",
+  "Olympic Games; the Olympics"
+ ],
+ [
+  7,
+  "包扎",
+  "bāo zā",
+  "variant of 包扎",
+  "bāo zā",
+  "to wrap up; to pack; to bind up (a wound)"
+ ],
+ [
+  7,
+  "绷",
+  "bēng",
+  "variant of 绷; variant of 绷",
+  "bēng",
+  "to draw tight; to stretch taut; to tack (with thread or pin)"
+ ],
+ [
+  7,
+  "掺",
+  "chān",
+  "variant of 搀; to mix",
+  "chān",
+  "to mix"
+ ],
+ [
+  7,
+  "盛",
+  "Shèng",
+  "surname Sheng",
+  "shèng",
+  "flourishing; vigorous; magnificent"
+ ],
+ [
+  7,
+  "秤",
+  "chēng",
+  "variant of 称, to weigh",
+  "chèng",
+  "steelyard; Roman balance"
+ ],
+ [
+  7,
+  "仇",
+  "Qiú",
+  "surname Qiu",
+  "chóu",
+  "hatred; animosity; enmity"
+ ],
+ [
+  7,
+  "创",
+  "chuàng",
+  "variant of 创",
+  "chuàng",
+  "to begin; to initiate; to inaugurate"
+ ],
+ [
+  7,
+  "蠢",
+  "chǔn",
+  "variant of 蠢; stupid",
+  "chǔn",
+  "stupid; sluggish; clumsy"
+ ],
+ [
+  7,
+  "辞",
+  "cí",
+  "old variant of 辞",
+  "cí",
+  "to resign; to dismiss; to decline"
+ ],
+ [
+  7,
+  "得意扬扬",
+  "dé yì yáng yáng",
+  "variant of 洋",
+  "yáng",
+  "ocean; vast; foreign"
+ ],
+ [
+  7,
+  "雕",
+  "diāo",
+  "variant of 雕, to engrave",
+  "diāo",
+  "to carve; to engrave; shrewd"
+ ],
+ [
+  7,
+  "叠",
+  "dié",
+  "variant of 叠",
+  "dié",
+  "to fold; to fold over in layers; to furl"
+ ],
+ [
+  7,
+  "丁",
+  "Dīng",
+  "surname Ding",
+  "dīng",
+  "male adult; the 4th of the 10 Heavenly Stems 干; fourth (used like \"4\" or \"D\")"
+ ],
+ [
+  7,
+  "动荡",
+  "dòng dàng",
+  "variant of 动荡",
+  "dòng dàng",
+  "unrest (social or political); turmoil; upheaval"
+ ],
+ [
+  7,
+  "斗",
+  "Dǒu",
+  "abbr. for the Big Dipper constellation 星",
+  "dòu",
+  "to fight; to struggle; to condemn"
+ ],
+ [
+  7,
+  "鹅",
+  "é",
+  "variant of 鹅",
+  "é",
+  "goose"
+ ],
+ [
+  7,
+  "恶",
+  "ě",
+  "used in 恶心",
+  "è",
+  "evil; fierce; vicious"
+ ],
+ [
+  7,
+  "帆",
+  "fān",
+  "variant of 帆",
+  "fān",
+  "sail; Taiwan pr. [fán], except 布 canvas"
+ ],
+ [
+  7,
+  "非",
+  "Fēi",
+  "abbr. for 洲, Africa",
+  "fēi",
+  "to not be; not; wrong; incorrect; non-; un-; in-; de-"
+ ],
+ [
+  7,
+  "附",
+  "fù",
+  "variant of 附",
+  "fù",
+  "to add; to attach; to be close to; to be attached"
+ ],
+ [
+  7,
+  "弓",
+  "Gōng",
+  "surname Gong",
+  "gōng",
+  "a bow (weapon); to bend; to arch (one's back etc)"
+ ],
+ [
+  7,
+  "勾",
+  "Gōu",
+  "surname Gou",
+  "gōu",
+  "to attract; to arouse; to tick"
+ ],
+ [
+  7,
+  "钩",
+  "gōu",
+  "variant of 钩",
+  "gōu",
+  "to hook; to sew; to crochet"
+ ],
+ [
+  7,
+  "雇",
+  "gù",
+  "variant of 雇",
+  "gù",
+  "to employ; to hire; to rent"
+ ],
+ [
+  7,
+  "柜台",
+  "guì tái",
+  "variant of 柜台",
+  "guì tái",
+  "sales counter; front desk; bar"
+ ],
+ [
+  7,
+  "糊",
+  "hú",
+  "variant of 糊",
+  "hú",
+  "muddled; paste; scorched"
+ ],
+ [
+  7,
+  "晃",
+  "huǎng",
+  "variant of 晃",
+  "huàng",
+  "to sway; to shake; to wander about"
+ ],
+ [
+  7,
+  "魂",
+  "hún",
+  "old variant of 魂",
+  "hún",
+  "soul; spirit; immortal soul (that can be detached from the body)"
+ ],
+ [
+  7,
+  "火暴",
+  "huǒ bào",
+  "variant of 爆",
+  "bào",
+  "to explode or burst; to quick fry or quick boil"
+ ],
+ [
+  7,
+  "计",
+  "Jì",
+  "surname Ji",
+  "jì",
+  "to calculate; to compute; to count"
+ ],
+ [
+  7,
+  "祭",
+  "Zhài",
+  "surname Zhai",
+  "jì",
+  "to offer a sacrifice to (gods or ancestors); memorial ceremony; (in classical novels) to recite an incantation to activate a magic weapon"
+ ],
+ [
+  7,
+  "家伙",
+  "jiā huo",
+  "variant of 伙",
+  "jiā huo",
+  "household dish, implement or furniture; domestic animal; (coll.) guy"
+ ],
+ [
+  7,
+  "驾",
+  "Jià",
+  "surname Jia",
+  "jià",
+  "to harness; to draw (a cart etc); to drive"
+ ],
+ [
+  7,
+  "姜",
+  "Jiāng",
+  "surname Jiang",
+  "jiāng",
+  "ginger"
+ ],
+ [
+  7,
+  "焦",
+  "Jiāo",
+  "surname Jiao",
+  "jiāo",
+  "burnt; scorched; charred"
+ ],
+ [
+  7,
+  "劫",
+  "jié",
+  "variant of 劫",
+  "jié",
+  "to rob; to plunder; to seize by force"
+ ],
+ [
+  7,
+  "经",
+  "Jīng",
+  "surname Jing",
+  "jīng",
+  "classics; sacred book; scripture"
+ ],
+ [
+  7,
+  "局限",
+  "jú xiàn",
+  "variant of 限",
+  "jú xiàn",
+  "to limit; to confine; to restrict sth within set boundaries"
+ ],
+ [
+  7,
+  "锯",
+  "jū",
+  "variant of 锔",
+  "jù",
+  "a saw; to cut with a saw"
+ ],
+ [
+  7,
+  "倔",
+  "jué",
+  "used in 倔强",
+  "juè",
+  "gruff; surly"
+ ],
+ [
+  7,
+  "俊",
+  "jùn",
+  "old variant of 俊",
+  "jùn",
+  "smart; eminent; handsome"
+ ],
+ [
+  7,
+  "夸",
+  "kuā",
+  "used in 克",
+  "kuā",
+  "to boast; to exaggerate; to praise"
+ ],
+ [
+  7,
+  "罗",
+  "Luó",
+  "surname Luo",
+  "luó",
+  "gauze; to collect; to gather"
+ ],
+ [
+  7,
+  "裸",
+  "luǒ",
+  "variant of 裸",
+  "luǒ",
+  "naked"
+ ],
+ [
+  7,
+  "麻",
+  "má",
+  "variant of 麻; hemp",
+  "má",
+  "generic name for hemp, flax etc; hemp or flax fiber for textile materials; sesame"
+ ],
+ [
+  7,
+  "枚",
+  "Méi",
+  "surname Mei",
+  "méi",
+  "classifier for coins, rings, badges, pearls, sporting medals, rockets, satellites etc; tree trunk; whip"
+ ],
+ [
+  7,
+  "谜",
+  "mèi",
+  "see 谜儿, riddle",
+  "mí",
+  "riddle"
+ ],
+ [
+  7,
+  "墨",
+  "Mò",
+  "surname Mo; abbr. for 哥, Mexico",
+  "mò",
+  "ink stick; China ink; corporal punishment consisting of tattooing characters on the victim's forehead"
+ ],
+ [
+  7,
+  "亩",
+  "mǔ",
+  "old variant of 亩",
+  "mǔ",
+  "classifier for fields; unit of area equal to one fifteenth of a hectare"
+ ],
+ [
+  7,
+  "飘",
+  "piāo",
+  "variant of 飘",
+  "piāo",
+  "to float"
+ ],
+ [
+  7,
+  "颇",
+  "Pō",
+  "surname Po; Taiwan pr. [Pǒ]",
+  "pō",
+  "rather; quite; considerably"
+ ],
+ [
+  7,
+  "棋",
+  "qí",
+  "variant of 棋",
+  "qí",
+  "chess; chess-like game; a game of chess"
+ ],
+ [
+  7,
+  "启蒙",
+  "qǐ méng",
+  "variant of 启蒙; to instruct the young",
+  "qǐ méng",
+  "to instruct the young; to initiate; to awake sb from ignorance"
+ ],
+ [
+  7,
+  "铅",
+  "qiān",
+  "old variant of 铅",
+  "qiān",
+  "lead (chemistry)"
+ ],
+ [
+  7,
+  "曲",
+  "Qū",
+  "surname Qu",
+  "qǔ",
+  "tune; song"
+ ],
+ [
+  7,
+  "饶",
+  "Ráo",
+  "surname Rao",
+  "ráo",
+  "rich; abundant; exuberant"
+ ],
+ [
+  7,
+  "尚",
+  "Shàng",
+  "surname Shang",
+  "shàng",
+  "still; yet; to value"
+ ],
+ [
+  7,
+  "竖",
+  "shù",
+  "variant of 竖",
+  "shù",
+  "to erect; vertical; vertical stroke (in Chinese characters)"
+ ],
+ [
+  7,
+  "耍",
+  "Shuǎ",
+  "surname Shua",
+  "shuǎ",
+  "to play with; to wield; to act (cool etc)"
+ ],
+ [
+  7,
+  "驮",
+  "tuó",
+  "variant of 驮",
+  "tuó",
+  "to carry on one's back"
+ ],
+ [
+  7,
+  "文",
+  "Wén",
+  "surname Wen",
+  "wén",
+  "language; culture; writing"
+ ],
+ [
+  7,
+  "无可厚非",
+  "wú kě hòu fēi",
+  "see 非",
+  "fēi",
+  "to not be; not; wrong; incorrect; non-; un-; in-; de-"
+ ],
+ [
+  7,
+  "席",
+  "Xí",
+  "surname Xi",
+  "xí",
+  "woven mat; seat; banquet"
+ ],
+ [
+  7,
+  "虾",
+  "há",
+  "used in 虾蟆",
+  "xiā",
+  "shrimp; prawn"
+ ],
+ [
+  7,
+  "邪",
+  "xié",
+  "old variant of 邪",
+  "xié",
+  "demonic; iniquitous; nefarious"
+ ],
+ [
+  7,
+  "泄",
+  "xiè",
+  "variant of 泄",
+  "xiè",
+  "(bound form) to leak out; to discharge; (fig.) to divulge"
+ ],
+ [
+  7,
+  "凶狠",
+  "xiōng hěn",
+  "variant of 狠",
+  "xiōng hěn",
+  "cruel; vicious; fierce and malicious"
+ ],
+ [
+  7,
+  "绣",
+  "xiù",
+  "variant of 绣",
+  "xiù",
+  "to embroider; embroidery"
+ ],
+ [
+  7,
+  "锈",
+  "xiù",
+  "variant of 锈",
+  "xiù",
+  "to rust"
+ ],
+ [
+  7,
+  "许",
+  "Xǔ",
+  "surname Xu",
+  "xǔ",
+  "to allow; to permit; to promise"
+ ],
+ [
+  7,
+  "延",
+  "Yán",
+  "surname Yan",
+  "yán",
+  "to prolong; to extend; to delay"
+ ],
+ [
+  7,
+  "验",
+  "yàn",
+  "variant of 验",
+  "yàn",
+  "to examine; to test; to check"
+ ],
+ [
+  7,
+  "扬",
+  "Yáng",
+  "abbr. for 扬州; surname Yang",
+  "yáng",
+  "to raise; to hoist; the action of tossing or winnowing"
+ ],
+ [
+  7,
+  "痒",
+  "yǎng",
+  "variant of 痒; to itch; to tickle",
+  "yǎng",
+  "to itch; to tickle"
+ ],
+ [
+  7,
+  "业",
+  "Yè",
+  "surname Ye",
+  "yè",
+  "line of business; industry; occupation"
+ ],
+ [
+  7,
+  "以",
+  "yǐ",
+  "old variant of 以",
+  "yǐ",
+  "to use; by means of; according to"
+ ],
+ [
+  7,
+  "悠闲",
+  "yōu xián",
+  "variant of 悠闲; leisurely",
+  "yōu xián",
+  "leisurely; carefree; relaxed"
+ ],
+ [
+  7,
+  "余",
+  "Yú",
+  "surname Yu",
+  "yú",
+  "extra; surplus; remaining"
+ ],
+ [
+  7,
+  "葬",
+  "zàng",
+  "old variant of 葬",
+  "zàng",
+  "to bury (the dead); to inter"
+ ],
+ [
+  7,
+  "闸",
+  "zhá",
+  "old variant of 闸; sluice; lock (on waterway)",
+  "zhá",
+  "gear; brake; sluice"
+ ],
+ [
+  7,
+  "榨",
+  "zhà",
+  "variant of 榨; to press; to extract (juice)",
+  "zhà",
+  "to press; to extract (juice); device for extracting juice, oils etc"
+ ],
+ [
+  7,
+  "粘",
+  "nián",
+  "variant of 黏",
+  "zhān",
+  "to glue; to paste; to adhere"
+ ],
+ [
+  7,
+  "砖",
+  "zhuān",
+  "variant of 砖",
+  "zhuān",
+  "brick"
+ ],
+ [
+  7,
+  "宗",
+  "Zōng",
+  "surname Zong",
+  "zōng",
+  "school; sect; purpose"
+ ],
+ [
+  1,
+  "比",
+  "Bǐ",
+  "Belgium; Belgian; abbr. for 比利时",
+  "bǐ",
+  "to compare; (followed by a noun and adjective) more {adj.} than {noun}; ratio"
+ ],
+ [
+  1,
+  "大学",
+  "Dà xué",
+  "the Great Learning, one of the Four Books 四书 in Confucianism",
+  "dà xué",
+  "university; college"
+ ],
+ [
+  1,
+  "西",
+  "Xī",
+  "the West; abbr. for Spain 牙; Spanish",
+  "xī",
+  "west"
+ ],
+ [
+  1,
+  "中",
+  "Zhōng",
+  "China; Chinese; surname Zhong",
+  "zhōng",
+  "within; among; in; middle; center; while (doing sth); during"
+ ],
+ [
+  2,
+  "大门",
+  "Dà mén",
+  "the Doors, US rock band",
+  "dà mén",
+  "entrance; door; gate"
+ ],
+ [
+  2,
+  "东北",
+  "Dōng běi",
+  "Northeast China; Manchuria",
+  "dōng běi",
+  "northeast"
+ ],
+ [
+  2,
+  "东方",
+  "Dōng fāng",
+  "the East; the Orient; two-character surname Dongfang",
+  "dōng fāng",
+  "east"
+ ],
+ [
+  2,
+  "加",
+  "Jiā",
+  "Canada (abbr. for 大); surname Jia",
+  "jiā",
+  "to add; plus; (used after an adverb such as 不, 大, 稍 etc, and before a disyllabic verb, to indicate that the action of the verb is applied to sth or sb previously mentioned)"
+ ],
+ [
+  2,
+  "凉",
+  "Liáng",
+  "the five Liang of the Sixteen Kingdoms, namely: Former Liang 前凉 (314-376), Later Liang 后凉 (386-403), Northern Liang 北凉 (398-439), Southern Liang 南凉 (397-414), Western Liang 西凉 (400-421)",
+  "liáng",
+  "cool; cold"
+ ],
+ [
+  2,
+  "满",
+  "Mǎn",
+  "Manchu ethnic group",
+  "mǎn",
+  "to fill; full; filled"
+ ],
+ [
+  2,
+  "西北",
+  "Xī běi",
+  "Northwest China (Shaanxi, Gansu, Qinghai, Ningxia, Xinjiang)",
+  "xī běi",
+  "northwest"
+ ],
+ [
+  2,
+  "药水",
+  "Yào shuǐ",
+  "Yaksu in North Korea, near the border with Liaoning and Jiling province",
+  "yào shuǐ",
+  "medicine in liquid form; bottled medicine; lotion"
+ ],
+ [
+  2,
+  "友好",
+  "Yǒu hǎo",
+  "Youhao district of Yichun city 市, Heilongjiang",
+  "yǒu hǎo",
+  "friendly; amicable; close friend"
+ ],
+ [
+  2,
+  "越",
+  "Yuè",
+  "generic word for peoples or states of south China or south Asia at different historical periods; abbr. for Vietnam 越南",
+  "yuè",
+  "to exceed; to climb over; to surpass"
+ ],
+ [
+  3,
+  "保",
+  "Bǎo",
+  "Bulgaria; Bulgarian; abbr. for 保加利亚",
+  "bǎo",
+  "to defend; to protect; to keep; to guarantee; to ensure; civil administration unit in the baojia 甲 system (old)"
+ ],
+ [
+  3,
+  "和平",
+  "Hé píng",
+  "Heping District of Shenyang city 沈阳市, Liaoning; Heping or Hoping Township in Taichung County 台中县, Taiwan",
+  "hé píng",
+  "peace; peaceful"
+ ],
+ [
+  3,
+  "美",
+  "Měi",
+  "(bound form) the Americas (abbr. for 洲); (bound form) USA (abbr. for 美国)",
+  "měi",
+  "beautiful; very satisfactory; good; to beautify"
+ ],
+ [
+  3,
+  "齐",
+  "Qí",
+  "(name of states and dynasties at several different periods); surname Qi",
+  "qí",
+  "neat; even; level with"
+ ],
+ [
+  3,
+  "时代",
+  "Shí dài",
+  "Time, US weekly news magazine",
+  "shí dài",
+  "age; era; epoch"
+ ],
+ [
+  3,
+  "台",
+  "Tái",
+  "Taiwan (abbr.); surname Tai",
+  "tái",
+  "platform; stage; terrace"
+ ],
+ [
+  3,
+  "土",
+  "Tǔ",
+  "Tu (ethnic group); surname Tu",
+  "tǔ",
+  "earth; dust; clay"
+ ],
+ [
+  3,
+  "现代",
+  "Xiàn dài",
+  "Hyundai, South Korean company",
+  "xiàn dài",
+  "modern times; modern age; modern era"
+ ],
+ [
+  4,
+  "大陆",
+  "Dà lù",
+  "mainland China (reference to the PRC)",
+  "dà lù",
+  "continent; mainland"
+ ],
+ [
+  4,
+  "大众",
+  "Dà zhòng",
+  "Volkswagen (automobile manufacturer)",
+  "dà zhòng",
+  "the masses; the great bulk of the population; popular (of music, science etc)"
+ ],
+ [
+  4,
+  "树林",
+  "Shù lín",
+  "Shulin city in New Taipei City 市, Taiwan",
+  "shù lín",
+  "woods; grove; forest"
+ ],
+ [
+  4,
+  "孙子",
+  "Sūn zǐ",
+  "Sun Tzu, also known as Sun Wu 孙武 (c. 500 BC, dates of birth and death uncertain), general, strategist and philosopher of the Spring and Autumn Period (700-475 BC), believed to be the author of the “Art of War” 孙子兵法, one of the Seven Military Classics of ancient China 武经七书",
+  "sūn zi",
+  "grandson; son's son"
+ ],
+ [
+  4,
+  "网络",
+  "Wǎng luò",
+  "Internet",
+  "wǎng luò",
+  "network (computing, telecommunications, transport etc)"
+ ],
+ [
+  4,
+  "延长",
+  "Yán cháng",
+  "Yanchang county in Yan'an 安, Shaanxi",
+  "yán cháng",
+  "to prolong; to extend; to delay"
+ ],
+ [
+  4,
+  "资源",
+  "Zī yuán",
+  "Ziyuan county in Guilin 林, Guangxi",
+  "zī yuán",
+  "natural resource (such as water or minerals); resource (such as manpower or tourism)"
+ ],
+ [
+  5,
+  "长寿",
+  "Cháng shòu",
+  "Changshou suburban district of Chongqing municipality, formerly in Sichuan",
+  "cháng shòu",
+  "longevity; long-lived"
+ ],
+ [
+  5,
+  "大都",
+  "Dà dū",
+  "Dadu, capital of China during the Yuan Dynasty (1280-1368), modern day Beijing",
+  "dà dōu",
+  "for the most part; on the whole; also pr. [dà dū]"
+ ],
+ [
+  5,
+  "联想",
+  "Lián xiǎng",
+  "Lenovo",
+  "lián xiǎng",
+  "to associate (cognitively); to make an associative connection; mental association"
+ ],
+ [
+  5,
+  "神",
+  "Shén",
+  "God; abbr. for 舟",
+  "shén",
+  "deity; soul; spirit"
+ ],
+ [
+  5,
+  "雨水",
+  "Yǔ shuǐ",
+  "Yushui or Rain Water, 2nd of the 24 solar terms 二十四节气 19th February-5th March",
+  "yǔ shuǐ",
+  "rainwater; rainfall; rain"
+ ],
+ [
+  6,
+  "藏",
+  "Zàng",
+  "Tibet; abbr. for Xizang or Tibet Autonomous Region 藏",
+  "cáng",
+  "to conceal; to hide away; to harbor"
+ ],
+ [
+  6,
+  "海湾",
+  "Hǎi wān",
+  "(Persian) Gulf",
+  "hǎi wān",
+  "bay; gulf"
+ ],
+ [
+  6,
+  "吉利",
+  "Jí lì",
+  "Geely, Chinese car make",
+  "jí lì",
+  "auspicious; lucky; propitious"
+ ],
+ [
+  6,
+  "将军",
+  "Jiāng jūn",
+  "(common place name)",
+  "jiāng jūn",
+  "general; high-ranking military officer; to check or checkmate"
+ ],
+ [
+  6,
+  "井",
+  "Jǐng",
+  "Jing, one of the 28 constellations of Chinese astronomy; surname Jing",
+  "jǐng",
+  "a well; neat; orderly"
+ ],
+ [
+  6,
+  "内地",
+  "Nèi dì",
+  "mainland China (PRC excluding Hong Kong and Macau, but including islands such as Hainan); Japan (used in Taiwan during Japanese colonization)",
+  "nèi dì",
+  "inland; interior; hinterland"
+ ],
+ [
+  6,
+  "清",
+  "Qīng",
+  "Qing (Wade-Giles: Ch'ing) dynasty of imperial China (1644-1911); surname Qing",
+  "qīng",
+  "(of water etc) clear; clean; quiet; still; pure; uncorrupted"
+ ],
+ [
+  6,
+  "塞",
+  "Sāi",
+  "Serbia; Serbian; abbr. for 塞尔维亚",
+  "sāi",
+  "to stop up; to squeeze in; to stuff"
+ ],
+ [
+  6,
+  "通道",
+  "Tōng dào",
+  "Tongdao Dong autonomous county in Huaihua 怀化, Hunan",
+  "tōng dào",
+  "(communications) channel; thoroughfare; passage"
+ ],
+ [
+  6,
+  "新兴",
+  "Xīn xīng",
+  "Xinxing county in Yunfu 云浮, Guangdong; Xinxing or Hsinhsing district of Kaohsiung city 市, south Taiwan",
+  "xīn xīng",
+  "(of markets, industries, infectious diseases etc) rising; emerging; in the ascendant"
+ ],
+ [
+  7,
+  "安定",
+  "Ān dìng",
+  "Anting township in Tainan county 台南县, Taiwan",
+  "ān dìng",
+  "stable; calm; settled; to stabilize; Valium; diazepam"
+ ],
+ [
+  7,
+  "安宁",
+  "Ān níng",
+  "Anning District of Lanzhou City 兰州市, Gansu; Anning City, to the west of Kunming 明, Yunnan",
+  "ān níng",
+  "peaceful; tranquil; calm"
+ ],
+ [
+  7,
+  "标致",
+  "Biāo zhì",
+  "Peugeot",
+  "biāo zhi",
+  "beautiful (of woman); pretty"
+ ],
+ [
+  7,
+  "滨海",
+  "Bīn hǎi",
+  "Binhai (place name); Binhai New District, subprovincial district of Tianjin; Binhai county in Yancheng 盐城, Jiangsu",
+  "bīn hǎi",
+  "coastal; bordering the sea"
+ ],
+ [
+  7,
+  "长征",
+  "Cháng zhēng",
+  "Long March (retreat of the Red Army 1934-1935)",
+  "cháng zhēng",
+  "expedition; long journey"
+ ],
+ [
+  7,
+  "德",
+  "Dé",
+  "Germany; German; abbr. for 德国",
+  "dé",
+  "virtue; goodness; morality"
+ ],
+ [
+  7,
+  "方言",
+  "Fāng yán",
+  "the first Chinese dialect dictionary, edited by Yang Xiong 扬雄 in 1st century, containing over 9000 characters",
+  "fāng yán",
+  "topolect; dialect"
+ ],
+ [
+  7,
+  "丰满",
+  "Fēng mǎn",
+  "Fengman district of Jilin city 吉林市, Jilin province",
+  "fēng mǎn",
+  "ample; well developed; fully rounded"
+ ],
+ [
+  7,
+  "凤凰",
+  "Fèng huáng",
+  "Fenghuang County in Xiangxi Tujia and Miao Autonomous Prefecture 州",
+  "fèng huáng",
+  "phoenix"
+ ],
+ [
+  7,
+  "复兴",
+  "Fù xīng",
+  "Fuxing district of Handan city 邯郸市, Hebei; Fuxing or Fuhsing township in Taoyuan county 桃园县, north Taiwan",
+  "fù xīng",
+  "to revive; to rejuvenate"
+ ],
+ [
+  7,
+  "富裕",
+  "Fù yù",
+  "Fuyu county in Qiqihar 齐齐哈尔, Heilongjiang",
+  "fù yù",
+  "prosperous; well-to-do; well-off"
+ ],
+ [
+  7,
+  "港",
+  "Gǎng",
+  "Hong Kong (abbr. for 港); surname Gang",
+  "gǎng",
+  "harbor; port"
+ ],
+ [
+  7,
+  "高明",
+  "Gāo míng",
+  "Gaoming District of Foshan City 市, Guangdong",
+  "gāo míng",
+  "brilliant; superior; wise"
+ ],
+ [
+  7,
+  "管子",
+  "Guǎn zǐ",
+  "Guanzi or Guan Zhong 管仲 (-645 BC), famous politician of Qi 齐国 of Spring and Autumn period; Guanzi, classical book containing writings of Guan Zhong and his school",
+  "guǎn zi",
+  "tube; pipe; drinking straw"
+ ],
+ [
+  7,
+  "光泽",
+  "Guāng zé",
+  "Guangze county in Nanping 平 Fujian",
+  "guāng zé",
+  "luster; gloss"
+ ],
+ [
+  7,
+  "国徽",
+  "Guó huī",
+  "the national emblem of the PRC (a red circle containing the five stars of the PRC flag over Tiananmen 天安门)",
+  "guó huī",
+  "national emblem; national coat of arms"
+ ],
+ [
+  7,
+  "互助",
+  "Hù zhù",
+  "Huzhu Tuzu autonomous county in Haidong prefecture 海东地区, Qinghai",
+  "hù zhù",
+  "to help each other"
+ ],
+ [
+  7,
+  "金子",
+  "Jīn zǐ",
+  "Kaneko (Japanese surname)",
+  "jīn zi",
+  "gold"
+ ],
+ [
+  7,
+  "来宾",
+  "Lái bīn",
+  "Laibin prefecture-level city in Guangxi",
+  "lái bīn",
+  "guest; visitor"
+ ],
+ [
+  7,
+  "冷战",
+  "Lěng zhàn",
+  "(US-Soviet) Cold War",
+  "lěng zhàn",
+  "cold war; (fig.) strained relationship; to be barely on speaking terms"
+ ],
+ [
+  7,
+  "美德",
+  "Měi Dé",
+  "USA and Germany",
+  "měi dé",
+  "virtue"
+ ],
+ [
+  7,
+  "苗",
+  "Miáo",
+  "Hmong or Miao ethnic group of southwest China; surname Miao",
+  "miáo",
+  "sprout"
+ ],
+ [
+  7,
+  "末日",
+  "Mò rì",
+  "Judgment Day (in Christian eschatology)",
+  "mò rì",
+  "last day; end; final days"
+ ],
+ [
+  7,
+  "牡丹",
+  "Mǔ dan",
+  "Mudan District of Heze City 菏泽市, Shandong; Mutan township in Pingtung County 屏东县, Taiwan",
+  "mǔ dan",
+  "tree peony (Paeonia suffruticosa)"
+ ],
+ [
+  7,
+  "平和",
+  "Píng hé",
+  "Pinghe county in Zhangzhou 州, Fujian",
+  "píng hé",
+  "gentle; mild; moderate"
+ ],
+ [
+  7,
+  "清明",
+  "Qīng míng",
+  "Qingming or Pure Brightness, 5th of the 24 solar terms 二十四节气 5th-19th April; Pure Brightness Festival or Tomb Sweeping Day (in early April)",
+  "qīng míng",
+  "clear and bright; sober and calm; (of a government or administration) well ordered"
+ ],
+ [
+  7,
+  "清新",
+  "Qīng xīn",
+  "Qingxin county in Qingyuan 清远, Guangdong",
+  "qīng xīn",
+  "fresh and clean"
+ ],
+ [
+  7,
+  "狮子",
+  "Shī zǐ",
+  "Leo (star sign); Shihtzu township in Pingtung County 屏东县, Taiwan",
+  "shī zi",
+  "lion"
+ ],
+ [
+  7,
+  "太平",
+  "Tài píng",
+  "place name",
+  "tài píng",
+  "peace and security"
+ ],
+ [
+  7,
+  "天桥",
+  "Tiān qiáo",
+  "Tianqiao district of Jinan city 济南市, Shandong; Tianqiao district in Beijing, formerly a center of folk culture",
+  "tiān qiáo",
+  "overhead walkway; pedestrian bridge"
+ ],
+ [
+  7,
+  "头条",
+  "Tóu tiáo",
+  "Toutiao, personalized content recommendation app (abbr. for 今日头条)",
+  "tóu tiáo",
+  "lead story (on the news)"
+ ],
+ [
+  7,
+  "威信",
+  "Wēi xìn",
+  "Weixin county in Zhaotong 通, Yunnan",
+  "wēi xìn",
+  "prestige; reputation; trust"
+ ],
+ [
+  7,
+  "温泉",
+  "Wēn quán",
+  "Arishang Nahiyisi or Wenquan county in Börtala Mongol autonomous prefecture 博尔塔拉蒙古自治州, Xinjiang",
+  "wēn quán",
+  "hot spring; spa; onsen"
+ ],
+ [
+  7,
+  "小康",
+  "Xiǎo kāng",
+  "Xiaokang, a Confucian near-ideal state of society, second only to Datong 同",
+  "xiǎo kāng",
+  "moderately affluent; well-off; a period of peace and prosperity"
+ ],
+ [
+  7,
+  "张扬",
+  "Zhāng Yáng",
+  "Zhang Yang (1967-), PRC film director and screenwriter",
+  "zhāng yáng",
+  "to display ostentatiously; to bring out into the open; to make public"
+ ],
+ [
+  7,
+  "振兴",
+  "Zhèn xīng",
+  "Zhengxing district of Dandong city 丹东市, Liaoning",
+  "zhèn xīng",
+  "to revive; to revitalize; to invigorate; to re-energize"
+ ],
+ [
+  7,
+  "中庸",
+  "Zhōng yōng",
+  "the Doctrine of the Mean, one of the Four Books 四书",
+  "zhōng yōng",
+  "golden mean (Confucianism); (literary) (of person) mediocre; ordinary"
+ ],
+ [
+  7,
+  "筑",
+  "Zhù",
+  "short name for Guiyang 贵阳",
+  "zhù",
+  "to build; to construct; to ram"
+ ],
+ [
+  7,
+  "壮",
+  "Zhuàng",
+  "Zhuang ethnic group of Guangxi, the PRC's second most numerous ethnic group",
+  "zhuàng",
+  "to strengthen; strong; robust"
+ ],
+ [
+  1,
+  "差",
+  "chā",
+  "difference; discrepancy; (math.) difference (amount remaining after a subtraction); (literary) a little; somewhat; slightly",
+  "chà",
+  "different; wrong; mistaken; to fall short; to lack"
+ ],
+ [
+  1,
+  "打",
+  "dá",
+  "dozen (loanword)",
+  "dǎ",
+  "to beat; to strike; to hit"
+ ],
+ [
+  1,
+  "累",
+  "lěi",
+  "to accumulate; to involve or implicate (Taiwan pr. [lèi]); continuous",
+  "lèi",
+  "tired; weary; to strain"
+ ],
+ [
+  1,
+  "跑",
+  "páo",
+  "(of an animal) to paw (the ground)",
+  "pǎo",
+  "to run; to run away; to escape"
+ ],
+ [
+  1,
+  "行",
+  "háng",
+  "row; line; commercial firm",
+  "xíng",
+  "to walk; to go; to travel"
+ ],
+ [
+  1,
+  "要",
+  "yāo",
+  "(bound form) to demand; to coerce",
+  "yào",
+  "to want; to need; to ask for; will; shall; about to; need to; should"
+ ],
+ [
+  1,
+  "页",
+  "xié",
+  "head",
+  "yè",
+  "page; leaf"
+ ],
+ [
+  1,
+  "着",
+  "zhāo",
+  "(chess) move; trick; all right!",
+  "zhe",
+  "aspect particle indicating action in progress or ongoing state"
+ ],
+ [
+  1,
+  "正",
+  "zhēng",
+  "first month of the lunar year",
+  "zhèng",
+  "straight; upright; proper"
+ ],
+ [
+  1,
+  "重",
+  "chóng",
+  "to repeat; repetition; again",
+  "zhòng",
+  "heavy; serious; to attach importance to"
+ ],
+ [
+  2,
+  "啊",
+  "ā",
+  "interjection of surprise; Ah!; Oh!",
+  "a",
+  "modal particle ending sentence, showing affirmation, approval, or consent"
+ ],
+ [
+  2,
+  "场",
+  "cháng",
+  "threshing floor; classifier for events and happenings: spell, episode, bout",
+  "chǎng",
+  "large place used for a specific purpose; stage; scene (of a play)"
+ ],
+ [
+  2,
+  "离",
+  "chī",
+  "mythical beast (archaic)",
+  "lí",
+  "to leave; to part from; to be away from"
+ ],
+ [
+  2,
+  "弄",
+  "lòng",
+  "lane; alley",
+  "nòng",
+  "to do; to manage; to handle"
+ ],
+ [
+  2,
+  "片",
+  "piān",
+  "disk; sheet",
+  "piàn",
+  "thin piece; flake; a slice"
+ ],
+ [
+  2,
+  "骑",
+  "jì",
+  "(Tw) saddle horse; mounted soldier",
+  "qí",
+  "to sit astride; to ride (a horse, bike etc); classifier for saddle horses"
+ ],
+ [
+  2,
+  "为",
+  "wéi",
+  "as (in the capacity of); to take sth as; to act as",
+  "wèi",
+  "because of; for; to"
+ ],
+ [
+  3,
+  "厂",
+  "hǎn",
+  "\"cliff\" radical in Chinese characters (Kangxi radical 27), occurring in 原, 历, 压 etc",
+  "chǎng",
+  "factory; yard; depot"
+ ],
+ [
+  3,
+  "合",
+  "gě",
+  "100 ml; one-tenth of a peck; measure for dry grain equal to one-tenth of sheng 升 or liter, or one-hundredth dou 斗",
+  "hé",
+  "to close; to join; to fit"
+ ],
+ [
+  3,
+  "胖",
+  "pán",
+  "healthy; at ease",
+  "pàng",
+  "fat; plump"
+ ],
+ [
+  3,
+  "约",
+  "yāo",
+  "to weigh in a balance or on a scale",
+  "yuē",
+  "to make an appointment; to invite; approximately"
+ ],
+ [
+  3,
+  "追",
+  "duī",
+  "to sculpt; to carve; musical instrument (old)",
+  "zhuī",
+  "to chase; to pursue; to look into"
+ ],
+ [
+  4,
+  "尺",
+  "chě",
+  "one of the characters used to represent a musical note in gongche notation, 工尺谱",
+  "chǐ",
+  "a Chinese foot; one-third of a meter; a ruler"
+ ],
+ [
+  4,
+  "刺",
+  "cī",
+  "(onom.) whoosh",
+  "cì",
+  "thorn; sting; thrust"
+ ],
+ [
+  4,
+  "底",
+  "de",
+  "(equivalent to 的 as possessive particle)",
+  "dǐ",
+  "background; bottom; base"
+ ],
+ [
+  4,
+  "结",
+  "jiē",
+  "(of a plant) to produce (fruit or seeds); Taiwan pr. [jié]",
+  "jié",
+  "knot; sturdy; bond"
+ ],
+ [
+  4,
+  "落",
+  "là",
+  "to leave out; to be missing; to leave behind or forget to bring",
+  "luò",
+  "to fall or drop; (of the sun) to set; (of a tide) to go out"
+ ],
+ [
+  4,
+  "浅",
+  "jiān",
+  "sound of moving water",
+  "qiǎn",
+  "shallow; light (color)"
+ ],
+ [
+  4,
+  "圈",
+  "juān",
+  "to confine; to lock up; to pen in",
+  "quān",
+  "circle; ring; loop; classifier for loops, orbits, laps of race etc; to surround; to circle"
+ ],
+ [
+  4,
+  "折",
+  "shé",
+  "to snap; to break (a stick, a bone etc); (bound form) to sustain a loss (in business)",
+  "zhé",
+  "to break; to fracture; to snap"
+ ],
+ [
+  5,
+  "答",
+  "dā",
+  "bound form having the same meaning as the free word 答, used in 答应, 理 etc",
+  "dá",
+  "to answer; to reply; to respond"
+ ],
+ [
+  5,
+  "待",
+  "dāi",
+  "to stay",
+  "dài",
+  "to wait; to treat; to deal with"
+ ],
+ [
+  5,
+  "广",
+  "yǎn",
+  "\"house on a cliff\" radical in Chinese characters (Kangxi radical 53), occurring in 店, 序, 底 etc",
+  "guǎng",
+  "wide; numerous; to spread"
+ ],
+ [
+  5,
+  "匹",
+  "pī",
+  "mate; one of a pair",
+  "pǐ",
+  "classifier for horses, mules etc; Taiwan pr. [pī]; ordinary person"
+ ],
+ [
+  5,
+  "抢",
+  "qiāng",
+  "(literary) to knock against (esp. to knock one's head on the ground in grief or rage); opposite in direction; contrary",
+  "qiǎng",
+  "to fight over; to rush; to scramble"
+ ],
+ [
+  5,
+  "扇",
+  "shān",
+  "to fan; to slap sb on the face",
+  "shàn",
+  "fan; sliding, hinged or detachable flat part of sth; classifier for doors, windows etc"
+ ],
+ [
+  5,
+  "拾",
+  "shè",
+  "to ascend in light steps",
+  "shí",
+  "to pick up; to collate or arrange; ten (banker's anti-fraud numeral)"
+ ],
+ [
+  5,
+  "吓",
+  "hè",
+  "to scare; to intimidate; to threaten",
+  "xià",
+  "to frighten; to scare"
+ ],
+ [
+  6,
+  "档",
+  "dǎng",
+  "(Tw) variant of 挡, gear",
+  "dàng",
+  "official records; grade (of goods); file"
+ ],
+ [
+  6,
+  "混",
+  "hún",
+  "confused; dirty; to mix",
+  "hùn",
+  "to mix; to mingle; muddled"
+ ],
+ [
+  6,
+  "觉",
+  "jiào",
+  "a nap; a sleep",
+  "jué",
+  "to feel; to find that; thinking"
+ ],
+ [
+  6,
+  "啦",
+  "lā",
+  "(onom.) sound of singing, cheering etc; (phonetic); (dialect) to chat",
+  "la",
+  "sentence-final particle, contraction of 了啊, indicating exclamation; particle placed after each item in a list of examples"
+ ],
+ [
+  6,
+  "泡",
+  "pāo",
+  "puffed; swollen; spongy; small lake (esp. in place names); classifier for urine or feces",
+  "pào",
+  "bubble; foam; blister; to soak; to steep; to infuse"
+ ],
+ [
+  6,
+  "炮",
+  "bāo",
+  "to sauté; to fry; to dry by heating",
+  "pào",
+  "cannon; firecracker"
+ ],
+ [
+  6,
+  "炸",
+  "zhá",
+  "to deep fry; Taiwan pr. [zhà]",
+  "zhà",
+  "to burst; to explode; to blow up"
+ ],
+ [
+  6,
+  "足",
+  "jù",
+  "excessive",
+  "zú",
+  "foot; to be sufficient; ample"
+ ],
+ [
+  6,
+  "作",
+  "zuō",
+  "worker; workshop; (slang) troublesome",
+  "zuò",
+  "to do; to engage in; to write; to compose; to pretend; to feign"
+ ],
+ [
+  7,
+  "熬",
+  "āo",
+  "to boil; to simmer",
+  "áo",
+  "to cook on a slow fire; to extract by heating; to decoct"
+ ],
+ [
+  7,
+  "扛",
+  "gāng",
+  "to raise aloft with both hands; (of two or more people) to carry sth together",
+  "káng",
+  "to carry on one's shoulder; (fig.) to take on (a burden, duty etc)"
+ ],
+ [
+  7,
+  "搂",
+  "lōu",
+  "to draw towards oneself; to gather; to gather up (one's gown, sleeves etc)",
+  "lǒu",
+  "to hug; to embrace; to hold in one's arms"
+ ],
+ [
+  7,
+  "抹",
+  "mā",
+  "to wipe",
+  "mǒ",
+  "to smear; to wipe; to erase"
+ ],
+ [
+  7,
+  "哦",
+  "é",
+  "to chant",
+  "ó",
+  "oh (interjection indicating doubt or surprise)"
+ ],
+ [
+  7,
+  "刨",
+  "bào",
+  "carpenter's plane; to plane (woodwork); to shave off",
+  "páo",
+  "to dig; to excavate; (coll.) to exclude"
+ ],
+ [
+  7,
+  "翘",
+  "qiáo",
+  "outstanding; to raise",
+  "qiào",
+  "to stick up; to rise on one end; to tilt"
+ ],
+ [
+  7,
+  "哑",
+  "yā",
+  "(onom.) sound of cawing; sound of infant learning to talk; variant of 呀",
+  "yǎ",
+  "mute; dumb; incapable of speech; (of a voice) hoarse; husky; (of a bullet, bomb etc) dud"
+ ],
+ [
+  7,
+  "咽",
+  "yān",
+  "throat; pharynx; narrow pass",
+  "yàn",
+  "to swallow"
+ ],
+ [
+  7,
+  "涌",
+  "chōng",
+  "(used in place names)",
+  "yǒng",
+  "to bubble up; to rush forth"
+ ],
+ [
+  7,
+  "攒",
+  "cuán",
+  "to bring together",
+  "zǎn",
+  "to collect; to hoard; to accumulate"
+ ],
+ [
+  7,
+  "拽",
+  "yè",
+  "to drag; to haul",
+  "zhuài",
+  "to pull; to tug at (sth)"
+ ],
+ [
+  3,
+  "重",
+  "chóng",
+  "to repeat; repetition; again",
+  "zhòng",
+  "heavy; serious; to attach importance to"
+ ],
+ [
+  3,
+  "行",
+  "háng",
+  "row; line; commercial firm",
+  "xíng",
+  "to walk; to go; to travel"
+ ],
+ [
+  3,
+  "为",
+  "wéi",
+  "as (in the capacity of); to take sth as; to act as",
+  "wèi",
+  "because of; for; to"
+ ],
+ [
+  3,
+  "正",
+  "zhēng",
+  "first month of the lunar year",
+  "zhèng",
+  "straight; upright; proper"
+ ],
+ [
+  4,
+  "啊",
+  "ā",
+  "interjection of surprise; Ah!; Oh!",
+  "a",
+  "modal particle ending sentence, showing affirmation, approval, or consent"
+ ],
+ [
+  4,
+  "打",
+  "dá",
+  "dozen (loanword)",
+  "dǎ",
+  "to beat; to strike; to hit"
+ ],
+ [
+  5,
+  "打",
+  "dá",
+  "dozen (loanword)",
+  "dǎ",
+  "to beat; to strike; to hit"
+ ],
+ [
+  4,
+  "要",
+  "yāo",
+  "(bound form) to demand; to coerce",
+  "yào",
+  "to want; to need; to ask for; will; shall; about to; need to; should"
+ ],
+ [
+  4,
+  "着",
+  "zhāo",
+  "(chess) move; trick; all right!",
+  "zhe",
+  "aspect particle indicating action in progress or ongoing state"
+ ],
+ [
+  5,
+  "落",
+  "là",
+  "to leave out; to be missing; to leave behind or forget to bring",
+  "luò",
+  "to fall or drop; (of the sun) to set; (of a tide) to go out"
+ ],
+ [
+  6,
+  "策略",
+  "cè lu:è",
+  "strategy; tactics; crafty; adroit",
+  "cè lüè",
+  "strategy; tactics; crafty; adroit"
+ ],
+ [
+  6,
+  "忽略",
+  "hū lu:è",
+  "to neglect; to overlook; to ignore",
+  "hū lüè",
+  "to neglect; to overlook; to ignore"
+ ],
+ [
+  6,
+  "战略",
+  "zhàn lu:è",
+  "strategy",
+  "zhàn lüè",
+  "strategy"
+ ],
+ [
+  7,
+  "奥运会",
+  "Aò yùn huì",
+  "Olympic Games; the Olympics",
+  "Ào yùn huì",
+  "Olympic Games; the Olympics"
+ ],
+ [
+  7,
+  "粗略",
+  "cū lu:è",
+  "rough (not precise or accurate); cursory",
+  "cū lüè",
+  "rough (not precise or accurate); cursory"
+ ],
+ [
+  7,
+  "闺女",
+  "guī ˙nu:",
+  "maiden; unmarried woman; (coll.) daughter",
+  "guī nü",
+  "maiden; unmarried woman; (coll.) daughter"
+ ],
+ [
+  7,
+  "领略",
+  "lǐng lu:è",
+  "to have a taste of; to realize; to appreciate",
+  "lǐng lüè",
+  "to have a taste of; to realize; to appreciate"
+ ],
+ [
+  7,
+  "掠夺",
+  "lu:è duó",
+  "to plunder; to rob",
+  "lüè duó",
+  "to plunder; to rob"
+ ],
+ [
+  7,
+  "略",
+  "lu:è",
+  "brief; sketchy; outline; summary; to omit",
+  "lüè",
+  "brief; sketchy; outline; summary; to omit"
+ ],
+ [
+  7,
+  "略微",
+  "lu:è wēi",
+  "a little bit; slightly",
+  "lüè wēi",
+  "a little bit; slightly"
+ ],
+ [
+  7,
+  "虐待",
+  "nu:è dài",
+  "to mistreat; to maltreat; to abuse",
+  "nüè dài",
+  "to mistreat; to maltreat; to abuse"
+ ],
+ [
+  7,
+  "侵略",
+  "qīn lu:è",
+  "to invade; invasion",
+  "qīn lüè",
+  "to invade; invasion"
+ ],
+ [
+  7,
+  "省略",
+  "shěng lu:è",
+  "to leave out; an omission",
+  "shěng lüè",
+  "to leave out; an omission"
+ ],
+ [
+  1,
+  "吧",
+  "bā",
+  "bar (loanword) (serving drinks, or providing Internet access etc); to puff (on a pipe etc); (onom.) bang",
+  "ba",
+  "(modal particle indicating suggestion or surmise); ...right?; ...OK?"
+ ],
+ [
+  2,
+  "得",
+  "dé",
+  "to obtain; to get; to gain",
+  "de",
+  "structural particle: used after a verb (or adjective as main verb), linking it to following phrase indicating effect, degree, possibility etc"
+ ],
+ [
+  2,
+  "不一会儿",
+  "bù yīhuǐr5",
+  "Take a short while",
+  "bù yīhuǐr",
+  "Take a short while"
+ ],
+ [
+  2,
+  "笑话儿",
+  "xiàohuar5",
+  "Joke",
+  "xiàohuar",
+  "Joke"
+ ],
+ [
+  2,
+  "有空儿",
+  "yǒukòngr5",
+  "available",
+  "yǒukòngr",
+  "available"
+ ],
+ [
+  4,
+  "没法儿",
+  "méifǎr5",
+  "Can't",
+  "méifǎr",
+  "Can't"
+ ],
+ [
+  4,
+  "名牌儿",
+  "míngpáir5",
+  "Famous brand",
+  "míngpáir",
+  "Famous brand"
+ ],
+ [
+  4,
+  "有劲儿",
+  "yǒujìnr5",
+  "Strength",
+  "yǒujìnr",
+  "Strength"
+ ],
+ [
+  5,
+  "胡同儿",
+  "hútòngr5",
+  "Alley",
+  "hútòngr",
+  "Alley"
+ ],
+ [
+  5,
+  "小偷儿",
+  "xiǎotōur5",
+  "Thief",
+  "xiǎotōur",
+  "Thief"
+ ],
+ [
+  7,
+  "离谱儿",
+  "lí pǔr5",
+  "Scientific",
+  "lí pǔr",
+  "outrageous; ridiculous; out of line"
+ ],
+ [
+  7,
+  "贪玩儿",
+  "tān wánr5",
+  "Greedy",
+  "tān wánr",
+  "to be too fond of play"
+ ]
+]

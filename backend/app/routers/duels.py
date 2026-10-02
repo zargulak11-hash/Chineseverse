@@ -67,10 +67,15 @@ def _build_questions(
     chosen = random.sample(words, k=min(QUESTION_COUNT, len(words)))
     single_char = [w for w in chosen if len(w.simplified) == 1]
 
-    base_types = ["pinyin", "meaning", "translate", "recognition", "tone", "listening", "reaction"]
+    # "tone" is only asked about a single character: the prompt cannot show
+    # the pinyin (its tone mark IS the answer), and a word without it has
+    # one tone per syllable.
+    base_types = ["pinyin", "meaning", "translate", "recognition", "listening", "reaction"]
     questions = []
     for i, word in enumerate(chosen):
         pool = list(base_types)
+        if word in single_char:
+            pool.append("tone")
         if word in single_char and len(single_char) >= 2:
             pool.append("character")
         if focus_type and focus_type in pool and random.random() < FOCUS_HIT_RATE:
@@ -96,7 +101,7 @@ def _build_questions(
             prompt, answer = meaning, word.simplified  # no options — spoken aloud
         elif qtype == "tone":
             tone = _tone_of(word.pinyin)
-            prompt, answer = f"What tone is 「{word.simplified}」 ({word.pinyin})?", TONE_LABELS[tone]
+            prompt, answer = f"What tone is 「{word.simplified}」?", TONE_LABELS[tone]
             other_labels = [v for k, v in TONE_LABELS.items() if k != tone]
             options = [answer] + random.sample(other_labels, k=min(3, len(other_labels)))
         elif qtype == "character":

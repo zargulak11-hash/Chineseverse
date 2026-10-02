@@ -795,7 +795,7 @@
     "q": {
       "meaning_to_word": "Which word means this?",
       "word_to_meaning": "What does this word mean?",
-      "listen_to_word": "Listen and pick the word you hear.",
+      "listen_to_word": "Listen, then pick what the word means.",
       "char_to_meaning": "What does this character mean?",
       "char_to_pinyin": "How is this character pronounced?",
       "example_to_point": "Which grammar point does this sentence use?"
