@@ -73,6 +73,11 @@
   --bad-dim: rgba(193, 68, 58, 0.15);
   --seal: #b83227;
 
+  /* ---- Brand logo tile: one mint tone behind the logo in both themes and
+     baked into the favicons. Keep in sync with LOGO_BG in
+     scripts/build_brand_assets.mjs. ---- */
+  --logo-bg: #cce8e3;
+
   /* ---- Back-compat aliases: older per-page code still references these
      names (accent2/indigo/warn) — keep them defined so nothing breaks,
      but resolve them into the Ink & Jade system instead of the old
@@ -373,16 +378,17 @@ a {
    ratio. The logo is sized, never scaled into a box, and so can never be
    stretched or squashed on any screen.
 
-   The artwork is never edited, re-encoded, recoloured or re-scaled in any
-   theme. The PNG is fully opaque on a near-white (#fefefe) ground, so it
-   is shown on that ground as a rounded tile in both themes:
-   - Filtering it onto the dark Ink page would need an invert, which turns
-     the brand red pink and the gold muddy.
-   - A `multiply` blend onto Paper was tried and does not hold: the landing
-     appbar's backdrop-filter and the hero's entrance animation each make a
-     stacking context with no opaque backdrop, so the white ground showed
-     through there while it blended away in the sidebar. One tile
-     everywhere keeps every placement identical. */
+   The artwork is never redrawn or recoloured. It sits on one mint tile
+   (--logo-bg) in both themes and every placement, the same tone baked into
+   the favicons, so the brand reads identically everywhere.
+
+   The source PNG is opaque on a near-white ground, so the UI uses the
+   matte derived from it by scripts/build_brand_assets.mjs
+   (src/assets/chineseverse-logo-matte.png): background pixels transparent,
+   every artwork pixel its exact original colour. A CSS blend can't do this
+   — multiply shifts every pixel of the artwork and darken clips about a
+   third of them — and filtering it onto the dark Ink page would need an
+   invert that turns the brand red pink. */
 .brand-logo {
   position: relative;
   display: inline-flex;
@@ -404,7 +410,7 @@ a {
 
 .brand-logo--lockup .brand-logo__img {
   border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 1px var(--border-strong);
+  background: var(--logo-bg);
 }
 
 /* Full lockup — height-driven, width follows the 1753:591 (~2.97:1) ratio. */
@@ -414,14 +420,15 @@ a {
 
 /* Emblem only, for the collapsed sidebar. Cropped out of the same logo file
    rather than shipped as a second asset, so the two can never drift.
+   The tile background sits on the span, which clips the crop to it.
 
    Measured from the PNG: the pagoda-and-book emblem occupies x 71..628 and
    y 110..504 of the 1753x591 canvas, and the wordmark's "C" starts at
    x 633. The crop is the square x 68..632, y 24..588 (565px), centred on
    the emblem and stopping just short of the "C". Those fractions become
    the scale and offsets below, so the crop lands on the artwork at any
-   size instead of being pinned to one pixel value. The window is entirely
-   inside the canvas, so it reads as a small white tile like the lockup. */
+   size instead of being pinned to one pixel value. The same square is what
+   build_brand_assets.mjs crops for the favicons. */
 .brand-logo--mark {
   --logo-mark: 32px;
   position: relative;
@@ -429,7 +436,7 @@ a {
   width: var(--logo-mark);
   height: var(--logo-mark);
   border-radius: var(--radius-sm);
-  box-shadow: 0 0 0 1px var(--border-strong);
+  background: var(--logo-bg);
 }
 
 .brand-logo--mark .brand-logo__img {
