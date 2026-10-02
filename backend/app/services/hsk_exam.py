@@ -18,11 +18,17 @@ hiding it (switching tab/window), closing or reloading it, or opening it
 again by URL ends it as "invalidated" with score 0 -- the page reports what
 it can see (POST /violation, also with keepalive on page hide), and the
 server invalidates any in-progress attempt that is reopened (GET), which is
-what a reload or a second tab does even if the report never arrived. An
-attempt nobody submits expires (score 0) once its time is up. Browser
-signals can be suppressed by a determined user; the server-side rules
-(no reopening, one active attempt, fixed clock, server grading) are what
-cannot be.
+what a reload or a second tab does even if the report never arrived. The
+page must also stay present: while it is visible and focused it sends a
+heartbeat every few seconds, and any contact after more than
+PRESENCE_TIMEOUT of silence -- the page closed, reloaded, navigated away,
+crashed, or was put in the background, whether or not its report got
+through -- ends the attempt as invalidated with 0, as does a ghost attempt
+found silent later. An attempt nobody submits expires (score 0) once its
+time is up. A determined user could still script heartbeats and answers;
+the server-side rules (no reopening, one active attempt, presence, fixed
+clock, server grading) are what a page that was really left cannot get
+past.
 
 Lesson progress is never touched: a failed exam leaves every completed
 lesson completed.
@@ -43,7 +49,10 @@ PASS_SCORE = 80.0          # percent of questions answered correctly
 QUESTION_COUNT = 20
 GRAMMAR_SHARE = 6          # up to this many grammar questions, the rest vocabulary
 TIME_LIMIT = timedelta(minutes=20)
-VIOLATIONS = {"left_page", "hidden", "navigation", "closed", "reopened"}
+# The exam page beats every HEARTBEAT seconds (frontend pages/Exam.jsx);
+# six missed beats is not a network hiccup, it is a page that is gone.
+PRESENCE_TIMEOUT = timedelta(seconds=30)
+VIOLATIONS = {"left_page", "hidden", "navigation", "closed", "reopened", "window_blur", "lost_contact"}
 
 IN_PROGRESS, PASSED, FAILED, INVALIDATED, EXPIRED = "in_progress", "passed", "failed", "invalidated", "expired"
 
@@ -82,16 +91,25 @@ def expire_stale(db: Session, user: models.User) -> None:
     """An attempt whose time is up and was never submitted fails with 0 --
     also what happens when the browser crashed or vanished mid-exam."""
     now = datetime.utcnow()
-    stale = (
-        db.query(models.HSKExamAttempt)
-        .filter_by(user_id=user.id, status=IN_PROGRESS)
-        .filter(models.HSKExamAttempt.expires_at <= now)
-        .all()
-    )
-    for attempt in stale:
-        _finish(attempt, EXPIRED, now)
-    if stale:
+    changed = False
+    for attempt in db.query(models.HSKExamAttempt).filter_by(user_id=user.id, status=IN_PROGRESS).all():
+        if attempt.expires_at <= now:
+            _finish(attempt, EXPIRED, now)
+            changed = True
+        elif _silent(attempt, now):
+            _lost(attempt, now)
+            changed = True
+    if changed:
         db.commit()
+
+
+def _silent(attempt: models.HSKExamAttempt, now: datetime) -> bool:
+    return now - (attempt.last_seen_at or attempt.started_at) > PRESENCE_TIMEOUT
+
+
+def _lost(attempt: models.HSKExamAttempt, now: datetime) -> None:
+    attempt.violations = list(attempt.violations or []) + [{"reason": "lost_contact", "at": now.isoformat() + "Z"}]
+    _finish(attempt, INVALIDATED, now)
 
 
 def result(attempt: models.HSKExamAttempt) -> dict:
@@ -193,7 +211,7 @@ def start(db: Session, user: models.User, level: int, locale: str) -> models.HSK
     attempt = models.HSKExamAttempt(
         user_id=user.id, level=level, status=IN_PROGRESS, questions=questions,
         answers=[None] * len(questions), total=len(questions), violations=[],
-        started_at=now, expires_at=now + TIME_LIMIT,
+        started_at=now, expires_at=now + TIME_LIMIT, last_seen_at=now,
     )
     db.add(attempt)
     try:
@@ -210,11 +228,25 @@ def start(db: Session, user: models.User, level: int, locale: str) -> models.HSK
 
 
 def _require_active(db: Session, attempt: models.HSKExamAttempt) -> None:
-    if attempt.status == IN_PROGRESS and attempt.expires_at <= datetime.utcnow():
-        _finish(attempt, EXPIRED, datetime.utcnow())
+    """Every contact from the exam page: the attempt must still be running,
+    in time, and the page must have stayed present. A contact counts as a
+    sign of life for the next one."""
+    now = datetime.utcnow()
+    if attempt.status == IN_PROGRESS and attempt.expires_at <= now:
+        _finish(attempt, EXPIRED, now)
+        db.commit()
+    elif attempt.status == IN_PROGRESS and _silent(attempt, now):
+        _lost(attempt, now)
         db.commit()
     if attempt.status != IN_PROGRESS:
         raise ExamError(409, "This exam attempt is over", "exam_over", result=result(attempt))
+    attempt.last_seen_at = now
+
+
+def heartbeat(db: Session, attempt: models.HSKExamAttempt) -> dict:
+    _require_active(db, attempt)
+    db.commit()
+    return {"status": attempt.status, "seconds_left": max(0, int((attempt.expires_at - datetime.utcnow()).total_seconds()))}
 
 
 def answer(db: Session, attempt: models.HSKExamAttempt, index: int, choice_id: int) -> dict:

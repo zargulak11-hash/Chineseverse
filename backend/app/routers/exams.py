@@ -89,6 +89,12 @@ def submit(attempt_id: int, user: models.User = Depends(get_current_user), db: S
     return _run(svc.submit, db, _owned(db, attempt_id, user))
 
 
+@router.post("/attempts/{attempt_id}/heartbeat")
+def heartbeat(attempt_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """The exam page is still open, visible and focused."""
+    return _run(svc.heartbeat, db, _owned(db, attempt_id, user))
+
+
 @router.post("/attempts/{attempt_id}/violation")
 def violation(
     attempt_id: int,

@@ -101,8 +101,15 @@ with TestClient(app) as client:
     # 6, 22, 23: one attempt, real HSK 1 material, no answers in the payload
     a1 = expect(client, "post", "/api/exams/1/start", 201, headers=h)
     assert a1["status"] == "in_progress" and a1["total"] == len(a1["questions"]) == 20 and a1["seconds_left"] > 1100
-    flat = repr(a1["questions"])
-    assert "item_id" not in flat and "correct" not in flat and "'answer'" not in flat
+    # Keys, not text: an option's meaning may itself be "right; correct; ..." (对).
+    def keys_of(node):
+        if isinstance(node, dict):
+            return set(node) | set().union(*(keys_of(v) for v in node.values()))
+        if isinstance(node, list):
+            return set().union(*(keys_of(v) for v in node)) if node else set()
+        return set()
+    leaked = keys_of(a1["questions"]) & {"item_id", "correct", "correct_id", "answer", "is_correct"}
+    assert not leaked, leaked
     with SessionLocal() as db:
         taught = {(t, r.id) for t, r in hsk_exam.level_material(db, 1)}
         level1 = db.query(models.HSKLevel).filter_by(level=1).one().id
@@ -254,5 +261,45 @@ with TestClient(app) as client:
             marks = [bool(cyr.search(o["label"] or "")) for o in q["options"]]
             assert all(marks) or not any(marks), q
     print("[PASS] ru exam: meaning options are all Russian (never one translated option among English ones)")
+
+    # ---------------------------------------------- presence: a page that went silent is a page that was left
+    from datetime import timedelta as _td
+    pid, ph = register(client, "presencelearner")
+    complete_levels(pid, {1})
+
+    def set_seen(aid, seconds_ago):
+        with SessionLocal() as db:
+            a = db.get(models.HSKExamAttempt, aid)
+            a.last_seen_at = datetime.utcnow() - _td(seconds=seconds_ago)
+            db.commit()
+
+    a = expect(client, "post", "/api/exams/1/start", 201, headers=ph)
+    hb = expect(client, "post", f"/api/exams/attempts/{a['id']}/heartbeat", 200, headers=ph)
+    assert hb["status"] == "in_progress" and hb["seconds_left"] > 0
+    set_seen(a["id"], 20)  # a slow network, still within the window
+    expect(client, "post", f"/api/exams/attempts/{a['id']}/answer", 200, headers=ph,
+           json={"index": 0, "choice_id": stored(a["id"])[0]["item_id"]})
+    expect(client, "post", f"/api/exams/attempts/{a['id']}/heartbeat", 404, headers=h)  # not yours
+    set_seen(a["id"], 35)  # the page stopped beating: closed / left / backgrounded, report or not
+    r = expect(client, "post", f"/api/exams/attempts/{a['id']}/answer", 409, headers=ph,
+               json={"index": 1, "choice_id": stored(a["id"])[1]["item_id"]})
+    assert r["code"] == "exam_over" and r["result"]["status"] == "invalidated" and r["result"]["score"] == 0.0, r
+    assert "lost_contact" in r["result"]["violations"]
+    expect(client, "post", f"/api/exams/attempts/{a['id']}/submit", 409, headers=ph)
+    expect(client, "post", f"/api/exams/attempts/{a['id']}/heartbeat", 409, headers=ph)
+    print("[PASS] answering after >30 s without the exam page's heartbeat ends the attempt with 0 (lost_contact)")
+
+    # a silent ghost attempt doesn't block the next one: it is closed as invalidated with 0
+    b = expect(client, "post", "/api/exams/1/start", 201, headers=ph)
+    set_seen(b["id"], 60)
+    c = expect(client, "post", "/api/exams/1/start", 201, headers=ph)
+    with SessionLocal() as db:
+        ghost = db.get(models.HSKExamAttempt, b["id"])
+        assert ghost.status == "invalidated" and ghost.score == 0.0, ghost.status
+    v = expect(client, "post", f"/api/exams/attempts/{c['id']}/violation", 200, headers=ph, json={"reason": "window_blur"})
+    assert v["status"] == "invalidated" and v["violations"] == ["window_blur"] and v["score"] == 0.0, v
+    # still at HSK 1: none of this opened HSK 2
+    assert path(client, ph)["exam_level"] == 1
+    print("[PASS] a silent ghost attempt is closed with 0; switching window is recorded; HSK 2 stays locked")
 
 print("ALL HSK EXAM TESTS PASSED")

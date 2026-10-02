@@ -752,6 +752,9 @@ class HSKExamAttempt(Base):
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
     finished_at = Column(DateTime, nullable=True)
+    # Last sign of life from the exam page (start, heartbeat, answer). Silence
+    # longer than hsk_exam.PRESENCE_TIMEOUT ends the attempt with 0.
+    last_seen_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="exam_attempts")
 

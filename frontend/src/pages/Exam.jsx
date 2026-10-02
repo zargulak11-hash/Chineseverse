@@ -33,6 +33,15 @@ function reportViolation(attemptId, reason) {
     .catch(() => null);
 }
 
+// While the exam is visible and focused the page tells the server it is
+// still there; the server ends the attempt with 0 after ~30 s of silence
+// (backend services/hsk_exam.py PRESENCE_TIMEOUT), so a page that was really
+// left can't go on answering even if its violation report never arrived.
+const HEARTBEAT_MS = 5000;
+// Focus moving to another window. A brief flicker (a permission bubble, the
+// browser's own UI) is tolerated; staying away is leaving the exam.
+const BLUR_GRACE_MS = 800;
+
 const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 export default function Exam() {
@@ -68,6 +77,24 @@ export default function Exam() {
     };
     const onVisibility = () => document.visibilityState === "hidden" && end("hidden");
     const onPageHide = () => end("closed");
+    let blurTimer = null;
+    const onBlur = () => {
+      clearTimeout(blurTimer);
+      blurTimer = setTimeout(() => {
+        if (!document.hasFocus() && document.visibilityState === "visible") end("window_blur");
+      }, BLUR_GRACE_MS);
+    };
+    const onFocus = () => clearTimeout(blurTimer);
+    const beat = setInterval(() => {
+      if (running.current !== attempt.id || finishing.current) return;
+      if (document.visibilityState !== "visible" || !document.hasFocus()) return;
+      api.post(`/exams/attempts/${attempt.id}/heartbeat`).catch((e) => {
+        if (e.data?.result && running.current === attempt.id) {
+          running.current = null;
+          setResult(e.data.result);
+        }
+      });
+    }, HEARTBEAT_MS);
     const onBeforeUnload = (e) => {
       e.preventDefault();
       e.returnValue = ""; // the browser's own "leave this page?" warning
@@ -75,7 +102,13 @@ export default function Exam() {
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
     return () => {
+      clearInterval(beat);
+      clearTimeout(blurTimer);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
