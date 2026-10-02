@@ -27,6 +27,7 @@ from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services import companion_reaction as cr  # noqa: E402
 from app.services.practice import lesson_items  # noqa: E402
+from trace_helpers import trace as draw_trace  # noqa: E402
 
 FRONTEND = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "frontend", "src")
 
@@ -249,13 +250,20 @@ with TestClient(app) as client:
         hz_id = hz.id
         word_id = db.query(models.VocabularyWord).order_by(models.VocabularyWord.id).first().id
         topic_id = db.query(models.GrammarTopic).order_by(models.GrammarTopic.id).first().id
-    w = expect(client, "post", f"/api/hanzi/{hz_id}/write", 200, headers=h, json={"total_mistakes": 0})
+    # Real traces drawn over the character's stroke data (tests/trace_helpers.py);
+    # the server re-checks every stroke and counts the misses itself.
+    def traced(mistakes=0, seed=1):
+        r = draw_trace(client, h, hz_id, mistakes=mistakes, seed=seed)
+        assert r.status_code == 200, r.text
+        return r.json()
+
+    w = traced()
     assert w["reaction"]["event"] == "hanzi_write" and w["reaction"]["mood"] == "proud" and w["reaction"]["cause"] == "clean_trace", w
     assert w["reaction"]["focus"]["hanzi"] == hz.character
-    w = expect(client, "post", f"/api/hanzi/{hz_id}/write", 200, headers=h, json={"total_mistakes": 6})
+    w = traced(mistakes=6, seed=2)
     assert w["reaction"]["mood"] == "encouraging" and w["reaction"]["cause"] == "shaky_trace", w
     # writing mastery so far 25 + 8 = 33; +25 -> 58, +25 -> 83, +25 -> 100 (>= 85: mastered)
-    trace = [expect(client, "post", f"/api/hanzi/{hz_id}/write", 200, headers=h, json={"total_mistakes": 0}) for _ in range(3)]
+    trace = [traced(seed=3 + i) for i in range(3)]
     assert [t["writing_status"] for t in trace] == ["practicing", "practicing", "mastered"], trace
     assert trace[2]["reaction"]["mood"] == "celebrating" and trace[2]["reaction"]["milestone"] == "writing_mastered", trace[2]
     print("[PASS] Hanzi tracing: clean -> proud, shaky -> encouraging, writing mastered -> celebrating")
@@ -300,7 +308,8 @@ with TestClient(app) as client:
     expect(client, "post", "/api/practice/sessions", 401, json={"source": "vocab", "hsk_level": 1})
     expect(client, "post", f"/api/practice/sessions/{sid}/answer", 404, headers=oh, json={"index": 5, "choice_id": stored[5]["item_id"]})
     expect(client, "post", f"/api/practice/sessions/{sid}/complete", 404, headers=oh)
-    expect(client, "post", f"/api/hanzi/{hz_id}/write", 401, json={"total_mistakes": 0})
+    expect(client, "post", f"/api/hanzi/{hz_id}/write/start", 401)
+    expect(client, "post", f"/api/hanzi/{hz_id}/write", 401, json={"attempt_id": 1, "strokes": [{"points": [[0, 0], [1, 1]], "matched": True}]})
     expect(client, "post", f"/api/hanzi/{hz_id}/review", 401, json={"correct": True})
     # the old self-graded vocab/grammar endpoints are gone
     assert client.post(f"/api/vocab/{word_id}/review", headers=h, json={"correct": True}).status_code in (404, 405)

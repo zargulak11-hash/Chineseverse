@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -12,6 +12,7 @@ from app.services.activity import log_activity
 from app.services import companion_reaction as cr
 from app.services.dna import bump_skill
 from app.services.srs import apply_srs
+from app.services.stroke_match import TraceRejected, verify_trace
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.gamification import (
@@ -48,13 +49,33 @@ class ReviewResponse(BaseModel):
     next_review_at: datetime | None = None
 
 
+class DrawnStroke(BaseModel):
+    # HanziWriter's drawnPath.points for one stroke the learner drew, in the
+    # character's own 1024-unit space, and whether the browser's quiz
+    # accepted it. The server re-checks every accepted stroke itself.
+    points: list[tuple[float, float]] = Field(min_length=2, max_length=600)
+    matched: bool
+
+
 class WritePayload(BaseModel):
-    # Real results from a completed HanziWriter stroke-order quiz against
-    # this character's actual stroke_data -- totalMistakes is HanziWriter's
-    # own count of incorrect strokes before each one was matched correctly.
-    # This endpoint is only reachable after every real stroke was traced and
-    # validated; there is no "mark as written" shortcut.
-    total_mistakes: int = Field(ge=0)
+    # A trace is reported by the attempt the server issued when the quiz
+    # started plus every stroke drawn, in order. This used to be just
+    # {"total_mistakes": n}: the server never saw the drawing, so any request
+    # (repeated at will) added writing mastery. The mistake count is now the
+    # server's; any score/completed/mastery a client adds is ignored.
+    attempt_id: int
+    strokes: list[DrawnStroke] = Field(min_length=1, max_length=400)
+
+
+class TraceStartResponse(BaseModel):
+    attempt_id: int
+
+
+# An attempt must be reported within this long, and can't be reported
+# faster than a person can draw the strokes (a script posting the moment it
+# gets an attempt is not a trace).
+TRACE_ATTEMPT_TTL = timedelta(minutes=30)
+MIN_SECONDS_PER_STROKE = 0.15
 
 
 class WriteResponse(BaseModel):
@@ -243,6 +264,30 @@ def review_hanzi(
                           next_review_at=rec.next_review_at)
 
 
+@router.post("/{hanzi_id}/write/start", response_model=TraceStartResponse, status_code=201)
+def start_trace(
+    hanzi_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Opens a tracing attempt for this character (the quiz's "Try writing").
+    An earlier unreported attempt on the same character is closed: only the
+    newest one can be reported."""
+    h = db.get(models.Hanzi, hanzi_id)
+    if h is None:
+        raise HTTPException(status_code=404, detail="Hanzi not found")
+    if h.stroke_data is None:
+        raise HTTPException(status_code=422, detail="No stroke data available for this character")
+    now = datetime.utcnow()
+    (db.query(models.HanziTraceAttempt)
+     .filter_by(user_id=user.id, hanzi_id=hanzi_id, status="open")
+     .update({"status": "expired", "finished_at": now}, synchronize_session=False))
+    attempt = models.HanziTraceAttempt(user_id=user.id, hanzi_id=hanzi_id, status="open", started_at=now)
+    db.add(attempt)
+    db.commit()
+    return TraceStartResponse(attempt_id=attempt.id)
+
+
 @router.post("/{hanzi_id}/write", response_model=WriteResponse)
 def write_hanzi(
     hanzi_id: int,
@@ -251,16 +296,44 @@ def write_hanzi(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
-    """Records a completed HanziWriter stroke-order quiz. Only reachable
-    after the learner actually traced every real stroke correctly (per
-    HanziWriter's own hit-testing against Hanzi.stroke_data); total_mistakes
-    only affects how much writing_mastery is gained, never whether it's
-    recorded at all. This is fully separate from recognition mastery."""
+    """Records a completed stroke-order quiz. The server spends the attempt,
+    then replays the quiz over the drawn strokes against Hanzi.stroke_data
+    (services/stroke_match.py, a port of HanziWriter's own matcher): every
+    stroke counted as correct must really match the next stroke of this
+    character, all of them, in order. Only then does writing mastery move,
+    by an amount set by the server's own mistake count. This is fully
+    separate from recognition mastery."""
     h = db.get(models.Hanzi, hanzi_id)
     if h is None:
         raise HTTPException(status_code=404, detail="Hanzi not found")
     if h.stroke_data is None:
         raise HTTPException(status_code=422, detail="No stroke data available for this character")
+
+    attempt = db.get(models.HanziTraceAttempt, payload.attempt_id)
+    # Someone else's attempt, or one for another character, is a 404 like
+    # any other row that isn't yours.
+    if attempt is None or attempt.user_id != user.id or attempt.hanzi_id != hanzi_id:
+        raise HTTPException(status_code=404, detail="Tracing attempt not found")
+    if attempt.status != "open":
+        raise HTTPException(status_code=409, detail="This tracing attempt was already used")
+    now = datetime.utcnow()
+    attempt.finished_at = now
+    if now - attempt.started_at > TRACE_ATTEMPT_TTL:
+        attempt.status = "expired"
+        db.commit()
+        raise HTTPException(status_code=409, detail="This tracing attempt has expired")
+    try:
+        n_strokes = len(h.stroke_data.get("medians") or [])
+        if (now - attempt.started_at).total_seconds() < n_strokes * MIN_SECONDS_PER_STROKE:
+            raise TraceRejected("The strokes were reported faster than they can be drawn")
+        total_mistakes = verify_trace(h.stroke_data, [s.model_dump() for s in payload.strokes])
+    except TraceRejected as exc:
+        # Spent either way: a forged trace can't be retried on this attempt.
+        attempt.status = "rejected"
+        db.commit()
+        raise HTTPException(status_code=422, detail=f"Trace not accepted: {exc}") from exc
+    attempt.status = "counted"
+    attempt.total_mistakes = total_mistakes
 
     rec = (
         db.query(models.UserHanzi)
@@ -280,9 +353,9 @@ def write_hanzi(
     # Fewer real stroke mistakes -> more mastery gained per attempt, but a
     # completed quiz always counts for something (it was still traced
     # correctly in the end, just with retries along the way).
-    if payload.total_mistakes == 0:
+    if total_mistakes == 0:
         gain = 25.0
-    elif payload.total_mistakes <= 2:
+    elif total_mistakes <= 2:
         gain = 15.0
     else:
         gain = 8.0
@@ -297,10 +370,10 @@ def write_hanzi(
 
     ensure_user_skills(db, user)
     skill_before = cr.skill_value(user, "writing")
-    bump_skill(user, "writing", 2.0 if payload.total_mistakes <= 2 else 1.0)
+    bump_skill(user, "writing", 2.0 if total_mistakes <= 2 else 1.0)
     skill_up = cr.skill_crossing("writing", skill_before, cr.skill_value(user, "writing"))
 
-    if payload.total_mistakes >= 3:
+    if total_mistakes >= 3:
         # A shaky trace brings the character back through Review.
         record_mistake(
             db, user, "hanzi_write", h.character,
@@ -323,7 +396,7 @@ def write_hanzi(
     h_out.writing_status = rec.writing_status
     h_out.writing_mastery = rec.writing_mastery
     reaction = cr.write_reaction(
-        user, total_mistakes=payload.total_mistakes, status_before=writing_before, status_after=rec.writing_status,
+        user, total_mistakes=total_mistakes, status_before=writing_before, status_after=rec.writing_status,
         skill=skill_up, focus={"item_type": "hanzi", "hanzi": h.character, "pinyin": h.pinyin, "meaning": h_out.meaning},
     )
     return WriteResponse(

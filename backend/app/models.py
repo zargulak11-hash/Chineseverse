@@ -76,6 +76,7 @@ class User(Base):
     progress = relationship("Progress", back_populates="user", cascade="all, delete-orphan")
     practice_sessions = relationship("PracticeSession", back_populates="user", cascade="all, delete-orphan")
     exam_attempts = relationship("HSKExamAttempt", back_populates="user", cascade="all, delete-orphan")
+    trace_attempts = relationship("HanziTraceAttempt", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -753,6 +754,29 @@ class HSKExamAttempt(Base):
     finished_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="exam_attempts")
+
+
+class HanziTraceAttempt(Base):
+    """One stroke-order tracing quiz on one character (routers/hanzi.py).
+
+    Issued by the server when the quiz starts and spent by the single
+    POST /hanzi/{id}/write that reports it, whatever its outcome, so a
+    recorded trace can't be replayed and a forged one can't be retried on
+    the same attempt. The server re-checks every drawn stroke against the
+    character's stroke data (services/stroke_match.py) and decides the
+    mistake count itself. status: open -> counted | rejected | expired."""
+
+    __tablename__ = "hanzi_trace_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    hanzi_id = Column(Integer, ForeignKey("hanzi.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="open")
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
+    total_mistakes = Column(Integer, nullable=True)
+
+    user = relationship("User", back_populates="trace_attempts")
 
 
 class LearningMistake(Base):

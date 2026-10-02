@@ -10,6 +10,12 @@ import { api } from "../api.js";
 // stroke has been traced and matched correctly by HanziWriter's own
 // hit-testing.
 //
+// The server doesn't take the browser's word for it: "Try writing" opens a
+// tracing attempt (/write/start), every stroke drawn is recorded with
+// HanziWriter's drawnPath.points (character space), and "Save" sends them so
+// the server re-matches each stroke against the same stroke data
+// (backend services/stroke_match.py) and counts the mistakes itself.
+//
 // Flow: watch the real stroke-order animation first (HanziWriter's own
 // animateCharacter(), stroke by stroke from the same real data) -> replay
 // as many times as wanted -> "Try writing" switches the SAME writer
@@ -21,6 +27,8 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
   const { t } = useTranslation();
   const mountRef = useRef(null);
   const writerRef = useRef(null);
+  const attemptRef = useRef(null); // server-issued tracing attempt id
+  const strokesRef = useRef([]); // [{points: [[x, y], ...], matched}] in drawing order
   const [phase, setPhase] = useState("loading"); // loading | watch | quiz | done
   const [mistakes, setMistakes] = useState(0);
   const [done, setDone] = useState(null);
@@ -73,13 +81,30 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
     writerRef.current?.animateCharacter({ onComplete: () => setPhase("watch") });
   }
 
-  function startWriting() {
-    setPhase("quiz");
+  function record(strokeData, matched) {
+    const points = (strokeData?.drawnPath?.points || []).map((p) => [p.x, p.y]);
+    strokesRef.current.push({ points, matched });
+  }
+
+  async function startWriting() {
+    setError(null);
     setDone(null);
     setMistakes(0);
+    strokesRef.current = [];
+    attemptRef.current = null;
+    try {
+      attemptRef.current = (await api.post(`/hanzi/${hanzi.id}/write/start`)).attempt_id;
+    } catch (e) {
+      setError(e.message);
+      return;
+    }
+    setPhase("quiz");
     writerRef.current?.quiz({
-      onMistake: () => setMistakes((m) => m + 1),
-      onCorrectStroke: () => {},
+      onMistake: (s) => {
+        record(s, false);
+        setMistakes((m) => m + 1);
+      },
+      onCorrectStroke: (s) => record(s, true),
       onComplete: (summary) => setDone({ totalMistakes: summary.totalMistakes }),
     });
   }
@@ -88,7 +113,10 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
     if (!done) return;
     setSaving(true);
     try {
-      const res = await api.post(`/hanzi/${hanzi.id}/write`, { total_mistakes: done.totalMistakes });
+      const res = await api.post(`/hanzi/${hanzi.id}/write`, {
+        attempt_id: attemptRef.current,
+        strokes: strokesRef.current,
+      });
       onSaved?.(res);
       onClose();
     } catch (e) {

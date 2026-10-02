@@ -32,12 +32,15 @@ const EXACT = {
   "The placement test is part of onboarding, which is already complete": "placementDone",
   "Lessons are completed by passing their practice round": "lessonByPractice",
   "No stroke data available for this character": "noStrokeData",
+  "This tracing attempt was already used": "traceUsed",
+  "This tracing attempt has expired": "traceExpired",
 };
 
 export function localizeApiError(detail, status) {
   if (typeof detail === "string") {
     const key = EXACT[detail];
     if (key) return i18n.t(`apiErrors.${key}`);
+    if (detail.startsWith("Trace not accepted")) return i18n.t("apiErrors.traceRejected");
     const mission = /^This mission opens at HSK (\d+)$/.exec(detail);
     if (mission) return i18n.t("apiErrors.missionLocked", { level: mission[1] });
     if (status === 404 && / not found$/i.test(detail)) return i18n.t("apiErrors.notFound");
