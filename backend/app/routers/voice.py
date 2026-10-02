@@ -149,9 +149,10 @@ def submit_attempt(
     progress_quests(db, user, "speaking", amount=1)
     progress_missions(db, user, "listening")
     if payload.scenario_id:
-        progress_missions(db, user, "speak", scenario_id=payload.scenario_id)
-        # "Complete the ... conversation" means its last learner line, not
-        # the first one (which used to complete it).
+        # "Complete the ... conversation" / "Complete '...' using your voice"
+        # (conversation and speak missions) mean its last learner line, not
+        # the first one -- speak missions used to complete on any voice
+        # attempt in the scenario, even a wrong first line.
         last_turn = (
             db.query(models.Dialogue)
             .filter_by(scenario_id=payload.scenario_id, speaker="learner")
@@ -162,6 +163,7 @@ def submit_attempt(
         # sending anything at all to it.
         if last_turn is not None and payload.dialogue_id == last_turn.id and result["is_correct"]:
             progress_missions(db, user, "conversation", scenario_id=payload.scenario_id)
+            progress_missions(db, user, "speak", scenario_id=payload.scenario_id)
     _track_mistake(db, user, payload.prompt_text, result)
     if user.streak:
         touch_streak(user)
