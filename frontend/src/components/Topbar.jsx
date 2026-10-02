@@ -10,10 +10,12 @@ import UserAvatar from "./UserAvatar.jsx";
 const NAV_INDEX = [
   ["/dashboard", "nav.home", "home"],
   ["/world", "nav.world", "world"],
+  ["/real-chinese", "nav.realChinese", "mapPin"],
   ["/dna", "nav.dna", "dna"],
   ["/duels", "nav.duels", "swords"],
   ["/progress", "nav.progress", "chart"],
   ["/lessons", "nav.lessons", "book"],
+  ["/sentence", "nav.sentence", "sparkles"],
   ["/review", "nav.review", "clock"],
   ["/vocabulary", "nav.vocabulary", "type"],
   ["/hanzi", "nav.hanzi", "pen"],

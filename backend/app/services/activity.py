@@ -32,6 +32,8 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     "hanzi_review": ("hanzi", 0.3),
     "hanzi_write": ("hanzi", 1.0),
     "grammar_practice": ("grammar", 0.5),
+    "real_life_scene": ("real_life", 3.0),
+    "sentence_lesson": ("sentence", 2.0),
 }
 
 SECTION_LABELS: dict[str, str] = {
@@ -45,6 +47,8 @@ SECTION_LABELS: dict[str, str] = {
     "practice": "Practice & Review",
     "hanzi": "Hanzi",
     "grammar": "Grammar",
+    "real_life": "Real Chinese",
+    "sentence": "Sentence Lessons",
 }
 
 

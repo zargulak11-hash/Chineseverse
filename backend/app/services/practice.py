@@ -12,6 +12,17 @@ Sources:
   lesson                   the words and grammar points a lesson teaches
   review                   everything due by the spaced-repetition schedule
                            plus unresolved mistakes, across all three types
+  scene                    a Real Chinese dialogue at the learner's tier
+                           (services/real_life.py) plus its new words/grammar
+  sentence                 one Chinese sentence turned into a lesson
+                           (services/sentence.py)
+
+Scene and sentence rounds add question types whose options are lines of
+text rather than curriculum rows (item_type "line" / "sentence"): the
+stored question keeps the lines and the index of the right one, and the
+browser still only sends back an option id. Their answers count through
+the exchange's / sentence's real focus word (apply_srs on its
+UserVocabulary row), so they reach mastery and review like any other.
 """
 
 from __future__ import annotations
@@ -38,7 +49,9 @@ from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
-SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review")
+SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence")
+VIRTUAL = ("line", "sentence")  # item types whose options are text, not rows
+SPEAK_LIMIT = 3  # spoken attempts per question (each one is a VoiceAttempt)
 VOCAB_TYPES = ("meaning_to_word", "word_to_meaning", "listen_to_word")
 HANZI_TYPES = ("char_to_meaning", "char_to_pinyin")
 PASS_SCORE = 0.7          # lesson counts as completed at >= 70% correct
@@ -353,6 +366,7 @@ def _question(db: Session, item_type: str, row, index: int, rng: random.Random,
 def build_session(
     db: Session, user: models.User, source: str, *, hsk_level: int | None = None,
     lesson_id: int | None = None, size: int = 10, locale: str = "en",
+    scene: str | None = None, sentence: str | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -375,7 +389,7 @@ def build_session(
         picked = lesson_round_items(db, lesson)
         if not picked:
             raise PracticeError(422, "This lesson has no linked vocabulary or grammar to practice yet")
-    else:  # review
+    elif source == "review":
         picked = _review_items(db, user, size, now)
         if not picked:
             return None
@@ -387,6 +401,21 @@ def build_session(
         if locale in ("ru", "tg") else None
     )
     questions = []
+    if source in ("scene", "sentence"):
+        # The learner's real level decides the tier (imported here: both
+        # modules build on this one).
+        from app.services import real_life
+        from app.services import sentence as sentence_svc
+        from app.services.gamification import user_rank
+
+        hsk_level, _ = user_rank(db, user)
+        try:
+            if source == "scene":
+                questions = real_life.build_questions(db, user, scene or "", hsk_level, rng, translated)
+            else:
+                questions = sentence_svc.build_questions(db, user, sentence or "", hsk_level, rng, translated)
+        except (real_life.SceneError, sentence_svc.SentenceError) as exc:
+            raise PracticeError(exc.status, exc.detail) from exc
     for i, (item_type, row) in enumerate(picked):
         q = _question(db, item_type, row, i, rng, translated)
         if q:
@@ -490,7 +519,8 @@ def _item_card(item_type: str, row, labels: dict) -> dict:
 def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[int, str]]:
     ids: dict[str, set[int]] = {"vocab": set(), "hanzi": set(), "grammar": set()}
     for q in questions:
-        ids[q["item_type"]].update(q["option_ids"])
+        if q["item_type"] in ids:
+            ids[q["item_type"]].update(q["option_ids"])
     out: dict[str, dict[int, str]] = {}
     # Ids whose label really is in the learner's language (not a fallback).
     translated: dict[str, set[int]] = {}
@@ -533,6 +563,9 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
     rendered = []
     for i, q in enumerate(session.questions):
         item_type, qtype = q["item_type"], q["type"]
+        if item_type in VIRTUAL:
+            rendered.append(_render_virtual(db, q, i, session.answers[i], locale))
+            continue
         target = _row(db, item_type, q["item_id"])
         options = []
         rows = {oid: r for oid in q["option_ids"] if (r := _row(db, item_type, oid)) is not None}
@@ -584,7 +617,97 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
         "questions": rendered,
         "completed": session.completed_at is not None,
         "score": session.score,
+        "context": _context(session, locale),
     }
+
+
+# --------------------------------------------------------------------------- scene / sentence questions
+
+def _context(session: models.PracticeSession, locale: str) -> dict | None:
+    """What a scene/sentence round is about (stored with its first question)."""
+    ctx = (session.questions or [{}])[0].get("ctx")
+    if not ctx:
+        return None
+    if ctx.get("kind") == "scene":
+        from app.services import real_life
+
+        return real_life.ctx_render(ctx, locale)
+    return ctx
+
+
+def _line_tr(d: dict | None, locale: str) -> str:
+    # zh UI reads the English gloss of a Chinese line (see real_life.text_for).
+    d = d or {}
+    return d.get(locale) or d.get("en") or ""
+
+
+def _word_meaning(db: Session, word_id: int | None, locale: str) -> str:
+    w = db.get(models.VocabularyWord, word_id) if word_id else None
+    if w is None:
+        return ""
+    label = tr(load_translations(db, "vocab_word", [str(w.id)], locale), w.id, "meanings", w.meanings)
+    return w.meanings if (label or "").strip() == w.simplified else (label or "")
+
+
+def _virtual_card(db: Session, q: dict, locale: str) -> dict:
+    """The correct answer, shown after grading."""
+    qtype = q["type"]
+    if qtype == "scene_reply":
+        r = q["reply"]
+        return {"hanzi": r["zh"], "pinyin": r["py"], "meaning": _line_tr(r.get("tr"), locale)}
+    if qtype == "scene_listen":
+        n = q["npc"]
+        return {"hanzi": n["zh"], "pinyin": n["py"], "meaning": _line_tr(n.get("tr"), locale)}
+    if qtype == "sentence_word":
+        w = db.get(models.VocabularyWord, q.get("word_id"))
+        return {"hanzi": q["options"][q["item_id"]]["zh"], "pinyin": w.pinyin if w else "",
+                "meaning": _word_meaning(db, q.get("word_id"), locale)}
+    return {"hanzi": q["sentence"], "pinyin": q.get("pinyin") or "", "meaning": ""}
+
+
+def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, locale: str) -> dict:
+    qtype = q["type"]
+    answered = answer is not None
+    rules: dict = {}
+    if q.get("scene"):
+        from app.services.real_life import RULES
+
+        rules = RULES.get(q.get("tier"), {})
+    options = []
+    for oid in q["option_ids"]:
+        o = q["options"][oid]
+        if qtype == "scene_listen":
+            options.append({"id": oid, "label": _line_tr(o.get("tr"), locale)})
+        else:
+            options.append({"id": oid, "label": o["zh"],
+                            "pinyin": (o.get("py") or None) if rules.get("option_pinyin") else None})
+    prompt: dict = {}
+    if qtype == "scene_listen":
+        n = q["npc"]
+        # Audio first; the reading is only for a device with no Chinese
+        # voice (the options are meanings, so it doesn't give them away).
+        prompt = {"speak": n["zh"], "pinyin": n["py"], "rate": rules.get("rate"), "turn": q.get("turn")}
+    elif qtype == "scene_reply":
+        n = q["npc"]
+        prompt = {
+            "speak": n["zh"], "rate": rules.get("rate"), "turn": q.get("turn"),
+            "text": n["zh"] if (rules.get("show_text") or answered) else None,
+            "pinyin": n["py"] if (rules.get("show_pinyin") or answered) else None,
+            # Beginners may peek at the meaning; others see it after answering.
+            "translation": _line_tr(n.get("tr"), locale) if (rules.get("show_translation") or answered) else None,
+        }
+    elif qtype == "sentence_word":
+        prompt = {"text": q["sentence"], "speak": q["sentence"], "meaning": _word_meaning(db, q.get("word_id"), locale)}
+    elif qtype == "sentence_listen":
+        prompt = {"speak": q["sentence"], "pinyin": q.get("pinyin")}
+    elif qtype == "sentence_order":
+        prompt = {"chunks": q.get("chunks") or []}
+    item = {"index": index, "type": qtype, "item_type": q["item_type"], "prompt": prompt, "options": options,
+            "answer": None, "can_speak": bool(q.get("say"))}
+    if answered:
+        item["answer"] = {**answer, "correct_id": q["item_id"], "card": _virtual_card(db, q, locale),
+                          "say": (q.get("say") or {}).get("zh")}
+    return item
 
 
 # --------------------------------------------------------------------------- grading
@@ -667,6 +790,81 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
     }
 
 
+# DNA skill moves per scene/sentence question type: (code, +correct, -wrong).
+_VIRTUAL_SKILLS = {
+    "scene_reply": (("reading", 1.5, -0.3), ("vocabulary", 0.5, 0.0)),
+    "scene_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
+    "sentence_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
+    "sentence_order": (("grammar", 2.0, -0.3), ("reading", 0.5, 0.0)),
+    "sentence_word": (("reading", 1.5, -0.3), ("vocabulary", 0.5, 0.0)),
+}
+VIRTUAL_SRS_DELTA = 6.0  # a dialogue line exercises its focus word less directly than a word card
+
+
+def _record_virtual(db: Session, user: models.User, session: models.PracticeSession, q: dict,
+                    correct: bool, response_ms: int) -> dict:
+    """Applies a graded scene/sentence answer: the focus word's mastery
+    (apply_srs), Learning DNA, mistakes (on the focus word, so Review
+    brings it back), quests and XP -- the same real effects as _record."""
+    qtype = q["type"]
+    focus = db.get(models.VocabularyWord, q["focus_id"]) if q.get("focus_id") else None
+    rec = status_before = None
+    if focus is not None:
+        rec = db.query(models.UserVocabulary).filter_by(user_id=user.id, word_id=focus.id).first()
+        status_before = rec.status if rec is not None else None
+        if rec is None:
+            rec = models.UserVocabulary(user_id=user.id, word_id=focus.id, mastery=0.0, status="new", times_missed=0)
+            db.add(rec)
+        apply_srs(rec, correct, user, delta=VIRTUAL_SRS_DELTA)
+
+    ensure_user_skills(db, user)
+    primary = cr.PRIMARY_SKILL.get(qtype)
+    skill_before = cr.skill_value(user, primary) if primary else None
+    for code, plus, minus in _VIRTUAL_SKILLS.get(qtype, ()):
+        bump_skill(user, code, plus if correct else minus)
+    # Advanced scenes are heard before they're read: picking the right
+    # reply is a listening task there too.
+    if qtype == "scene_reply" and q.get("tier") == "advanced":
+        bump_skill(user, "listening", 1.0 if correct else 0.0)
+    if correct and 0 < response_ms <= FAST_ANSWER_MS:
+        bump_skill(user, "reaction_speed", 0.5)
+
+    if correct:
+        if focus is not None:
+            reinforce_mistake(db, user, "word", focus.simplified)
+        if qtype in ("scene_listen", "sentence_listen"):
+            progress_quests(db, user, "listening", amount=1)
+        user.total_xp += XP_PER_CORRECT
+    elif focus is not None:
+        card = _virtual_card(db, q, "en")
+        record_mistake(
+            db, user, "word", focus.simplified,
+            question_text=(q.get("npc") or {}).get("zh") or q.get("sentence") or card["hanzi"],
+            correct_answer=" ".join(x for x in (card["hanzi"], card["pinyin"]) if x),
+        )
+    touch_streak(user)
+    log_activity(db, user, "practice_answer")
+    return {
+        "mastery": rec.mastery if rec is not None else 0.0,
+        "status_before": status_before if rec is not None else "learning",
+        "status_after": rec.status if rec is not None else "learning",
+        "times_missed": (rec.times_missed or 0) if rec is not None else 0,
+        "skill": cr.skill_crossing(primary, skill_before, cr.skill_value(user, primary)) if primary else None,
+        "vocab_mastered": rec is not None and rec.status == "mastered" and status_before != "mastered",
+    }
+
+
+def _focus_virtual(db: Session, q: dict, locale: str) -> dict | None:
+    w = db.get(models.VocabularyWord, q["focus_id"]) if q.get("focus_id") else None
+    if w is None:
+        return None
+    card = {"item_type": "vocab", "hanzi": w.simplified, "pinyin": w.pinyin, "meaning": _word_meaning(db, w.id, locale)}
+    if w.example:
+        card["example"] = w.example
+        card["example_pinyin"] = w.example_pinyin
+    return card
+
+
 def answer_question(
     db: Session, user: models.User, session: models.PracticeSession, index: int, choice_id: int,
     response_ms: int, locale: str,
@@ -680,8 +878,9 @@ def answer_question(
     q = session.questions[index]
     if choice_id not in q["option_ids"]:
         raise PracticeError(422, "That option was not offered for this question")
-    row = _row(db, q["item_type"], q["item_id"])
-    if row is None:
+    virtual = q["item_type"] in VIRTUAL
+    row = None if virtual else _row(db, q["item_type"], q["item_id"])
+    if row is None and not virtual:
         raise PracticeError(410, "This item no longer exists")
 
     correct = choice_id == q["item_id"]
@@ -690,26 +889,70 @@ def answer_question(
     since = max(seen) if seen else (session.created_at or now)
     observed_ms = int((now - since).total_seconds() * 1000)
     response_ms = max(response_ms, observed_ms - FEEDBACK_ALLOWANCE_MS)
-    change = _record(db, user, session, q, row, correct, response_ms)
+
+    # A wrong pick between two curriculum items the learner has mixed up
+    # before (counted from their own stored answers, before this one).
+    confused = None
+    if not virtual and not correct and q["type"] in companion_memory_confusable():
+        from app.services import companion_memory
+
+        prior = companion_memory.confusion_count(db, user, q["item_type"], q["item_id"], choice_id,
+                                                 exclude_session=session.id)
+        picked = _row(db, q["item_type"], choice_id)
+        if prior >= 1 and picked is not None:
+            own = lambda r: getattr(r, "simplified", None) or getattr(r, "character", None)  # noqa: E731
+            confused = {"a": own(row), "b": own(picked), "count": prior + 1}
+
+    if virtual:
+        change = _record_virtual(db, user, session, q, correct, response_ms)
+    else:
+        status_was = None
+        if q["item_type"] == "vocab":
+            rec = db.query(models.UserVocabulary).filter_by(user_id=user.id, word_id=row.id).first()
+            status_was = rec.status if rec else None
+        change = _record(db, user, session, q, row, correct, response_ms)
+        change["vocab_mastered"] = (q["item_type"] == "vocab" and change["status_after"] == "mastered"
+                                    and status_was != "mastered")
     answers = list(session.answers)  # reassign so the JSON column is marked dirty
     answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms,
                       "answered_at": now.isoformat()}
+    if change.get("vocab_mastered"):
+        # Counted at completion for the mastered-words milestone.
+        answers[index]["mastered_vocab"] = True
     session.answers = answers
     db.commit()
-    labels = _labels(db, [q], locale)
-    return {
+    if virtual:
+        card = _virtual_card(db, q, locale)
+        focus = _focus_virtual(db, q, locale)
+    else:
+        labels = _labels(db, [q], locale)
+        card = _item_card(q["item_type"], row, labels)
+        focus = _focus(q["item_type"], row, labels)
+    out = {
         "correct": correct,
         "correct_id": q["item_id"],
-        "card": _item_card(q["item_type"], row, labels),
+        "card": card,
         "mastery": round(change["mastery"], 1),
         "xp_gained": XP_PER_CORRECT if correct else 0,
         "reaction": cr.answer_reaction(
             user, answers,
-            item_type=q["item_type"], focus=_focus(q["item_type"], row, labels),
+            item_type=(focus or {}).get("item_type", q["item_type"]) if virtual else q["item_type"], focus=focus,
             status_before=change["status_before"], status_after=change["status_after"],
-            times_missed=change["times_missed"], skill=change["skill"],
+            times_missed=change["times_missed"], skill=change["skill"], confused=confused,
         ),
     }
+    if virtual:
+        out["say"] = (q.get("say") or {}).get("zh")
+        # The question as it reads now that it's answered (a hidden line is
+        # revealed), so the dialogue thread can show it.
+        out["question"] = _render_virtual(db, q, index, answers[index], locale)
+    return out
+
+
+def companion_memory_confusable() -> set[str]:
+    from app.services.companion_memory import _CONFUSABLE
+
+    return _CONFUSABLE
 
 
 def complete_session(db: Session, user: models.User, session: models.PracticeSession, locale: str) -> dict:
@@ -731,6 +974,10 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
         if score >= 0.8:
             user.total_xp += XP_GOOD_ROUND_BONUS
             xp = XP_GOOD_ROUND_BONUS
+        if session.source == "scene":
+            log_activity(db, user, "real_life_scene")
+        elif session.source == "sentence":
+            log_activity(db, user, "sentence_lesson")
         if session.lesson_id:
             # Imported here: lesson_path builds on this module.
             from app.services import lesson_path
@@ -762,6 +1009,10 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
     missed = []
     focus = None
     for q, a in zip(session.questions, answers):
+        if a is not None and not a["correct"] and q["item_type"] in VIRTUAL:
+            missed.append({"item_type": q["item_type"], **_virtual_card(db, q, locale)})
+            focus = focus or _focus_virtual(db, q, locale)
+            continue
         if a is not None and not a["correct"]:
             row = _row(db, q["item_type"], q["item_id"])
             if row is not None:
@@ -769,6 +1020,15 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
                 # The first missed item is the one the companion suggests
                 # revisiting -- it is already queued for Review.
                 focus = focus or _focus(q["item_type"], row, labels)
+    # Did this round push the learner's mastered-word count past a milestone?
+    words_milestone = None
+    newly = sum(1 for a in answers if a and a.get("mastered_vocab"))
+    if first_completion and newly:
+        from app.services.companion_memory import WORD_MILESTONES
+
+        total_now = db.query(models.UserVocabulary).filter_by(user_id=user.id, status="mastered").count()
+        crossed = [m for m in WORD_MILESTONES if total_now - newly < m <= total_now]
+        words_milestone = crossed[-1] if crossed else None
     return {
         "correct": correct,
         "answered": answered,
@@ -787,6 +1047,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             # re-practicing an already completed lesson is judged by score.
             lesson_completed=newly_completed,
             focus=focus, skill=cr.trained_skill(user, session.questions, answers),
+            words_milestone=words_milestone,
         ),
     }
 
@@ -804,7 +1065,61 @@ def start_reaction(db: Session, user: models.User, session: models.PracticeSessi
             for w in vocab
         ]
     due = len(session.questions) if session.source == "review" else 0
-    return cr.start_reaction(user, session.source, words=words, due=due)
+    from app.services.companion_memory import days_away
+
+    return cr.start_reaction(user, session.source, words=words, due=due, away_days=days_away(db, user))
+
+
+# --------------------------------------------------------------------------- speaking
+
+def speak(db: Session, user: models.User, session: models.PracticeSession, index: int, spoken_text: str,
+          response_ms: int) -> dict:
+    """Say the line / sentence of an answered scene or sentence question.
+
+    The answer key is the stored question's own text (never anything the
+    browser sends), graded by the same voice pipeline as World turns and
+    stored as a real VoiceAttempt, so speaking feeds the speaking/tones DNA,
+    the speaking quest and the voice achievements. Capped per question."""
+    from app.services import voice_eval
+    from app.services.dna import apply_voice_to_skills
+
+    if not 0 <= index < len(session.questions):
+        raise PracticeError(422, "No such question")
+    q = session.questions[index]
+    say = q.get("say")
+    if not say:
+        raise PracticeError(422, "This question has nothing to say aloud")
+    answer = session.answers[index]
+    if answer is None:
+        raise PracticeError(409, "Answer the question before saying it aloud")
+    if (answer.get("spoken") or 0) >= SPEAK_LIMIT:
+        raise PracticeError(409, "You've already practised saying this one")
+
+    ensure_user_skills(db, user)
+    result = voice_eval.grade_turn(None, spoken_text, expected_keywords=say.get("keywords") or [say["zh"]])
+    attempt = models.VoiceAttempt(
+        user_id=user.id, prompt_text=say["zh"], spoken_text=spoken_text, transcript=result["transcript"],
+        pronunciation=result["pronunciation"], tones=result["tones"], fluency=result["fluency"],
+        grammar=result["grammar"], relevance=result["relevance"], response_time_ms=response_ms,
+        overall=result["overall"], feedback=result["feedback"],
+    )
+    db.add(attempt)
+    db.flush()
+    apply_voice_to_skills(user, attempt)
+    progress_quests(db, user, "speaking", amount=1)
+    log_activity(db, user, "voice_attempt")
+    answers = list(session.answers)
+    answers[index] = {**answer, "spoken": (answer.get("spoken") or 0) + 1,
+                      "spoken_best": max(answer.get("spoken_best") or 0, round(result["overall"], 1))}
+    session.answers = answers
+    db.commit()
+    return {
+        "target": say["zh"],
+        "transcript": result["transcript"],
+        "scores": {k: round(result[k], 1) for k in ("pronunciation", "tones", "fluency", "relevance", "overall")},
+        "is_correct": result["is_correct"],
+        "attempts_left": SPEAK_LIMIT - answers[index]["spoken"],
+    }
 
 
 def _record_lesson(db: Session, user: models.User, lesson_id: int, score: float) -> str:

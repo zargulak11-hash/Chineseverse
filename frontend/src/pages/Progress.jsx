@@ -14,6 +14,8 @@ const SECTION_COLORS = {
   quests: "#c9974a",
   missions: "#ff7a45",
   pet_teacher: "#3fb6a8",
+  real_life: "#f06292",
+  sentence: "#9ccc65",
 };
 
 function fmtMinutes(m) {

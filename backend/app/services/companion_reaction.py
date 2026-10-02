@@ -55,9 +55,15 @@ PRIMARY_SKILL = {
     "char_to_meaning": "reading",
     "char_to_pinyin": "tones",
     "example_to_point": "grammar",
+    # Real Chinese / One Sentence (services/real_life.py, services/sentence.py)
+    "scene_reply": "reading",
+    "scene_listen": "listening",
+    "sentence_listen": "listening",
+    "sentence_order": "grammar",
+    "sentence_word": "reading",
 }
 
-_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法"}
+_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法", "line": "句子", "sentence": "句子"}
 
 _ZH = {
     # answer, correct
@@ -68,6 +74,7 @@ _ZH = {
     "hot_streak": "你真厉害！",
     "comeback": "这次对了，真棒！",
     "mastered": "这个{noun}你已经掌握了！",
+    "mastered_hard": "以前这个{noun}很难，现在你掌握了！",
     "skill_up": "你进步了！",
     # answer, wrong
     "miss": "再试一次。",
@@ -77,6 +84,7 @@ _ZH = {
     "long_slump": "我陪着你，你可以做到！",
     "repeat_item": "这个{noun}我们再练习一次。",
     "tricky_item": "这个{noun}有点调皮！再看一遍。",
+    "confused_pair": "这两个很像，别着急，慢慢分清楚。",
     # self-check ("I know it" / "still learning")
     "self_known": "很好！",
     "still_learning": "没关系，慢慢学。",
@@ -92,6 +100,10 @@ _ZH = {
     "lesson_start": "我们开始吧！",
     "review_start": "我们复习一下吧！",
     "session_start": "准备好了吗？",
+    "welcome_back": "欢迎回来！我一直在等你。",
+    "scene_start": "我们去试试真实的中文吧！",
+    "sentence_start": "一句话，一堂课！",
+    "words_milestone": "太棒了！你掌握的词越来越多了！",
     # handwriting
     "clean_trace": "写得真漂亮！",
     "good_trace": "写得很好！",
@@ -178,17 +190,23 @@ def answer_reaction(
     status_after: str,
     times_missed: int,
     skill: dict | None,
+    confused: dict | None = None,
 ) -> dict:
     """Reaction to one graded practice answer. `answers` is the session's
     stored answer list INCLUDING this one; `times_missed` is the item's
     lifetime miss count after this answer; `status_before` is None when the
-    learner met this item for the first time."""
+    learner met this item for the first time. `confused` is a real
+    confusion the learner has made before ({a, b, count} -- the item asked
+    and the one picked, counted from their stored practice answers)."""
     graded = [a for a in answers if a is not None]
     correct = bool(graded and graded[-1]["correct"])
     streak, miss_streak, prior_miss_run, accuracy = _run(answers)
     milestone = None
     if correct:
-        if status_after == "mastered" and status_before != "mastered":
+        if status_after == "mastered" and status_before != "mastered" and times_missed >= 2:
+            # Mastered an item that tripped the learner up repeatedly.
+            mood, cause, milestone = "celebrating", "mastered_hard", "mastered"
+        elif status_after == "mastered" and status_before != "mastered":
             mood, cause, milestone = "proud", "mastered", "mastered"
         elif skill is not None:
             mood, cause, milestone = "proud", "skill_up", "skill_up"
@@ -212,6 +230,8 @@ def answer_reaction(
             mood, cause = "sad", "long_slump"
         elif miss_streak == 3 or recent_misses >= 3:
             mood, cause = "worried", "mistake_run"
+        elif confused is not None:
+            mood, cause = "encouraging", "confused_pair"
         elif times_missed >= 3:
             mood, cause = "frustrated", "tricky_item"
         elif times_missed == 2:
@@ -226,6 +246,7 @@ def answer_reaction(
         user, mood, "answer", cause, item_type,
         streak=streak, miss_streak=miss_streak, accuracy=accuracy,
         focus=focus, skill=skill if cause == "skill_up" else None, milestone=milestone,
+        pair=confused if cause == "confused_pair" else None,
     )
 
 
@@ -241,7 +262,16 @@ def _streak_before_miss(graded: list) -> int:
 
 # --------------------------------------------------------------------------- starts / completion
 
-def start_reaction(user: models.User, source: str, *, words: list[dict] | None = None, due: int = 0) -> dict:
+def start_reaction(user: models.User, source: str, *, words: list[dict] | None = None, due: int = 0,
+                   away_days: int | None = None) -> dict:
+    """`away_days`: real days since the learner's last activity before today
+    (companion_memory.days_away) -- coming back after a break is welcomed
+    first, whatever the round is."""
+    if away_days is not None and away_days >= 3:
+        event = {"lesson": "lesson_start", "review": "review_start"}.get(source, "session_start")
+        return _base(user, "excited", event, "welcome_back", words=words or [], due=due, away_days=away_days)
+    if source in ("scene", "sentence"):
+        return _base(user, "happy", f"{source}_start", f"{source}_start")
     if source == "lesson":
         return _base(user, "happy", "lesson_start", "lesson_start", "vocab", words=words or [])
     if source == "review":
@@ -262,6 +292,7 @@ def session_reaction(
     lesson_completed: bool,
     focus: dict | None,
     skill: dict | None,
+    words_milestone: int | None = None,
 ) -> dict:
     """Reaction to a finished round, from its real score:
     >= 90% celebrate, 70-89% happy, 50-69% neutral with a targeted item to
@@ -271,8 +302,13 @@ def session_reaction(
     streak, miss_streak, _p, accuracy = _run(answers)
     if lesson_completed:
         event, mood, cause = "lesson_complete", "celebrating", "lesson_complete"
+    elif words_milestone:
+        # This round pushed the learner's mastered-word count past a
+        # milestone (counted from their real UserVocabulary rows).
+        event = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete"}.get(source, "complete")
+        mood, cause = "celebrating", "words_milestone"
     else:
-        event = "review_complete" if source == "review" else "complete"
+        event = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete"}.get(source, "complete")
         if score >= 0.9:
             mood, cause = "celebrating", "outstanding"
         elif score >= 0.7:
@@ -285,7 +321,8 @@ def session_reaction(
         user, mood, event, cause, (focus or {}).get("item_type"),
         streak=streak, miss_streak=miss_streak, accuracy=accuracy,
         score=round(score * 100, 1), focus=focus, skill=skill,
-        milestone="lesson_complete" if lesson_completed else None,
+        milestone="lesson_complete" if lesson_completed else ("words" if words_milestone else None),
+        words_milestone=words_milestone,
     )
 
 

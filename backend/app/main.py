@@ -119,6 +119,7 @@ from app.routers import (  # noqa: E402
     animals,
     assistant,
     auth,
+    companion,
     dashboard,
     dna,
     duels,
@@ -136,6 +137,8 @@ from app.routers import (  # noqa: E402
     practice,
     progress,
     quests,
+    real_life,
+    sentence,
     social,
     users,
     vocab,
@@ -174,6 +177,9 @@ for module in (
     dashboard,
     assistant,
     analytics,
+    real_life,
+    sentence,
+    companion,
     admin,
 ):
     app.include_router(module.router)

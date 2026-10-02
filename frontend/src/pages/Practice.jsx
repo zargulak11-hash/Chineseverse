@@ -6,6 +6,7 @@ import CompanionFigure from "../components/CompanionFigure.jsx";
 import CompanionReaction from "../components/CompanionReaction.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
+import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../components/RoundExtras.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -21,6 +22,10 @@ export default function Practice({ forceSource }) {
   const source = forceSource || params.get("source") || (params.get("lesson") ? "lesson" : "vocab");
   const level = params.get("level") ? Number(params.get("level")) : null;
   const lessonId = params.get("lesson") ? Number(params.get("lesson")) : null;
+  // Real Chinese scene slug / One Sentence lesson text (services/real_life.py,
+  // services/sentence.py) -- the server builds and grades those rounds too.
+  const scene = params.get("scene");
+  const sentence = params.get("text");
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -46,6 +51,8 @@ export default function Practice({ forceSource }) {
     const body = { source, size: source === "review" ? 12 : 10 };
     if (level) body.hsk_level = level;
     if (lessonId) body.lesson_id = lessonId;
+    if (source === "scene" && scene) body.scene = scene;
+    if (source === "sentence" && sentence) body.sentence = sentence;
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -56,7 +63,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, i18n]);
+  }, [source, level, lessonId, scene, sentence, i18n]);
 
   useEffect(start, [start]);
 
@@ -98,6 +105,14 @@ export default function Practice({ forceSource }) {
     if (question?.type === "listen_to_word" && question.prompt.speak && !result) {
       speakChinese(question.prompt.speak);
     }
+    // Lines heard before they're read: listening checks, and advanced
+    // scenes (the server sends no text until the line is answered).
+    const heardFirst =
+      ["scene_listen", "sentence_listen"].includes(question?.type) ||
+      (question?.type === "scene_reply" && !question.prompt.text);
+    if (heardFirst && question.prompt.speak && !result && canSpeakChinese()) {
+      speakAt(question.prompt.speak, question.prompt.rate);
+    }
     shownAt.current = Date.now();
   }, [question, result]);
 
@@ -112,6 +127,11 @@ export default function Practice({ forceSource }) {
       });
       setResult({ ...r, choice_id: optionId, index });
       setOutcomes((o) => ({ ...o, [index]: r.correct }));
+      // Scene/sentence answers come back with the question as it now reads
+      // (a hidden line revealed) for the conversation thread.
+      if (r.question) {
+        setSession((s) => ({ ...s, questions: s.questions.map((q) => (q.index === index ? r.question : q)) }));
+      }
     } catch (e) {
       setError(e.message);
     } finally {
@@ -141,9 +161,24 @@ export default function Practice({ forceSource }) {
     }
   }
 
-  const title = t(`practice.title.${source}`, { level: level ?? "" });
-  const backTo = lessonId ? `/lessons/${lessonId}` : source === "review" ? "/mistakes" : `/${source === "vocab" ? "vocabulary" : source}`;
-  const eyebrow = level ? `HSK ${level}` : t(source === "review" ? "nav.review" : "nav.lessons");
+  const context = session?.context;
+  const title = t(`practice.title.${source}`, { level: level ?? "", title: context?.title || "" });
+  const backTo = lessonId
+    ? `/lessons/${lessonId}`
+    : source === "review"
+      ? "/mistakes"
+      : source === "scene"
+        ? `/real-chinese/${scene || ""}`
+        : source === "sentence"
+          ? `/sentence${sentence ? `?text=${encodeURIComponent(sentence)}` : ""}`
+          : `/${source === "vocab" ? "vocabulary" : source}`;
+  const eyebrow = level
+    ? `HSK ${level}`
+    : source === "scene"
+      ? t("nav.realChinese")
+      : source === "sentence"
+        ? t("nav.sentence")
+        : t(source === "review" ? "nav.review" : "nav.lessons");
   const head = (kpis = null) => (
     <header className="page-head">
       <div>
@@ -273,6 +308,11 @@ export default function Practice({ forceSource }) {
   const answered = Object.keys(outcomes).length;
   const correctCount = Object.values(outcomes).filter(Boolean).length;
   const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin"].includes(question.type);
+  const qtype = question.type;
+  const listenOnly = ["scene_listen", "sentence_listen"].includes(qtype);
+  // Options written in Chinese (scene replies and the sentence activities).
+  const cjkOptions = qtype === "meaning_to_word" || ["scene_reply", "sentence_listen", "sentence_order", "sentence_word"].includes(qtype);
+  const say = result?.say;
   const animal = dashboard?.animal;
   // The greeting belongs to the start of the round only; after that the
   // companion reacts to each graded answer and calms back to neutral when
@@ -313,10 +353,33 @@ export default function Practice({ forceSource }) {
               <CompanionReaction animal={animal} reaction={narrowGreeting} compact size={56} />
             </div>
           )}
+          {source === "scene" && <SceneThread questions={session.questions} upTo={index} context={context} />}
           <div className="card practice-card" key={`${session.id}-${index}-${i18n.language}`}>
-            <p className="sub" style={{ marginBottom: 8 }}>{t(`practice.q.${question.type}`)}</p>
-            <div className="practice-prompt">
-              {question.type === "listen_to_word" ? (
+            <p className="sub" style={{ marginBottom: 8 }}>
+              {t(`practice.q.${qtype}`, { meaning: question.prompt.meaning || "" })}
+            </p>
+            {qtype === "scene_reply" && <NpcLine question={question} context={context} />}
+            <div className={`practice-prompt${qtype === "scene_reply" ? " is-empty" : ""}`}>
+              {qtype === "scene_reply" ? null : qtype === "sentence_order" ? (
+                <div className="sentence-chunks" lang="zh-CN">
+                  {question.prompt.chunks.map((c, i) => (
+                    <span key={i} className="sentence-chunk">{c}</span>
+                  ))}
+                </div>
+              ) : listenOnly ? (
+                <>
+                  <button type="button" className="btn" onClick={() => speakAt(question.prompt.speak, question.prompt.rate)}>
+                    <Icon name="ear" size={16} style={{ verticalAlign: -3, marginRight: 6 }} />
+                    {t("practice.playAgain")}
+                  </button>
+                  {!canSpeakChinese() && question.prompt.pinyin && (
+                    <div className="practice-no-voice">
+                      <div className="practice-text">{question.prompt.pinyin}</div>
+                      <p className="sub">{t("practice.noChineseVoice")}</p>
+                    </div>
+                  )}
+                </>
+              ) : question.type === "listen_to_word" ? (
                 <>
                   <button type="button" className="btn" onClick={() => speakChinese(question.prompt.speak)}>
                     <Icon name="ear" size={16} style={{ verticalAlign: -3, marginRight: 6 }} />
@@ -350,10 +413,14 @@ export default function Practice({ forceSource }) {
                   if (o.id === result.correct_id) cls += " is-correct";
                   else if (o.id === result.choice_id) cls += " is-wrong";
                 }
-                const cjk = question.type === "meaning_to_word";
+                const cjk = cjkOptions;
+                const long = cjk && o.label.length > 6;
                 return (
                   <button key={o.id} type="button" className={cls} disabled={busy || !!result} onClick={() => choose(o.id)}>
-                    <span className={cjk ? "practice-option-hanzi" : ""}>{o.label}</span>
+                    <span className={cjk ? (long ? "practice-option-line" : "practice-option-hanzi") : ""} lang={cjk ? "zh-CN" : undefined}>
+                      {o.label}
+                    </span>
+                    {o.pinyin && <span className="sub practice-option-pinyin">{o.pinyin}</span>}
                   </button>
                 );
               })}
@@ -375,6 +442,7 @@ export default function Practice({ forceSource }) {
                 </div>
                 {/* On narrow screens the side panel sits below the fold, so
                     the reaction is repeated here where the learner is looking. */}
+                {say && <SpeakLine key={`${session.id}-${index}`} sessionId={session.id} index={index} text={say} />}
                 <div className="only-narrow">
                   <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} compact focusMode="example" size={60} />
                 </div>
@@ -397,6 +465,8 @@ export default function Practice({ forceSource }) {
               animal?.slug && <CompanionFigure slug={animal.slug} mood="neutral" size={104} />
             )}
           </div>
+
+          <RoundContextCard context={context} />
 
           <div className="card side-card">
             <p className="side-title">{t("practice.roundProgress")}</p>

@@ -18,11 +18,11 @@ import { speakChinese } from "../zhSpeech.js";
 
 // Causes where the companion points at the item to look at again.
 const HELP_CAUSES = new Set([
-  "miss", "streak_break", "two_misses", "mistake_run", "long_slump", "repeat_item", "tricky_item",
+  "confused_pair", "miss", "streak_break", "two_misses", "mistake_run", "long_slump", "repeat_item", "tricky_item",
   "still_learning", "keep_practicing", "needs_review", "shaky_trace",
 ]);
 // Causes where the item itself is the good news.
-const WIN_CAUSES = new Set(["new_item", "mastered", "comeback", "writing_mastered", "clean_trace"]);
+const WIN_CAUSES = new Set(["new_item", "mastered", "mastered_hard", "comeback", "writing_mastered", "clean_trace"]);
 
 const pulses = new WeakMap();
 let pulseSeq = 0;
@@ -79,6 +79,13 @@ export default function CompanionReaction({
     due: reaction.due ?? 0,
     mistakes: reaction.mistakes ?? 0,
     noun: t(`companionReact.noun.${focus?.item_type || context || "vocab"}`),
+    // Real memory the server attached: a pair the learner has confused
+    // before, days since their last visit, a mastered-words milestone.
+    a: reaction.pair?.a ?? "",
+    b: reaction.pair?.b ?? "",
+    times: reaction.pair?.count ?? 0,
+    days: reaction.away_days ?? 0,
+    milestone: reaction.words_milestone ?? 0,
   };
   const line = cause
     ? t(`companionReact.cause.${cause}`, { ...vars, defaultValue: t(`companionReact.${legacyKey}`, vars) })

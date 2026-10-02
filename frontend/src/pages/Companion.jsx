@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import CompanionMemory from "../components/CompanionMemory.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Bar, Empty, Loading, Stat } from "../components/ui.jsx";
@@ -93,6 +94,12 @@ export default function Companion() {
             </button>
           </Link>
         </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h2 className="h2">{t("companionMemory.journal")}</h2>
+        <p className="sub">{t("companionMemory.journalHint", { name: animal.name })}</p>
+        <CompanionMemory animal={animal} full />
       </div>
 
       <div className="card" style={{ marginTop: 16 }}>

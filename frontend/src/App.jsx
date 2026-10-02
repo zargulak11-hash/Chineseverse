@@ -34,6 +34,8 @@ import VoiceCompanion from "./pages/VoiceCompanion.jsx";
 import PetTeacher from "./pages/PetTeacher.jsx";
 import Mistakes from "./pages/Mistakes.jsx";
 import Practice from "./pages/Practice.jsx";
+import RealChinese, { RealChineseScene } from "./pages/RealChinese.jsx";
+import SentenceLesson from "./pages/SentenceLesson.jsx";
 import Exam from "./pages/Exam.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -153,6 +155,30 @@ export default function App() {
             element={
               <RequireAuth>
                 <Onboarding />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/real-chinese"
+            element={
+              <RequireAuth>
+                <RealChinese />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/real-chinese/:slug"
+            element={
+              <RequireAuth>
+                <RealChineseScene />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/sentence"
+            element={
+              <RequireAuth>
+                <SentenceLesson />
               </RequireAuth>
             }
           />

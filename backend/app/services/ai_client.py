@@ -514,6 +514,45 @@ def chat_reply(
     return _offline_chat(messages, animal_slug, user_name, energy=energy)
 
 
+TRANSLATE_LANGUAGE = {"en": "English", "ru": "Russian", "tg": "Tajik (Cyrillic script only)"}
+# One Sentence lessons are re-opened and re-rendered; the same sentence in
+# the same language never needs a second paid call. In-process and bounded.
+_translation_cache: dict[tuple[str, str], str] = {}
+
+
+def translate_sentence(text: str, locale: str) -> Optional[str]:
+    """A natural translation of one Chinese sentence into the learner's UI
+    language, or None when no AI provider answers (and for zh, where the
+    sentence itself is the text). None is a real state, not an error: the
+    lesson always shows the word-by-word gloss built from the curriculum's
+    own meanings, so nothing is invented offline."""
+    language = TRANSLATE_LANGUAGE.get(locale)
+    if language is None or _active_provider() != "gemini":
+        return None
+    key = (text, locale)
+    if key in _translation_cache:
+        return _translation_cache[key]
+    try:
+        system = (
+            f"Translate the Chinese sentence into {language}. Reply with the translation only: "
+            "no quotes, no pinyin, no notes, one line."
+        )
+        out = _gemini_chat(
+            [{"role": "system", "content": system}, {"role": "user", "content": text}],
+            max_tokens=200, temperature=0.2,
+        ).strip().strip('"“”')
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+        return None
+    if locale == "tg":
+        out = _tg_clean_mixed_script(out)
+    if not out or _CJK_CHAR.search(out):
+        return None
+    if len(_translation_cache) > 500:
+        _translation_cache.clear()
+    _translation_cache[key] = out
+    return out
+
+
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:
     """Graceful degradation when the live AI call fails mid-flight."""
     return _offline_evaluate(prompt, transcript, expected_keywords or [])

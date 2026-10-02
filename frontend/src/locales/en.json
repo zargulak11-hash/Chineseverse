@@ -50,7 +50,9 @@
     "groupAdmin": "Admin",
     "adminUsers": "Admin Users",
     "adminHome": "Admin Home",
-    "review": "Review"
+    "review": "Review",
+    "realChinese": "Real Chinese",
+    "sentence": "One Sentence"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -480,7 +482,9 @@
         "other": "Other",
         "practice": "Practice & Review",
         "hanzi": "Hanzi",
-        "grammar": "Grammar"
+        "grammar": "Grammar",
+        "real_life": "Real Chinese",
+        "sentence": "Sentence lessons"
       }
     },
     "profile": {
@@ -772,7 +776,9 @@
       "hanzi": "Hanzi practice · HSK {{level}}",
       "grammar": "Grammar practice · HSK {{level}}",
       "lesson": "Lesson practice",
-      "review": "Review"
+      "review": "Review",
+      "scene": "Real Chinese · {{title}}",
+      "sentence": "One-sentence lesson"
     },
     "retry": "Try again",
     "back": "Back",
@@ -803,7 +809,12 @@
       "listen_to_word": "Listen, then pick what the word means.",
       "char_to_meaning": "What does this character mean?",
       "char_to_pinyin": "How is this character pronounced?",
-      "example_to_point": "Which grammar point does this sentence use?"
+      "example_to_point": "Which grammar point does this sentence use?",
+      "scene_reply": "What do you say back?",
+      "scene_listen": "Listen: what did they say?",
+      "sentence_listen": "Listen: which sentence did you hear?",
+      "sentence_order": "Put the pieces in the right order.",
+      "sentence_word": "In this sentence, which word means “{{meaning}}”?"
     },
     "questionLabel": "Question",
     "accuracy": "Accuracy",
@@ -868,7 +879,9 @@
     "noun": {
       "vocab": "word",
       "hanzi": "character",
-      "grammar": "grammar point"
+      "grammar": "grammar point",
+      "line": "line",
+      "sentence": "sentence"
     },
     "skill": {
       "speaking": "Speaking",
@@ -912,7 +925,13 @@
       "clean_trace": "{{name}} is proud — every stroke clean!",
       "good_trace": "{{name}} is happy — well written, just a slip or two.",
       "shaky_trace": "{{name}} cheers you on — the character is done; one more trace will make it steadier.",
-      "writing_mastered": "{{name}} is celebrating — you can write this character now!"
+      "writing_mastered": "{{name}} is celebrating — you can write this character now!",
+      "mastered_hard": "{{name}} is celebrating — this {{noun}} tripped you up before, and now you've mastered it!",
+      "confused_pair": "{{name}} noticed: you've mixed up {{a}} and {{b}} before. They look alike — compare them once more.",
+      "welcome_back": "{{name}} is so happy you're back after {{days}} days away. Let's take it gently.",
+      "scene_start": "{{name}} is ready — let's try some real-life Chinese!",
+      "sentence_start": "{{name}} loves this: one sentence, a whole lesson.",
+      "words_milestone": "{{name}} is celebrating — this round took you past {{milestone}} mastered words!"
     }
   },
   "wordType": {
@@ -1075,5 +1094,168 @@
     "invalidInput": "Some of the entered data isn't valid. Please check it and try again.",
     "server": "Something went wrong on the server. Please try again in a moment.",
     "requestFailed": "The request failed ({{status}}). Please try again."
+  },
+  "realLife": {
+    "title": "Real-life Chinese",
+    "subtitle": "Real situations as real conversations — pitched at your HSK level, so every answer trains the words and grammar you're learning now.",
+    "yourLevel": "Your level",
+    "played": "Scenes played",
+    "situations": "Situations",
+    "best": "Best {{score}}%",
+    "exchanges_one": "{{count}} exchange",
+    "exchanges_other": "{{count}} exchanges",
+    "newWordsCount_one": "{{count}} new word for you",
+    "newWordsCount_other": "{{count}} new words for you",
+    "yourTier": "Your tier",
+    "tier": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "tierHow": {
+      "beginner": "Short, everyday sentences with HSK 1–2 words. You read every line with pinyin and can peek at the translation.",
+      "intermediate": "Longer exchanges with HSK 3–4 words and patterns. Lines are in characters only, and one line is listening-only.",
+      "advanced": "Natural, complex conversations with HSK 5+ language. You hear each line before you can read it, and choose from four replies."
+    },
+    "rule": {
+      "options_one": "Choose from {{count}} reply",
+      "options_other": "Choose from {{count}} replies",
+      "textPinyin": "Lines shown with pinyin and a translation to peek at",
+      "text": "Lines shown in characters — tap to hear them",
+      "audioFirst": "Hear each line before you can read it",
+      "listening_one": "{{count}} listening check",
+      "listening_other": "{{count}} listening checks",
+      "newWords_one": "Up to {{count}} new word drilled",
+      "newWords_other": "Up to {{count}} new words drilled"
+    },
+    "exchangesLabel": "Exchanges",
+    "bestLabel": "Best score",
+    "youTalkTo": "You'll talk with",
+    "start": "Start the conversation",
+    "playAgain": "Play again",
+    "wordsForYou": "New words for you in this scene",
+    "noNewWords": "You already know every word of this scene at your level — a good one to test your listening.",
+    "grammarInScene": "Grammar in this conversation",
+    "listenLine": "Listen",
+    "listenFirst": "Listen first — the text appears after you answer.",
+    "showTranslation": "Show translation",
+    "conversationSoFar": "Conversation so far",
+    "sayIt": "Now say it",
+    "sayItHint": "Tap the mic and say the line aloud.",
+    "grading": "Checking…",
+    "spokenWell": "Well said!",
+    "spokenAgain": "Try once more",
+    "heard": "Heard",
+    "speakScore": "Pronunciation {{overall}} · tones {{tones}}",
+    "attemptsLeft_one": "{{count}} try left",
+    "attemptsLeft_other": "{{count}} tries left"
+  },
+  "sentenceLesson": {
+    "teaser": "Bring one Chinese sentence and turn it into a full lesson at your level.",
+    "open": "Open One Sentence",
+    "title": "One sentence → a whole lesson",
+    "subtitle": "Type a Chinese sentence or pick one from your curriculum. Its words, characters, grammar and sounds become practice — and go into your review.",
+    "wordsLabel": "Words",
+    "newForYou": "New for you",
+    "inputLabel": "Chinese sentence",
+    "placeholder": "e.g. 我昨天去了北京。",
+    "analyze": "Build my lesson",
+    "analyzing": "Building…",
+    "orPick": "Or pick a sentence from your curriculum",
+    "noSuggestions": "No example sentences at your level yet.",
+    "forWord": "practises {{word}}",
+    "translation": "Translation",
+    "wordByWord": "Word by word:",
+    "vocabulary": "Words",
+    "characters": "Characters",
+    "grammar": "Grammar",
+    "noGrammar": "No curriculum grammar point was recognised in this sentence.",
+    "flashcards": "Flashcards",
+    "flashcardsHint": "Tap a card to flip it. Practising the lesson puts these words on your review schedule.",
+    "flip": "Flip card",
+    "stretch": "Above your level",
+    "status": {
+      "new": "New",
+      "learning": "Learning",
+      "reviewing": "Reviewing",
+      "mastered": "Mastered"
+    },
+    "radical": "Radical {{radical}}",
+    "strokes_one": "{{count}} stroke",
+    "strokes_other": "{{count}} strokes",
+    "forYourLevel": "For your level",
+    "fit": {
+      "below": "Easy for HSK {{level}}",
+      "at": "Right for HSK {{level}}",
+      "above": "A stretch for HSK {{level}}"
+    },
+    "countsLine": "{{fresh}} new · {{learning}} learning · {{mastered}} mastered",
+    "practiceTitle": "Your practice",
+    "activity": {
+      "vocab": "Vocabulary you still need",
+      "characters": "Characters: meaning and tones",
+      "listening": "Listening: pick what you heard",
+      "order": "Word order",
+      "reading": "Reading comprehension",
+      "speaking": "Say the sentence aloud"
+    },
+    "start": "Start the lesson",
+    "reviewNote": "Every answer is graded and scheduled for review, like any lesson.",
+    "howTitle": "How it works",
+    "how": "The sentence is split into HSK words and characters you can study, its grammar is matched to your curriculum, and a practice round is built for your level."
+  },
+  "companionMemory": {
+    "title": "{{name}} remembers",
+    "journal": "Learning journal",
+    "journalHint": "Everything {{name}} remembers comes from what you've really done in ChineseVerse.",
+    "remembers": "{{name}} also remembers",
+    "kind": {
+      "welcome_back_one": "{{name}} missed you — your last session was {{count}} day ago. Let's ease back in with a short review.",
+      "welcome_back_other": "{{name}} missed you — your last session was {{count}} days ago. Let's ease back in with a short review.",
+      "welcome_back_active_one": "Welcome back! After {{count}} day away you're already practising again — {{name}} is delighted.",
+      "welcome_back_active_other": "Welcome back! After {{count}} days away you're already practising again — {{name}} is delighted.",
+      "new_learner": "{{name}} is ready for your first steps — every word you learn will be remembered here.",
+      "word_milestone_one": "Milestone: you've mastered {{count}} word! {{name}} is celebrating.",
+      "word_milestone_other": "Milestone: you've mastered {{count}} words! {{name}} is celebrating.",
+      "streak_one": "{{count}}-day streak — {{name}} has noticed you showing up every day.",
+      "streak_other": "{{count}}-day streak — {{name}} has noticed you showing up every day.",
+      "achievement": "New achievement: {{title}}.",
+      "lesson_completed_one": "You completed “{{title}}” {{days}} day ago.",
+      "lesson_completed_other": "You completed “{{title}}” {{days}} days ago.",
+      "lesson_completed_today": "You completed “{{title}}” today — {{name}} is celebrating!",
+      "mastered_hard": "You mastered {{word}} recently — it tripped you up before, and now it's yours.",
+      "mastered_recently_one": "This week you reviewed and mastered {{count}} word.",
+      "mastered_recently_other": "This week you reviewed and mastered {{count}} words.",
+      "difficult_chars": "These characters keep being tricky — {{name}} suggests a little extra practice.",
+      "confused_pair_one": "You've mixed up {{a}} and {{b}} {{count}} time — they look alike, so let's tell them apart in Review.",
+      "confused_pair_other": "You've mixed up {{a}} and {{b}} {{count}} times — they look alike, so let's tell them apart in Review.",
+      "recent_mistakes_one": "{{count}} mistake came back this week. No rush — {{name}} will go through it with you.",
+      "recent_mistakes_other": "{{count}} mistakes came back this week. No rush — {{name}} will go through them with you.",
+      "improving_listening": "Your listening is improving: {{recent}}% correct this week, up from {{before}}%.",
+      "reviews_done_one": "You finished {{count}} review this week — your memory is getting stronger.",
+      "reviews_done_other": "You finished {{count}} reviews this week — your memory is getting stronger.",
+      "stale_area": "You haven't practised {{area}} for {{days}} days — {{name}} saved your place.",
+      "stale_area_never": "You started {{area}} but haven't practised it in a round yet.",
+      "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next."
+    },
+    "area": {
+      "vocab": "vocabulary",
+      "hanzi": "characters",
+      "grammar": "grammar"
+    },
+    "action": {
+      "default": "Go",
+      "welcome_back": "Start a review",
+      "lesson_completed": "Open the lesson",
+      "difficult_chars": "Practise characters",
+      "confused_pair": "Review them",
+      "recent_mistakes": "See my mistakes",
+      "improving_listening": "Try a real conversation",
+      "stale_area": "Pick it up again",
+      "weak_skill": "See my DNA",
+      "new_learner": "Start a lesson",
+      "achievement": "See achievements",
+      "mastered_recently": "My vocabulary"
+    }
   }
 }

@@ -19,6 +19,16 @@ class SessionCreate(BaseModel):
     hsk_level: int | None = Field(default=None, ge=1, le=9)
     lesson_id: int | None = None
     size: int = Field(default=10, ge=4, le=20)
+    # source "scene": a Real Chinese scene slug; source "sentence": the
+    # Chinese sentence to turn into a lesson (validated by the server).
+    scene: str | None = Field(default=None, max_length=40)
+    sentence: str | None = Field(default=None, max_length=80)
+
+
+class SpeakPayload(BaseModel):
+    index: int = Field(ge=0)
+    spoken_text: str = Field(min_length=1, max_length=200)
+    response_ms: int = Field(default=0, ge=0, le=600_000)
 
 
 class AnswerPayload(BaseModel):
@@ -57,6 +67,7 @@ def create_session(
     session = _run(
         svc.build_session, db, user, payload.source,
         hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size, locale=locale,
+        scene=payload.scene, sentence=payload.sentence,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.
@@ -90,6 +101,21 @@ def answer(
 ):
     session = _owned(db, session_id, user)
     result = _run(svc.answer_question, db, user, session, payload.index, payload.choice_id, payload.response_ms, locale)
+    check_achievements(db, user)
+    return result
+
+
+@router.post("/sessions/{session_id}/speak")
+def speak(
+    session_id: int,
+    payload: SpeakPayload,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Say an answered scene reply / sentence aloud; graded against the
+    stored question's own text (services/practice.speak)."""
+    session = _owned(db, session_id, user)
+    result = _run(svc.speak, db, user, session, payload.index, payload.spoken_text, payload.response_ms)
     check_achievements(db, user)
     return result
 

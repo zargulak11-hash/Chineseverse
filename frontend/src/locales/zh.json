@@ -50,7 +50,9 @@
     "groupAdmin": "管理",
     "adminUsers": "用户管理",
     "adminHome": "管理主页",
-    "review": "复习"
+    "review": "复习",
+    "realChinese": "真实中文",
+    "sentence": "一句话"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -479,7 +481,9 @@
         "other": "其他",
         "practice": "练习与复习",
         "hanzi": "汉字",
-        "grammar": "语法"
+        "grammar": "语法",
+        "real_life": "真实中文",
+        "sentence": "一句话课堂"
       }
     },
     "profile": {
@@ -771,7 +775,9 @@
       "hanzi": "汉字练习 · HSK {{level}}",
       "grammar": "语法练习 · HSK {{level}}",
       "lesson": "课程练习",
-      "review": "复习"
+      "review": "复习",
+      "scene": "真实中文 · {{title}}",
+      "sentence": "一句话课堂"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -802,7 +808,12 @@
       "listen_to_word": "听一听，选出你听到的词的意思。",
       "char_to_meaning": "这个汉字是什么意思？",
       "char_to_pinyin": "这个汉字怎么读？",
-      "example_to_point": "这个句子用了哪个语法点？"
+      "example_to_point": "这个句子用了哪个语法点？",
+      "scene_reply": "你怎么回答？",
+      "scene_listen": "听一听：对方说了什么？",
+      "sentence_listen": "听一听：你听到的是哪句话？",
+      "sentence_order": "把这些部分排成正确的顺序。",
+      "sentence_word": "这句话里哪个词的意思是“{{meaning}}”？"
     },
     "questionLabel": "题目",
     "accuracy": "正确率",
@@ -867,7 +878,9 @@
     "noun": {
       "vocab": "词",
       "hanzi": "汉字",
-      "grammar": "语法点"
+      "grammar": "语法点",
+      "line": "句子",
+      "sentence": "句子"
     },
     "skill": {
       "speaking": "口语",
@@ -911,7 +924,13 @@
       "clean_trace": "{{name}}为你骄傲——每一笔都很干净！",
       "good_trace": "{{name}}很开心——写得很好，只有一两处小失误。",
       "shaky_trace": "{{name}}为你加油——字已经写完了，再写一遍会更稳。",
-      "writing_mastered": "{{name}}在庆祝——这个字你会写了！"
+      "writing_mastered": "{{name}}在庆祝——这个字你会写了！",
+      "mastered_hard": "{{name}}在庆祝——这个{{noun}}以前总让你出错，现在你掌握了！",
+      "confused_pair": "{{name}}注意到：你以前把“{{a}}”和“{{b}}”弄混过。它们很像，再比较一下吧。",
+      "welcome_back": "你离开了{{days}}天，{{name}}很高兴你回来了。我们慢慢来。",
+      "scene_start": "{{name}}准备好了——我们来试试真实的中文吧！",
+      "sentence_start": "{{name}}很喜欢：一句话，一堂课。",
+      "words_milestone": "{{name}}在庆祝——这一轮让你掌握的词超过了{{milestone}}个！"
     }
   },
   "wordType": {
@@ -1072,5 +1091,152 @@
     "invalidInput": "部分输入的数据无效，请检查后重试。",
     "server": "服务器出了点问题，请稍后再试。",
     "requestFailed": "请求失败（{{status}}），请重试。"
+  },
+  "realLife": {
+    "title": "生活中的中文",
+    "subtitle": "真实场景，真实对话——按你的HSK水平设计，每次回答都在练习你正在学的词汇和语法。",
+    "yourLevel": "你的水平",
+    "played": "已完成场景",
+    "situations": "场景",
+    "best": "最佳 {{score}}%",
+    "exchanges_other": "{{count}} 轮对话",
+    "newWordsCount_other": "{{count}} 个新词",
+    "yourTier": "你的难度",
+    "tier": {
+      "beginner": "初级",
+      "intermediate": "中级",
+      "advanced": "高级"
+    },
+    "tierHow": {
+      "beginner": "简短的日常句子，使用HSK 1–2词汇。每句话都有拼音，还可以看翻译。",
+      "intermediate": "更长的对话，使用HSK 3–4的词汇和句型。只显示汉字，还有一句只能听。",
+      "advanced": "自然、复杂的对话，使用HSK 5级以上的语言。每句话要先听后看，从四个回答中选择。"
+    },
+    "rule": {
+      "options_other": "从{{count}}个回答中选择",
+      "textPinyin": "显示拼音，可查看翻译",
+      "text": "只显示汉字，点击可听",
+      "audioFirst": "每句话先听后看",
+      "listening_other": "{{count}} 道听力题",
+      "newWords_other": "最多练习{{count}}个新词"
+    },
+    "exchangesLabel": "对话轮数",
+    "bestLabel": "最佳成绩",
+    "youTalkTo": "对话对象：",
+    "start": "开始对话",
+    "playAgain": "再来一次",
+    "wordsForYou": "这个场景里你的新词",
+    "noNewWords": "这个场景的词你都掌握了——正好练练听力。",
+    "grammarInScene": "对话中的语法",
+    "listenLine": "听",
+    "listenFirst": "先听——回答后才显示文字。",
+    "showTranslation": "显示翻译",
+    "conversationSoFar": "目前的对话",
+    "sayIt": "现在说一说",
+    "sayItHint": "点击麦克风，大声说出这句话。",
+    "grading": "正在评分…",
+    "spokenWell": "说得好！",
+    "spokenAgain": "再试一次",
+    "heard": "识别到",
+    "speakScore": "发音 {{overall}} · 声调 {{tones}}",
+    "attemptsLeft_other": "还剩{{count}}次"
+  },
+  "sentenceLesson": {
+    "teaser": "用一句中文，生成一堂适合你水平的完整课程。",
+    "open": "打开“一句话”",
+    "title": "一句话 → 一堂课",
+    "subtitle": "输入一句中文，或从课程中选一句。它的词语、汉字、语法和发音都会变成练习，并加入你的复习。",
+    "wordsLabel": "词语",
+    "newForYou": "对你是新的",
+    "inputLabel": "中文句子",
+    "placeholder": "例如：我昨天去了北京。",
+    "analyze": "生成课程",
+    "analyzing": "正在生成…",
+    "orPick": "或者从课程中选一句",
+    "noSuggestions": "你的水平暂时还没有例句。",
+    "forWord": "练习“{{word}}”",
+    "translation": "翻译",
+    "wordByWord": "逐词：",
+    "vocabulary": "词语",
+    "characters": "汉字",
+    "grammar": "语法",
+    "noGrammar": "这句话里没有识别到课程中的语法点。",
+    "flashcards": "词卡",
+    "flashcardsHint": "点击卡片翻面。完成练习后，这些词会进入你的复习计划。",
+    "flip": "翻转卡片",
+    "stretch": "高于你的水平",
+    "status": {
+      "new": "新",
+      "learning": "学习中",
+      "reviewing": "复习中",
+      "mastered": "已掌握"
+    },
+    "radical": "部首 {{radical}}",
+    "strokes_other": "{{count}}画",
+    "forYourLevel": "适合你的水平吗",
+    "fit": {
+      "below": "对HSK {{level}}来说较容易",
+      "at": "正适合HSK {{level}}",
+      "above": "对HSK {{level}}有挑战"
+    },
+    "countsLine": "{{fresh}}个新词 · {{learning}}个学习中 · {{mastered}}个已掌握",
+    "practiceTitle": "你的练习",
+    "activity": {
+      "vocab": "你还需要的词汇",
+      "characters": "汉字：意思和声调",
+      "listening": "听力：选出你听到的句子",
+      "order": "词序",
+      "reading": "阅读理解",
+      "speaking": "大声说出这句话"
+    },
+    "start": "开始上课",
+    "reviewNote": "每个回答都会评分并加入复习，和普通课程一样。",
+    "howTitle": "怎么用",
+    "how": "句子会拆成HSK词语和汉字，语法会与课程对照，再按你的水平生成练习。"
+  },
+  "companionMemory": {
+    "title": "{{name}}记得",
+    "journal": "学习日记",
+    "journalHint": "{{name}}记得的一切，都来自你在ChineseVerse里真正做过的事。",
+    "remembers": "{{name}}还记得",
+    "kind": {
+      "welcome_back_other": "{{name}}很想你——上次学习是{{count}}天前。先来个简短的复习吧。",
+      "welcome_back_active_other": "欢迎回来！休息了{{count}}天，你又开始学习了——{{name}}特别开心。",
+      "new_learner": "{{name}}准备好陪你迈出第一步了——你学会的每个词都会被记在这里。",
+      "word_milestone_other": "里程碑：你已经掌握了{{count}}个词！{{name}}在为你庆祝。",
+      "streak_other": "连续学习{{count}}天——{{name}}看到你每天都来了。",
+      "achievement": "新成就：{{title}}。",
+      "lesson_completed_other": "你在{{days}}天前学完了《{{title}}》。",
+      "lesson_completed_today": "你今天学完了《{{title}}》——{{name}}在为你庆祝！",
+      "mastered_hard": "你最近掌握了“{{word}}”——以前它总让你出错，现在它是你的了。",
+      "mastered_recently_other": "这周你复习并掌握了{{count}}个词。",
+      "difficult_chars": "这几个字还有点难——{{name}}建议再多练一练。",
+      "confused_pair_other": "你把“{{a}}”和“{{b}}”弄混了{{count}}次——它们很像，我们在复习里分清楚吧。",
+      "recent_mistakes_other": "这周有{{count}}个错误又出现了。别着急——{{name}}陪你一起复习。",
+      "improving_listening": "你的听力在进步：这周正确率{{recent}}%，之前是{{before}}%。",
+      "reviews_done_other": "这周你完成了{{count}}次复习——记忆越来越牢了。",
+      "stale_area": "你已经{{days}}天没练{{area}}了——{{name}}帮你记着进度。",
+      "stale_area_never": "你开始学{{area}}了，但还没有在练习中练过。",
+      "weak_skill": "你的{{skill}}目前最弱（{{value}}/100）——下一步可以重点提高。"
+    },
+    "area": {
+      "vocab": "词汇",
+      "hanzi": "汉字",
+      "grammar": "语法"
+    },
+    "action": {
+      "default": "去看看",
+      "welcome_back": "开始复习",
+      "lesson_completed": "打开课程",
+      "difficult_chars": "练习汉字",
+      "confused_pair": "去复习",
+      "recent_mistakes": "查看错题",
+      "improving_listening": "试试真实对话",
+      "stale_area": "继续练习",
+      "weak_skill": "查看学习DNA",
+      "new_learner": "开始上课",
+      "achievement": "查看成就",
+      "mastered_recently": "我的词汇"
+    }
   }
 }

@@ -34,6 +34,22 @@ DYNAMIC = (
     + [f"pages.duelBattle.{s}" for s in ("declined", "cancelled", "expired")]
     + [f"pages.duelBattle.decidedBy.{d}" for d in ("correct", "score", "time", "draw")]
     + [f"pages.duelBattle.finish.{f}" for f in ("completed", "timeout", "forfeit", "no_show")]
+    + [f"practice.title.{s}" for s in ("scene", "sentence")]
+    + [f"practice.q.{q}" for q in ("scene_reply", "scene_listen", "sentence_listen", "sentence_order", "sentence_word")]
+    + [f"realLife.tier.{x}" for x in ("beginner", "intermediate", "advanced")]
+    + [f"realLife.tierHow.{x}" for x in ("beginner", "intermediate", "advanced")]
+    + [f"sentenceLesson.status.{x}" for x in ("new", "learning", "reviewing", "mastered")]
+    + [f"sentenceLesson.fit.{x}" for x in ("below", "at", "above")]
+    + [f"companionMemory.kind.{k}" for k in (
+        "welcome_back", "welcome_back_active", "new_learner", "word_milestone", "streak", "achievement",
+        "lesson_completed", "lesson_completed_today", "mastered_hard", "mastered_recently", "difficult_chars",
+        "confused_pair", "recent_mistakes", "improving_listening", "reviews_done", "stale_area",
+        "stale_area_never", "weak_skill")]
+    + [f"companionMemory.area.{a}" for a in ("vocab", "hanzi", "grammar")]
+    + [f"companionReact.cause.{c}" for c in ("mastered_hard", "confused_pair", "welcome_back", "scene_start",
+                                             "sentence_start", "words_milestone")]
+    + [f"companionReact.noun.{n}" for n in ("line", "sentence")]
+    + [f"pages.progress.section.{x}" for x in ("real_life", "sentence")]
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

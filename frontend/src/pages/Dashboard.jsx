@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
@@ -192,6 +193,17 @@ export default function Dashboard() {
         <div className="card bento-4 center dna-hero-card">
           <RingHero value={d.dna.overall} label={t("dashboard.learningDnaOverall")} />
         </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <div className="row spread" style={{ margin: 0, flexWrap: "wrap" }}>
+          <h2 className="h2">{t("companionMemory.title", { name: d.animal?.name || t("companionReact.fallbackName") })}</h2>
+          <div className="row" style={{ gap: 8, margin: 0, flexWrap: "wrap" }}>
+            <Link to="/real-chinese" className="btn small"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</Link>
+            <Link to="/sentence" className="btn small ghost"><Icon name="sparkles" size={13} /> {t("nav.sentence")}</Link>
+          </div>
+        </div>
+        <CompanionMemory animal={d.animal} />
       </div>
 
       <div className="bento" style={{ marginTop: 16 }}>
