@@ -43,6 +43,12 @@ VOCAB_TYPES = ("meaning_to_word", "word_to_meaning", "listen_to_word")
 HANZI_TYPES = ("char_to_meaning", "char_to_pinyin")
 PASS_SCORE = 0.7          # lesson counts as completed at >= 70% correct
 FAST_ANSWER_MS = 4000     # correct within 4s feeds Reaction Speed
+# The browser's response_ms (question shown -> answered) is only a claim. The
+# server bounds it by the time it actually saw pass since the previous answer
+# (or the round's start), less this allowance for reading the previous
+# answer's feedback and pressing Next. Without it any request could send
+# response_ms=1 and earn the Reaction Speed bonus on every correct answer.
+FEEDBACK_ALLOWANCE_MS = 8000
 XP_PER_CORRECT = 2
 XP_GOOD_ROUND_BONUS = 10  # score >= 80%
 
@@ -679,9 +685,15 @@ def answer_question(
         raise PracticeError(410, "This item no longer exists")
 
     correct = choice_id == q["item_id"]
+    now = datetime.utcnow()
+    seen = [datetime.fromisoformat(a["answered_at"]) for a in session.answers if a and a.get("answered_at")]
+    since = max(seen) if seen else (session.created_at or now)
+    observed_ms = int((now - since).total_seconds() * 1000)
+    response_ms = max(response_ms, observed_ms - FEEDBACK_ALLOWANCE_MS)
     change = _record(db, user, session, q, row, correct, response_ms)
     answers = list(session.answers)  # reassign so the JSON column is marked dirty
-    answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms}
+    answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms,
+                      "answered_at": now.isoformat()}
     session.answers = answers
     db.commit()
     labels = _labels(db, [q], locale)

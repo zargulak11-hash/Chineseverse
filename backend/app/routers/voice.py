@@ -99,19 +99,32 @@ def submit_attempt(
 ):
     ensure_user_skills(db, user)
 
+    # The turn being answered decides what a good answer is -- its own prompt
+    # and expected_keywords from the database. The request's
+    # expected_keywords used to override them, so a client could say "好",
+    # declare "好" the expected answer, and score a near-perfect turn into
+    # Learning DNA, quests and missions. Likewise the dialogue must belong to
+    # the scenario named, and the lock is checked on the dialogue's own
+    # scenario (a locked location's line can't be answered via another id).
+    dialogue = None
+    if payload.dialogue_id:
+        dialogue = db.get(models.Dialogue, payload.dialogue_id)
+        if dialogue is None:
+            raise HTTPException(status_code=404, detail="Dialogue not found")
+        if payload.scenario_id and dialogue.scenario_id != payload.scenario_id:
+            raise HTTPException(status_code=422, detail="This line is not part of that scenario")
+        payload.scenario_id = dialogue.scenario_id
+
     if payload.scenario_id:
         scenario = db.get(models.Scenario, payload.scenario_id)
         if scenario is not None and not scenario_is_unlocked(db, user, scenario):
             raise HTTPException(status_code=403, detail="This location isn't unlocked yet")
 
-    dialogue = None
-    if payload.dialogue_id:
-        dialogue = db.get(models.Dialogue, payload.dialogue_id)
-
-    result = voice_eval.grade_turn(
-        dialogue, payload.spoken_text,
-        expected_keywords=payload.expected_keywords or None,
-    )
+    # Without a dialogue there is no server-side answer key: the turn is graded
+    # as free speech, never against keywords the client chose.
+    result = voice_eval.grade_turn(dialogue, payload.spoken_text, expected_keywords=None)
+    if dialogue is not None:
+        payload.prompt_text = dialogue.prompt
 
     attempt = models.VoiceAttempt(
         user_id=user.id,
@@ -145,7 +158,9 @@ def submit_attempt(
             .order_by(models.Dialogue.turn_index.desc(), models.Dialogue.id.desc())
             .first()
         )
-        if last_turn is not None and payload.dialogue_id == last_turn.id:
+        # ...and answering it acceptably (the server's own grade), not just
+        # sending anything at all to it.
+        if last_turn is not None and payload.dialogue_id == last_turn.id and result["is_correct"]:
             progress_missions(db, user, "conversation", scenario_id=payload.scenario_id)
     _track_mistake(db, user, payload.prompt_text, result)
     if user.streak:

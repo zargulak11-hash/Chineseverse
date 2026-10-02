@@ -11,6 +11,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 _tmp = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}/missions.db"
+os.environ["AI_PROVIDER"] = "offline"  # deterministic speech grading
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -108,13 +109,20 @@ with TestClient(app) as client:
                  .order_by(models.Dialogue.turn_index).all())
         sc_id = sc.id
         first_turn, last_turn = turns[0].id, turns[-1].id
+        last_answer = "".join(turns[-1].expected_keywords or [])
     assert first_turn != last_turn
     voice = {"spoken_text": "请问火车站怎么走？", "scenario_id": sc_id, "response_time_ms": 1500}
     expect(client, "post", "/api/voice/attempt", 200, headers=h, json={**voice, "dialogue_id": first_turn})
     assert by_slug(client, h)["directions-master"]["status"] == "active"
-    expect(client, "post", "/api/voice/attempt", 200, headers=h, json={**voice, "dialogue_id": last_turn})
+    # a wrong answer to the last line -- even naming its own "expected" words -- doesn't complete it
+    expect(client, "post", "/api/voice/attempt", 200, headers=h,
+           json={**voice, "spoken_text": "你好", "expected_keywords": ["你好"], "dialogue_id": last_turn})
+    assert by_slug(client, h)["directions-master"]["status"] == "active"
+    assert last_answer, "the last line has real expected words"
+    expect(client, "post", "/api/voice/attempt", 200, headers=h,
+           json={**voice, "spoken_text": last_answer, "dialogue_id": last_turn})
     assert by_slug(client, h)["directions-master"]["status"] == "completed"
-    print("[PASS] 'Getting Around' completes on the scenario's last learner line, not on the first one")
+    print("[PASS] 'Getting Around' completes only when its last learner line is answered correctly")
 
     # a locked mission does not advance even when its activity happens
     with SessionLocal() as db:

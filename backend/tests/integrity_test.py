@@ -188,4 +188,49 @@ with TestClient(app) as client:
     expect(client, "get", "/api/missions", 200, headers=rh)
     print("[PASS] concurrent first loads no longer 500 on the learner's skill rows")
 
+    # ---------------------------------------------- voice: the dialogue is the answer key
+    vid, vh = register(client, "integrityvoice")
+    with SessionLocal() as db:
+        sc = db.query(models.Scenario).filter_by(slug="asking-directions").one()
+        line = (db.query(models.Dialogue).filter_by(scenario_id=sc.id, speaker="learner")
+                .order_by(models.Dialogue.turn_index).first())
+        locked_sc = db.query(models.Scenario).filter_by(slug="buying-fruit").one()
+        locked_line = db.query(models.Dialogue).filter_by(scenario_id=locked_sc.id, speaker="learner").first()
+        sc_id, line_id, locked_line_id = sc.id, line.id, locked_line.id
+    forged = expect(client, "post", "/api/voice/attempt", 200, headers=vh, json={
+        "spoken_text": "好", "expected_keywords": ["好"], "prompt_text": "好", "scenario_id": sc_id, "dialogue_id": line_id})
+    assert forged["attempt"]["relevance"] < 55, forged["attempt"]  # graded against the line's own keywords
+    free = expect(client, "post", "/api/voice/attempt", 200, headers=vh, json={
+        "spoken_text": "好", "expected_keywords": ["好"]})
+    assert free["attempt"]["relevance"] == 0, free["attempt"]  # no client-chosen answer key
+    # a locked location's line can't be answered by leaving scenario_id out or naming another one
+    expect(client, "post", "/api/voice/attempt", 403, headers=vh, json={"spoken_text": "我要苹果", "dialogue_id": locked_line_id})
+    expect(client, "post", "/api/voice/attempt", 422, headers=vh,
+           json={"spoken_text": "我要苹果", "scenario_id": sc_id, "dialogue_id": locked_line_id})
+    expect(client, "post", "/api/voice/attempt", 404, headers=vh, json={"spoken_text": "好", "dialogue_id": 999999})
+    print("[PASS] voice turns are graded against the dialogue's own keywords; locked lines stay locked")
+
+    # ---------------------------------------------- practice: response time is bounded by the server clock
+    pid, ph = register(client, "integrityspeed")
+
+    def correct_answer(sess, idx, ms):
+        with SessionLocal() as db:
+            stored = db.get(models.PracticeSession, sess["id"]).questions
+        return expect(client, "post", f"/api/practice/sessions/{sess['id']}/answer", 200, headers=ph,
+                      json={"index": idx, "choice_id": stored[idx]["item_id"], "response_ms": ms})
+
+    s = expect(client, "post", "/api/practice/sessions", 201, headers=ph, json={"source": "vocab", "hsk_level": 1, "size": 4})
+    with SessionLocal() as db:  # a minute passes before the "1 ms" answer arrives
+        row = db.get(models.PracticeSession, s["id"])
+        row.created_at = datetime.utcnow() - timedelta(seconds=60)
+        db.commit()
+    speed = skill(pid, "reaction_speed")
+    correct_answer(s, 0, 1)
+    assert skill(pid, "reaction_speed") == speed, "a claimed 1 ms answer a minute in earned Reaction Speed"
+    with SessionLocal() as db:
+        assert db.get(models.PracticeSession, s["id"]).answers[0]["response_ms"] >= 50_000
+    correct_answer(s, 1, 1500)  # answered right after the previous one: genuinely fast
+    assert skill(pid, "reaction_speed") == speed + 0.5, (skill(pid, "reaction_speed"), speed)
+    print("[PASS] a forged fast response_ms can't earn Reaction Speed; a really fast answer still does")
+
 print("ALL INTEGRITY TESTS PASSED")
