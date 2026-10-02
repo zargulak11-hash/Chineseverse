@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import ErrorBoundary from "./ErrorBoundary.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Topbar from "./Topbar.jsx";
 
@@ -156,11 +157,17 @@ function Shell({ children }) {
 
 // The persistent shell: the element of the layout route wrapping every
 // signed-in page in App.jsx. The matched page renders in the <Outlet />.
+// The page gets its own error boundary here, below the shell: a page that
+// throws while rendering must not take the sidebar down with it (that
+// remounted the sidebar at scrollTop 0 on the next navigation).
 export function AppShell() {
+  const { pathname } = useLocation();
   return (
     <ShellContext.Provider value={true}>
       <Shell>
-        <Outlet />
+        <ErrorBoundary resetKey={pathname} inShell>
+          <Outlet />
+        </ErrorBoundary>
       </Shell>
     </ShellContext.Provider>
   );
