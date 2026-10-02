@@ -366,31 +366,23 @@ a {
 
 /* ---------- Brand logo ----------
    The real ChineseVerse logo (frontend/photo/*.png, imported by
-   components/BrandLogo.jsx) is now the only brand artwork in the UI.
+   components/BrandLogo.jsx) is the only brand artwork in the UI.
 
    Sizing rule: exactly ONE dimension is ever set on the image and the
-   other stays `auto`, so the browser keeps the PNG's intrinsic 2048:768
+   other stays `auto`, so the browser keeps the PNG's intrinsic 1753:591
    ratio. The logo is sized, never scaled into a box, and so can never be
    stretched or squashed on any screen.
 
-   No backdrop of any kind — the logo sits straight on the page. It used to
-   ride on a warm cream plate, which read as an orange block against the
-   near-black Ink theme; that chip is gone for good.
-
-   The artwork is never edited, re-encoded or re-scaled in any theme.
-   Switching Ink/Paper changes the page around the logo, and on Ink it also
-   recolours the mark — but never its shape, alpha or proportions.
-
-   The lockup is drawn as two stacked copies of the same file, each clipped
-   to one half, so the seal and the wordmark can be coloured separately:
-   the seal to the brand red, the wordmark to white. The split sits at
-   30.64% of the canvas, inside the logo's only wide blank column run
-   (x 624..631, measured fully transparent), so the seam lands in empty
-   space and the halves recompose into the original pixel-for-pixel.
-
-   On Paper both copies are unfiltered, so the light theme is the untouched
-   photo. On Ink the wordmark copy goes to pure white and the seal copy to
-   the brand red. */
+   The artwork is never edited, re-encoded, recoloured or re-scaled in any
+   theme. The PNG is fully opaque on a near-white (#fefefe) ground, so it
+   is shown on that ground as a rounded tile in both themes:
+   - Filtering it onto the dark Ink page would need an invert, which turns
+     the brand red pink and the gold muddy.
+   - A `multiply` blend onto Paper was tried and does not hold: the landing
+     appbar's backdrop-filter and the hero's entrance animation each make a
+     stacking context with no opaque backdrop, so the white ground showed
+     through there while it blended away in the sidebar. One tile
+     everywhere keeps every placement identical. */
 .brand-logo {
   position: relative;
   display: inline-flex;
@@ -398,41 +390,6 @@ a {
   justify-content: center;
   flex-shrink: 0;
   vertical-align: middle;
-}
-
-/* The split, measured from the PNG: 30.64% of the 2048px canvas lands in
-   the empty run at x 624..631, between the seal and the wordmark. */
-.brand-logo__img--word {
-  clip-path: inset(0 0 0 30.64%);
-}
-
-.brand-logo__img--seal {
-  clip-path: inset(0 69.36% 0 0);
-}
-
-/* The seal copy rides on top of the wordmark copy, both at the same size so
-   they register exactly. It is decorative — the wordmark copy carries the
-   alt text — so it is aria-hidden in the markup and inert to the pointer. */
-.brand-logo--lockup .brand-logo__img--seal {
-  position: absolute;
-  left: 0;
-  top: 0;
-  pointer-events: none;
-}
-
-[data-theme="ink"] .brand-logo__img--word {
-  filter: brightness(0) invert(1);
-}
-
-[data-theme="ink"] .brand-logo__img--seal {
-  /* `brightness(0)` flattens the artwork to one grey, then the chain steers
-     that grey to the brand red. Values were read back off real Chrome
-     screenshots of the logo at real sizes rather than modelled: at these
-     sizes nearly every pixel is a partial-alpha antialiased edge, which a
-     closed-form model of the chain gets wrong. Produces a flat #fa3b2d at
-     5.16:1 on the #0b1020 page. The low blue channel keeps it true to the
-     real cinnabar (#b80818) rather than drifting pink. */
-  filter: brightness(0) invert(32%) sepia(95%) saturate(2800%) hue-rotate(344deg);
 }
 
 .brand-logo__img {
@@ -445,33 +402,42 @@ a {
   user-select: none;
 }
 
-/* Full lockup — height-driven, width follows the 8:3 ratio. */
+.brand-logo--lockup .brand-logo__img {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+/* Full lockup — height-driven, width follows the 1753:591 (~2.97:1) ratio. */
 .brand-logo--lockup {
   --logo-h: 44px;
 }
 
-/* Seal only, for the collapsed sidebar. Cropped out of the same logo file
+/* Emblem only, for the collapsed sidebar. Cropped out of the same logo file
    rather than shipped as a second asset, so the two can never drift.
 
-   Measured from the PNG: the seal occupies x 96..613 and y 144..649 of
-   the 2048x768 canvas — 4.69%..29.93% across, 18.75%..84.51% down. Those
-   fractions become the scale and offsets below, so the crop lands on the
-   artwork at any size instead of being pinned to one pixel value. The
-   result keeps ~4% breathing room inside a square window. */
+   Measured from the PNG: the pagoda-and-book emblem occupies x 71..628 and
+   y 110..504 of the 1753x591 canvas, and the wordmark's "C" starts at
+   x 633. The crop is the square x 68..632, y 24..588 (565px), centred on
+   the emblem and stopping just short of the "C". Those fractions become
+   the scale and offsets below, so the crop lands on the artwork at any
+   size instead of being pinned to one pixel value. The window is entirely
+   inside the canvas, so it reads as a small white tile like the lockup. */
 .brand-logo--mark {
   --logo-mark: 32px;
   position: relative;
   overflow: hidden;
   width: var(--logo-mark);
   height: var(--logo-mark);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .brand-logo--mark .brand-logo__img {
   position: absolute;
-  height: calc(var(--logo-mark) * 1.36403);
+  height: calc(var(--logo-mark) * 1.04602);
   width: auto;
-  left: calc(var(--logo-mark) * -0.12964);
-  top: calc(var(--logo-mark) * -0.20509);
+  left: calc(var(--logo-mark) * -0.12035);
+  top: calc(var(--logo-mark) * -0.04248);
 }
 
 /* Per-placement sizes. Desktop first, then one small-screen step down so
@@ -481,15 +447,14 @@ a {
 }
 
 /* The expanded sidebar's head gives the brand 252 - 32 (padding) - 8 (gap)
-   - 26 (collapse toggle) = 185px, so the 8:3 lockup has room well past
-   where it was reading small next to the nav labels. 46px renders 122.7px
-   wide, leaving ~62px of slack. */
+   - 26 (collapse toggle) = 185px. 46px renders the ~2.97:1 lockup 136.4px
+   wide, leaving ~48px of slack. */
 .brand-logo--sidebar {
   --logo-h: 46px;
 }
 
 /* Collapsed rail only. The 78px rail shares its width with the 26px
-   toggle, so 32px is the largest seal that still fits whole alongside
+   toggle, so 32px is the largest emblem that still fits whole alongside
    6px of padding. */
 .brand-logo--sidebar-mark {
   --logo-mark: 32px;
@@ -497,6 +462,11 @@ a {
 
 .brand-logo--hero {
   --logo-h: clamp(54px, 12vw, 112px);
+}
+
+/* At hero size the small-tile corner reads as square; use the card radius. */
+.brand-logo--hero .brand-logo__img {
+  border-radius: var(--radius-md);
 }
 
 .brand-logo--boot {
@@ -2310,8 +2280,7 @@ table.data td {
 }
 
 /* Collapsed, the full lockup has no room, so the sidebar falls back to the
-   seal alone — the same behaviour as before, now cropped from the real
-   logo instead of a CSS-drawn square. */
+   emblem alone, cropped from the same logo file (see .brand-logo--mark). */
 .sidebar-brand .brand-logo--sidebar-mark {
   display: none;
 }
