@@ -56,7 +56,7 @@ def create_session(
             return JSONResponse(status_code=403, content=lesson_path.locked_payload(state))
     session = _run(
         svc.build_session, db, user, payload.source,
-        hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size,
+        hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size, locale=locale,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.

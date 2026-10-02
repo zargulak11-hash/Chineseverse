@@ -210,4 +210,67 @@ with TestClient(app) as client:
             assert len(ch) == 1 and "(" not in q["prompt"] and not re.search(r"[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]", q["prompt"]), q["prompt"]
     print("[PASS] placement tone questions ask about one character and no longer print its pinyin")
 
+    # ------------------------------------------------ one language per question, localized lesson rounds
+    CYR = re.compile(r"[А-Яа-яЁёҲҳҶҷҒғӢӣҚқӮӯ]")
+    LAT = re.compile(r"[A-Za-z]{2,}")
+    meaning_q = ("word_to_meaning", "listen_to_word", "char_to_meaning")
+    with SessionLocal() as db:
+        lesson_ids = [l.id for l, _lvl in ordered_lessons(db)]
+        u = db.get(models.User, uid)
+        for loc in ("ru", "tg"):
+            full = mixed = total = 0
+            for lid in lesson_ids:
+                s_ = practice_svc.build_session(db, u, "lesson", lesson_id=lid, locale=loc)
+                for q in practice_svc.render_session(db, s_, loc)["questions"]:
+                    if q["type"] not in meaning_q:
+                        continue
+                    total += 1
+                    cyr = [bool(CYR.search(o["label"] or "")) for o in q["options"]]
+                    full += all(cyr)
+                    mixed += any(cyr) and not all(cyr)
+            assert mixed == 0, (loc, mixed)
+            assert full / total >= 0.95, (loc, full, total)
+            print(f"[PASS] {loc}: {full}/{total} meaning questions of all 111 lesson rounds fully in {loc}, none mixed")
+        for lvl in (2, 5, 7):
+            s_ = practice_svc.build_session(db, u, "vocab", hsk_level=lvl, size=20, locale="ru")
+            for q in practice_svc.render_session(db, s_, "ru")["questions"]:
+                if q["type"] in meaning_q:
+                    cyr = [bool(CYR.search(o["label"] or "")) for o in q["options"]]
+                    assert all(cyr) or not any(cyr), q
+                if q["type"] == "listen_to_word":
+                    assert q["prompt"].get("pinyin"), q
+    print("[PASS] level practice in ru: options never mix languages; listening prompts carry pinyin for devices without a Chinese voice")
+
+    # ------------------------------------------------ cross-reference glosses are not practiced
+    with SessionLocal() as db:
+        refs = [w for w in db.query(models.VocabularyWord) if REFERENCE.match((w.meanings or "").split(";")[0].strip())]
+        assert len(refs) == 9 and not any(practice_svc._usable("vocab", w) for w in refs)
+    print("[PASS] the 9 words whose only gloss is a cross-reference never appear in practice")
+
+    # ------------------------------------------------ reused translations
+    with SessionLocal() as db:
+        tr_ = {(t.content_type, t.content_key, t.locale): t.text for t in db.query(models.ContentTranslation).filter(
+            models.ContentTranslation.content_type.in_(("vocab_word", "hanzi")))}
+        assert tr_[("vocab_word", str(word(db, 1, "半").id), "ru")] == "половина"
+        gou = db.query(models.Hanzi).filter_by(character="狗").first()
+        assert tr_[("hanzi", str(gou.id), "ru")] == "собака"
+        dai = db.query(models.Hanzi).filter_by(character="带").first()
+        assert ("hanzi", str(dai.id), "ru") not in tr_, "带 'belt' must not take the word 带 'to carry'"
+    print("[PASS] reused ru/tg meanings only where reading and sense match (半, 狗; not 带)")
+
+    # ------------------------------------------------ placement test in the learner's language
+    for loc, script in (("ru", CYR), ("tg", CYR), ("zh", re.compile(r"[㐀-鿿]"))):
+        start = expect(client, "post", "/api/onboarding/placement-test/start", 200, headers={**h, "X-Locale": loc})
+        for q in start["questions"]:
+            if q["type"] in ("pinyin", "meaning", "reaction", "recognition"):
+                continue  # the prompt is the Chinese word / a meaning
+            assert not LAT.search(q["prompt"].replace("🔊", "")) or (q["type"] == "translate" and loc != "zh"), (loc, q["prompt"])
+            if loc == "zh":
+                assert q["type"] not in ("translate", "recognition", "character"), q
+            assert script.search(q["prompt"]), (loc, q["prompt"])
+        if loc != "zh":
+            opts = [o for q in start["questions"] if q["type"] in ("meaning", "reaction", "listening", "memory") for o in q["options"] or []]
+            assert opts and all(CYR.search(o) for o in opts), (loc, [o for o in opts if not CYR.search(o)][:5])
+    print("[PASS] placement test prompts and meaning options are in ru / tg / zh")
+
 print("ALL CONTENT QUALITY TESTS PASSED")

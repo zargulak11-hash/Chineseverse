@@ -781,6 +781,7 @@
     "again": "再练一轮",
     "counter": "{{n}} / {{total}}",
     "playAgain": "再听一遍",
+    "noChineseVoice": "此设备没有中文语音，请看拼音作答。",
     "correct": "答对了！",
     "notQuite": "不太对",
     "masteryNow": "当前掌握度 {{value}}%",

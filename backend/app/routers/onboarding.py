@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
 from app.routers.duels import _build_questions
 from app.services.gamification import ensure_user_skills, user_rank
 
@@ -32,6 +32,7 @@ def _get_or_create_profile(db: Session, user: models.User) -> models.UserProfile
 def start_placement_test(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     levels = (
         db.query(models.HSKLevel)
@@ -44,7 +45,7 @@ def start_placement_test(
 
     all_questions = []
     for hsk in levels:
-        questions = _build_questions(db, hsk.id, focus_type="meaning")
+        questions = _build_questions(db, hsk.id, focus_type="meaning", locale=locale)
         for q in questions:
             q["level"] = hsk.level
         all_questions.extend(questions)

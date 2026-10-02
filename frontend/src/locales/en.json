@@ -782,6 +782,7 @@
     "again": "Practice again",
     "counter": "{{n}} / {{total}}",
     "playAgain": "Play again",
+    "noChineseVoice": "No Chinese voice on this device, so read the pinyin instead.",
     "correct": "Correct!",
     "notQuite": "Not quite",
     "masteryNow": "Mastery now {{value}}%",

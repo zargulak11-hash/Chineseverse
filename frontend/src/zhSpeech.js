@@ -27,6 +27,17 @@ if (typeof window !== "undefined" && window.speechSynthesis) {
 }
 
 /**
+ * Whether this device can say Chinese aloud: false without speechSynthesis,
+ * or once the voice list has loaded and holds no Chinese voice. An empty
+ * list (still loading) counts as able -- the browser may yet provide one.
+ */
+export function canSpeakChinese() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+  const voices = window.speechSynthesis.getVoices();
+  return !voices.length || !!pickChineseVoice();
+}
+
+/**
  * Speaks `text` aloud in Mandarin Chinese. `options.profile` (optional)
  * carries {rate, pitch, volume} for a per-character voice (e.g. the Daily
  * Voice Companion's per-animal profile); omitted, it just uses natural

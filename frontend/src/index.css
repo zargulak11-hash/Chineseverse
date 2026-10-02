@@ -3728,6 +3728,12 @@ table.data td {
   font-size: clamp(17px, 3.6vw, 22px);
   font-weight: 700;
 }
+/* Listening on a device without a Chinese voice: the reading replaces the
+   audio (Practice.jsx), so the question stays answerable. */
+.practice-no-voice {
+  margin-top: var(--space-2);
+  text-align: center;
+}
 .practice-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

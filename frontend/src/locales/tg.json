@@ -782,6 +782,7 @@
     "again": "Боз машқ",
     "counter": "{{n}} / {{total}}",
     "playAgain": "Боз гӯш кардан",
+    "noChineseVoice": "Дар ин дастгоҳ овози чинӣ нест — пиньинро хонед.",
     "correct": "Дуруст!",
     "notQuite": "На он қадар",
     "masteryNow": "Азхудкунӣ: {{value}}%",

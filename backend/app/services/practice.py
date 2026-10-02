@@ -140,9 +140,15 @@ def _grammar_example(topic: models.GrammarTopic) -> str | None:
     return None
 
 
+# A gloss that only points elsewhere ("see 干嘛", "variant of 淳朴", "abbr.
+# for 体格检查") carries no meaning to test; 9 words keep one because their
+# source entry has nothing else (see alembic c8e4a1f6b2d9).
+_REFERENCE_GLOSS = re.compile(r"^(?:see|variant of|old variant of|abbr\. for)\s+\S+\s*$", re.I)
+
+
 def _usable(item_type: str, row) -> bool:
     if item_type == "vocab":
-        return bool(row.simplified and row.meanings and row.pinyin)
+        return bool(row.simplified and row.meanings and row.pinyin) and not _REFERENCE_GLOSS.match(row.meanings)
     if item_type == "hanzi":
         return bool(row.character and row.meaning and row.pinyin)
     return _grammar_example(row) is not None
@@ -275,7 +281,20 @@ def _option_label_key(qtype: str, row) -> str:
     return row.title
 
 
-def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Random, k: int = 3) -> list[int]:
+# Questions whose options are meanings, and where those meanings live.
+_MEANING_OPTIONS = {"word_to_meaning": "vocab_word", "listen_to_word": "vocab_word", "char_to_meaning": "hanzi"}
+
+
+def _translated_ids(db: Session, content_type: str, locale: str) -> set[int]:
+    field = "meanings" if content_type == "vocab_word" else "meaning"
+    return {
+        int(k) for (k,) in db.query(models.ContentTranslation.content_key).filter_by(
+            content_type=content_type, field=field, locale=locale)
+    }
+
+
+def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Random, k: int = 3,
+                 prefer: set[int] | None = None) -> list[int]:
     model, id_field = _MODEL[item_type]
     pool = db.query(model).filter(id_field == target.hsk_level_id, model.id != target.id).all()
     pool = [r for r in pool if _usable(item_type, r)]
@@ -289,6 +308,10 @@ def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Ra
         pool = same + rest
     else:
         rng.shuffle(pool)
+    if prefer:
+        # Options in the learner's language first, so all four can be shown
+        # in it (one language per question -- see _option_labels).
+        pool = [r for r in pool if r.id in prefer] + [r for r in pool if r.id not in prefer]
     taken = {_option_label_key(qtype, target)}
     out = []
     for r in pool:
@@ -302,9 +325,15 @@ def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Ra
     return out
 
 
-def _question(db: Session, item_type: str, row, index: int, rng: random.Random) -> dict | None:
+def _question(db: Session, item_type: str, row, index: int, rng: random.Random,
+              translated: dict[str, set[int]] | None = None) -> dict | None:
     qtype = _pick_type(item_type, index)
-    distractors = _distractors(db, item_type, qtype, row, rng)
+    content_type = _MEANING_OPTIONS.get(qtype)
+    prefer = (translated or {}).get(content_type) if content_type else None
+    # Only worth it when the answer itself is translated.
+    if prefer is not None and row.id not in prefer:
+        prefer = None
+    distractors = _distractors(db, item_type, qtype, row, rng, prefer=prefer)
     if len(distractors) < 2:
         return None
     options = distractors + [row.id]
@@ -317,7 +346,7 @@ def _question(db: Session, item_type: str, row, index: int, rng: random.Random) 
 
 def build_session(
     db: Session, user: models.User, source: str, *, hsk_level: int | None = None,
-    lesson_id: int | None = None, size: int = 10,
+    lesson_id: int | None = None, size: int = 10, locale: str = "en",
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -345,9 +374,15 @@ def build_session(
         if not picked:
             return None
 
+    # ru / tg meanings that really exist (zh "meanings" are the words
+    # themselves, never shown as options -- see _labels).
+    translated = (
+        {ct: _translated_ids(db, ct, locale) for ct in ("vocab_word", "hanzi")}
+        if locale in ("ru", "tg") else None
+    )
     questions = []
     for i, (item_type, row) in enumerate(picked):
-        q = _question(db, item_type, row, i, rng)
+        q = _question(db, item_type, row, i, rng, translated)
         if q:
             questions.append(q)
     if not questions:
@@ -451,12 +486,15 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
     for q in questions:
         ids[q["item_type"]].update(q["option_ids"])
     out: dict[str, dict[int, str]] = {}
+    # Ids whose label really is in the learner's language (not a fallback).
+    translated: dict[str, set[int]] = {}
     for item_type, content_type, field in (
         ("vocab", "vocab_word", "meanings"), ("hanzi", "hanzi", "meaning"), ("grammar", "grammar_topic", "title"),
     ):
         rows = db.query(_MODEL[item_type][0]).filter(_MODEL[item_type][0].id.in_(ids[item_type] or {0})).all()
         trs = load_translations(db, content_type, [str(r.id) for r in rows], locale)
         out[item_type] = {}
+        translated[item_type] = set()
         for r in rows:
             label = tr(trs, r.id, field, getattr(r, field))
             # The zh "meaning" of a word is the word itself (a mirror, see
@@ -466,8 +504,22 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
             own = getattr(r, "simplified", None) or getattr(r, "character", None)
             if item_type != "grammar" and own and (label or "").strip() == own:
                 label = getattr(r, field)
+            if label != getattr(r, field):
+                translated[item_type].add(r.id)
             out[item_type][r.id] = label
+    out["translated"] = translated
     return out
+
+
+def _option_labels(labels: dict, item_type: str, option_ids: list[int], rows: dict[int, object]) -> dict[int, str]:
+    """One language for all options of a question. If any option has no
+    translation in the learner's language, every option uses the source
+    text: a lone Russian option among English ones would give the answer
+    away (the translated words are the ones lessons teach)."""
+    field = {"vocab": "meanings", "hanzi": "meaning", "grammar": "title"}[item_type]
+    if all(oid in labels["translated"][item_type] for oid in option_ids):
+        return {oid: labels[item_type].get(oid) for oid in option_ids}
+    return {oid: getattr(rows[oid], field) for oid in option_ids if oid in rows}
 
 
 def render_session(db: Session, session: models.PracticeSession, locale: str) -> dict:
@@ -477,8 +529,10 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
         item_type, qtype = q["item_type"], q["type"]
         target = _row(db, item_type, q["item_id"])
         options = []
+        rows = {oid: r for oid in q["option_ids"] if (r := _row(db, item_type, oid)) is not None}
+        option_text = _option_labels(labels, item_type, list(rows), rows)
         for oid in q["option_ids"]:
-            r = _row(db, item_type, oid)
+            r = rows.get(oid)
             if r is None:
                 continue
             if qtype == "meaning_to_word":
@@ -488,13 +542,13 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
                 # to be sent the word to speak it (prompt.speak), so options
                 # in Chinese would let the answer be read straight off the
                 # payload. Hearing it and knowing what it means is the task.
-                label = _short(labels["vocab"].get(r.id))
+                label = _short(option_text.get(r.id))
             elif qtype == "char_to_meaning":
-                label = _short(labels["hanzi"].get(r.id))
+                label = _short(option_text.get(r.id))
             elif qtype == "char_to_pinyin":
                 label = r.pinyin
             else:
-                label = _short(labels["grammar"].get(r.id), 90)
+                label = _short(option_text.get(r.id), 90)
             options.append({"id": oid, "label": label})
         prompt: dict = {}
         if target is not None:
@@ -503,7 +557,10 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
             elif qtype == "word_to_meaning":
                 prompt = {"text": target.simplified, "pinyin": target.pinyin, "speak": target.simplified}
             elif qtype == "listen_to_word":
-                prompt = {"speak": target.simplified}
+                # pinyin: shown only on a device that cannot speak Chinese, so
+                # the question stays answerable there (the options are
+                # meanings, so the reading does not give the answer away).
+                prompt = {"speak": target.simplified, "pinyin": target.pinyin}
             elif qtype in ("char_to_meaning", "char_to_pinyin"):
                 prompt = {"text": target.character, "speak": target.character if qtype == "char_to_meaning" else None}
             else:

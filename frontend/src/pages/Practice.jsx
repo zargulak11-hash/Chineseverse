@@ -8,7 +8,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
-import { speakChinese } from "../zhSpeech.js";
+import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 
 // One practice/review round. Everything that counts -- which option is
 // correct, mastery, mistakes, Learning DNA, XP, lesson completion -- is
@@ -317,10 +317,19 @@ export default function Practice({ forceSource }) {
             <p className="sub" style={{ marginBottom: 8 }}>{t(`practice.q.${question.type}`)}</p>
             <div className="practice-prompt">
               {question.type === "listen_to_word" ? (
-                <button type="button" className="btn" onClick={() => speakChinese(question.prompt.speak)}>
-                  <Icon name="ear" size={16} style={{ verticalAlign: -3, marginRight: 6 }} />
-                  {t("practice.playAgain")}
-                </button>
+                <>
+                  <button type="button" className="btn" onClick={() => speakChinese(question.prompt.speak)}>
+                    <Icon name="ear" size={16} style={{ verticalAlign: -3, marginRight: 6 }} />
+                    {t("practice.playAgain")}
+                  </button>
+                  {/* No Chinese voice on this device: read the pinyin instead. */}
+                  {!canSpeakChinese() && question.prompt.pinyin && (
+                    <div className="practice-no-voice">
+                      <div className="practice-text">{question.prompt.pinyin}</div>
+                      <p className="sub">{t("practice.noChineseVoice")}</p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className={bigPrompt ? "practice-hanzi" : "practice-text"}>{question.prompt.text}</div>

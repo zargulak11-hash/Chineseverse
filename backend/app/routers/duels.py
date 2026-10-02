@@ -19,6 +19,7 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import duel as duel_svc
 from app.services.gamification import user_rank
+from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/duels", tags=["duels"])
 
@@ -32,6 +33,45 @@ router = APIRouter(prefix="/api/duels", tags=["duels"])
 QUESTION_COUNT = 5
 
 TONE_LABELS = {1: "1st tone", 2: "2nd tone", 3: "3rd tone", 4: "4th tone", 5: "neutral tone"}
+
+# The placement test is shown in the learner's language: its prompts used to
+# be English for everyone. Answers are stored in the same language when the
+# test starts, so grading (an exact text match) is unaffected. Chinese words
+# and pinyin are the content being tested and stay as they are.
+PLACEMENT_TEXT = {
+    "en": {
+        "translate": "{meaning} → Chinese",
+        "tone": "What tone is 「{word}」?",
+        "character": 'Which character means "{meaning}"?',
+        "listening": "🔊 Listen, then choose the meaning",
+        "memory": "What did the PREVIOUS word 「{word}」 mean?",
+        "tones": TONE_LABELS,
+    },
+    "ru": {
+        "translate": "{meaning} → по-китайски",
+        "tone": "Какой тон у «{word}»?",
+        "character": "Какой иероглиф означает «{meaning}»?",
+        "listening": "🔊 Послушайте и выберите значение",
+        "memory": "Что означало ПРЕДЫДУЩЕЕ слово «{word}»?",
+        "tones": {1: "1-й тон", 2: "2-й тон", 3: "3-й тон", 4: "4-й тон", 5: "нейтральный тон"},
+    },
+    "tg": {
+        "translate": "{meaning} → ба забони чинӣ",
+        "tone": "Оҳанги «{word}» кадом аст?",
+        "character": "Кадом иероглиф маънои «{meaning}»-ро дорад?",
+        "listening": "🔊 Гӯш кунед ва маъноро интихоб кунед",
+        "memory": "Калимаи ПЕШИНА «{word}» чӣ маъно дошт?",
+        "tones": {1: "оҳанги 1", 2: "оҳанги 2", 3: "оҳанги 3", 4: "оҳанги 4", 5: "оҳанги нейтралӣ"},
+    },
+    "zh": {
+        "translate": "{meaning} → 中文",
+        "tone": "「{word}」是第几声？",
+        "character": "哪个汉字的意思是“{meaning}”？",
+        "listening": "🔊 听一听，选出意思",
+        "memory": "上一个词「{word}」是什么意思？",
+        "tones": {1: "第一声", 2: "第二声", 3: "第三声", 4: "第四声", 5: "轻声"},
+    },
+}
 _TONE_MARKS = {1: "āēīōūǖ", 2: "áéíóúǘ", 3: "ǎěǐǒǔǚ", 4: "àèìòùǜ"}
 
 
@@ -43,8 +83,25 @@ def _tone_of(pinyin: str) -> int:
     return 5
 
 
-def _meaning_of(word: models.VocabularyWord) -> str:
-    return (word.meanings or word.simplified).split(",")[0].strip()
+def _meaning_of(word: models.VocabularyWord, labels: dict[int, str] | None = None) -> str:
+    text = (labels or {}).get(word.id) or word.meanings or word.simplified
+    return text.split(",")[0].split(";")[0].strip()
+
+
+def _meaning_labels(db: Session, words, locale: str) -> dict[int, str]:
+    """Each word's meaning in the learner's language -- or {} (the English
+    glosses) unless every word has a real translation. The zh "meaning"
+    that is the word itself never counts: it would print the answer."""
+    trs = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
+    out = {}
+    for w in words:
+        label = tr(trs, w.id, "meanings", w.meanings)
+        if (label or "").strip() == w.simplified or label == w.meanings:
+            # One language for the whole set: a lone translated meaning
+            # among English ones would give its question's answer away.
+            return {}
+        out[w.id] = label
+    return out
 
 
 VALID_FOCUS_TYPES = {"pinyin", "meaning", "translate", "recognition", "tone", "character", "listening", "reaction", "memory"}
@@ -52,13 +109,25 @@ FOCUS_HIT_RATE = 0.7  # a "focused" duel is mostly-but-not-only that type, so it
 
 
 def _build_questions(
-    db: Session, level_id: int | None, word_pool=None, focus_type: str | None = None
+    db: Session, level_id: int | None, word_pool=None, focus_type: str | None = None, locale: str = "en",
 ) -> list[dict]:
     if word_pool is None:
         query = db.query(models.VocabularyWord)
         if level_id is not None:
             query = query.filter(models.VocabularyWord.hsk_level_id == level_id)
         words = query.limit(40).all()
+        if locale != "en" and level_id is not None:
+            # Prefer this level's words that have a meaning in the learner's
+            # language, so the whole test can be shown in it.
+            keys = {
+                int(t.content_key)
+                for t in db.query(models.ContentTranslation.content_key).filter_by(
+                    content_type="vocab_word", field="meanings", locale=locale)
+            }
+            local = [w for w in db.query(models.VocabularyWord).filter_by(hsk_level_id=level_id).order_by(models.VocabularyWord.id)
+                     if w.id in keys]
+            if len(local) >= QUESTION_COUNT + 3:
+                words = local[:40]
     else:
         words = word_pool
     if not words:
@@ -66,24 +135,30 @@ def _build_questions(
 
     chosen = random.sample(words, k=min(QUESTION_COUNT, len(words)))
     single_char = [w for w in chosen if len(w.simplified) == 1]
+    text = PLACEMENT_TEXT.get(locale, PLACEMENT_TEXT["en"])
+    labels = _meaning_labels(db, chosen, locale)
 
     # "tone" is only asked about a single character: the prompt cannot show
     # the pinyin (its tone mark IS the answer), and a word without it has
     # one tone per syllable.
     base_types = ["pinyin", "meaning", "translate", "recognition", "listening", "reaction"]
+    if locale == "zh":
+        # There are no Chinese glosses (a zh "meaning" is the word itself), so
+        # a prompt that IS a meaning would be English in the Chinese UI.
+        base_types = [t for t in base_types if t not in ("translate", "recognition")]
     questions = []
     for i, word in enumerate(chosen):
         pool = list(base_types)
         if word in single_char:
             pool.append("tone")
-        if word in single_char and len(single_char) >= 2:
+        if word in single_char and len(single_char) >= 2 and locale != "zh":
             pool.append("character")
         if focus_type and focus_type in pool and random.random() < FOCUS_HIT_RATE:
             qtype = focus_type
         else:
             qtype = random.choice(pool)
 
-        meaning = _meaning_of(word)
+        meaning = _meaning_of(word, labels)
         others = [w for w in chosen if w.id != word.id]
         options = None
         tts_text = None
@@ -93,25 +168,25 @@ def _build_questions(
             options = [answer] + random.sample([w.pinyin for w in others], k=min(3, len(others)))
         elif qtype in ("meaning", "reaction"):
             prompt, answer = word.simplified, meaning
-            options = [answer] + random.sample([_meaning_of(w) for w in others], k=min(3, len(others)))
+            options = [answer] + random.sample([_meaning_of(w, labels) for w in others], k=min(3, len(others)))
         elif qtype == "translate":
-            prompt, answer = f"{meaning} → Chinese", word.simplified
+            prompt, answer = text["translate"].format(meaning=meaning), word.simplified
             options = [answer] + random.sample([w.simplified for w in others], k=min(3, len(others)))
         elif qtype == "recognition":
             prompt, answer = meaning, word.simplified  # no options — spoken aloud
         elif qtype == "tone":
             tone = _tone_of(word.pinyin)
-            prompt, answer = f"What tone is 「{word.simplified}」?", TONE_LABELS[tone]
-            other_labels = [v for k, v in TONE_LABELS.items() if k != tone]
+            prompt, answer = text["tone"].format(word=word.simplified), text["tones"][tone]
+            other_labels = [v for k, v in text["tones"].items() if k != tone]
             options = [answer] + random.sample(other_labels, k=min(3, len(other_labels)))
         elif qtype == "character":
-            prompt, answer = f'Which character means "{meaning}"?', word.simplified
+            prompt, answer = text["character"].format(meaning=meaning), word.simplified
             other_chars = [w.simplified for w in single_char if w.id != word.id]
             options = [answer] + random.sample(other_chars, k=min(3, len(other_chars)))
         else:  # listening
-            prompt, answer = "🔊 Listen, then choose the meaning", meaning
+            prompt, answer = text["listening"], meaning
             tts_text = word.simplified
-            options = [answer] + random.sample([_meaning_of(w) for w in others], k=min(3, len(others)))
+            options = [answer] + random.sample([_meaning_of(w, labels) for w in others], k=min(3, len(others)))
 
         if options is not None:
             random.shuffle(options)
@@ -140,14 +215,14 @@ def _build_questions(
             mem_indices = [random.choice(eligible)]
         for mem_idx in mem_indices:
             prev_word = chosen[mem_idx - 1]
-            prev_meaning = _meaning_of(prev_word)
-            distractors = [_meaning_of(w) for w in chosen if w.id != prev_word.id]
+            prev_meaning = _meaning_of(prev_word, labels)
+            distractors = [_meaning_of(w, labels) for w in chosen if w.id != prev_word.id]
             mem_options = [prev_meaning] + random.sample(distractors, k=min(3, len(distractors)))
             random.shuffle(mem_options)
             questions[mem_idx] = {
                 "index": mem_idx,
                 "type": "memory",
-                "prompt": f"What did the PREVIOUS word 「{prev_word.simplified}」 mean?",
+                "prompt": text["memory"].format(word=prev_word.simplified),
                 "options": mem_options,
                 "answer": prev_meaning,
                 "tts_text": None,
