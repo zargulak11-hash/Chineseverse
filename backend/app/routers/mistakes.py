@@ -1,10 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas
-from app.crud import get_or_404
 from app.database import get_db
 from app.deps import get_current_user
 from app.services.gamification import check_achievements
@@ -49,7 +48,10 @@ def patch_mistake(
         .first()
     )
     if mistake is None:
-        get_or_404(db, models.LearningMistake, mistake_id)
+        # Someone else's row (or none at all) is a 404 either way. This used
+        # to call get_or_404 and drop its result, so another user's id fell
+        # through to mistake.next_review_at on None -- a 500, and an id leak.
+        raise HTTPException(status_code=404, detail=f"LearningMistake with id {mistake_id} not found")
     if payload.request_retest:
         # Bump it to the front of the review queue — this does NOT grant
         # mastery. Mastery only ever comes from reinforce_mistake(), which

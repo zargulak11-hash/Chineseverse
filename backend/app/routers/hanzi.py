@@ -41,6 +41,11 @@ class ReviewResponse(BaseModel):
     # The permanent companion's reaction to this real result
     # (services/companion_reaction.py); optional so the shape stays compatible.
     reaction: dict | None = None
+    # False when a "got it" arrived before the card was due: the visit is
+    # still activity, but the schedule, mastery, DNA, quests and missions
+    # don't move (see review_hanzi).
+    counted: bool = True
+    next_review_at: datetime | None = None
 
 
 class WritePayload(BaseModel):
@@ -176,6 +181,26 @@ def review_hanzi(
         )
         db.add(rec)
 
+    # "Got it" is the learner's own word, so it may only count when the
+    # spaced-repetition schedule asks for this card. Without this, nine
+    # clicks in a row marked any character "mastered" and each one bumped
+    # Learning DNA, quests and missions. "Still learning" always counts:
+    # admitting a miss can't inflate anything.
+    now = datetime.utcnow()
+    if payload.correct and rec.next_review_at is not None and rec.next_review_at > now:
+        log_activity(db, user, "hanzi_review")
+        db.commit()
+        db.refresh(rec)
+        h_out = schemas.HanziWithStatus.model_validate(h)
+        translations = load_translations(db, "hanzi", [str(h.id)], locale)
+        h_out.meaning = tr(translations, h.id, "meaning", h_out.meaning)
+        h_out.status = rec.status
+        h_out.mastery = rec.mastery
+        h_out.writing_status = rec.writing_status
+        h_out.writing_mastery = rec.writing_mastery
+        return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status,
+                              counted=False, next_review_at=rec.next_review_at)
+
     apply_srs(rec, payload.correct, user)
 
     ensure_user_skills(db, user)
@@ -214,7 +239,8 @@ def review_hanzi(
         times_missed=rec.times_missed or 0, skill=skill_up,
         focus={"item_type": "hanzi", "hanzi": h.character, "pinyin": h.pinyin, "meaning": h_out.meaning},
     )
-    return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status, reaction=reaction)
+    return ReviewResponse(hanzi=h_out, mastery=round(rec.mastery, 1), status=rec.status, reaction=reaction,
+                          next_review_at=rec.next_review_at)
 
 
 @router.post("/{hanzi_id}/write", response_model=WriteResponse)

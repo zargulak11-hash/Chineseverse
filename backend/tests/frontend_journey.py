@@ -83,11 +83,13 @@ call("GET", f"/api/lessons/{locked['id']}", headers=H, expected=(403,))
 call("POST", "/api/progress", {"lesson_id": cur, "status": "completed"}, headers=H, expected=(403,))
 print(f"  OK current lesson '{fl['title']}' opens; locked lesson and self-completion are refused")
 
-print("\n== Vocabulary (GET /api/vocab + POST review) ==")
+print("\n== Vocabulary (GET /api/vocab + a graded practice round) ==")
 words = call("GET", "/api/vocab?hsk_level=1", headers=H)
 assert len(words) >= 20, f"expected >=20 HSK1 words, got {len(words)}"
-call("POST", f"/api/vocab/{words[0]['id']}/review", {"correct": True}, headers=H)
-print(f"  OK reviewed '{words[0]['simplified']}'")
+call("POST", f"/api/vocab/{words[0]['id']}/review", {"correct": True}, headers=H, expected=(404, 405))
+from quest_helpers import vocab_round  # noqa: E402
+vocab_round(call, H)
+print("  OK self-graded review is refused; a graded vocabulary round plays")
 
 print("\n== World (locations + scenario detail) ==")
 locs = call("GET", "/api/world/locations", headers=H)
@@ -143,12 +145,8 @@ ready = [q for q in qs if q["completed"]]
 # (reviewing words always feeds it) to completion, then claim it.
 if not ready:
     vq = next(q for q in qs if q["quest_type"] == "vocab")
-    words = call("GET", "/api/vocab?hsk_level=1", headers=H)
-    i = 0
     while not ready:
-        w = words[i % len(words)]
-        call("POST", f"/api/vocab/{w['id']}/review", {"correct": True}, headers=H)
-        i += 1
+        vocab_round(call, H)
         q = call("GET", "/api/quests/today", headers=H)
         vq = next(x for x in q if x["quest_type"] == "vocab")
         if vq["completed"]:

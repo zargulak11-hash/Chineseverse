@@ -7,7 +7,6 @@ from app.deps import get_current_user, get_locale, get_user_or_none
 from app.services import ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
-    ensure_bond,
     ensure_user_skills,
     location_status,
     progress_missions,
@@ -96,7 +95,6 @@ def location_detail(
         raise HTTPException(status_code=404, detail="Location not found")
     current = 1
     if user:
-        ensure_bond(db, user)
         current, _ = user_rank(db, user)
 
     status = _computed_status(loc, current)
@@ -197,7 +195,7 @@ def solve_case(
         case_data.get("hint", ""),
     )
     solved = verdict["solved"]
-    progress_quests(db, user, "case" if solved else "case")
+    progress_quests(db, user, "case")
     if solved:
         progress_missions(db, user, "case", scenario_id=scenario.id)
         reinforce_mistake(db, user, "grammar", scenario.slug)
@@ -223,5 +221,6 @@ def solve_case(
         "solved": solved,
         "correct_answer": hint,
         "feedback": verdict["feedback"] or fallback_feedback,
-        "xp_reward": 50 if solved else 5,
+        # (An "xp_reward" of 50/5 used to be reported here although no XP was
+        # ever granted for it; the case's real reward is its mission's.)
     }

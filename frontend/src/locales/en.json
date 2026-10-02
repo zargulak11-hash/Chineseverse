@@ -128,7 +128,8 @@
     "haveAccount": "Already have an account?",
     "register": "Create account",
     "registerSub": "Pick a companion later — first, let's get you set up.",
-    "confirmPassword": "Confirm password"
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match"
   },
   "dashboard": {
     "goal": "goal {{minutes}} min/day",
@@ -661,6 +662,7 @@
       "recognitionProgress": "Recognition",
       "writingProgress": "Writing",
       "gotIt": "I recognize this",
+      "notDueYet": "Not due yet, so this didn't change your progress. The character comes back for review on {{date}}.",
       "stillLearning": "Still learning",
       "viewDetail": "Learn this character",
       "close": "Close"
@@ -993,5 +995,82 @@
       "invalidated": "This attempt was ended because the exam page was left. Score: 0.",
       "expired": "Time ran out before the exam was submitted. Score: 0."
     }
+  },
+  "voice": {
+    "title": "Daily Voice Companion",
+    "subtitle": "Choose an animal to talk with today. This choice is only for this voice session; it never changes your main Learning Companion.",
+    "loading": "Gathering companions…",
+    "talkTo": "Talk to {{name}}",
+    "sessionLabel": "{{voice}} · today's voice session",
+    "change": "Change companion",
+    "empty": "Say something in Chinese to start talking with {{name}}.",
+    "tone": {
+      "fast": "Fast, energetic voice",
+      "soft": "Soft, gentle voice",
+      "calm": "Calm, steady voice",
+      "deep": "Deep, confident voice",
+      "light": "Light, bright voice",
+      "warm": "Warm, easygoing voice"
+    },
+    "says": "{{name}} says",
+    "saysDefault": "Your companion says",
+    "goodAttempt": "Good attempt!",
+    "micUnsupported": "Voice input needs Chrome or Edge, so type instead.",
+    "micListening": "Listening… click to stop",
+    "micStart": "Click to speak",
+    "score": {
+      "pronunciation": "Pronunciation",
+      "tones": "Tones",
+      "fluency": "Fluency",
+      "grammar": "Grammar"
+    },
+    "focusTip": "Focus tip: {{skill}} was your softest spot this time, and that's exactly what {{name}} would practise with you next.",
+    "focusTipDefault": "Focus tip: {{skill}} was your softest spot this time, and that's exactly what your companion would practise with you next."
+  },
+  "ui": {
+    "heatmapLess": "Less",
+    "heatmapMore": "More",
+    "heatmapDay": "{{date}}: {{actions}} · {{minutes}} min",
+    "actions_one": "{{count}} action",
+    "actions_other": "{{count}} actions",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "openMenu": "Open menu",
+    "switchToPaper": "Switch to Rice Paper (light)",
+    "switchToInk": "Switch to Ink (dark)",
+    "toggleTheme": "Switch light/dark theme",
+    "googleNotConfigured": "Google Sign-In isn't set up for this site yet.",
+    "googleLoading": "Loading Google Sign-In…"
+  },
+  "apiErrors": {
+    "invalidLogin": "Invalid username or password.",
+    "usernameTaken": "This username is already taken.",
+    "emailTaken": "An account with this email already exists.",
+    "deactivated": "This account has been deactivated.",
+    "googleOtherAccount": "This email is linked to a different Google account.",
+    "googleNoEmail": "This Google account has no verified email.",
+    "sessionExpired": "Your session has ended. Please sign in again.",
+    "locationLocked": "This location isn't unlocked yet.",
+    "lessonLocked": "This lesson is locked. Complete the previous lesson first.",
+    "caseAboveLevel": "This case is above your current HSK level.",
+    "questNotDone": "This quest isn't completed yet.",
+    "questClaimed": "This reward has already been claimed.",
+    "imageType": "Only JPG, PNG or WEBP images are allowed.",
+    "imageSize": "The image must be 3 MB or smaller.",
+    "followSelf": "You can't follow yourself.",
+    "petNoContent": "Pet Teacher has no content yet.",
+    "lessonNoPractice": "This lesson has no words or grammar to practise yet.",
+    "notEnoughContent": "There isn't enough content at this level for a practice round yet.",
+    "roundFinished": "This practice round is already finished.",
+    "alreadyAnswered": "This question has already been answered.",
+    "answerOne": "Answer at least one question before finishing.",
+    "placementDone": "The placement test is part of onboarding, which you have already completed.",
+    "lessonByPractice": "A lesson is completed by passing its practice round.",
+    "noStrokeData": "There is no stroke data for this character yet.",
+    "missionLocked": "This mission opens at HSK {{level}}.",
+    "notFound": "This item could not be found.",
+    "invalidInput": "Some of the entered data isn't valid. Please check it and try again.",
+    "server": "Something went wrong on the server. Please try again in a moment.",
+    "requestFailed": "The request failed ({{status}}). Please try again."
   }
 }

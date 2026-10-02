@@ -28,12 +28,22 @@ def _get_or_create_profile(db: Session, user: models.User) -> models.UserProfile
     return profile
 
 
+def _placement_still_open(db: Session, user: models.User) -> None:
+    """Placement sets every Learning DNA skill from its score, so it belongs
+    to onboarding only (the app never offers it afterwards). Without this a
+    request could re-run it at any time and overwrite DNA earned since."""
+    profile = user.profile
+    if profile is not None and profile.onboarding_completed:
+        raise HTTPException(status_code=409, detail="The placement test is part of onboarding, which is already complete")
+
+
 @router.post("/placement-test/start", response_model=schemas.PlacementStartResponse)
 def start_placement_test(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
+    _placement_still_open(db, user)
     levels = (
         db.query(models.HSKLevel)
         .filter(models.HSKLevel.level <= MAX_TEST_LEVEL)
@@ -120,6 +130,7 @@ def submit_placement_test(
         raise HTTPException(status_code=404, detail="Placement attempt not found")
     if attempt.status != "active":
         raise HTTPException(status_code=409, detail="Placement attempt already finished")
+    _placement_still_open(db, user)
 
     submitted = {a.index: a.answer for a in payload.answers}
     correct_count = 0

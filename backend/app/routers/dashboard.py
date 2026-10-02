@@ -13,7 +13,6 @@ from app.routers.quests import _localize_quest
 from app.services.dna import compute_dna
 from app.services.gamification import (
     check_achievements,
-    ensure_bond,
     ensure_user_skills,
     generate_daily_quests,
     streak_snapshot,
@@ -32,7 +31,6 @@ def dashboard(
     locale: str = Depends(get_locale),
 ):
     ensure_user_skills(db, user)
-    ensure_bond(db, user)
     if user.streak is None:
         # A transient (never-flushed) UserStreak() would leave every column
         # at Python's bare None instead of the model's default=, since

@@ -1,43 +1,22 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
-from app.services.activity import log_activity
-from app.services import companion_reaction as cr
-from app.services.dna import bump_skill
-from app.services.srs import apply_srs
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
-from app.services.gamification import (
-    check_achievements,
-    ensure_user_skills,
-    progress_missions,
-    progress_quests,
-    record_mistake,
-    reinforce_mistake,
-)
+from app.services.gamification import ensure_user_skills
 
 router = APIRouter(prefix="/api/vocab", tags=["vocabulary"])
 
-
-class ReviewPayload(BaseModel):
-    correct: bool
-    # No client-chosen step size: "delta" used to be accepted here (up to 100),
-    # so one request with {"correct": true, "delta": 100} marked an item
-    # mastered. The step is the server's; an old client still sending
-    # "delta" is ignored, not rejected.
-
-
-class ReviewResponse(BaseModel):
-    word: schemas.WordWithStatus
-    mastery: float
-    status: str
-    reaction: dict | None = None  # permanent companion's reaction to this result
+# Read-only. POST /{word_id}/review used to take {"correct": true} from the
+# browser and apply it as a graded answer: nine requests in a row marked any
+# word "mastered", and each one bumped Learning DNA, quests and missions. No
+# screen called it any more -- words are learned through the server-graded
+# rounds in /api/practice -- so it was removed rather than kept as a bypass.
 
 
 @router.get("", response_model=list[schemas.WordWithStatus])
@@ -74,72 +53,3 @@ def list_words(
     # this is the "Memory of the World" reading the schedule it writes.
     out.sort(key=lambda w: (not w.due_for_review, w.id))
     return out
-
-
-@router.post("/{word_id}/review", response_model=ReviewResponse)
-def review_word(
-    word_id: int,
-    payload: ReviewPayload,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    locale: str = Depends(get_locale),
-):
-    word = db.get(models.VocabularyWord, word_id)
-    if word is None:
-        raise HTTPException(status_code=404, detail="Word not found")
-
-    rec = (
-        db.query(models.UserVocabulary)
-        .filter_by(user_id=user.id, word_id=word_id)
-        .first()
-    )
-    status_before = rec.status if rec is not None else None
-    if rec is None:
-        rec = models.UserVocabulary(
-            user_id=user.id, word_id=word_id,
-            times_seen=0, times_missed=0, mastery=0.0, status="new",
-        )
-        db.add(rec)
-
-    apply_srs(rec, payload.correct, user)
-
-    # A vocab review is real "vocabulary" activity for Learning DNA too —
-    # same +2.0/-0.3 convention duels already use for a correct/incorrect
-    # answer, so this doesn't invent a second tuning scale.
-    ensure_user_skills(db, user)
-    skill_before = cr.skill_value(user, "vocabulary")
-    bump_skill(user, "vocabulary", 2.0 if payload.correct else -0.3)
-    skill_up = cr.skill_crossing("vocabulary", skill_before, cr.skill_value(user, "vocabulary"))
-
-    if payload.correct:
-        progress_quests(db, user, "vocab", amount=1)
-        progress_missions(db, user, "vocab")
-        reinforce_mistake(db, user, "word", word.simplified)
-    else:
-        record_mistake(
-            db, user, "word", word.simplified,
-            question_text=word.meanings, correct_answer=word.pinyin,
-        )
-
-    # log_activity also updates the streak (creating it if missing). The
-    # ad-hoc row this used to add set last_active_date=today with
-    # current_streak=0, so a first-day vocab review never started a streak.
-    log_activity(db, user, "vocab_review")
-    db.commit()
-    db.refresh(rec)
-    check_achievements(db, user)
-    word_out = schemas.WordWithStatus.model_validate(word)
-    translations = load_translations(db, "vocab_word", [str(word.id)], locale)
-    word_out.meanings = tr(translations, word.id, "meanings", word_out.meanings)
-    focus = {"item_type": "vocab", "hanzi": word.simplified, "pinyin": word.pinyin, "meaning": word_out.meanings}
-    if word.example:
-        focus.update(example=word.example, example_pinyin=word.example_pinyin)
-    return ReviewResponse(
-        word=word_out,
-        mastery=round(rec.mastery, 1),
-        status=rec.status,
-        reaction=cr.self_check_reaction(
-            user, item_type="vocab", correct=payload.correct, status_before=status_before, status_after=rec.status,
-            times_missed=rec.times_missed or 0, focus=focus, skill=skill_up,
-        ),
-    )

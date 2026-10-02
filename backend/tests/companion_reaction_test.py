@@ -260,22 +260,33 @@ with TestClient(app) as client:
     assert trace[2]["reaction"]["mood"] == "celebrating" and trace[2]["reaction"]["milestone"] == "writing_mastered", trace[2]
     print("[PASS] Hanzi tracing: clean -> proud, shaky -> encouraging, writing mastered -> celebrating")
 
-    # A client-sent "delta" no longer chooses the step: one review cannot jump
-    # a word to mastered; it takes repeated correct reviews (+10 each, >= 85).
-    v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": True, "delta": 100})
-    assert v["status"] != "mastered" and v["mastery"] <= 20, v
+    # A Hanzi "got it" is a self-check, so it only counts when the card is due
+    # (a client-sent "delta" never chooses the step). Time passing is
+    # simulated by moving the schedule back between reviews.
+    from datetime import datetime, timedelta
+
+    def make_due():
+        with SessionLocal() as db:
+            rec = db.query(models.UserHanzi).filter_by(user_id=uid, hanzi_id=hz_id).one()
+            rec.next_review_at = datetime.utcnow() - timedelta(minutes=1)
+            db.commit()
+
+    make_due()  # this character was already reviewed above
+    v = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True, "delta": 100})
+    assert v["counted"] and v["status"] != "mastered" and v["mastery"] <= 20, v
+    assert v["reaction"]["event"] == "self_check" and v["reaction"]["companion"] == {"slug": "fox"}, v["reaction"]
+    early = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True})
+    assert not early["counted"] and early["mastery"] == v["mastery"] and early["reaction"] is None, early
     for _ in range(10):
         if v["status"] == "mastered":
             break
-        v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": True})
+        make_due()
+        v = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True})
     assert v["status"] == "mastered" and v["reaction"]["milestone"] == "mastered" and v["reaction"]["mood"] == "proud", v["reaction"]
-    v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": False})
-    assert v["reaction"]["mood"] in ("encouraging", "serious"), v["reaction"]
-    g = expect(client, "post", f"/api/grammar/{topic_id}/practice", 200, headers=h, json={"correct": True})
-    assert g["reaction"]["event"] == "self_check" and g["reaction"]["companion"] == {"slug": "fox"}, g["reaction"]
     hr = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": False})
+    assert hr["counted"] and hr["reaction"]["mood"] in ("encouraging", "serious"), hr["reaction"]
     assert hr["reaction"]["focus"]["hanzi"] == hz.character
-    print("[PASS] vocab/grammar/Hanzi self-checks react (mastered word -> proud milestone)")
+    print("[PASS] Hanzi self-checks react (mastered -> proud milestone); an early 'got it' changes nothing")
 
     # ------------------------------------------------ review
     rv = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "review"})
@@ -290,7 +301,10 @@ with TestClient(app) as client:
     expect(client, "post", f"/api/practice/sessions/{sid}/answer", 404, headers=oh, json={"index": 5, "choice_id": stored[5]["item_id"]})
     expect(client, "post", f"/api/practice/sessions/{sid}/complete", 404, headers=oh)
     expect(client, "post", f"/api/hanzi/{hz_id}/write", 401, json={"total_mistakes": 0})
-    expect(client, "post", f"/api/vocab/{word_id}/review", 401, json={"correct": True})
+    expect(client, "post", f"/api/hanzi/{hz_id}/review", 401, json={"correct": True})
+    # the old self-graded vocab/grammar endpoints are gone
+    assert client.post(f"/api/vocab/{word_id}/review", headers=h, json={"correct": True}).status_code in (404, 405)
+    assert client.post(f"/api/grammar/{topic_id}/practice", headers=h, json={"correct": True}).status_code in (404, 405)
     print("[PASS] reactions stay behind the same auth/ownership checks (401/404)")
 
     # ------------------------------------------------ frontend species map covers the real roster

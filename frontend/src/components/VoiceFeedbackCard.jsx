@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { popIn } from "../motion.js";
 import { Bar } from "./ui.jsx";
 import AnimalAvatar from "./AnimalAvatar.jsx";
 import Icon from "./Icon.jsx";
 
+// [score field, icon]; labels come from voice.score.* in the locale files.
 const SCORE_FIELDS = [
-  ["pronunciation", "Pronunciation", "mic"],
-  ["tones", "Tones", "droplet"],
-  ["fluency", "Fluency", "trending"],
-  ["grammar", "Grammar", "book"],
+  ["pronunciation", "mic"],
+  ["tones", "droplet"],
+  ["fluency", "trending"],
+  ["grammar", "book"],
 ];
 
 function overallTone(score) {
@@ -24,8 +26,9 @@ function overallTone(score) {
 // it as your companion talking to you, and the weakest sub-score gets an
 // explicit, encouraging call-out — instead of a bare "72/100".
 export default function VoiceFeedbackCard({ attempt, reaction, companionSlug, companionName }) {
+  const { t } = useTranslation();
   if (!attempt) return null;
-  const scores = SCORE_FIELDS.map(([key, label, icon]) => ({ key, label, icon, value: attempt[key] ?? 0 }));
+  const scores = SCORE_FIELDS.map(([key, icon]) => ({ key, label: t(`voice.score.${key}`), icon, value: attempt[key] ?? 0 }));
   const weakest = scores.reduce((a, b) => (b.value < a.value ? b : a), scores[0]);
   const overall = Math.round(attempt.overall ?? 0);
   // The avatar's expression reflects the SAME score already driving the bar
@@ -43,8 +46,8 @@ export default function VoiceFeedbackCard({ attempt, reaction, companionSlug, co
           </span>
         )}
         <div className="voice-feedback-text">
-          <b>{companionName ? `${companionName} says` : "Your companion says"}</b>
-          <p className="sub" style={{ margin: 0 }}>{attempt.feedback || reaction || "Good attempt!"}</p>
+          <b>{companionName ? t("voice.says", { name: companionName }) : t("voice.saysDefault")}</b>
+          <p className="sub" style={{ margin: 0 }}>{attempt.feedback || reaction || t("voice.goodAttempt")}</p>
         </div>
         <span className="voice-feedback-overall" style={{ color: overallTone(overall) }}>
           {overall}
@@ -68,8 +71,9 @@ export default function VoiceFeedbackCard({ attempt, reaction, companionSlug, co
       {weakest.value < 70 && (
         <p className="voice-feedback-tip">
           <Icon name="target" size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
-          Focus tip: <b>{weakest.label.toLowerCase()}</b> was your softest spot this time — that's exactly
-          what {companionName || "your companion"} would drill next.
+          {companionName
+            ? t("voice.focusTip", { skill: weakest.label, name: companionName })
+            : t("voice.focusTipDefault", { skill: weakest.label })}
         </p>
       )}
     </motion.div>

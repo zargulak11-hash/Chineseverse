@@ -19,24 +19,16 @@ export function deriveVoiceProfile(personalityRow) {
   return { rate: Number(rate.toFixed(2)), pitch: Number(pitch.toFixed(2)), volume: 1 };
 }
 
-// Short "Trait • Trait • voice descriptor" label for the selection cards,
-// e.g. "Clever • playful • lively voice" -- built from the animal's own
-// traits plus a voice adjective derived from the same profile above.
-export function voiceLabel(personalityRow) {
-  const traits = (personalityRow?.traits || "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .slice(0, 2);
+// Which kind of voice the profile above produces, as an i18n key under
+// voice.tone.* (fast / soft / calm / deep / light / warm). This used to be an
+// English "trait • trait • voice" string; the raw traits exist only in
+// English, so the picker shows the animal's localized personality instead.
+export function voiceTone(personalityRow) {
   const { rate, pitch } = deriveVoiceProfile(personalityRow);
-
-  let descriptor;
-  if (rate >= 1.2) descriptor = "fast, energetic voice";
-  else if (rate <= 0.85 && pitch >= 1.1) descriptor = "soft, gentle voice";
-  else if (rate <= 0.85) descriptor = "calm, steady voice";
-  else if (pitch <= 0.9) descriptor = "deep, confident voice";
-  else if (pitch >= 1.15) descriptor = "light, bright voice";
-  else descriptor = "warm, easygoing voice";
-
-  return [...traits, descriptor].join(" • ");
+  if (rate >= 1.2) return "fast";
+  if (rate <= 0.85 && pitch >= 1.1) return "soft";
+  if (rate <= 0.85) return "calm";
+  if (pitch <= 0.9) return "deep";
+  if (pitch >= 1.15) return "light";
+  return "warm";
 }

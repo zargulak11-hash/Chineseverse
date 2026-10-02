@@ -71,7 +71,9 @@ with TestClient(app) as client:
     check("vocab hsk1", r.status_code == 200 and len(r.json()) > 20)
     word_id = r.json()[0]["id"]
     r = client.post(f"/api/vocab/{word_id}/review", json={"correct": True, "delta": 30}, headers=h)
-    check("vocab review", r.status_code == 200 and r.json()["mastery"] > 0 and r.json()["status"] in ("learning", "reviewing"))
+    check("self-graded vocab review is gone", r.status_code in (404, 405))
+    r = client.post("/api/practice/sessions", json={"source": "vocab", "hsk_level": 1, "size": 4}, headers=h)
+    check("graded vocab practice", r.status_code == 201 and len(r.json()["questions"]) == 4)
 
     # Voice attempt
     r = client.post("/api/voice/attempt", json={

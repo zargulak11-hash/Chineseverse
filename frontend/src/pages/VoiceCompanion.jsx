@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
@@ -6,10 +7,11 @@ import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
-import { deriveVoiceProfile, voiceLabel } from "../voiceProfile.js";
+import { deriveVoiceProfile, voiceTone } from "../voiceProfile.js";
 import { speakChinese } from "../zhSpeech.js";
 
 export default function VoiceCompanion() {
+  const { t, i18n } = useTranslation();
   const [animals, setAnimals] = useState(null);
   const [error, setError] = useState("");
   // Session-only choice. This never reads or writes user.animal_id / the
@@ -22,9 +24,10 @@ export default function VoiceCompanion() {
   const [sending, setSending] = useState(false);
   const [speaking, setSpeaking] = useState(false); // true while TTS is actually voicing the reply
 
+  // Refetch on language change: description/personality are localized.
   useEffect(() => {
     api.get("/animals").then(setAnimals).catch((e) => setError(e.message));
-  }, []);
+  }, [i18n.language]);
 
   function chooseCompanion(animal) {
     setSession(animal);
@@ -78,16 +81,13 @@ export default function VoiceCompanion() {
   }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!animals) return <Layout><Loading>Gathering companions…</Loading></Layout>;
+  if (!animals) return <Layout><Loading>{t("voice.loading")}</Loading></Layout>;
 
   if (!session) {
     return (
       <Layout>
-        <h1 className="h1">Daily Voice Companion</h1>
-        <p className="sub">
-          Choose your animal companion for today's conversation. This is just for this voice
-          session — it never changes your main Learning Companion.
-        </p>
+        <h1 className="h1">{t("voice.title")}</h1>
+        <p className="sub">{t("voice.subtitle")}</p>
 
         <div className="grid cards" style={{ marginTop: 18 }}>
           {animals.map((a) => (
@@ -98,10 +98,11 @@ export default function VoiceCompanion() {
               <div className="name">{a.name}</div>
               <div className="species">{a.species}</div>
               <div className="statsrow">
-                <span className="statpill">{voiceLabel(a.personality_row)}</span>
+                <span className="statpill">{t(`voice.tone.${voiceTone(a.personality_row)}`)}</span>
               </div>
+              {a.personality && <p className="sub" style={{ fontSize: "var(--text-xs)", marginTop: 8 }}>{a.personality}</p>}
               <button className="btn small primary" style={{ marginTop: 10 }}>
-                Talk to {a.name}
+                {t("voice.talkTo", { name: a.name })}
               </button>
             </div>
           ))}
@@ -121,18 +122,18 @@ export default function VoiceCompanion() {
           />
           <div>
             <h1 className="h1" style={{ marginBottom: 0 }}>{session.name}</h1>
-            <p className="sub">{voiceLabel(session.personality_row)} · today's voice session</p>
+            <p className="sub">{t("voice.sessionLabel", { voice: t(`voice.tone.${voiceTone(session.personality_row)}`) })}</p>
           </div>
         </div>
         <button className="btn ghost small" onClick={endSession}>
-          <Icon name="x" size={13} /> Change companion
+          <Icon name="x" size={13} /> {t("voice.change")}
         </button>
       </div>
 
       <div className="card" style={{ marginTop: 16 }}>
         <div className="chat" style={{ marginTop: 4 }}>
           {chat.length === 0 && (
-            <p className="sub center">Say something in Chinese to start talking with {session.name}.</p>
+            <p className="sub center">{t("voice.empty", { name: session.name })}</p>
           )}
           {chat.map((c, i) =>
             c.from === "me" ? (
@@ -156,18 +157,19 @@ export default function VoiceCompanion() {
           )}
         </div>
         <div className="row" style={{ marginTop: 14, alignItems: "stretch" }}>
-          <MicRecorder onTranscript={(t) => send(t)} disabled={sending} lang="zh-CN" />
+          <MicRecorder onTranscript={(text) => send(text)} disabled={sending} lang="zh-CN" />
           <input
             className="input"
             style={{ flex: 1 }}
-            placeholder="Tap the mic and speak, or type in Chinese…"
+            placeholder={t("pages.conversation.micPlaceholder")}
+            aria-label={t("pages.conversation.micPlaceholder")}
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             disabled={sending}
           />
           <button className="btn primary" onClick={() => send()} disabled={sending}>
-            {sending ? "…" : "Send"}
+            {sending ? "…" : t("pages.companion.send")}
           </button>
         </div>
       </div>

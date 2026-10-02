@@ -144,8 +144,8 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
             type="button"
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label="Toggle sidebar"
+            title={collapsed ? t("ui.expandSidebar") : t("ui.collapseSidebar")}
+            aria-label={collapsed ? t("ui.expandSidebar") : t("ui.collapseSidebar")}
           >
             <Icon name={collapsed ? "chevronRight" : "chevronLeft"} size={15} />
           </button>

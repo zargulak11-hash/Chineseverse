@@ -64,16 +64,16 @@ def practice_round(client, h, **body):
 today = datetime.utcnow().date()
 
 with TestClient(app) as client:
-    # --- a vocab review as the very first action (no streak row yet) starts
-    # the streak; it used to create a row with current_streak=0.
-    uid, h = register(client, "firstvocab")
+    # --- a Hanzi self-check as the very first action (no streak row yet)
+    # starts the streak; it used to create a row with current_streak=0.
+    uid, h = register(client, "firsthanzi")
     drop_streak(uid)
-    word = expect(client, "get", "/api/vocab?hsk_level=1", 200, headers=h)[0]
-    expect(client, "post", f"/api/vocab/{word['id']}/review", 200, headers=h, json={"correct": True})
+    first_hz = expect(client, "get", "/api/hanzi?hsk_level=1", 200, headers=h)[0]
+    expect(client, "post", f"/api/hanzi/{first_hz['id']}/review", 200, headers=h, json={"correct": True})
     s = streak_row(uid)
     assert s and s.current_streak == 1 and s.total_active_days == 1 and s.last_active_date == today, vars(s)
-    assert events(uid) == ["vocab_review"]
-    print("[PASS] a first-ever vocab review logs activity and starts the streak at 1")
+    assert events(uid) == ["hanzi_review"]
+    print("[PASS] a first-ever Hanzi self-check logs activity and starts the streak at 1")
 
     # --- first action = practice answer with no streak row: touch_streak runs
     # twice in one request (practice + log_activity) without a duplicate row.
@@ -96,13 +96,12 @@ with TestClient(app) as client:
     practice_round(client, h, source="hanzi", hsk_level=1)
     hz = expect(client, "get", "/api/hanzi?hsk_level=1", 200, headers=h)[0]
     expect(client, "post", f"/api/hanzi/{hz['id']}/review", 200, headers=h, json={"correct": True})
-    gt = expect(client, "get", "/api/grammar?hsk_level=1", 200, headers=h)[0]
-    expect(client, "post", f"/api/grammar/{gt['id']}/practice", 200, headers=h, json={"correct": False})
+    practice_round(client, h, source="grammar", hsk_level=1)
     lesson = next(l for l in expect(client, "get", "/api/lessons?hsk_level=1", 200, headers=h)
                   if expect(client, "get", f"/api/lessons/{l['id']}/items", 200, headers=h)["vocab"])
     practice_round(client, h, source="lesson", lesson_id=lesson["id"])
     kinds = set(events(uid))
-    assert {"practice_answer", "hanzi_review", "grammar_practice"} <= kinds, kinds
+    assert {"practice_answer", "hanzi_review"} <= kinds, kinds
     s = streak_row(uid)
     assert s.current_streak == 1 and s.total_active_days == 1 and s.last_active_date == today, vars(s)
     n = len(events(uid))
@@ -111,7 +110,7 @@ with TestClient(app) as client:
     assert a["days"][-1]["actions"] == n == a["today_actions"], (a["days"][-1], n)
     assert a["streak"]["current_streak"] == 1
     sections = {x["section"] for x in a["sections"]}
-    assert {"practice", "hanzi", "grammar"} <= sections, sections
+    assert {"practice", "hanzi"} <= sections, sections
     # XP still comes only from the existing rules (practice correct answers etc.)
     with SessionLocal() as db:
         assert (db.get(models.User, uid).total_xp or 0) >= xp_before

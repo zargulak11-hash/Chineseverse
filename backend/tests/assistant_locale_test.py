@@ -221,7 +221,8 @@ with TestClient(app) as client:
         assert "ONLY help" not in prompt and "decline" not in prompt, prompt
         assert "Do not refuse them" in prompt
         assert "never invent" in prompt and "read-only" in prompt
-        assert "HSK level estimated from Learning DNA: 1" in prompt, prompt
+        assert "current HSK level on the lesson path: 1" in prompt, prompt
+        assert "final exam" not in prompt, prompt  # HSK 1 lessons aren't done yet
         # The real lesson path position, in the learner's language (this prompt was a ru request).
         assert 'current lesson on the lesson path: "Приветствия" (HSK 1)' in prompt, prompt
         assert "items due in Review now: 1" in prompt, prompt  # the one open mistake
@@ -253,6 +254,23 @@ with TestClient(app) as client:
         assert "12%" in mastery_line and "55%" in mastery_line, mastery_line
         assert mastery_line.index("12%") < mastery_line.index("55%")  # weakest first
         print("[PASS] real Learning DNA skill mastery is passed, weakest first, in the selected language")
+
+        # At the exam gate the next step is the level's final exam, not a lesson.
+        from app.services.lesson_path import path_state
+        db = SessionLocal()
+        u = db.get(models.User, user_id)
+        for e in path_state(db, u).entries:
+            if e.level == 1 and e.practicable:
+                db.add(models.Progress(user_id=user_id, lesson_id=e.lesson.id, status="completed", score=90))
+        db.commit()
+        # (a deliberate write, like the DNA one above; chatting must add nothing on top)
+        progress_before = db.query(models.Progress).filter_by(user_id=user_id).count()
+        db.close()
+        chat(client, h, "Что мне делать дальше?", "ru")
+        prompt = captured[-1]["messages"][0]["content"]
+        assert "the next step is the HSK 1 final exam" in prompt, prompt
+        assert "current lesson on the lesson path" not in prompt, prompt
+        print("[PASS] at the exam gate the assistant is told the HSK 1 final exam is next")
 
         # Snapshot after the deliberate DNA write: chatting itself must not move anything.
         db = SessionLocal()
@@ -372,7 +390,7 @@ try:
         {"role": "user", "parts": [{"text": "Ман мехоҳам забони чиниро омӯзам"}]},
     ], body["contents"]
     system_text = body["systemInstruction"]["parts"][0]["text"]
-    assert "always reply in Tajik" in system_text and "HSK level estimated from Learning DNA" in system_text
+    assert "always reply in Tajik" in system_text and "current HSK level on the lesson path" in system_text
     # Visible answer budget + headroom for the model's hidden thinking, and
     # no model-specific thinking flags (gemini-3.x rejects some of them).
     assert body["generationConfig"]["maxOutputTokens"] == 700 + ai_client.THINKING_HEADROOM

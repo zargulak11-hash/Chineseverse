@@ -127,7 +127,8 @@
     "haveAccount": "已有账户？",
     "register": "创建账户",
     "registerSub": "伙伴稍后再选 — 我们先把账户设置好。",
-    "confirmPassword": "确认密码"
+    "confirmPassword": "确认密码",
+    "passwordMismatch": "两次输入的密码不一致"
   },
   "dashboard": {
     "goal": "目标 {{minutes}} 分钟/天",
@@ -660,6 +661,7 @@
       "recognitionProgress": "识别",
       "writingProgress": "书写",
       "gotIt": "我认识",
+      "notDueYet": "还没到复习时间，所以这次不计入进度。这个汉字将在 {{date}} 回到复习中。",
       "stillLearning": "还在学",
       "viewDetail": "学习这个汉字",
       "close": "关闭"
@@ -991,5 +993,81 @@
       "invalidated": "由于离开了考试页面，本次考试已终止。成绩：0。",
       "expired": "提交之前时间已到。成绩：0。"
     }
+  },
+  "voice": {
+    "title": "每日语音伙伴",
+    "subtitle": "选择今天和你对话的动物。这个选择只用于本次语音对话，不会改变你的主要学习伙伴。",
+    "loading": "正在召集伙伴…",
+    "talkTo": "和{{name}}聊天",
+    "sessionLabel": "{{voice}} · 今天的语音对话",
+    "change": "更换伙伴",
+    "empty": "用中文说点什么，开始和{{name}}聊天吧。",
+    "tone": {
+      "fast": "快速、活力充沛的声音",
+      "soft": "柔和、温柔的声音",
+      "calm": "冷静、平稳的声音",
+      "deep": "低沉、自信的声音",
+      "light": "轻快、明亮的声音",
+      "warm": "温暖、随和的声音"
+    },
+    "says": "{{name}}说",
+    "saysDefault": "你的伙伴说",
+    "goodAttempt": "说得不错！",
+    "micUnsupported": "语音输入需要 Chrome 或 Edge，请改为打字。",
+    "micListening": "正在听…点击停止",
+    "micStart": "点击说话",
+    "score": {
+      "pronunciation": "发音",
+      "tones": "声调",
+      "fluency": "流利度",
+      "grammar": "语法"
+    },
+    "focusTip": "重点提示：这次「{{skill}}」最薄弱，{{name}}接下来会和你重点练习这一项。",
+    "focusTipDefault": "重点提示：这次「{{skill}}」最薄弱，你的伙伴接下来会和你重点练习这一项。"
+  },
+  "ui": {
+    "heatmapLess": "少",
+    "heatmapMore": "多",
+    "heatmapDay": "{{date}}：{{actions}} · {{minutes}} 分钟",
+    "actions_other": "{{count}} 次活动",
+    "expandSidebar": "展开侧边栏",
+    "collapseSidebar": "收起侧边栏",
+    "openMenu": "打开菜单",
+    "switchToPaper": "切换到宣纸（浅色）",
+    "switchToInk": "切换到水墨（深色）",
+    "toggleTheme": "切换浅色/深色主题",
+    "googleNotConfigured": "本网站尚未设置 Google 登录。",
+    "googleLoading": "正在加载 Google 登录…"
+  },
+  "apiErrors": {
+    "invalidLogin": "用户名或密码错误。",
+    "usernameTaken": "该用户名已被使用。",
+    "emailTaken": "该邮箱已注册账号。",
+    "deactivated": "该账号已被停用。",
+    "googleOtherAccount": "该邮箱已关联另一个 Google 账号。",
+    "googleNoEmail": "该 Google 账号没有已验证的邮箱。",
+    "sessionExpired": "登录已失效，请重新登录。",
+    "locationLocked": "该地点尚未解锁。",
+    "lessonLocked": "该课程尚未解锁，请先完成上一课。",
+    "caseAboveLevel": "该案例高于你当前的 HSK 等级。",
+    "questNotDone": "该任务尚未完成。",
+    "questClaimed": "该奖励已领取。",
+    "imageType": "只能上传 JPG、PNG 或 WEBP 图片。",
+    "imageSize": "图片大小不能超过 3 MB。",
+    "followSelf": "不能关注自己。",
+    "petNoContent": "宠物老师模式暂时没有内容。",
+    "lessonNoPractice": "该课程暂时没有可练习的词语或语法。",
+    "notEnoughContent": "该等级的内容还不足以组成一轮练习。",
+    "roundFinished": "这一轮练习已经结束。",
+    "alreadyAnswered": "这道题已经回答过了。",
+    "answerOne": "请至少回答一道题后再结束。",
+    "placementDone": "分级测试是入门设置的一部分，你已经完成了。",
+    "lessonByPractice": "通过课程练习后，课程才算完成。",
+    "noStrokeData": "这个汉字暂时没有笔顺数据。",
+    "missionLocked": "该任务将在 HSK {{level}} 开放。",
+    "notFound": "找不到该内容。",
+    "invalidInput": "部分输入的数据无效，请检查后重试。",
+    "server": "服务器出了点问题，请稍后再试。",
+    "requestFailed": "请求失败（{{status}}），请重试。"
   }
 }

@@ -11,7 +11,6 @@ from app.services.activity import log_activity
 from app.services.gamification import (
     add_bond_points,
     check_achievements,
-    ensure_bond,
     progress_missions,
     reinforce_mistake,
     user_rank,
@@ -44,7 +43,21 @@ def get_lesson(
         .all()
     )
     if not cases:
-        cases = db.query(models.PetTeacherCase).all()
+        # Nothing at or below the learner's level yet: the easiest cases,
+        # not every case (answer_lesson accepts the same reach).
+        lowest = (
+            db.query(models.HSKLevel.level)
+            .join(models.PetTeacherCase, models.PetTeacherCase.hsk_level_id == models.HSKLevel.id)
+            .order_by(models.HSKLevel.level)
+            .first()
+        )
+        if lowest:
+            cases = (
+                db.query(models.PetTeacherCase)
+                .join(models.HSKLevel, models.PetTeacherCase.hsk_level_id == models.HSKLevel.id)
+                .filter(models.HSKLevel.level == lowest[0])
+                .all()
+            )
     if not cases:
         raise HTTPException(status_code=404, detail="No Pet Teacher content available yet")
 
@@ -70,6 +83,21 @@ def answer_lesson(
     case = db.get(models.PetTeacherCase, case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
+    # GET /lesson only hands out cases at or below the learner's level; an
+    # answer to a higher one is refused the same way, not taught.
+    level, _mastery = user_rank(db, user)
+    lowest = (
+        db.query(models.HSKLevel.level)
+        .join(models.PetTeacherCase, models.PetTeacherCase.hsk_level_id == models.HSKLevel.id)
+        .order_by(models.HSKLevel.level)
+        .first()
+    )
+    # Same reach as GET /lesson, including its "nothing at your level yet"
+    # fallback to the easiest cases.
+    allowed = max(level, lowest[0] if lowest else level)
+    case_level = db.get(models.HSKLevel, case.hsk_level_id)
+    if case_level is not None and case_level.level > allowed:
+        raise HTTPException(status_code=403, detail="This case is above your current HSK level")
 
     correct_fix = _normalize(payload.correction) == _normalize(case.correct_sentence)
     verdict = ai_client.evaluate_pet_teacher_explanation(
@@ -78,7 +106,6 @@ def answer_lesson(
     understood = verdict["understood"]
     success = correct_fix and understood
 
-    ensure_bond(db, user)
     if success:
         already = (
             db.query(models.UserTaughtFact)
@@ -87,8 +114,12 @@ def answer_lesson(
         )
         if already is None:
             db.add(models.UserTaughtFact(user_id=user.id, case_id=case.id))
-        add_bond_points(user, points=5)
-        progress_missions(db, user, "teach")
+            # Only a newly taught fact earns bond points and moves "teach"
+            # missions: re-submitting a case already solved (its answer is
+            # known) used to count each time -- a dozen repeats reached bond
+            # level 3 and its achievement.
+            add_bond_points(user, points=5)
+            progress_missions(db, user, "teach")
         if case.grammar_topic_id:
             topic = db.get(models.GrammarTopic, case.grammar_topic_id)
             if topic:

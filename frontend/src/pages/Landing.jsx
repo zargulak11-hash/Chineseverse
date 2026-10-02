@@ -41,8 +41,8 @@ export default function Landing() {
             type="button"
             className="theme-toggle"
             onClick={toggleTheme}
-            title={theme === "ink" ? "Switch to Rice Paper" : "Switch to Ink"}
-            aria-label="Toggle light/dark theme"
+            title={theme === "ink" ? t("ui.switchToPaper") : t("ui.switchToInk")}
+            aria-label={t("ui.toggleTheme")}
           >
             <Icon name="droplet" size={15} />
           </button>

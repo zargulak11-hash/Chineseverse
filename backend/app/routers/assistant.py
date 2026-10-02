@@ -91,6 +91,12 @@ def chat(
         lesson_tr = load_translations(db, "lesson", [str(cur.id)], locale)
         context["current_lesson"] = tr(lesson_tr, cur.id, "title", cur.title)
         context["current_lesson_level"] = state.current.level
+    # At the exam gate there is no current lesson: the next real step is the
+    # level's final exam, so the assistant must not suggest lessons past it.
+    if state.exam_level is not None:
+        context["pending_exam_level"] = state.exam_level
+    if state.exams_passed:
+        context["exams_passed"] = sorted(state.exams_passed)
     reply, source = ai_client.assistant_reply(
         [m.model_dump() for m in payload.messages], context, locale
     )

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { loginWithGoogle } from "../api.js";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -9,6 +10,7 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 // invented here — if VITE_GOOGLE_CLIENT_ID isn't set, we say so instead of
 // showing a decorative button that would silently fail.
 export default function GoogleAuthButton({ onSuccess, onError }) {
+  const { t } = useTranslation();
   const divRef = useRef(null);
   const [ready, setReady] = useState(false);
 
@@ -63,7 +65,7 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
   if (!CLIENT_ID) {
     return (
       <p className="sub" style={{ opacity: 0.6, fontSize: 12 }}>
-        Google Sign-In isn't configured for this deployment yet.
+        {t("ui.googleNotConfigured")}
       </p>
     );
   }
@@ -71,7 +73,7 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
   return (
     <div className="center" style={{ display: "flex", justifyContent: "center" }}>
       <div ref={divRef} />
-      {!ready && <p className="sub" style={{ fontSize: 12 }}>Loading Google Sign-In…</p>}
+      {!ready && <p className="sub" style={{ fontSize: "var(--text-xs)" }}>{t("ui.googleLoading")}</p>}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import { speakChinese } from "../zhSpeech.js";
 // -- this view is the overview/reference screen around it, not a second
 // writing implementation.
 export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [current, setCurrent] = useState(hanzi);
   const [examples, setExamples] = useState(null);
   const [examplesError, setExamplesError] = useState(null);
@@ -25,6 +25,7 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
   // The permanent companion's reaction to the last real self-check or
   // completed trace on this character (server-decided, see the API).
   const [reaction, setReaction] = useState(null);
+  const [notDue, setNotDue] = useState(null);
   const { dashboard, refresh } = useDashboard() || {};
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
     setExamples(null);
     setExamplesError(null);
     setReaction(null);
+    setNotDue(null);
     api
       .get(`/hanzi/${hanzi.id}/examples`)
       .then(setExamples)
@@ -54,6 +56,9 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
       setCurrent(updated);
       onUpdated?.(updated);
       setReaction(res.reaction || null);
+      // An early "got it" is recorded as a visit only (the server's schedule
+      // decides when a self-check counts) -- say so instead of looking broken.
+      setNotDue(res.counted === false ? res.next_review_at : null);
       refresh?.(); // XP/streak/DNA changed
     } catch {
       // stays on-screen; the button simply re-enables for another try
@@ -131,6 +136,14 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
             {t("pages.hanzi.gotIt")}
           </button>
         </div>
+
+        {notDue && (
+          <p className="sub" role="status" style={{ textAlign: "center", marginTop: 8, fontSize: "var(--text-xs)" }}>
+            {t("pages.hanzi.notDueYet", {
+              date: new Date(notDue.endsWith("Z") ? notDue : `${notDue}Z`).toLocaleDateString(i18n.language),
+            })}
+          </p>
+        )}
 
         {reaction && (
           <CompanionReaction animal={dashboard?.animal} reaction={reaction} context="hanzi" compact size={60} focusMode="none" settleAfter={9000} />

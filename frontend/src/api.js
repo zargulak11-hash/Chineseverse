@@ -1,4 +1,5 @@
 import i18n from "./i18n.js";
+import { localizeApiError } from "./apiErrors.js";
 
 const API_BASE = "/api";
 const TOKEN_KEY = "linguaverse_token";
@@ -52,8 +53,7 @@ async function request(method, path, body) {
   }
   if (!res.ok) {
     const detail = data && data.detail;
-    const message =
-      typeof detail === "string" ? detail : `Request failed (${res.status})`;
+    const message = localizeApiError(detail, res.status);
     if (res.status === 401) clearSession();
     const err = new Error(message);
     // Some endpoints (duels) add a stable machine code next to `detail` so
@@ -83,7 +83,7 @@ async function upload(method, path, file) {
   }
   if (!res.ok) {
     const detail = data && data.detail;
-    throw new Error(typeof detail === "string" ? detail : `Upload failed (${res.status})`);
+    throw new Error(localizeApiError(detail, res.status));
   }
   return data;
 }

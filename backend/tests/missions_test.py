@@ -60,17 +60,46 @@ with TestClient(app) as client:
     assert by_slug(client, h)["word-collector"]["status"] != "completed"
     print("[PASS] POST /missions/{id}/progress is gone: a mission cannot be completed from the browser")
 
-    # real activity moves it: 10 vocabulary reviews -> Word Collector, rewards granted
+    # the self-graded vocabulary endpoint that used to feed it is gone too
+    assert client.post("/api/vocab/1/review", headers=h, json={"correct": True}).status_code in (404, 405)
+
+    # real activity moves it: 10 correct graded vocabulary answers -> Word Collector, reward granted
     with SessionLocal() as db:
         xp_before = db.get(models.User, uid).total_xp
-        words = [w.id for w in db.query(models.VocabularyWord).limit(10)]
-    for wid in words:
-        expect(client, "post", f"/api/vocab/{wid}/review", 200, headers=h, json={"correct": True})
+    s = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "vocab", "hsk_level": 1, "size": 10})
+    with SessionLocal() as db:
+        stored = db.get(models.PracticeSession, s["id"]).questions
+    assert len(stored) == 10
+    wrong = next(o["id"] for o in s["questions"][0]["options"] if o["id"] != stored[0]["item_id"])
+    expect(client, "post", f"/api/practice/sessions/{s['id']}/answer", 200, headers=h, json={"index": 0, "choice_id": wrong})
+    assert by_slug(client, h)["word-collector"]["progress"] == 0, "a wrong answer does not count"
+    for i in range(1, 10):
+        expect(client, "post", f"/api/practice/sessions/{s['id']}/answer", 200, headers=h,
+               json={"index": i, "choice_id": stored[i]["item_id"]})
+    assert by_slug(client, h)["word-collector"]["progress"] == 9
+    s2 = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "vocab", "hsk_level": 1, "size": 4})
+    with SessionLocal() as db:
+        st2 = db.get(models.PracticeSession, s2["id"]).questions
+    expect(client, "post", f"/api/practice/sessions/{s2['id']}/answer", 200, headers=h, json={"index": 0, "choice_id": st2[0]["item_id"]})
     wc = by_slug(client, h)["word-collector"]
     assert wc["status"] == "completed" and wc["progress"] == 10, wc
     with SessionLocal() as db:
         assert db.get(models.User, uid).total_xp >= xp_before + wc["mission"]["reward_xp"]
-    print("[PASS] 10 real vocabulary reviews complete Word Collector and grant its reward")
+    # finishing it again does not pay twice
+    def wc_row():
+        with SessionLocal() as db:
+            m = db.query(models.Mission).filter_by(slug="word-collector").one()
+            um = db.query(models.UserMission).filter_by(user_id=uid, mission_id=m.id).one()
+            return um.status, um.progress, um.completed_at
+    done = wc_row()
+    expect(client, "post", f"/api/practice/sessions/{s2['id']}/answer", 200, headers=h, json={"index": 1, "choice_id": st2[1]["item_id"]})
+    assert wc_row() == done, (wc_row(), done)
+    print("[PASS] 10 correct graded vocabulary answers complete Word Collector once (wrong answers don't count)")
+
+    # another learner's activity never touches this learner's missions
+    oid, oh = register(client, "othermissionlearner")
+    assert by_slug(client, oh)["word-collector"]["progress"] == 0
+    print("[PASS] mission progress is per learner")
 
     # a conversation mission completes on the conversation's last learner line, not the first
     with SessionLocal() as db:

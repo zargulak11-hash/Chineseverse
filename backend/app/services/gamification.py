@@ -6,6 +6,7 @@ from __future__ import annotations
 import random
 from datetime import date, datetime, timedelta
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models
@@ -150,19 +151,31 @@ def streak_snapshot(streak: models.UserStreak | None) -> dict:
 def ensure_user_skills(db: Session, user: models.User) -> None:
     if user.user_skills:
         return
+    # Anything else already pending in this request; only a clean session may
+    # safely roll back below.
+    pending = bool(db.new or db.dirty or db.deleted)
     for skill in db.query(models.Skill).all():
         db.add(models.UserSkill(user_id=user.id, skill_id=skill.id, level=1, xp=0, mastery=0.0))
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # A new account's first page load sends GET /dashboard and the page's
+        # own request at once; both found no skill rows and both inserted
+        # them, so the loser hit uq(user_id, skill_id) and the learner's very
+        # first screen showed a server error. The winner's rows are the same
+        # rows, so the loser just uses them.
+        db.rollback()
+        if pending:
+            raise
+        db.refresh(user)
 
 
-def ensure_bond(db: Session, user: models.User) -> None:
-    """Attach the default animal if none chosen."""
-    if user.user_animal is None and user.animal_id is None:
-        panda = db.query(models.Animal).filter_by(slug="panda").first()
-        if panda:
-            user.animal_id = panda.id
-            db.add(models.UserAnimal(user_id=user.id, animal_id=panda.id, bond_level=1))
-            db.commit()
+# (ensure_bond used to live here: GET /api/dashboard, a location's detail
+# and Pet Teacher silently made the panda the learner's main companion when
+# none was chosen yet. Since every page loads the dashboard, a new learner
+# already had a panda "picked" on the very screen that asks them to choose.
+# The main companion is now only ever the learner's own choice (POST
+# /api/me/animal); bond points simply wait until one exists.)
 
 
 def generate_daily_quests(db: Session, user: models.User, force: bool = False) -> list[models.DailyQuest]:

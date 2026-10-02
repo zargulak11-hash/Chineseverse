@@ -27,7 +27,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (form.password !== form.confirm) {
-      setError("Passwords do not match");
+      setError(t("auth.passwordMismatch"));
       return;
     }
     setBusy(true);

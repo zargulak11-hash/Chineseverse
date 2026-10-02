@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Icon from "./Icon.jsx";
 
 const SpeechRecognitionImpl =
@@ -11,6 +12,7 @@ const SpeechRecognitionImpl =
 // caller exactly like typed input. No audio ever leaves the browser — only
 // the recognized transcript is sent to our backend for scoring.
 export default function MicRecorder({ onTranscript, lang = "zh-CN", disabled }) {
+  const { t } = useTranslation();
   const recognitionRef = useRef(null);
   const [state, setState] = useState(SpeechRecognitionImpl ? "idle" : "unsupported");
 
@@ -41,7 +43,7 @@ export default function MicRecorder({ onTranscript, lang = "zh-CN", disabled }) 
   if (state === "unsupported") {
     return (
       <span className="muted" style={{ fontSize: 11 }}>
-        Voice input needs Chrome or Edge — type instead.
+        {t("voice.micUnsupported")}
       </span>
     );
   }
@@ -52,7 +54,8 @@ export default function MicRecorder({ onTranscript, lang = "zh-CN", disabled }) 
       className={`micbtn${state === "listening" ? " listening" : ""}`}
       onClick={state === "listening" ? stop : start}
       disabled={disabled}
-      title={state === "listening" ? "Listening… click to stop" : "Click to speak"}
+      title={state === "listening" ? t("voice.micListening") : t("voice.micStart")}
+      aria-label={state === "listening" ? t("voice.micListening") : t("voice.micStart")}
     >
       <Icon name={state === "listening" ? "stop" : "mic"} size={22} />
     </button>

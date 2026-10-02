@@ -23,10 +23,9 @@ def drive_quest(call, H, q):
                 headers=H,
             )
     elif kind == "vocab":
-        words = call("GET", "/api/vocab", headers=H)
-        for i in range(need):
-            w = words[i % len(words)]
-            call("POST", f"/api/vocab/{w['id']}/review", {"correct": True}, headers=H)
+        # Only correct graded answers count; the self-graded
+        # /api/vocab/{id}/review that used to feed this quest is gone.
+        vocab_round(call, H)
     elif kind == "lesson":
         # A lesson completes only when its server-graded round is passed
         # (status="completed" via /api/progress is refused), so this is a real
@@ -48,6 +47,15 @@ def drive_quest(call, H, q):
     elif kind == "duel":
         for _ in range(need):
             play_real_duel(call, H)
+
+
+def vocab_round(call, H):
+    """One real graded vocabulary round. A script can't see the answers, so
+    it picks the first option; callers repeat until enough of them count."""
+    s = call("POST", "/api/practice/sessions", {"source": "vocab", "hsk_level": 1, "size": 10}, headers=H)
+    for i, q in enumerate(s["questions"]):
+        call("POST", f"/api/practice/sessions/{s['id']}/answer", {"index": i, "choice_id": q["options"][0]["id"]}, headers=H)
+    call("POST", f"/api/practice/sessions/{s['id']}/complete", headers=H)
 
 
 def play_real_duel(call, H):

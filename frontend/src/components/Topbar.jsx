@@ -304,7 +304,7 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
 
   return (
     <header className="topbar">
-      <button type="button" className="mobile-menu-btn" onClick={onOpenMobileSidebar} aria-label="Open menu">
+      <button type="button" className="mobile-menu-btn" onClick={onOpenMobileSidebar} aria-label={t("ui.openMenu")}>
         <Icon name="menu" size={18} />
       </button>
 
@@ -359,8 +359,8 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
           type="button"
           className="theme-toggle"
           onClick={toggleTheme}
-          title={theme === "ink" ? "Switch to Rice Paper" : "Switch to Ink"}
-          aria-label="Toggle light/dark theme"
+          title={theme === "ink" ? t("ui.switchToPaper") : t("ui.switchToInk")}
+          aria-label={t("ui.toggleTheme")}
         >
           <Icon name="droplet" size={15} />
         </button>
