@@ -52,7 +52,10 @@
     "adminHome": "管理主页",
     "review": "复习",
     "realChinese": "真实中文",
-    "sentence": "一句话"
+    "sentence": "一句话",
+    "detective": "侦探模式",
+    "soundWorld": "声音世界",
+    "ecosystem": "词汇生态"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -483,7 +486,9 @@
         "hanzi": "汉字",
         "grammar": "语法",
         "real_life": "真实中文",
-        "sentence": "一句话课堂"
+        "sentence": "一句话课堂",
+        "detective": "侦探模式",
+        "sound_world": "声音世界"
       }
     },
     "profile": {
@@ -777,7 +782,9 @@
       "lesson": "课程练习",
       "review": "复习",
       "scene": "真实中文 · {{title}}",
-      "sentence": "一句话课堂"
+      "sentence": "一句话课堂",
+      "detective": "侦探案件",
+      "sound": "声音世界 · {{place}}"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -880,7 +887,9 @@
       "hanzi": "汉字",
       "grammar": "语法点",
       "line": "句子",
-      "sentence": "句子"
+      "sentence": "句子",
+      "case": "线索",
+      "sound": "句子"
     },
     "skill": {
       "speaking": "口语",
@@ -930,7 +939,9 @@
       "welcome_back": "你离开了{{days}}天，{{name}}很高兴你回来了。我们慢慢来。",
       "scene_start": "{{name}}准备好了——我们来试试真实的中文吧！",
       "sentence_start": "{{name}}很喜欢：一句话，一堂课。",
-      "words_milestone": "{{name}}在庆祝——这一轮让你掌握的词超过了{{milestone}}个！"
+      "words_milestone": "{{name}}在庆祝——这一轮让你掌握的词超过了{{milestone}}个！",
+      "detective_start": "{{name}}拿起了放大镜——我们用中文破案吧！",
+      "sound_start": "{{name}}竖起了耳朵——仔细听听周围的人在说什么。"
     }
   },
   "wordType": {
@@ -1238,5 +1249,215 @@
       "achievement": "查看成就",
       "mastered_recently": "我的词汇"
     }
+  },
+  "detective": {
+    "title": "中文侦探",
+    "subtitle": "通过阅读和聆听中文线索来破案。每个案件都按你的水平、你的词汇和你的错误生成，每条线索都在教你中文。",
+    "solved": "已破案件",
+    "cases": "案件档案",
+    "record": "破案 {{solved}}/{{played}}",
+    "open": "开始调查",
+    "yourCases": "你的案件是怎么生成的",
+    "howTitle": "怎么玩",
+    "how": "阅读或聆听每条线索并回答问题，然后用所有线索破案。答错了？你会看到逐词解释，这个词也会加入复习。",
+    "case": {
+      "who_took": {
+        "zh": "谁拿走了我的东西？",
+        "title": "谁拿走的？",
+        "desc": "东西不见了。检查每个人的不在场证明：那个时间谁在那里？"
+      },
+      "where_lost": {
+        "zh": "我的东西在哪儿？",
+        "title": "东西去哪儿了？",
+        "desc": "按时间顺序追踪一天去过的地方，找出东西落在哪儿了。"
+      },
+      "who_lies": {
+        "zh": "谁在说谎？",
+        "title": "谁在说谎？",
+        "desc": "每个人都有说法，有一个人的话和证据对不上。"
+      }
+    },
+    "profile": {
+      "suspects_other": "{{count}}个嫌疑人",
+      "listen": "{{pct}}%的线索要听，不能看",
+      "skills": "根据你的学习DNA：阅读{{reading}}，听力{{listening}}",
+      "herring": "包含一条需要排除的干扰线索",
+      "noHerring": "你现在的难度还没有干扰线索",
+      "evidence_other": "{{count}}个你答错过的词会作为证据出现",
+      "noEvidence": "目前没有需要作为证据复习的错题"
+    },
+    "caseFile": "案件档案",
+    "heard": "听到的",
+    "mode": {
+      "read": "阅读线索",
+      "listen": "聆听线索"
+    },
+    "playClue": "播放线索",
+    "listenFirst": "先听——回答后才显示文字。",
+    "gloss": "逐词解释",
+    "solution": "线索是怎么对上的",
+    "tag": {
+      "evidence": "证据：你以前答错过的词",
+      "grammar_clue": "语法线索"
+    },
+    "ask": {
+      "where": "{{time}}的时候，{{who}}在哪儿？",
+      "where_me": "{{time}}的时候，失主在哪儿？",
+      "when": "{{who}}什么时候在{{place}}？",
+      "when_me": "失主几点到的{{place}}？",
+      "where_say": "{{who}}说自己{{time}}在哪儿？",
+      "where_seen": "{{time}}的时候，有人在哪儿看见了{{who}}？",
+      "deduce": "破案——回答这个中文问题："
+    }
+  },
+  "soundWorld": {
+    "title": "中文声音世界",
+    "subtitle": "置身真实场景，听身边的人说中文。语速随你提升：慢速、正常、较快，再到母语速度。",
+    "speedsOpen": "已解锁语速",
+    "speed": "语速",
+    "stage": {
+      "1": "慢速",
+      "2": "正常",
+      "3": "较快",
+      "4": "母语速度"
+    },
+    "stageBest_other": "最佳{{best}}% · {{count}}轮",
+    "stageOpen": "已解锁——还没玩过",
+    "needLevel": "HSK {{level}}级解锁",
+    "needPass": "在第{{prev}}档拿到{{score}}%以上即可解锁",
+    "places": "场景",
+    "env": {
+      "night_market": "夜市",
+      "restaurant": "饭馆",
+      "train_station": "火车站",
+      "school": "学校",
+      "street": "街上",
+      "airport": "机场",
+      "shopping": "商场"
+    },
+    "speaker": {
+      "vendor": "摊主",
+      "customer": "顾客",
+      "friend": "朋友",
+      "waiter": "服务员",
+      "cook": "厨师",
+      "announcer": "广播",
+      "passenger": "乘客",
+      "staff": "工作人员",
+      "teacher": "老师",
+      "student": "学生",
+      "local": "路人",
+      "clerk": "店员"
+    },
+    "howTitle": "你要做什么",
+    "how": {
+      "identify": "听出别人说了什么",
+      "info": "听出价格、时间、站台、楼层",
+      "respond": "回答跟你说话的人",
+      "find": "找到东西在哪儿",
+      "conversation": "听懂两个人的对话",
+      "memory": "记住谁说了什么"
+    },
+    "tierNote": "词汇和句子按HSK {{level}}级设计。",
+    "playAll": "全部播放",
+    "replayLine": "重播第{{n}}句",
+    "ambient": "背景声音",
+    "ambientOn": "打开",
+    "ambientOff": "关闭",
+    "ask": {
+      "sound_identify": "他们提到了什么？",
+      "sound_info": {
+        "price": "{{item}}多少钱一斤？",
+        "total": "一共多少钱？",
+        "platform": "在几号站台？",
+        "room": "在几号教室？",
+        "bus": "去{{item}}坐几路车？",
+        "takeoff": "飞机几点起飞？",
+        "floor": "{{item}}在几楼？"
+      },
+      "sound_find": "{{item}}在哪儿？",
+      "sound_respond": "你怎么回答？",
+      "sound_conversation": {
+        "count": "顾客要多少？",
+        "price": "对方说多少钱？",
+        "bus": "应该坐几路车？"
+      },
+      "sound_memory": "第{{order}}个说话的人（{{speaker}}）提到了什么？"
+    }
+  },
+  "charDna": {
+    "eyebrow": "汉字DNA",
+    "open": "汉字DNA",
+    "openFor": "打开“{{char}}”的汉字DNA",
+    "mastery": "认读掌握",
+    "wordsMastered": "已掌握的词",
+    "structure": "结构",
+    "noStructure": "暂时没有这个字的结构数据。",
+    "radical": "部首",
+    "components": "组成部分",
+    "family": "词语家族",
+    "openEcosystem": "查看词汇网络",
+    "noWords": "课程里还没有用这个字组成的词。",
+    "startsWith": "{{char}} + …",
+    "endsWith": "… + {{char}}",
+    "inside": "… {{char}} …",
+    "status": {
+      "new": "新",
+      "learning": "学习中",
+      "reviewing": "复习中",
+      "mastered": "已掌握",
+      "due": "该复习了"
+    },
+    "writingStatus": {
+      "not_practiced": "还没练习",
+      "new": "新",
+      "learning": "学习中",
+      "reviewing": "复习中",
+      "mastered": "已掌握"
+    },
+    "related": "相关汉字",
+    "partners": "常一起组词的字",
+    "sameRadical": "同部首",
+    "sharedComponent": "相同部件",
+    "noRelated": "课程里没有找到相关的字。",
+    "examples": "例句",
+    "makeLesson": "生成课程",
+    "yourHistory": "你和这个字",
+    "notMetYet": "你还没练过这个字——可以从下面的词开始。",
+    "recognition": "认读",
+    "writing": "书写",
+    "firstMet": "第一次学：{{date}}",
+    "practiced_other": "练习了{{count}}次",
+    "traced_other": "描写了{{count}}次",
+    "lastReviewed": "上次复习：{{date}}",
+    "nextReview": "下次复习：{{date}}",
+    "dueNow": "现在该复习了",
+    "wordsDue_other": "有{{count}}个相关的词该复习了",
+    "recent": "最近练习",
+    "trouble": "易错点",
+    "mistake": "{{ref}}——错了{{count}}次",
+    "mistakeFixed": "{{ref}}——已掌握（曾错{{count}}次）",
+    "confusion": "把“{{a}}”和“{{b}}”弄混了{{count}}次",
+    "practiceLevel": "练习HSK {{level}}汉字"
+  },
+  "ecosystem": {
+    "title": "词汇生态",
+    "subtitle": "中文词语由汉字长成。从一个字出发，看看它组成哪些词、你掌握得怎么样、又能连到哪些字。",
+    "mastered": "已掌握",
+    "due": "待复习",
+    "centerLabel": "中心汉字",
+    "explore": "查看",
+    "levels": "词语范围",
+    "empty": "HSK {{level}}级以内还没有含“{{char}}”的词——试试放宽级别。",
+    "graphLabel": "以“{{char}}”为中心的词汇网络：{{n}}个词",
+    "hint": "点击词语查看详情；点击外圈的字，把它变成新的中心。",
+    "listTitle": "含“{{char}}”的词",
+    "more": "显示{{total}}个词中的{{shown}}个——调整HSK级别查看其他词。",
+    "word": "词语",
+    "itsCharacters": "组成的字",
+    "centre": "中心",
+    "statsLine": "HSK {{level}}级以内共有{{total}}个词含有这个字。",
+    "openDna": "打开汉字DNA",
+    "nextToLearn": "接下来可以学"
   }
 }

@@ -52,7 +52,10 @@
     "adminHome": "Admin Home",
     "review": "Review",
     "realChinese": "Real Chinese",
-    "sentence": "One Sentence"
+    "sentence": "One Sentence",
+    "detective": "Detective Mode",
+    "soundWorld": "Sound World",
+    "ecosystem": "Word Ecosystem"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -484,7 +487,9 @@
         "hanzi": "Hanzi",
         "grammar": "Grammar",
         "real_life": "Real Chinese",
-        "sentence": "Sentence lessons"
+        "sentence": "Sentence lessons",
+        "detective": "Detective Mode",
+        "sound_world": "Sound World"
       }
     },
     "profile": {
@@ -778,7 +783,9 @@
       "lesson": "Lesson practice",
       "review": "Review",
       "scene": "Real Chinese · {{title}}",
-      "sentence": "One-sentence lesson"
+      "sentence": "One-sentence lesson",
+      "detective": "Detective case",
+      "sound": "Sound World · {{place}}"
     },
     "retry": "Try again",
     "back": "Back",
@@ -881,7 +888,9 @@
       "hanzi": "character",
       "grammar": "grammar point",
       "line": "line",
-      "sentence": "sentence"
+      "sentence": "sentence",
+      "case": "clue",
+      "sound": "line"
     },
     "skill": {
       "speaking": "Speaking",
@@ -931,7 +940,9 @@
       "welcome_back": "{{name}} is so happy you're back after {{days}} days away. Let's take it gently.",
       "scene_start": "{{name}} is ready — let's try some real-life Chinese!",
       "sentence_start": "{{name}} loves this: one sentence, a whole lesson.",
-      "words_milestone": "{{name}} is celebrating — this round took you past {{milestone}} mastered words!"
+      "words_milestone": "{{name}} is celebrating — this round took you past {{milestone}} mastered words!",
+      "detective_start": "{{name}} grabs the magnifying glass — let's crack this case in Chinese!",
+      "sound_start": "{{name}} is all ears — listen to the people around you."
     }
   },
   "wordType": {
@@ -1257,5 +1268,221 @@
       "achievement": "See achievements",
       "mastered_recently": "My vocabulary"
     }
+  },
+  "detective": {
+    "title": "Chinese Detective",
+    "subtitle": "Solve mysteries by reading and listening to Chinese clues. Every case is built for you — your level, your words, your mistakes — and every clue teaches.",
+    "solved": "Cases solved",
+    "cases": "Case files",
+    "record": "{{solved}}/{{played}} solved",
+    "open": "Open the case",
+    "yourCases": "How your cases are built",
+    "howTitle": "How to play",
+    "how": "Read or listen to each clue and answer what it says. Then use all the clues to solve the case. Miss something? You'll see the clue word by word, and the word goes into your review.",
+    "case": {
+      "who_took": {
+        "zh": "谁拿走了我的东西？",
+        "title": "Who took it?",
+        "desc": "Something has gone missing. Check every suspect's alibi: who was there at that time?"
+      },
+      "where_lost": {
+        "zh": "我的东西在哪儿？",
+        "title": "Where did it go?",
+        "desc": "Follow a day of places and times to find where it was left."
+      },
+      "who_lies": {
+        "zh": "谁在说谎？",
+        "title": "Who is lying?",
+        "desc": "Everyone has a story. One statement doesn't match the evidence."
+      }
+    },
+    "profile": {
+      "suspects_one": "{{count}} suspect",
+      "suspects_other": "{{count}} suspects",
+      "listen": "{{pct}}% of clues are heard, not read",
+      "skills": "Tuned to your Learning DNA: reading {{reading}}, listening {{listening}}",
+      "herring": "Includes a red herring to rule out",
+      "noHerring": "No red herrings at your tier yet",
+      "evidence_one": "{{count}} word from your mistakes comes back as evidence",
+      "evidence_other": "{{count}} words from your mistakes come back as evidence",
+      "noEvidence": "No open mistakes to bring back as evidence"
+    },
+    "caseFile": "Case file",
+    "heard": "heard",
+    "mode": {
+      "read": "Read the clue",
+      "listen": "Listen to the clue"
+    },
+    "playClue": "Play the clue",
+    "listenFirst": "Listen first — the text appears after you answer.",
+    "gloss": "Word by word",
+    "solution": "How the clues fit together",
+    "tag": {
+      "evidence": "Evidence: a word you've missed before",
+      "grammar_clue": "Grammar clue"
+    },
+    "ask": {
+      "where": "Where was the {{who}} at {{time}}?",
+      "where_me": "Where was the owner at {{time}}?",
+      "when": "When was the {{who}} at the {{place}}?",
+      "when_me": "What time did the owner get to the {{place}}?",
+      "where_say": "Where does the {{who}} say they were at {{time}}?",
+      "where_seen": "Where was the {{who}} really seen at {{time}}?",
+      "deduce": "Solve the case — answer the question in Chinese:"
+    }
+  },
+  "soundWorld": {
+    "title": "Chinese Sound World",
+    "subtitle": "Stand in a real place and listen to the people around you. Speed grows with you: slow, normal, faster, then native.",
+    "speedsOpen": "Speeds open",
+    "speed": "Speed",
+    "stage": {
+      "1": "Slow",
+      "2": "Normal",
+      "3": "Faster",
+      "4": "Native speed"
+    },
+    "stageBest_one": "best {{best}}% · {{count}} round",
+    "stageBest_other": "best {{best}}% · {{count}} rounds",
+    "stageOpen": "open — not played yet",
+    "needLevel": "opens at HSK {{level}}",
+    "needPass": "score {{score}}%+ at speed {{prev}} to open",
+    "places": "Places",
+    "env": {
+      "night_market": "Night market",
+      "restaurant": "Restaurant",
+      "train_station": "Train station",
+      "school": "School",
+      "street": "Street",
+      "airport": "Airport",
+      "shopping": "Shopping mall"
+    },
+    "speaker": {
+      "vendor": "stall owner",
+      "customer": "customer",
+      "friend": "friend",
+      "waiter": "waiter",
+      "cook": "cook",
+      "announcer": "announcement",
+      "passenger": "passenger",
+      "staff": "staff",
+      "teacher": "teacher",
+      "student": "student",
+      "local": "passer-by",
+      "clerk": "shop assistant"
+    },
+    "howTitle": "What you'll do",
+    "how": {
+      "identify": "Catch what someone said",
+      "info": "Pick out prices, times, platforms, floors",
+      "respond": "Answer a person who speaks to you",
+      "find": "Find where something is",
+      "conversation": "Follow a conversation between two people",
+      "memory": "Remember who said what"
+    },
+    "tierNote": "Words and sentences are pitched at HSK {{level}}.",
+    "playAll": "Play everyone",
+    "replayLine": "Replay line {{n}}",
+    "ambient": "Background sound",
+    "ambientOn": "Turn on",
+    "ambientOff": "Turn off",
+    "ask": {
+      "sound_identify": "What did they mention?",
+      "sound_info": {
+        "price": "How much is the {{item}} per jin?",
+        "total": "How much is the bill?",
+        "platform": "Which platform?",
+        "room": "Which classroom?",
+        "bus": "Which bus goes to the {{item}}?",
+        "takeoff": "When does the plane take off?",
+        "floor": "Which floor is the {{item}} on?"
+      },
+      "sound_find": "Where is the {{item}}?",
+      "sound_respond": "What do you say back?",
+      "sound_conversation": {
+        "count": "How many does the customer want?",
+        "price": "What price do they say?",
+        "bus": "Which bus should they take?"
+      },
+      "sound_memory": "What did speaker {{order}} ({{speaker}}) mention?"
+    }
+  },
+  "charDna": {
+    "eyebrow": "Character DNA",
+    "open": "Character DNA",
+    "openFor": "Open Character DNA for {{char}}",
+    "mastery": "Recognition",
+    "wordsMastered": "Words mastered",
+    "structure": "Structure",
+    "noStructure": "No structural data for this character yet.",
+    "radical": "Radical",
+    "components": "Components",
+    "family": "Word family",
+    "openEcosystem": "Explore the network",
+    "noWords": "No curriculum words are built from this character yet.",
+    "startsWith": "{{char}} + …",
+    "endsWith": "… + {{char}}",
+    "inside": "… {{char}} …",
+    "status": {
+      "new": "New",
+      "learning": "Learning",
+      "reviewing": "Reviewing",
+      "mastered": "Mastered",
+      "due": "Due for review"
+    },
+    "writingStatus": {
+      "not_practiced": "not practised yet",
+      "new": "new",
+      "learning": "learning",
+      "reviewing": "reviewing",
+      "mastered": "mastered"
+    },
+    "related": "Related characters",
+    "partners": "Combines with",
+    "sameRadical": "Same radical",
+    "sharedComponent": "Shared component",
+    "noRelated": "No related characters found in the curriculum.",
+    "examples": "Example sentences",
+    "makeLesson": "Make it a lesson",
+    "yourHistory": "Your history with it",
+    "notMetYet": "You haven't practised this character yet — its words below are a good place to start.",
+    "recognition": "Recognition",
+    "writing": "Writing",
+    "firstMet": "First met: {{date}}",
+    "practiced_one": "Practised {{count}} time",
+    "practiced_other": "Practised {{count}} times",
+    "traced_one": "Traced {{count}} time",
+    "traced_other": "Traced {{count}} times",
+    "lastReviewed": "Last reviewed: {{date}}",
+    "nextReview": "Next review: {{date}}",
+    "dueNow": "Due for review now",
+    "wordsDue_one": "{{count}} of its words is due",
+    "wordsDue_other": "{{count}} of its words are due",
+    "recent": "Recent practice",
+    "trouble": "Trouble spots",
+    "mistake": "{{ref}} — missed {{count}}×",
+    "mistakeFixed": "{{ref}} — fixed (missed {{count}}×)",
+    "confusion": "Mixed {{a}} up with {{b}} {{count}}×",
+    "practiceLevel": "Practise HSK {{level}} characters"
+  },
+  "ecosystem": {
+    "title": "Vocabulary Ecosystem",
+    "subtitle": "Chinese words grow from characters. Start from one character and see the real words it builds, how far you've got with each, and where it leads next.",
+    "mastered": "Mastered here",
+    "due": "Due for review",
+    "centerLabel": "Centre character",
+    "explore": "Explore",
+    "levels": "Words up to",
+    "empty": "No words with {{char}} up to HSK {{level}} yet — widen the level filter.",
+    "graphLabel": "Word network around {{char}}: {{n}} words",
+    "hint": "Tap a word to see it; tap an outer character to move the centre there.",
+    "listTitle": "Words with {{char}}",
+    "more": "Showing {{shown}} of {{total}} words — change the HSK filter to see others.",
+    "word": "Word",
+    "itsCharacters": "Its characters",
+    "centre": "Centre",
+    "statsLine": "{{total}} curriculum words contain it up to HSK {{level}}.",
+    "openDna": "Open Character DNA",
+    "nextToLearn": "Next to learn here"
   }
 }

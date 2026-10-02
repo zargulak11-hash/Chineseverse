@@ -16,6 +16,8 @@ const SECTION_COLORS = {
   pet_teacher: "#3fb6a8",
   real_life: "#f06292",
   sentence: "#9ccc65",
+  detective: "#8d6e63",
+  sound_world: "#26c6da",
 };
 
 function fmtMinutes(m) {

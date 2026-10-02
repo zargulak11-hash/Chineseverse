@@ -23,6 +23,11 @@ class SessionCreate(BaseModel):
     # Chinese sentence to turn into a lesson (validated by the server).
     scene: str | None = Field(default=None, max_length=40)
     sentence: str | None = Field(default=None, max_length=80)
+    # source "detective": the case structure; source "sound": the place and
+    # the speed stage (refused unless the learner has unlocked it).
+    case: str | None = Field(default=None, max_length=30)
+    env: str | None = Field(default=None, max_length=30)
+    stage: int | None = Field(default=None, ge=1, le=4)
 
 
 class SpeakPayload(BaseModel):
@@ -68,6 +73,7 @@ def create_session(
         svc.build_session, db, user, payload.source,
         hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size, locale=locale,
         scene=payload.scene, sentence=payload.sentence,
+        case=payload.case, env=payload.env, stage=payload.stage,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.

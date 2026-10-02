@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -53,3 +53,25 @@ def list_words(
     # this is the "Memory of the World" reading the schedule it writes.
     out.sort(key=lambda w: (not w.due_for_review, w.id))
     return out
+
+
+@router.get("/ecosystem")
+def vocabulary_ecosystem(
+    center: str | None = Query(default=None, max_length=4),
+    hsk_max: int | None = Query(default=None, ge=1, le=9),
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """A small network around one character: its compounds within the HSK
+    filter and the characters they connect to, with the learner's own
+    status on every node (services/character_dna.ecosystem). Read-only."""
+    from fastapi import HTTPException
+
+    from app.services import character_dna as svc
+
+    ensure_user_skills(db, user)
+    try:
+        return svc.ecosystem(db, user, center, hsk_max, locale)
+    except svc.CharacterError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc

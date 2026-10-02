@@ -16,6 +16,8 @@ Sources:
                            (services/real_life.py) plus its new words/grammar
   sentence                 one Chinese sentence turned into a lesson
                            (services/sentence.py)
+  detective                a generated Chinese mystery (services/detective.py)
+  sound                    an immersive listening place (services/sound_world.py)
 
 Scene and sentence rounds add question types whose options are lines of
 text rather than curriculum rows (item_type "line" / "sentence"): the
@@ -49,8 +51,8 @@ from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
-SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence")
-VIRTUAL = ("line", "sentence")  # item types whose options are text, not rows
+SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound")
+VIRTUAL = ("line", "sentence", "case", "sound")  # item types whose options are text, not rows
 SPEAK_LIMIT = 3  # spoken attempts per question (each one is a VoiceAttempt)
 VOCAB_TYPES = ("meaning_to_word", "word_to_meaning", "listen_to_word")
 HANZI_TYPES = ("char_to_meaning", "char_to_pinyin")
@@ -367,6 +369,7 @@ def build_session(
     db: Session, user: models.User, source: str, *, hsk_level: int | None = None,
     lesson_id: int | None = None, size: int = 10, locale: str = "en",
     scene: str | None = None, sentence: str | None = None,
+    case: str | None = None, env: str | None = None, stage: int | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -401,10 +404,10 @@ def build_session(
         if locale in ("ru", "tg") else None
     )
     questions = []
-    if source in ("scene", "sentence"):
-        # The learner's real level decides the tier (imported here: both
+    if source in ("scene", "sentence", "detective", "sound"):
+        # The learner's real level decides the tier (imported here: these
         # modules build on this one).
-        from app.services import real_life
+        from app.services import detective, real_life, sound_world
         from app.services import sentence as sentence_svc
         from app.services.gamification import user_rank
 
@@ -412,9 +415,15 @@ def build_session(
         try:
             if source == "scene":
                 questions = real_life.build_questions(db, user, scene or "", hsk_level, rng, translated)
-            else:
+            elif source == "sentence":
                 questions = sentence_svc.build_questions(db, user, sentence or "", hsk_level, rng, translated)
-        except (real_life.SceneError, sentence_svc.SentenceError) as exc:
+            elif source == "detective":
+                questions = detective.build_questions(db, user, case or "", hsk_level, rng, translated)
+            else:
+                if stage is None:
+                    stage = sound_world.stage_status(db, user)["recommended"]
+                questions = sound_world.build_questions(db, user, env or "", stage, hsk_level, rng, translated)
+        except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError) as exc:
             raise PracticeError(exc.status, exc.detail) from exc
     for i, (item_type, row) in enumerate(picked):
         q = _question(db, item_type, row, i, rng, translated)
@@ -606,6 +615,9 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
                 prompt = {"text": q.get("prompt") or "", "speak": q.get("prompt")}
         answer = session.answers[i]
         item = {"index": i, "type": qtype, "item_type": item_type, "prompt": prompt, "options": options, "answer": None}
+        if q.get("tag"):
+            # Detective Mode: an evidence note / grammar clue inside a case.
+            item["tag"] = q["tag"]
         if answer is not None and target is not None:
             item["answer"] = {**answer, "correct_id": q["item_id"], "card": _item_card(item_type, target, labels)}
         rendered.append(item)
@@ -652,6 +664,14 @@ def _word_meaning(db: Session, word_id: int | None, locale: str) -> str:
 def _virtual_card(db: Session, q: dict, locale: str) -> dict:
     """The correct answer, shown after grading."""
     qtype = q["type"]
+    if q["item_type"] == "case":
+        from app.services import detective
+
+        return detective.card(db, q, locale)
+    if q["item_type"] == "sound":
+        from app.services import sound_world
+
+        return sound_world.card(db, q, locale)
     if qtype == "scene_reply":
         r = q["reply"]
         return {"hanzi": r["zh"], "pinyin": r["py"], "meaning": _line_tr(r.get("tr"), locale)}
@@ -668,6 +688,17 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
 def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, locale: str) -> dict:
     qtype = q["type"]
     answered = answer is not None
+    if q["item_type"] in ("case", "sound"):
+        from app.services import detective, sound_world
+
+        mod = detective if q["item_type"] == "case" else sound_world
+        prompt, options = mod.render(db, q, answered, locale)
+        item = {"index": index, "type": qtype, "item_type": q["item_type"], "prompt": prompt, "options": options,
+                "answer": None, "can_speak": bool(q.get("say"))}
+        if answered:
+            item["answer"] = {**answer, "correct_id": q["item_id"], "card": _virtual_card(db, q, locale),
+                              "say": (q.get("say") or {}).get("zh")}
+        return item
     rules: dict = {}
     if q.get("scene"):
         from app.services.real_life import RULES
@@ -797,7 +828,25 @@ _VIRTUAL_SKILLS = {
     "sentence_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
     "sentence_order": (("grammar", 2.0, -0.3), ("reading", 0.5, 0.0)),
     "sentence_word": (("reading", 1.5, -0.3), ("vocabulary", 0.5, 0.0)),
+    # Detective Mode: a read clue trains reading, a heard one listening
+    # (see _skills_for); the deduction is reasoning over remembered clues.
+    "case_clue": (("reading", 1.5, -0.3), ("vocabulary", 0.5, 0.0)),
+    "case_deduce": (("reading", 1.0, -0.3), ("memory", 1.5, -0.3)),
+    # Sound World: every interaction is heard first.
+    "sound_identify": (("listening", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
+    "sound_info": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
+    "sound_find": (("listening", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
+    "sound_respond": (("listening", 1.5, -0.3), ("speaking", 0.5, 0.0)),
+    "sound_conversation": (("listening", 2.0, -0.3), ("memory", 0.5, 0.0)),
+    "sound_memory": (("listening", 1.5, -0.3), ("memory", 2.0, -0.3)),
 }
+_LISTEN_CLUE = (("listening", 2.0, -0.3), ("tones", 0.5, 0.0))
+
+
+def _skills_for(q: dict) -> tuple:
+    if q["type"] == "case_clue" and q.get("mode") == "listen":
+        return _LISTEN_CLUE
+    return _VIRTUAL_SKILLS.get(q["type"], ())
 VIRTUAL_SRS_DELTA = 6.0  # a dialogue line exercises its focus word less directly than a word card
 
 
@@ -820,7 +869,7 @@ def _record_virtual(db: Session, user: models.User, session: models.PracticeSess
     ensure_user_skills(db, user)
     primary = cr.PRIMARY_SKILL.get(qtype)
     skill_before = cr.skill_value(user, primary) if primary else None
-    for code, plus, minus in _VIRTUAL_SKILLS.get(qtype, ()):
+    for code, plus, minus in _skills_for(q):
         bump_skill(user, code, plus if correct else minus)
     # Advanced scenes are heard before they're read: picking the right
     # reply is a listening task there too.
@@ -832,7 +881,8 @@ def _record_virtual(db: Session, user: models.User, session: models.PracticeSess
     if correct:
         if focus is not None:
             reinforce_mistake(db, user, "word", focus.simplified)
-        if qtype in ("scene_listen", "sentence_listen"):
+        if qtype in ("scene_listen", "sentence_listen") or q["item_type"] == "sound" or (
+                qtype == "case_clue" and q.get("mode") == "listen"):
             progress_quests(db, user, "listening", amount=1)
         user.total_xp += XP_PER_CORRECT
     elif focus is not None:
@@ -978,6 +1028,16 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             log_activity(db, user, "real_life_scene")
         elif session.source == "sentence":
             log_activity(db, user, "sentence_lesson")
+        elif session.source == "detective":
+            log_activity(db, user, "detective_case")
+            # "Detective hour" counts an attempted case; "Solve ... Cases"
+            # missions only a case whose deduction was right.
+            progress_quests(db, user, "case", amount=1)
+            final = answers[-1] if answers else None
+            if final and final.get("correct") and session.questions[-1]["type"] == "case_deduce":
+                progress_missions(db, user, "case")
+        elif session.source == "sound":
+            log_activity(db, user, "sound_world")
         if session.lesson_id:
             # Imported here: lesson_path builds on this module.
             from app.services import lesson_path

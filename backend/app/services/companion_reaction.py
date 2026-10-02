@@ -61,9 +61,17 @@ PRIMARY_SKILL = {
     "sentence_listen": "listening",
     "sentence_order": "grammar",
     "sentence_word": "reading",
+    "case_clue": "reading",
+    "case_deduce": "memory",
+    "sound_identify": "listening",
+    "sound_info": "listening",
+    "sound_find": "listening",
+    "sound_respond": "listening",
+    "sound_conversation": "listening",
+    "sound_memory": "memory",
 }
 
-_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法", "line": "句子", "sentence": "句子"}
+_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法", "line": "句子", "sentence": "句子", "case": "线索", "sound": "句子"}
 
 _ZH = {
     # answer, correct
@@ -103,6 +111,8 @@ _ZH = {
     "welcome_back": "欢迎回来！我一直在等你。",
     "scene_start": "我们去试试真实的中文吧！",
     "sentence_start": "一句话，一堂课！",
+    "detective_start": "侦探，我们出发吧！",
+    "sound_start": "仔细听，周围都是中文！",
     "words_milestone": "太棒了！你掌握的词越来越多了！",
     # handwriting
     "clean_trace": "写得真漂亮！",
@@ -270,7 +280,7 @@ def start_reaction(user: models.User, source: str, *, words: list[dict] | None =
     if away_days is not None and away_days >= 3:
         event = {"lesson": "lesson_start", "review": "review_start"}.get(source, "session_start")
         return _base(user, "excited", event, "welcome_back", words=words or [], due=due, away_days=away_days)
-    if source in ("scene", "sentence"):
+    if source in ("scene", "sentence", "detective", "sound"):
         return _base(user, "happy", f"{source}_start", f"{source}_start")
     if source == "lesson":
         return _base(user, "happy", "lesson_start", "lesson_start", "vocab", words=words or [])
@@ -305,10 +315,10 @@ def session_reaction(
     elif words_milestone:
         # This round pushed the learner's mastered-word count past a
         # milestone (counted from their real UserVocabulary rows).
-        event = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete"}.get(source, "complete")
+        event = COMPLETE_EVENT.get(source, "complete")
         mood, cause = "celebrating", "words_milestone"
     else:
-        event = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete"}.get(source, "complete")
+        event = COMPLETE_EVENT.get(source, "complete")
         if score >= 0.9:
             mood, cause = "celebrating", "outstanding"
         elif score >= 0.7:
@@ -324,6 +334,10 @@ def session_reaction(
         milestone="lesson_complete" if lesson_completed else ("words" if words_milestone else None),
         words_milestone=words_milestone,
     )
+
+
+COMPLETE_EVENT = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete",
+                  "detective": "detective_complete", "sound": "sound_complete"}
 
 
 def trained_skill(user: models.User, questions: list, answers: list) -> dict | None:

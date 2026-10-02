@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import CompanionReaction from "./CompanionReaction.jsx";
@@ -105,6 +106,11 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
             <span className="statpill">{t("pages.hanzi.strokes", { count: current.stroke_count })}</span>
           )}
           {current.handwriting_tier && <span className="statpill">{t("pages.hanzi.handwriting")}</span>}
+        </div>
+        <div style={{ textAlign: "center", marginTop: 12 }}>
+          <Link to={`/hanzi/${encodeURIComponent(current.character)}`} className="btn small">
+            <Icon name="dna" size={13} /> {t("charDna.open")}
+          </Link>
         </div>
 
         {/* PROGRESS */}

@@ -34,6 +34,8 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     "grammar_practice": ("grammar", 0.5),
     "real_life_scene": ("real_life", 3.0),
     "sentence_lesson": ("sentence", 2.0),
+    "detective_case": ("detective", 4.0),
+    "sound_world": ("sound_world", 3.0),
 }
 
 SECTION_LABELS: dict[str, str] = {
@@ -49,6 +51,8 @@ SECTION_LABELS: dict[str, str] = {
     "grammar": "Grammar",
     "real_life": "Real Chinese",
     "sentence": "Sentence Lessons",
+    "detective": "Detective Mode",
+    "sound_world": "Sound World",
 }
 
 

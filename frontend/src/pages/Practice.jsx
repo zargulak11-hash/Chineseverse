@@ -7,6 +7,7 @@ import CompanionReaction from "../components/CompanionReaction.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../components/RoundExtras.jsx";
+import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -26,6 +27,10 @@ export default function Practice({ forceSource }) {
   // services/sentence.py) -- the server builds and grades those rounds too.
   const scene = params.get("scene");
   const sentence = params.get("text");
+  // Detective Mode case structure / Sound World place and speed stage.
+  const caseKey = params.get("case");
+  const env = params.get("env");
+  const stage = params.get("stage") ? Number(params.get("stage")) : null;
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -53,6 +58,11 @@ export default function Practice({ forceSource }) {
     if (lessonId) body.lesson_id = lessonId;
     if (source === "scene" && scene) body.scene = scene;
     if (source === "sentence" && sentence) body.sentence = sentence;
+    if (source === "detective" && caseKey) body.case = caseKey;
+    if (source === "sound" && env) {
+      body.env = env;
+      if (stage) body.stage = stage;
+    }
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -63,7 +73,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, scene, sentence, i18n]);
+  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, i18n]);
 
   useEffect(start, [start]);
 
@@ -109,7 +119,8 @@ export default function Practice({ forceSource }) {
     // scenes (the server sends no text until the line is answered).
     const heardFirst =
       ["scene_listen", "sentence_listen"].includes(question?.type) ||
-      (question?.type === "scene_reply" && !question.prompt.text);
+      (question?.type === "scene_reply" && !question.prompt.text) ||
+      (question?.type === "case_clue" && !question.prompt.text);
     if (heardFirst && question.prompt.speak && !result && canSpeakChinese()) {
       speakAt(question.prompt.speak, question.prompt.rate);
     }
@@ -162,7 +173,11 @@ export default function Practice({ forceSource }) {
   }
 
   const context = session?.context;
-  const title = t(`practice.title.${source}`, { level: level ?? "", title: context?.title || "" });
+  const title = t(`practice.title.${source}`, {
+    level: level ?? "",
+    title: typeof context?.title === "string" ? context.title : "",
+    place: context?.env ? t(`soundWorld.env.${context.env}`) : "",
+  });
   const backTo = lessonId
     ? `/lessons/${lessonId}`
     : source === "review"
@@ -171,14 +186,22 @@ export default function Practice({ forceSource }) {
         ? `/real-chinese/${scene || ""}`
         : source === "sentence"
           ? `/sentence${sentence ? `?text=${encodeURIComponent(sentence)}` : ""}`
-          : `/${source === "vocab" ? "vocabulary" : source}`;
+          : source === "detective"
+            ? "/detective"
+            : source === "sound"
+              ? "/sound-world"
+              : `/${source === "vocab" ? "vocabulary" : source}`;
   const eyebrow = level
     ? `HSK ${level}`
     : source === "scene"
       ? t("nav.realChinese")
       : source === "sentence"
         ? t("nav.sentence")
-        : t(source === "review" ? "nav.review" : "nav.lessons");
+        : source === "detective"
+          ? t("nav.detective")
+          : source === "sound"
+            ? t("nav.soundWorld")
+            : t(source === "review" ? "nav.review" : "nav.lessons");
   const head = (kpis = null) => (
     <header className="page-head">
       <div>
@@ -311,7 +334,11 @@ export default function Practice({ forceSource }) {
   const qtype = question.type;
   const listenOnly = ["scene_listen", "sentence_listen"].includes(qtype);
   // Options written in Chinese (scene replies and the sentence activities).
-  const cjkOptions = qtype === "meaning_to_word" || ["scene_reply", "sentence_listen", "sentence_order", "sentence_word"].includes(qtype);
+  const cjkOptions =
+    qtype === "meaning_to_word" ||
+    ["scene_reply", "sentence_listen", "sentence_order", "sentence_word", "case_deduce", "sound_respond"].includes(qtype);
+  // Detective Mode / Sound World questions word their own ask from the round.
+  const custom = qtype.startsWith("case_") || qtype.startsWith("sound_");
   const say = result?.say;
   const animal = dashboard?.animal;
   // The greeting belongs to the start of the round only; after that the
@@ -354,13 +381,24 @@ export default function Practice({ forceSource }) {
             </div>
           )}
           {source === "scene" && <SceneThread questions={session.questions} upTo={index} context={context} />}
+          {source === "detective" && <CaseFile context={context} questions={session.questions} upTo={index} />}
           <div className="card practice-card" key={`${session.id}-${index}-${i18n.language}`}>
+            {question.tag && (
+              <span className="badge accent" style={{ marginBottom: 8 }}>{t(`detective.tag.${question.tag}`)}</span>
+            )}
             <p className="sub" style={{ marginBottom: 8 }}>
-              {t(`practice.q.${qtype}`, { meaning: question.prompt.meaning || "" })}
+              {custom ? askText(t, question) : t(`practice.q.${qtype}`, { meaning: question.prompt.meaning || "" })}
             </p>
+            {qtype === "case_clue" && <CaseClue question={question} />}
+            {qtype.startsWith("sound_") && <SoundStage question={question} autoPlay />}
             {qtype === "scene_reply" && <NpcLine question={question} context={context} />}
-            <div className={`practice-prompt${qtype === "scene_reply" ? " is-empty" : ""}`}>
-              {qtype === "scene_reply" ? null : qtype === "sentence_order" ? (
+            <div className={`practice-prompt${qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? " is-empty" : ""}`}>
+              {qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? null : qtype === "case_deduce" ? (
+                <>
+                  <div className="practice-text" lang="zh-CN">{question.prompt.text}</div>
+                  {question.prompt.pinyin && <div className="sub">{question.prompt.pinyin}</div>}
+                </>
+              ) : qtype === "sentence_order" ? (
                 <div className="sentence-chunks" lang="zh-CN">
                   {question.prompt.chunks.map((c, i) => (
                     <span key={i} className="sentence-chunk">{c}</span>
@@ -442,6 +480,15 @@ export default function Practice({ forceSource }) {
                 </div>
                 {/* On narrow screens the side panel sits below the fold, so
                     the reaction is repeated here where the learner is looking. */}
+                <GlossList gloss={result.card.gloss} />
+                {result.card.solution?.length > 0 && (
+                  <div className="gloss">
+                    <p className="side-title">{t("detective.solution")}</p>
+                    <ol className="case-clues">
+                      {result.card.solution.map((c, i) => <li key={i} lang="zh-CN">{c}</li>)}
+                    </ol>
+                  </div>
+                )}
                 {say && <SpeakLine key={`${session.id}-${index}`} sessionId={session.id} index={index} text={say} />}
                 <div className="only-narrow">
                   <CompanionReaction animal={animal} reaction={result.reaction} context={question.item_type} compact focusMode="example" size={60} />
@@ -467,6 +514,12 @@ export default function Practice({ forceSource }) {
           </div>
 
           <RoundContextCard context={context} />
+          {context?.kind === "sound" && (
+            <div className="card side-card">
+              <p className="side-title">{t("soundWorld.ambient")}</p>
+              <AmbientToggle env={context.env} />
+            </div>
+          )}
 
           <div className="card side-card">
             <p className="side-title">{t("practice.roundProgress")}</p>

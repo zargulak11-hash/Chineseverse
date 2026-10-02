@@ -402,3 +402,22 @@ def write_hanzi(
     return WriteResponse(
         hanzi=h_out, writing_mastery=round(rec.writing_mastery, 1), writing_status=rec.writing_status, reaction=reaction,
     )
+
+
+@router.get("/character/{char}/dna")
+def character_dna(
+    char: str,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Character DNA: structure, words, related characters, examples and
+    the learner's own history with one character (services/character_dna.py).
+    Read-only -- it never records progress."""
+    from app.services import character_dna as svc
+
+    ensure_user_skills(db, user)
+    try:
+        return svc.character_dna(db, user, char, locale)
+    except svc.CharacterError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc

@@ -217,7 +217,8 @@ export default function SentenceLesson() {
                 {analysis.characters.map((c) => (
                   <div key={c.char} className="card flat sentence-char">
                     <div className="row spread" style={{ margin: 0 }}>
-                      <span className="sentence-char-glyph" lang="zh-CN">{c.char}</span>
+                      <Link to={`/hanzi/${encodeURIComponent(c.char)}`} className="sentence-char-glyph" lang="zh-CN"
+                            aria-label={t("charDna.openFor", { char: c.char })}>{c.char}</Link>
                       <StatusBadge status={c.status} />
                     </div>
                     <div className="sub">{c.pinyin} · {c.meaning}</div>

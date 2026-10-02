@@ -36,6 +36,10 @@ import Mistakes from "./pages/Mistakes.jsx";
 import Practice from "./pages/Practice.jsx";
 import RealChinese, { RealChineseScene } from "./pages/RealChinese.jsx";
 import SentenceLesson from "./pages/SentenceLesson.jsx";
+import Detective from "./pages/Detective.jsx";
+import SoundWorld from "./pages/SoundWorld.jsx";
+import CharacterDNA from "./pages/CharacterDNA.jsx";
+import Ecosystem from "./pages/Ecosystem.jsx";
 import Exam from "./pages/Exam.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -179,6 +183,38 @@ export default function App() {
             element={
               <RequireAuth>
                 <SentenceLesson />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/detective"
+            element={
+              <RequireAuth>
+                <Detective />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/sound-world"
+            element={
+              <RequireAuth>
+                <SoundWorld />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/hanzi/:char"
+            element={
+              <RequireAuth>
+                <CharacterDNA />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/ecosystem"
+            element={
+              <RequireAuth>
+                <Ecosystem />
               </RequireAuth>
             }
           />

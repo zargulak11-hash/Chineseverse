@@ -50,6 +50,24 @@ DYNAMIC = (
                                              "sentence_start", "words_milestone")]
     + [f"companionReact.noun.{n}" for n in ("line", "sentence")]
     + [f"pages.progress.section.{x}" for x in ("real_life", "sentence")]
+    + [f"practice.title.{s}" for s in ("detective", "sound")]
+    + [f"detective.ask.{k}" for k in ("where", "where_me", "when", "when_me", "where_say", "where_seen", "deduce")]
+    + [f"detective.case.{c}.{f}" for c in ("who_took", "where_lost", "who_lies") for f in ("zh", "title", "desc")]
+    + [f"detective.tag.{x}" for x in ("evidence", "grammar_clue")]
+    + [f"detective.mode.{x}" for x in ("read", "listen")]
+    + [f"soundWorld.env.{e}" for e in ("night_market", "restaurant", "train_station", "school", "street", "airport", "shopping")]
+    + [f"soundWorld.speaker.{s}" for s in ("vendor", "customer", "friend", "waiter", "cook", "announcer", "passenger",
+                                           "staff", "teacher", "student", "local", "clerk")]
+    + [f"soundWorld.stage.{n}" for n in (1, 2, 3, 4)]
+    + [f"soundWorld.ask.{a}" for a in ("sound_identify", "sound_find", "sound_respond", "sound_memory",
+                                       "sound_info.price", "sound_info.total", "sound_info.platform", "sound_info.room",
+                                       "sound_info.bus", "sound_info.takeoff", "sound_info.floor",
+                                       "sound_conversation.count", "sound_conversation.price", "sound_conversation.bus")]
+    + [f"charDna.status.{x}" for x in ("new", "learning", "reviewing", "mastered", "due")]
+    + [f"charDna.writingStatus.{x}" for x in ("not_practiced", "new", "learning", "reviewing", "mastered")]
+    + [f"companionReact.cause.{c}" for c in ("detective_start", "sound_start")]
+    + [f"companionReact.noun.{n}" for n in ("case", "sound")]
+    + [f"pages.progress.section.{x}" for x in ("detective", "sound_world")]
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

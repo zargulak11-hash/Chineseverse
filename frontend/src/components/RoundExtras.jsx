@@ -172,6 +172,39 @@ export function RoundContextCard({ context }) {
       </div>
     );
   }
+  if (context.kind === "case") {
+    const p = context.profile || {};
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("nav.detective")}</p>
+        <div className="row" style={{ margin: 0, gap: 12 }}>
+          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <b>{t(`detective.case.${context.case}.title`)}</b>
+        </div>
+        <span className="badge accent" style={{ marginTop: 12 }}>{t(`realLife.tier.${context.tier}`)}</span>
+        <ul className="scene-rules">
+          <li>{t("detective.profile.suspects", { count: p.suspects })}</li>
+          <li>{t("detective.profile.listen", { pct: Math.round((p.listen_share || 0) * 100) })}</li>
+          {p.evidence_notes > 0 && <li>{t("detective.profile.evidence", { count: p.evidence_notes })}</li>}
+        </ul>
+      </div>
+    );
+  }
+  if (context.kind === "sound") {
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("nav.soundWorld")}</p>
+        <div className="row" style={{ margin: 0, gap: 12 }}>
+          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <div>
+            <b>{t(`soundWorld.env.${context.env}`)}</b>
+            <div className="sub" lang="zh-CN">{context.zh}</div>
+          </div>
+        </div>
+        <span className="badge accent" style={{ marginTop: 12 }}>{t(`soundWorld.stage.${context.stage}`)}</span>
+      </div>
+    );
+  }
   return (
     <div className="card side-card">
       <p className="side-title">{t("nav.sentence")}</p>
