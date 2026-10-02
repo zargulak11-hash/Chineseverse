@@ -146,7 +146,11 @@ with TestClient(app) as client:
     expect(client, "get", f"/api/lessons/{lid}", 404, headers=admin_headers)
 
     # Progress: always the signed-in user's own rows
-    lesson2 = client.get("/api/lessons", params={"hsk_level": 2}).json()[0]
+    # Rows may only be written for a lesson the path has opened (the learner's
+    # current one); a locked HSK 2 lesson is refused.
+    lesson2 = {"id": client.get("/api/lessons/path", headers=alice_headers).json()["current_lesson_id"]}
+    locked2 = client.get("/api/lessons", params={"hsk_level": 2}).json()[0]
+    expect(client, "post", "/api/progress", 403, json={"lesson_id": locked2["id"], "status": "not_started"}, headers=alice_headers)
     expect(client, "get", "/api/progress", 401)
     expect(client, "post", "/api/progress", 401, json={"lesson_id": lesson2["id"]})
     prog = expect(

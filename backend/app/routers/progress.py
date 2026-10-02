@@ -7,6 +7,7 @@ from app import models, schemas
 from app.crud import apply_updates, commit_or_409
 from app.database import get_db
 from app.deps import get_current_user
+from app.services import lesson_path
 from app.services.activity import log_activity
 
 router = APIRouter(prefix="/api/progress", tags=["progress"])
@@ -48,6 +49,14 @@ def _no_client_score(score: int | None, current: int | None = None) -> None:
             status_code=403,
             detail="Lesson scores are recorded by graded practice",
         )
+
+
+def _not_locked(db: Session, user: models.User, lesson_id: int) -> None:
+    """No row on a lesson the path hasn't opened for this learner. Graded
+    practice only ever writes rows for open lessons; these endpoints used
+    to accept any lesson id, so a client could plant rows on locked ones."""
+    if not lesson_path.path_state(db, user).is_open(lesson_id):
+        raise HTTPException(status_code=403, detail=lesson_path.LOCKED_DETAIL)
 
 
 def _sync_completed_at(item: models.Progress):
@@ -99,6 +108,7 @@ def create_progress(
         raise HTTPException(status_code=404, detail=f"Lesson with id {payload.lesson_id} not found")
     _no_self_completion(payload.status)
     _no_client_score(payload.score)
+    _not_locked(db, user, payload.lesson_id)
     item = models.Progress(user_id=user.id, lesson_id=payload.lesson_id, status=payload.status)
     _sync_completed_at(item)
     db.add(item)

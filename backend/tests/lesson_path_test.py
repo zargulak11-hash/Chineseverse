@@ -265,4 +265,44 @@ with TestClient(app) as client:
     expect(client, "post", "/api/practice/sessions", 403, headers=ah, json={"source": "lesson", "lesson_id": last["id"]})
     print("[PASS] admin reads any lesson's content but cannot practice past the path")
 
+    # ---------------------------------------------- learners from before exams existed are not re-locked
+    from datetime import datetime as _dt, timedelta as _td
+    from app.services.lesson_path import EXAMS_INTRODUCED_AT, path_state as _ps
+
+    def pre_exam_learner(name, started_at):
+        lid, lh = register(client, name)
+        with SessionLocal() as db:
+            entries = _ps(db, db.get(models.User, lid)).entries
+            for e in entries:
+                if e.level == 1 and e.practicable:
+                    db.add(models.Progress(user_id=lid, lesson_id=e.lesson.id, status="completed", score=90,
+                                           created_at=EXAMS_INTRODUCED_AT - _td(days=3), completed_at=EXAMS_INTRODUCED_AT - _td(days=3)))
+            hsk2_first = next(e.lesson.id for e in entries if e.level == 2 and e.practicable)
+            db.add(models.Progress(user_id=lid, lesson_id=hsk2_first, status="in_progress", score=40, created_at=started_at))
+            db.commit()
+        return lh, hsk2_first
+
+    lh, first2 = pre_exam_learner("startedbefore", EXAMS_INTRODUCED_AT - _td(days=1))
+    p = expect(client, "get", "/api/lessons/path", 200, headers=lh)
+    assert p["exam_level"] is None and p["current_level"] == 2, (p["exam_level"], p["current_level"])
+    assert p["current_lesson_id"] == first2
+    expect(client, "get", f"/api/lessons/{first2}", 200, headers=lh)
+    expect(client, "post", "/api/practice/sessions", 201, headers=lh, json={"source": "lesson", "lesson_id": first2})
+    print("[PASS] a learner who had started HSK 2 before exams existed keeps it open (not re-locked)")
+
+    lh2, first2b = pre_exam_learner("startedafter", _dt.utcnow())
+    p = expect(client, "get", "/api/lessons/path", 200, headers=lh2)
+    assert p["exam_level"] == 1, p["exam_level"]
+    expect(client, "get", f"/api/lessons/{first2b}", 403, headers=lh2)
+    print("[PASS] a row on an HSK 2 lesson made after exams existed doesn't skip the HSK 1 exam")
+
+    # nobody can plant such a row: the progress API refuses locked lessons
+    nid, nh = register(client, "plantrow")
+    locked_id = next(l["id"] for l in flat(expect(client, "get", "/api/lessons/path", 200, headers=nh)) if l["status"] == "locked")
+    for status in ("in_progress", "not_started"):
+        expect(client, "post", "/api/progress", 403, headers=nh, json={"lesson_id": locked_id, "status": status})
+    with SessionLocal() as db:
+        assert db.query(models.Progress).filter_by(user_id=nid).count() == 0
+    print("[PASS] POST /api/progress refuses rows on locked lessons")
+
 print("ALL LESSON PATH TESTS PASSED")

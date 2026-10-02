@@ -27,6 +27,7 @@ than being sent back. Nothing here writes or resets progress rows.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -36,6 +37,13 @@ from app.services.practice import lesson_round_items
 
 COMPLETED, CURRENT, AVAILABLE, LOCKED = "completed", "current", "available", "locked"
 LOCKED_DETAIL = "This lesson is locked. Complete the previous lesson first."
+
+# When HSK final exams went live (deploy of b5ea315). A lesson above a level
+# that the learner had already *started* before this -- an in-progress row
+# from a graded round -- grandfathers that level's exam like a completed one
+# does: it was open to them then and must not be re-locked now. Rows started
+# later can't count, or a row on a locked lesson would bypass the exam.
+EXAMS_INTRODUCED_AT = datetime(2026, 10, 2, 10, 51)
 
 
 @dataclass
@@ -127,12 +135,17 @@ def path_state(db: Session, user: models.User) -> PathState:
 
     # HSK final exams (services/hsk_exam.py): finishing a level's lessons
     # does not open the next level -- passing that level's exam does. A
-    # learner who already has completed lessons ABOVE a level counts as past
-    # its exam (progress from before exams existed is never re-locked).
+    # learner who already has completed lessons ABOVE a level -- or had
+    # started one before exams existed -- counts as past its exam (progress
+    # from before exams existed is never re-locked).
     passed = {
         lvl for (lvl,) in db.query(models.HSKExamAttempt.level).filter_by(user_id=user.id, status="passed")
     }
-    done_levels = {e.level for e in entries if e.lesson.id in done}
+    level_of = {e.lesson.id: e.level for e in entries}
+    done_levels = {e.level for e in entries if e.lesson.id in done} | {
+        level_of[lid] for lid, p in progress.items()
+        if lid in level_of and p.created_at is not None and p.created_at < EXAMS_INTRODUCED_AT
+    }
     cleared = {lvl for lvl in {e.level for e in entries} if lvl in passed or any(d > lvl for d in done_levels)}
     gate = None
     for lvl in sorted({e.level for e in entries if e.practicable}):
