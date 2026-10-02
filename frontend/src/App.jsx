@@ -34,6 +34,7 @@ import VoiceCompanion from "./pages/VoiceCompanion.jsx";
 import PetTeacher from "./pages/PetTeacher.jsx";
 import Mistakes from "./pages/Mistakes.jsx";
 import Practice from "./pages/Practice.jsx";
+import Exam from "./pages/Exam.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
 import Settings from "./pages/Settings.jsx";
@@ -320,6 +321,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Practice />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/exam/:level"
+            element={
+              <RequireAuth>
+                <Exam />
               </RequireAuth>
             }
           />

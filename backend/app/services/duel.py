@@ -297,7 +297,10 @@ def _finalize(db: Session, duel: models.Duel, now: datetime) -> None:
             continue
         log_activity(db, u, "duel_finish")
         progress_quests(db, u, "duel", amount=1)   # "Finish 1 duel"
-        progress_missions(db, u, "duel")
+        if duel.winner_id == u.id:
+            # The duel mission is "Win your first DNA Duel" -- it used to
+            # advance for both players, loser included.
+            progress_missions(db, u, "duel")
         opp = next((o for o in ps if o.user_id != p.user_id), None)
         notifications.create_duel_notification(
             db, notifications.DUEL_COMPLETED, db.get(models.User, opp.user_id) if opp else None, u, duel.id

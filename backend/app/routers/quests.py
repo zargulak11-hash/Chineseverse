@@ -51,10 +51,18 @@ def claim_quest(
         raise HTTPException(status_code=404, detail="Quest not found")
     if not quest.completed:
         raise HTTPException(status_code=409, detail="Quest not completed yet")
-    if quest.claimed:
+    # Claimed with one conditional UPDATE: two claims at the same instant
+    # (double click, two tabs) used to both pass the check above and pay the
+    # reward twice; only one of them can flip claimed now.
+    won = (
+        db.query(models.DailyQuest)
+        .filter(models.DailyQuest.id == quest.id, models.DailyQuest.claimed.is_(False))
+        .update({models.DailyQuest.claimed: True}, synchronize_session=False)
+    )
+    if not won:
+        db.rollback()
         raise HTTPException(status_code=409, detail="Quest already claimed")
-
-    quest.claimed = True
+    db.refresh(quest)
     user.total_xp += quest.reward_xp
     user.coins += quest.reward_coins
     add_bond_points(user, points=2)

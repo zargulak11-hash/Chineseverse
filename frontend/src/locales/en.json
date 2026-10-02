@@ -239,6 +239,8 @@
       "loading": "Gathering missions…",
       "subtitle": "Real objectives across the world — speaking, listening, cases, duels and more. Progress updates automatically as you play; rewards land the moment you finish.",
       "accept": "Accept mission",
+      "start": "Start",
+      "locked": "Opens at HSK {{level}}",
       "completed": "Completed",
       "empty": "No missions yet."
     },
@@ -941,5 +943,55 @@
     "duel_accepted": "{{name}} accepted your duel.",
     "duel_declined": "{{name}} declined your duel.",
     "duel_completed": "Your duel with {{name}} has a result."
+  },
+  "exam": {
+    "eyebrow": "Final exam",
+    "title": "HSK {{level}} final exam",
+    "intro": "This exam checks what you learned in HSK {{level}}. Pass it to open HSK {{next}}.",
+    "introLast": "This exam checks what you learned in HSK 9, the last step of the course.",
+    "lessonsReady": "All HSK {{level}} lessons are complete. Pass the final exam to open HSK {{next}}.",
+    "lessonsReadyLast": "All lessons are complete. Pass the HSK 9 final exam to finish the course.",
+    "takeExam": "Take the exam",
+    "rulesTitle": "Before you start",
+    "rules": {
+      "questions": "{{count}} questions from your HSK {{level}} lessons",
+      "time": "{{minutes}} minutes",
+      "pass": "Pass mark: {{score}}%",
+      "integrity": "Stay on this page until you submit. Leaving it, switching to another tab or window, reloading or closing it ends the attempt with 0 points."
+    },
+    "start": "Start the exam",
+    "starting": "Starting…",
+    "questionKpi": "Question",
+    "timeLeft": "Time left",
+    "lessonsKpi": "Lessons done",
+    "bestKpi": "Best score",
+    "integrityBanner": "Protected exam: leaving this page ends the attempt with 0 points.",
+    "answered": "Answered {{count}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next",
+    "submit": "Submit exam",
+    "keepGoing": "Keep going",
+    "confirmSubmit": "Submit now? {{count}} unanswered questions will count as wrong.",
+    "locked": "This exam is not open yet. Finish every lesson of HSK {{level}} first.",
+    "inProgress": "An exam attempt is already open (another tab or window). End it to start again; it will count as 0.",
+    "endAndRestart": "End it and start again",
+    "toLessons": "Back to lessons",
+    "toNextLevel": "Go to HSK {{level}}",
+    "retry": "Try again",
+    "status": {
+      "passed": "Passed",
+      "failed": "Not passed",
+      "invalidated": "Ended: page left",
+      "expired": "Time ran out",
+      "in_progress": "In progress"
+    },
+    "result": {
+      "score": "{{correct}} of {{total}} correct · {{score}}%",
+      "passed": "Passed! HSK {{next}} is now open.",
+      "passedLast": "Passed! You have completed HSK 9.",
+      "failed": "Not passed this time: you need {{score}}%. Your lessons stay completed. Review and try again.",
+      "invalidated": "This attempt was ended because the exam page was left. Score: 0.",
+      "expired": "Time ran out before the exam was submitted. Score: 0."
+    }
   }
 }

@@ -60,6 +60,7 @@ async function request(method, path, body) {
     // the page can show the message in the learner's language.
     err.status = res.status;
     if (data && typeof data.code === "string") err.code = data.code;
+    err.data = data; // the whole body (e.g. an exam's attempt_id / result)
     throw err;
   }
   return data;

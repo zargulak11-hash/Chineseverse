@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -16,16 +18,38 @@ const KIND_ICON = {
   world: "world",
 };
 
+// Where a mission is actually done. Missions advance on their own from that
+// real activity (server-side); this page only points the learner there.
+const KIND_PATH = {
+  listening: "/voice-companion",
+  duel: "/duels",
+  vocab: "/vocabulary",
+  teach: "/pet-teacher",
+};
+
+function missionPath(mission) {
+  if (mission.scenario_slug) {
+    return mission.scenario_type === "case" ? `/cases/${mission.scenario_slug}` : `/conversation/${mission.scenario_slug}`;
+  }
+  return KIND_PATH[mission.kind] || "/world";
+}
+
 export default function Missions() {
   const { t } = useTranslation();
   const { data, setData, error } = useApi("/missions");
+  const [actionError, setActionError] = useState("");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading>{t("pages.missions.loading")}</Loading></Layout>;
 
   async function accept(missionId) {
-    const updated = await api.post(`/missions/${missionId}/accept`);
-    setData((ms) => (ms || []).map((m) => (m.mission.id === missionId ? updated : m)));
+    setActionError("");
+    try {
+      const updated = await api.post(`/missions/${missionId}/accept`);
+      setData((ms) => (ms || []).map((m) => (m.mission.id === missionId ? updated : m)));
+    } catch (e) {
+      setActionError(e.message);
+    }
   }
 
   const active = data.filter((m) => m.status !== "completed");
@@ -36,7 +60,8 @@ export default function Missions() {
       <h1 className="h1">{t("pages.missions.title")}</h1>
       <p className="sub">{t("pages.missions.subtitle")}</p>
 
-      <div className="col" style={{ marginTop: 18 }}>
+      {actionError && <p className="formerr">{actionError}</p>}
+      <div className="col" style={{ marginTop: 16 }}>
         {active.map((m) => (
           <div key={m.id} className="card">
             <div className="row spread">
@@ -60,16 +85,25 @@ export default function Missions() {
                 )}
               </div>
             </div>
-            {m.status === "available" ? (
-              <button className="btn primary small" style={{ marginTop: 10 }} onClick={() => accept(m.mission.id)}>
+            {m.locked ? (
+              <span className="badge" style={{ marginTop: 12 }}>
+                <Icon name="lock" size={11} /> {t("pages.missions.locked", { level: m.mission.min_hsk_level })}
+              </span>
+            ) : m.status === "available" ? (
+              <button type="button" className="btn primary small" style={{ marginTop: 12 }} onClick={() => accept(m.mission.id)}>
                 {t("pages.missions.accept")}
               </button>
             ) : (
-              <div className="hbar" style={{ marginTop: 10 }}>
-                <span className="muted" style={{ fontSize: 12 }}>
-                  {m.progress}/{m.mission.target_count}
-                </span>
-                <Bar value={m.progress} max={m.mission.target_count} />
+              <div className="row" style={{ marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+                <div className="hbar" style={{ flex: 1, minWidth: 0 }}>
+                  <span className="muted" style={{ fontSize: "var(--text-xs)" }}>
+                    {m.progress}/{m.mission.target_count}
+                  </span>
+                  <Bar value={m.progress} max={m.mission.target_count} />
+                </div>
+                <Link to={missionPath(m.mission)} className="btn small">
+                  <Icon name={KIND_ICON[m.mission.kind] || "flag"} size={13} /> {t("pages.missions.start")}
+                </Link>
               </div>
             )}
           </div>

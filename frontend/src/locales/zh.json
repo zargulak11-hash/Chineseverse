@@ -238,6 +238,8 @@
       "loading": "正在收集任务…",
       "subtitle": "遍布世界的真实目标——口语、听力、案件、对决等等。进度会在你游戏过程中自动更新；完成的瞬间即可获得奖励。",
       "accept": "接受任务",
+      "start": "开始",
+      "locked": "HSK {{level}} 开放",
       "completed": "已完成",
       "empty": "暂无任务。"
     },
@@ -939,5 +941,55 @@
     "duel_accepted": "{{name}} 接受了你的对决。",
     "duel_declined": "{{name}} 拒绝了你的对决。",
     "duel_completed": "你和 {{name}} 的对决已出结果。"
+  },
+  "exam": {
+    "eyebrow": "结业考试",
+    "title": "HSK {{level}} 结业考试",
+    "intro": "本考试检测你在 HSK {{level}} 学到的内容。通过后即可开启 HSK {{next}}。",
+    "introLast": "本考试检测你在 HSK 9 学到的内容，这是课程的最后一步。",
+    "lessonsReady": "HSK {{level}} 的所有课程已完成。通过结业考试即可开启 HSK {{next}}。",
+    "lessonsReadyLast": "所有课程已完成。通过 HSK 9 结业考试即可完成全部课程。",
+    "takeExam": "参加考试",
+    "rulesTitle": "开始之前",
+    "rules": {
+      "questions": "{{count}} 道题，来自你的 HSK {{level}} 课程",
+      "time": "{{minutes}} 分钟",
+      "pass": "及格线：{{score}}%",
+      "integrity": "提交之前请一直停留在本页面。离开本页、切换到其他标签页或窗口、刷新或关闭页面，本次考试将以 0 分结束。"
+    },
+    "start": "开始考试",
+    "starting": "正在开始…",
+    "questionKpi": "题目",
+    "timeLeft": "剩余时间",
+    "lessonsKpi": "已完成课程",
+    "bestKpi": "最好成绩",
+    "integrityBanner": "受保护的考试：离开本页面，本次考试将以 0 分结束。",
+    "answered": "已作答 {{count}} / {{total}}",
+    "prev": "上一题",
+    "next": "下一题",
+    "submit": "提交考试",
+    "keepGoing": "继续作答",
+    "confirmSubmit": "现在提交吗？未作答的 {{count}} 道题将计为错误。",
+    "locked": "考试尚未开放。请先完成 HSK {{level}} 的所有课程。",
+    "inProgress": "已有一次考试正在进行（在其他标签页或窗口中）。结束它才能重新开始，那次考试将计为 0 分。",
+    "endAndRestart": "结束并重新开始",
+    "toLessons": "返回课程",
+    "toNextLevel": "前往 HSK {{level}}",
+    "retry": "再试一次",
+    "status": {
+      "passed": "已通过",
+      "failed": "未通过",
+      "invalidated": "已终止：离开了页面",
+      "expired": "时间已到",
+      "in_progress": "进行中"
+    },
+    "result": {
+      "score": "答对 {{correct}} / {{total}} · {{score}}%",
+      "passed": "通过了！HSK {{next}} 已开启。",
+      "passedLast": "通过了！你已完成 HSK 9。",
+      "failed": "这次没有通过：需要 {{score}}%。已完成的课程会保留。复习后再试一次。",
+      "invalidated": "由于离开了考试页面，本次考试已终止。成绩：0。",
+      "expired": "提交之前时间已到。成绩：0。"
+    }
   }
 }

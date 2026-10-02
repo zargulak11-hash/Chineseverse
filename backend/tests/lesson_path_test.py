@@ -203,7 +203,8 @@ with TestClient(app) as client:
     assert expect(client, "get", "/api/lessons/path", 200, headers=gh)["current_lesson_id"] == stepl[6]["id"]
     print("[PASS] pre-path progress resumes after the furthest completed lesson; earlier gaps stay open, nothing reset")
 
-    # --- HSK progression on the real curriculum: finish HSK 1 -> HSK 2 opens
+    # --- HSK progression on the real curriculum: finish HSK 1 -> its final
+    # exam -> pass it -> HSK 2 opens (services/hsk_exam.py)
     hsk1 = [s for s in steps(expect(client, "get", "/api/lessons/path", 200, headers=h)) if s["status"] != "completed"]
     level_of = {l["id"]: lv["level"] for lv in path["levels"] for l in lv["lessons"]}
     hsk1 = [s for s in hsk1 if level_of[s["id"]] == 1]
@@ -213,20 +214,37 @@ with TestClient(app) as client:
         assert play(client, h, s["id"])["lesson_status"] == "completed"
     ph = expect(client, "get", "/api/lessons/path", 200, headers=h)
     by_level = {lv["level"]: lv for lv in ph["levels"]}
-    assert by_level[1]["status"] == "completed" and by_level[1]["completed"] == by_level[1]["total"], by_level[1]
+    assert by_level[1]["completed"] == by_level[1]["total"] and by_level[1]["exam"] == "ready", by_level[1]["exam"]
+    assert ph["exam_level"] == 1 and ph["current_lesson_id"] is None
+    assert by_level[2]["status"] == "locked" and by_level[3]["status"] == "locked"
+    exam = expect(client, "post", "/api/exams/1/start", 201, headers=h)
+    with SessionLocal() as db:
+        qs = db.get(models.HSKExamAttempt, exam["id"]).questions
+    for i, q in enumerate(qs):
+        expect(client, "post", f"/api/exams/attempts/{exam['id']}/answer", 200, headers=h, json={"index": i, "choice_id": q["item_id"]})
+    assert expect(client, "post", f"/api/exams/attempts/{exam['id']}/submit", 200, headers=h)["status"] == "passed"
+    ph = expect(client, "get", "/api/lessons/path", 200, headers=h)
+    by_level = {lv["level"]: lv for lv in ph["levels"]}
+    assert by_level[1]["status"] == "completed" and by_level[1]["exam"] == "passed", by_level[1]["status"]
     assert by_level[2]["status"] == "current" and ph["current_level"] == 2, by_level[2]["status"]
     assert by_level[3]["status"] == "locked"
     first_hsk2 = next(s for s in steps(ph) if level_of[s["id"]] == 2)
     assert ph["current_lesson_id"] == first_hsk2["id"]
-    print(f"[PASS] completing all {by_level[1]['total']} HSK 1 steps opens HSK 2 at its first lesson; HSK 3 stays locked")
+    print(f"[PASS] all {by_level[1]['total']} HSK 1 steps -> HSK 1 exam (HSK 2 locked) -> passed -> HSK 2 opens; HSK 3 stays locked")
 
-    # --- dashboard / Roadmap agree with the path: HSK 1 finished -> HSK 2,
-    # even when the Learning DNA average (all 0 here) has not caught up.
+    # --- dashboard / Roadmap agree with the path: HSK 1 finished and its exam
+    # passed -> HSK 2, even when the Learning DNA average (all 0) has not caught up.
     rid, rh = register(client, "pathrank")
     hsk1_steps = [s for s in steps(ph) if level_of[s["id"]] == 1]
     with SessionLocal() as db:
         for s in hsk1_steps:
             db.add(models.Progress(user_id=rid, lesson_id=s["id"], status="completed", score=90, completed_at=datetime.utcnow()))
+        db.commit()
+    assert expect(client, "get", "/api/dashboard", 200, headers=rh)["hsk_level"] == 1  # exam still due
+    with SessionLocal() as db:
+        db.add(models.HSKExamAttempt(user_id=rid, level=1, status="passed", questions=[], answers=[], total=20,
+                                     correct=20, score=100.0, violations=[], started_at=datetime.utcnow(),
+                                     expires_at=datetime.utcnow(), finished_at=datetime.utcnow()))
         db.commit()
     assert expect(client, "get", "/api/dashboard", 200, headers=rh)["hsk_level"] == 2
     road = expect(client, "get", "/api/hsk/roadmap", 200, headers=rh)
@@ -235,7 +253,7 @@ with TestClient(app) as client:
     fresh_id, fresh_h = register(client, "pathfresh")
     assert expect(client, "get", "/api/dashboard", 200, headers=fresh_h)["hsk_level"] == 1
     assert expect(client, "get", "/api/hsk/roadmap", 200, headers=fresh_h)["current_level"] == 1
-    print("[PASS] dashboard and Roadmap follow the lesson path: HSK 1 completed -> HSK 2 current (DNA still 0)")
+    print("[PASS] dashboard and Roadmap follow the lesson path: HSK 1 done (1 until its exam) -> exam passed -> HSK 2 (DNA still 0)")
 
     # --- admins can read any lesson (they author them) but still progress in order
     aid, ah = register(client, "pathadmin")

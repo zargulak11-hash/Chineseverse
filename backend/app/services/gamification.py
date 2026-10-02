@@ -226,9 +226,16 @@ def progress_missions(
     """
     missions = db.query(models.Mission).filter(models.Mission.kind == kind).all()
     completed_now = []
+    level = None
     for mission in missions:
         if mission.scenario_id is not None and mission.scenario_id != scenario_id:
             continue
+        # A mission above the learner's HSK level is locked (routers/missions.py).
+        if (mission.min_hsk_level or 1) > 1:
+            if level is None:
+                level = user_rank(db, user)[0]
+            if mission.min_hsk_level > level:
+                continue
         entry = (
             db.query(models.UserMission)
             .filter_by(user_id=user.id, mission_id=mission.id)

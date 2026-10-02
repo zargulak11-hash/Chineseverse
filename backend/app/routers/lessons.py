@@ -90,7 +90,10 @@ def get_path(
     current = state.current
     return {
         "current_lesson_id": current.lesson.id if current else None,
-        "current_level": current.level if current else None,
+        "current_level": current.level if current else state.exam_level,
+        # Set when every lesson of this level is done and its final exam is
+        # what opens the next level (services/hsk_exam.py).
+        "exam_level": state.exam_level,
         "completed": sum(1 for e in steps if e.status == lesson_path.COMPLETED),
         "total": len(steps),
         "levels": levels,

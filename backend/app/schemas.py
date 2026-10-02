@@ -562,6 +562,9 @@ class MissionResponse(BaseModel):
     reward_coins: int
     target_count: int
     scenario_id: Optional[int]
+    # Where the mission is done: /conversation/<slug> or /cases/<slug>.
+    scenario_slug: Optional[str] = None
+    scenario_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -572,13 +575,9 @@ class UserMissionResponse(BaseModel):
     status: str
     progress: int
     completed_at: Optional[datetime]
+    locked: bool = False  # above the learner's HSK level
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class MissionProgressUpdate(BaseModel):
-    status: Optional[str] = Field(default=None, max_length=20)
-    delta: int = Field(default=0, ge=0, le=100)
 
 
 # --------------------------------------------------------------------------- Voice

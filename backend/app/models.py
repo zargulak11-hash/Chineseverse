@@ -8,11 +8,13 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Table,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import relationship
 
@@ -73,6 +75,7 @@ class User(Base):
     participants = relationship("DuelParticipant", back_populates="user", cascade="all, delete-orphan")
     progress = relationship("Progress", back_populates="user", cascade="all, delete-orphan")
     practice_sessions = relationship("PracticeSession", back_populates="user", cascade="all, delete-orphan")
+    exam_attempts = relationship("HSKExamAttempt", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -712,6 +715,44 @@ class PracticeSession(Base):
     completed_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="practice_sessions")
+
+
+class HSKExamAttempt(Base):
+    """One attempt at an HSK level's final exam (services/hsk_exam.py).
+
+    The server owns everything about it: the questions it built
+    ({type, item_type, item_id, option_ids} -- the browser only ever gets
+    option ids and labels), the answers (option ids), the clock
+    (expires_at), the status and the score. status:
+      in_progress -> passed | failed     (submitted, graded on the server)
+      in_progress -> invalidated         (left / hid / reopened the exam: 0)
+      in_progress -> expired             (time ran out unsubmitted: 0)
+    At most one in_progress attempt per user (partial unique index), so two
+    tabs can never hold two live attempts."""
+
+    __tablename__ = "hsk_exam_attempts"
+    __table_args__ = (
+        Index(
+            "uq_exam_one_active_per_user", "user_id", unique=True,
+            postgresql_where=text("status = 'in_progress'"), sqlite_where=text("status = 'in_progress'"),
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    level = Column(Integer, nullable=False, index=True)  # display level 1-9
+    status = Column(String(20), nullable=False, default="in_progress")
+    questions = Column(JSON, nullable=False)
+    answers = Column(JSON, nullable=False)
+    total = Column(Integer, nullable=False, default=0)
+    correct = Column(Integer, nullable=True)
+    score = Column(Float, nullable=True)
+    violations = Column(JSON, nullable=False, default=list)  # [{reason, at}]
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    finished_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="exam_attempts")
 
 
 class LearningMistake(Base):

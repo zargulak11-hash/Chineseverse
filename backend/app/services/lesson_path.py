@@ -51,6 +51,11 @@ class PathEntry:
 class PathState:
     entries: list[PathEntry] = field(default_factory=list)
     current: PathEntry | None = None
+    # The level whose final exam stands between the learner and the next
+    # level (all its lessons done, exam not passed) -- None otherwise.
+    exam_level: int | None = None
+    exams_passed: set[int] = field(default_factory=set)
+    exams_cleared: set[int] = field(default_factory=set)  # passed, or progress already beyond it
 
     def entry(self, lesson_id: int) -> PathEntry | None:
         return next((e for e in self.entries if e.lesson.id == lesson_id), None)
@@ -120,12 +125,33 @@ def path_state(db: Session, user: models.User) -> PathState:
     furthest = max((i for i, e in enumerate(entries) if e.lesson.id in done), default=-1)
     frontier = next((i for i in range(furthest + 1, len(entries)) if entries[i].practicable), len(entries))
 
-    state = PathState(entries=entries)
+    # HSK final exams (services/hsk_exam.py): finishing a level's lessons
+    # does not open the next level -- passing that level's exam does. A
+    # learner who already has completed lessons ABOVE a level counts as past
+    # its exam (progress from before exams existed is never re-locked).
+    passed = {
+        lvl for (lvl,) in db.query(models.HSKExamAttempt.level).filter_by(user_id=user.id, status="passed")
+    }
+    done_levels = {e.level for e in entries if e.lesson.id in done}
+    cleared = {lvl for lvl in {e.level for e in entries} if lvl in passed or any(d > lvl for d in done_levels)}
+    gate = None
+    for lvl in sorted({e.level for e in entries if e.practicable}):
+        steps = [e for e in entries if e.level == lvl and e.practicable]
+        if not all(e.lesson.id in done for e in steps):
+            break
+        if lvl not in cleared:
+            gate = lvl
+            break
+    gated = gate is not None
+
+    state = PathState(entries=entries, exam_level=gate, exams_passed=passed, exams_cleared=cleared)
     for i, e in enumerate(entries):
         p = progress.get(e.lesson.id)
         e.score = p.score if p else None
         if e.lesson.id in done:
             e.status = COMPLETED
+        elif gated:
+            e.status = AVAILABLE if e.level <= gate else LOCKED
         elif i == frontier:
             e.status = CURRENT
             state.current = e
@@ -141,6 +167,8 @@ def path_level(db: Session, user: models.User) -> int:
     their current lesson, or the last level once every step is completed.
     Display levels, so the shared 7-9 band reports 7, 8 or 9."""
     state = path_state(db, user)
+    if state.exam_level is not None:
+        return state.exam_level
     if state.current is not None:
         return state.current.level
     steps = [e for e in state.entries if e.practicable]
@@ -157,7 +185,7 @@ def level_summaries(state: PathState) -> list[dict]:
     out = []
     for level, entries in by_level.items():
         steps = [e for e in entries if e.practicable]
-        if state.current is not None and state.current.level == level:
+        if (state.current is not None and state.current.level == level) or state.exam_level == level:
             status = CURRENT
         elif all(e.status == LOCKED for e in entries):
             status = LOCKED
@@ -170,6 +198,14 @@ def level_summaries(state: PathState) -> list[dict]:
             "status": status,
             "completed": sum(1 for e in steps if e.status == COMPLETED),
             "total": len(steps),
+            # passed | ready (all lessons done, exam due) | cleared (progress
+            # already beyond it) | locked (lessons still to finish)
+            "exam": (
+                "passed" if level in state.exams_passed
+                else "ready" if state.exam_level == level
+                else "cleared" if level in state.exams_cleared
+                else "locked"
+            ),
             "entries": entries,
         })
     return out

@@ -66,7 +66,28 @@ export default function Lessons() {
       <div className="ws">
         <div className="ws-main">
           <h2 className="h2 section-title">{t("pages.lessons.upNext")}</h2>
-          {current ? (
+          {path.exam_level ? (
+            // Every lesson of this level is done: its final exam opens the next one.
+            <div className="card lesson-next">
+              <div className="roadmap-card-head">
+                <div className="row" style={{ gap: 8 }}>
+                  <span className="badge accent">HSK {path.exam_level}</span>
+                  <span className="badge accent">{t("exam.eyebrow")}</span>
+                </div>
+              </div>
+              <h3 className="h2" style={{ marginTop: 12 }}>{t("exam.title", { level: path.exam_level })}</h3>
+              <p className="sub">
+                {path.exam_level < 9
+                  ? t("exam.lessonsReady", { level: path.exam_level, next: path.exam_level + 1 })
+                  : t("exam.lessonsReadyLast")}
+              </p>
+              <div className="row" style={{ marginTop: 16 }}>
+                <Link to={`/exam/${path.exam_level}`} className="btn primary">
+                  <Icon name="award" size={15} /> {t("exam.takeExam")}
+                </Link>
+              </div>
+            </div>
+          ) : current ? (
             <div className="card lesson-next">
               <div className="roadmap-card-head">
                 <div className="row" style={{ gap: 8 }}>
