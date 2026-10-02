@@ -136,6 +136,19 @@ def path_state(db: Session, user: models.User) -> PathState:
     return state
 
 
+def path_level(db: Session, user: models.User) -> int:
+    """The HSK level the learner has really reached on the path: the level of
+    their current lesson, or the last level once every step is completed.
+    Display levels, so the shared 7-9 band reports 7, 8 or 9."""
+    state = path_state(db, user)
+    if state.current is not None:
+        return state.current.level
+    steps = [e for e in state.entries if e.practicable]
+    if steps and all(e.status == COMPLETED for e in steps):
+        return max(e.level for e in steps)
+    return 1
+
+
 def level_summaries(state: PathState) -> list[dict]:
     """Per-HSK-level progress along the path, in level order."""
     by_level: dict[int, list[PathEntry]] = {}

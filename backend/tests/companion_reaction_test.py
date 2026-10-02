@@ -260,7 +260,14 @@ with TestClient(app) as client:
     assert trace[2]["reaction"]["mood"] == "celebrating" and trace[2]["reaction"]["milestone"] == "writing_mastered", trace[2]
     print("[PASS] Hanzi tracing: clean -> proud, shaky -> encouraging, writing mastered -> celebrating")
 
+    # A client-sent "delta" no longer chooses the step: one review cannot jump
+    # a word to mastered; it takes repeated correct reviews (+10 each, >= 85).
     v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": True, "delta": 100})
+    assert v["status"] != "mastered" and v["mastery"] <= 20, v
+    for _ in range(10):
+        if v["status"] == "mastered":
+            break
+        v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": True})
     assert v["status"] == "mastered" and v["reaction"]["milestone"] == "mastered" and v["reaction"]["mood"] == "proud", v["reaction"]
     v = expect(client, "post", f"/api/vocab/{word_id}/review", 200, headers=h, json={"correct": False})
     assert v["reaction"]["mood"] in ("encouraging", "serious"), v["reaction"]

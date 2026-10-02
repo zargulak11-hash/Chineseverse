@@ -28,7 +28,10 @@ router = APIRouter(prefix="/api/hanzi", tags=["hanzi"])
 
 class ReviewPayload(BaseModel):
     correct: bool
-    delta: float = Field(default=10.0, ge=0, le=100)
+    # No client-chosen step size: "delta" used to be accepted here (up to 100),
+    # so one request with {"correct": true, "delta": 100} marked an item
+    # mastered. The step is the server's; an old client still sending
+    # "delta" is ignored, not rejected.
 
 
 class ReviewResponse(BaseModel):
@@ -173,7 +176,7 @@ def review_hanzi(
         )
         db.add(rec)
 
-    apply_srs(rec, payload.correct, user, delta=payload.delta)
+    apply_srs(rec, payload.correct, user)
 
     ensure_user_skills(db, user)
     skill_before = cr.skill_value(user, "reading")

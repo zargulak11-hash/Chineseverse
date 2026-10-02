@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -27,7 +27,10 @@ router = APIRouter(prefix="/api/vocab", tags=["vocabulary"])
 
 class ReviewPayload(BaseModel):
     correct: bool
-    delta: float = Field(default=10.0, ge=0, le=100)
+    # No client-chosen step size: "delta" used to be accepted here (up to 100),
+    # so one request with {"correct": true, "delta": 100} marked an item
+    # mastered. The step is the server's; an old client still sending
+    # "delta" is ignored, not rejected.
 
 
 class ReviewResponse(BaseModel):
@@ -98,7 +101,7 @@ def review_word(
         )
         db.add(rec)
 
-    apply_srs(rec, payload.correct, user, delta=payload.delta)
+    apply_srs(rec, payload.correct, user)
 
     # A vocab review is real "vocabulary" activity for Learning DNA too —
     # same +2.0/-0.3 convention duels already use for a correct/incorrect

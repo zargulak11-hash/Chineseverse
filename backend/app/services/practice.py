@@ -51,6 +51,20 @@ _CJK = re.compile(r"[㐀-鿿]")
 # its pinyin in parentheses, the format both the hand-written and the
 # generated lessons use to introduce vocabulary.
 _LESSON_WORD = re.compile(r"([㐀-鿿]{1,6})\s*[（(]\s*[a-zA-ZÀ-ɏǍ-ǜ' ]+[)）]")
+# The hand-written HSK 1-2 intro lessons also introduce words in two looser
+# shapes the pattern above never matched, which left "Greetings", "Introduce
+# yourself", "Numbers 1-10" and "Food words" with no practice at all:
+#   "我叫…… (wǒ jiào ...)" / "很高兴认识你。 (hěn gāoxìng ...)" -- a phrase,
+#       then an ellipsis or sentence mark, then its pinyin in parentheses;
+#   "米饭 mǐfàn = rice" / "一 yī, 二 èr" -- pinyin with no parentheses.
+# The second shape requires a tone-marked vowel, so plain Latin text after
+# Chinese ("X是X", "HSK 3") is never read as pinyin.
+_LESSON_PHRASE = re.compile(r"([㐀-鿿]{1,8})(?:……|…|\.\.\.)?[。？！，]?\s*[（(]\s*[a-zA-ZÀ-ɏǍ-ǜ' .…]+[)）]")
+_LESSON_BARE = re.compile(
+    r"([㐀-鿿]{1,6})[ \t]+((?:[a-zA-ZÀ-ɏǍ-ǜ']+[ \t]?){1,4}?)(?=[ \t]*(?:=|,|，|\.|。|\n|$))"
+)
+_TONED = re.compile(r"[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]")
+_SEGMENT_MAX = 4  # longest word tried when splitting a phrase into known words
 _TONE_MARKS = str.maketrans(
     "āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü", "aaaaeeeeiiiioooouuuuvvvvv"
 )
@@ -131,24 +145,74 @@ def _prioritize(rows: list, recs: dict, size: int, now: datetime) -> list:
 
 # --------------------------------------------------------------------------- lesson links
 
+def _lesson_phrases(text: str) -> list[str]:
+    """Every Chinese phrase the lesson introduces with its pinyin, in the
+    order it appears, each once."""
+    found = [(m.start(), m.group(1)) for m in _LESSON_PHRASE.finditer(text)]
+    found += [(m.start(), m.group(1)) for m in _LESSON_BARE.finditer(text) if _TONED.search(m.group(2))]
+    seen: set[str] = set()
+    return [p for _pos, p in sorted(found) if not (p in seen or seen.add(p))]
+
+
+def _segment(phrase: str, known: set[str]) -> list[str] | None:
+    """Splits a phrase into known words, longest match first -- or None if
+    any part of it is not a known word (then nothing is taken from it)."""
+    out, i = [], 0
+    while i < len(phrase):
+        for size in range(min(_SEGMENT_MAX, len(phrase) - i), 0, -1):
+            if phrase[i:i + size] in known:
+                out.append(phrase[i:i + size])
+                i += size
+                break
+        else:
+            return None
+    return out
+
+
 def lesson_items(db: Session, lesson: models.Lesson) -> dict[str, list]:
     """The vocabulary and grammar a lesson actually teaches: words it
-    introduces as "word (pinyin)" and the level's grammar points whose title
-    appears in it. Same-level rows win over other levels for duplicates."""
+    introduces with their pinyin and the level's grammar points it covers.
+    Same-level rows win over other levels for duplicates.
+
+    A phrase that is not itself a vocabulary row ("你好", "早上好", "十一",
+    "我叫") counts through its words ("你" + "好") -- but only when every
+    part is a real word of the lesson's own HSK level, so an advanced
+    lesson's idiom never drags in beginner words. Nothing is invented: a
+    phrase that cannot be fully split into real rows is left out."""
     text = f"{lesson.summary or ''}\n{lesson.content or ''}"
+    phrases = _lesson_phrases(text)
     words: list[models.VocabularyWord] = []
-    seen: set[str] = set()
-    wanted = [w for w in _LESSON_WORD.findall(text) if not (w in seen or seen.add(w))]
-    if wanted:
-        candidates = db.query(models.VocabularyWord).filter(models.VocabularyWord.simplified.in_(wanted)).all()
+    if phrases:
+        candidates = db.query(models.VocabularyWord).filter(models.VocabularyWord.simplified.in_(phrases)).all()
         best: dict[str, models.VocabularyWord] = {}
         for c in sorted(candidates, key=lambda c: (c.hsk_level_id != lesson.hsk_level_id, c.id)):
             best.setdefault(c.simplified, c)
-        words = [best[w] for w in wanted if w in best]
+        unmatched = [p for p in phrases if p not in best and len(p) > 1]
+        parts: dict[str, models.VocabularyWord] = {}
+        if unmatched and lesson.hsk_level_id is not None:
+            pieces = {p[i:i + n] for p in unmatched for n in range(1, _SEGMENT_MAX + 1) for i in range(len(p) - n + 1)}
+            parts = {
+                w.simplified: w
+                for w in db.query(models.VocabularyWord).filter(
+                    models.VocabularyWord.hsk_level_id == lesson.hsk_level_id,
+                    models.VocabularyWord.simplified.in_(pieces),
+                )
+            }
+        taken: set[str] = set()
+        for p in phrases:
+            for w in [best[p]] if p in best else [parts[s] for s in (_segment(p, set(parts)) or [])]:
+                if w.simplified not in taken:
+                    taken.add(w.simplified)
+                    words.append(w)
     grammar = []
     if lesson.hsk_level_id is not None:
+        # The hand-written intro lessons name the point they teach in their
+        # one-line summary by its head ("Mark the past with 了" teaches
+        # "了 — completed action"); the generated lessons quote full titles.
+        summary = (lesson.summary or "") if lesson.lesson_type == "lesson" else ""
         for g in db.query(models.GrammarTopic).filter_by(hsk_level_id=lesson.hsk_level_id).order_by(models.GrammarTopic.id):
-            if len(g.title) >= 2 and g.title in text:
+            head = g.title.split(" — ")[0] if " — " in g.title else None
+            if (len(g.title) >= 2 and g.title in text) or (head and head in summary):
                 grammar.append(g)
     return {"vocab": words, "grammar": grammar}
 

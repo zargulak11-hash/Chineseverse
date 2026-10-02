@@ -221,7 +221,9 @@ with TestClient(app) as client:
         assert "ONLY help" not in prompt and "decline" not in prompt, prompt
         assert "Do not refuse them" in prompt
         assert "never invent" in prompt and "read-only" in prompt
-        assert "current HSK level: 1" in prompt, prompt
+        assert "HSK level estimated from Learning DNA: 1" in prompt, prompt
+        # The real lesson path position, in the learner's language (this prompt was a ru request).
+        assert 'current lesson on the lesson path: "Приветствия" (HSK 1)' in prompt, prompt
         assert "items due in Review now: 1" in prompt, prompt  # the one open mistake
         assert "grammar 了 vs 过 (answered 过, correct 了)" in prompt, prompt
         assert "lessons completed: 0" in prompt, prompt
@@ -370,7 +372,7 @@ try:
         {"role": "user", "parts": [{"text": "Ман мехоҳам забони чиниро омӯзам"}]},
     ], body["contents"]
     system_text = body["systemInstruction"]["parts"][0]["text"]
-    assert "always reply in Tajik" in system_text and "current HSK level" in system_text
+    assert "always reply in Tajik" in system_text and "HSK level estimated from Learning DNA" in system_text
     # Visible answer budget + headroom for the model's hidden thinking, and
     # no model-specific thinking flags (gemini-3.x rejects some of them).
     assert body["generationConfig"]["maxOutputTokens"] == 700 + ai_client.THINKING_HEADROOM

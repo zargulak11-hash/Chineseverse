@@ -437,6 +437,17 @@ def user_rank(db: Session, user: models.User) -> tuple[int, float]:
     for level in levels:
         if overall >= max(0, (level - 1) * 15):
             current = max(current, level)
+    # Never below where the learner really is on the lesson path: finishing
+    # every HSK 1 lesson opens HSK 2 there, and the dashboard, Roadmap and
+    # World must agree instead of still showing HSK 1 until the DNA average
+    # catches up. Only raises the level; the DNA rank (and the placement
+    # test that writes it) still counts. Capped at the highest HSKLevel row
+    # (the shared 7-9 band is level 7 here; the Roadmap refines the stage).
+    # Imported here: lesson_path builds on practice, which imports this module.
+    from app.services.lesson_path import path_level
+
+    if levels:
+        current = max(current, min(path_level(db, user), levels[-1]))
     return current, round(overall, 1)
 
 

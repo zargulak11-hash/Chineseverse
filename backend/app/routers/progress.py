@@ -38,6 +38,18 @@ def _no_self_completion(new_status: str | None, was_completed: bool = False) -> 
         )
 
 
+def _no_client_score(score: int | None, current: int | None = None) -> None:
+    """A lesson's score is its best graded practice round, recorded by
+    services.practice._record_lesson. These endpoints used to store any 0-100
+    score the client sent, so a learner could show a perfect score on a
+    lesson they never practiced. Re-sending the stored value is accepted."""
+    if score is not None and score != current:
+        raise HTTPException(
+            status_code=403,
+            detail="Lesson scores are recorded by graded practice",
+        )
+
+
 def _sync_completed_at(item: models.Progress):
     if item.status == "completed" and item.completed_at is None:
         item.completed_at = datetime.utcnow()
@@ -86,9 +98,8 @@ def create_progress(
     if db.get(models.Lesson, payload.lesson_id) is None:
         raise HTTPException(status_code=404, detail=f"Lesson with id {payload.lesson_id} not found")
     _no_self_completion(payload.status)
-    item = models.Progress(
-        user_id=user.id, lesson_id=payload.lesson_id, status=payload.status, score=payload.score
-    )
+    _no_client_score(payload.score)
+    item = models.Progress(user_id=user.id, lesson_id=payload.lesson_id, status=payload.status)
     _sync_completed_at(item)
     db.add(item)
     if item.status == "completed":
@@ -122,8 +133,8 @@ def update_progress(
     item = _own_or_404(db, progress_id, user)
     was_completed = item.status == "completed"
     _no_self_completion(payload.status, was_completed)
+    _no_client_score(payload.score, item.score)
     item.status = payload.status
-    item.score = payload.score
     _sync_completed_at(item)
     _log_if_newly_completed(db, user, item, was_completed)
     db.commit()
@@ -141,7 +152,8 @@ def patch_progress(
     item = _own_or_404(db, progress_id, user)
     was_completed = item.status == "completed"
     _no_self_completion(payload.status, was_completed)
-    apply_updates(item, payload.model_dump(exclude_unset=True))
+    _no_client_score(payload.score, item.score)
+    apply_updates(item, payload.model_dump(exclude_unset=True, exclude={"score"}))
     _sync_completed_at(item)
     _log_if_newly_completed(db, user, item, was_completed)
     db.commit()

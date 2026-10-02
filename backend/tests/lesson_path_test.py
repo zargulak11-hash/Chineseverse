@@ -81,6 +81,26 @@ with TestClient(app) as client:
                 assert practice_svc.build_session(db, u, "lesson", lesson_id=e.lesson.id) is not None, e.lesson.title
     print(f"[PASS] all {len(stepl)} path steps build a real practice round")
 
+    # --- the hand-written intro lessons are real steps too: their words are
+    # introduced as "米饭 mǐfàn", "我叫…… (...)" or a phrase like "你好" that is
+    # practiced through its real words -- they used to have no round at all,
+    # so a new learner's first HSK 1 lessons could not be practiced.
+    assert all(l["practicable"] for l in lessons), [l["title"] for l in lessons if not l["practicable"]]
+    assert first["title"] == "Greetings", first["title"]
+    with SessionLocal() as db:
+        by_title = {l.title: l for l in db.query(models.Lesson)}
+        def round_of(title):
+            return [getattr(r, "simplified", None) or r.title for _t, r in practice_svc.lesson_round_items(db, by_title[title])]
+        assert round_of("Greetings") == ["你", "好", "早上", "晚上"], round_of("Greetings")
+        assert round_of("Food words") == ["米饭", "茶", "水", "牛肉面", "苹果"], round_of("Food words")
+        assert round_of("Numbers 1–10")[:3] == ["一", "二", "三"], round_of("Numbers 1–10")
+        assert "认识" in round_of("Introduce yourself") and "高兴" in round_of("Introduce yourself")
+        assert round_of("Completed actions") == ["了 — completed action"], round_of("Completed actions")
+        # Only real rows of the lesson's own level are used to split a phrase.
+        greet = by_title["Greetings"]
+        assert all(w.hsk_level_id == greet.hsk_level_id for w in practice_svc.lesson_items(db, greet)["vocab"])
+    print("[PASS] intro lessons (Greetings, Food words, Numbers, ...) practice their own real words")
+
     # --- locked lessons are refused by the backend, not just hidden
     locked = stepl[1]
     for url in (f"/api/lessons/{locked['id']}", f"/api/lessons/{locked['id']}/items"):
@@ -199,6 +219,23 @@ with TestClient(app) as client:
     first_hsk2 = next(s for s in steps(ph) if level_of[s["id"]] == 2)
     assert ph["current_lesson_id"] == first_hsk2["id"]
     print(f"[PASS] completing all {by_level[1]['total']} HSK 1 steps opens HSK 2 at its first lesson; HSK 3 stays locked")
+
+    # --- dashboard / Roadmap agree with the path: HSK 1 finished -> HSK 2,
+    # even when the Learning DNA average (all 0 here) has not caught up.
+    rid, rh = register(client, "pathrank")
+    hsk1_steps = [s for s in steps(ph) if level_of[s["id"]] == 1]
+    with SessionLocal() as db:
+        for s in hsk1_steps:
+            db.add(models.Progress(user_id=rid, lesson_id=s["id"], status="completed", score=90, completed_at=datetime.utcnow()))
+        db.commit()
+    assert expect(client, "get", "/api/dashboard", 200, headers=rh)["hsk_level"] == 2
+    road = expect(client, "get", "/api/hsk/roadmap", 200, headers=rh)
+    assert road["current_level"] == 2 and road["overall_mastery"] == 0.0, road["current_level"]
+    assert [l["status"] for l in road["levels"][:3]] == ["unlocked", "current", "locked"], [l["status"] for l in road["levels"][:3]]
+    fresh_id, fresh_h = register(client, "pathfresh")
+    assert expect(client, "get", "/api/dashboard", 200, headers=fresh_h)["hsk_level"] == 1
+    assert expect(client, "get", "/api/hsk/roadmap", 200, headers=fresh_h)["current_level"] == 1
+    print("[PASS] dashboard and Roadmap follow the lesson path: HSK 1 completed -> HSK 2 current (DNA still 0)")
 
     # --- admins can read any lesson (they author them) but still progress in order
     aid, ah = register(client, "pathadmin")

@@ -162,10 +162,15 @@ with TestClient(app) as client:
     expect(client, "post", "/api/progress", 422, json={"lesson_id": lesson2["id"], "status": "completed", "score": 150}, headers=alice_headers)
     # Completion only comes from a passed practice round, never from the client.
     expect(client, "patch", f"/api/progress/{pid}", 403, json={"status": "completed", "score": 92}, headers=alice_headers)
+    # ...and neither does a score: it is the best graded round, not a client value.
+    expect(client, "patch", f"/api/progress/{pid}", 403, json={"score": 100}, headers=alice_headers)
+    expect(client, "put", f"/api/progress/{pid}", 403, json={"status": "in_progress", "score": 100}, headers=alice_headers)
+    expect(client, "post", "/api/progress", 403, json={"lesson_id": client.get("/api/lessons", params={"hsk_level": 2}).json()[1]["id"], "status": "in_progress", "score": 100}, headers=alice_headers)
     moved = expect(
         client, "patch", f"/api/progress/{pid}", 200,
-        json={"status": "in_progress", "score": 40}, headers=alice_headers,
+        json={"status": "in_progress"}, headers=alice_headers,
     ).json()
+    assert moved["score"] is None
     assert moved["status"] == "in_progress"
     assert moved["completed_at"] is None
     # Another learner can neither see nor touch alice's row.

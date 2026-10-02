@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
+from app.services import lesson_path
 from app.services.gamification import ensure_user_skills, user_rank
 from app.services.hsk_band import split_thirds
 from app.services.localization import load_translations, tr
@@ -147,6 +148,8 @@ def roadmap(
                     effective_stage = 8
                 else:
                     effective_stage = 7
+                # ...and never behind the stage the lesson path has reached.
+                effective_stage = max(effective_stage, lesson_path.path_level(db, user))
             # Real HSK 3.0 standard: 7/8/9 share ONE advanced pool. Split
             # that pool's real rows into 3 contiguous thirds so the roadmap
             # can still show three progression stages, without inventing

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
-from app.services import ai_client
+from app.services import ai_client, lesson_path
 from app.services.dna import compute_dna
 from app.services.gamification import ensure_user_skills, user_rank
 from app.services.localization import load_translations, tr
@@ -83,6 +83,14 @@ def chat(
         .filter(models.Progress.user_id == user.id, models.Progress.status == "completed")
         .count()
     )
+    # Where the learner really is in the curriculum: the lesson path's
+    # current lesson (server-side, services/lesson_path.py), in their language.
+    state = lesson_path.path_state(db, user)
+    if state.current is not None:
+        cur = state.current.lesson
+        lesson_tr = load_translations(db, "lesson", [str(cur.id)], locale)
+        context["current_lesson"] = tr(lesson_tr, cur.id, "title", cur.title)
+        context["current_lesson_level"] = state.current.level
     reply, source = ai_client.assistant_reply(
         [m.model_dump() for m in payload.messages], context, locale
     )

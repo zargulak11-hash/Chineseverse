@@ -682,7 +682,12 @@ def _learner_block(context: dict) -> str:
     if context.get("username"):
         lines.append(f"- username: {context['username']}")
     if context.get("hsk_level") is not None:
-        lines.append(f"- current HSK level: {context['hsk_level']}")
+        lines.append(f"- HSK level estimated from Learning DNA: {context['hsk_level']}")
+    if context.get("current_lesson"):
+        lines.append(
+            f"- current lesson on the lesson path: \"{context['current_lesson']}\""
+            f" (HSK {context.get('current_lesson_level')})"
+        )
     if context.get("mastery") is not None:
         lines.append(f"- overall mastery at that level: {context['mastery']}%")
     if context.get("streak") is not None:
