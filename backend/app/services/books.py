@@ -112,6 +112,13 @@ def parse(raw: dict, where: str = "book") -> dict:
             raise BookError(f"{cw}: 'text' is a list of non-empty paragraphs")
         paragraphs = [[_sentence(s, f"{cw} p{pi + 1}s{si + 1}") for si, s in enumerate(p)] for pi, p in enumerate(paras)]
         flat = [s for p in paragraphs for s in p]
+        seen_zh: set[str] = set()
+        for s in flat:
+            # A repeated sentence is almost always a copy-paste or export
+            # slip (one once duplicated a whole paragraph), not writing.
+            if s["zh"] in seen_zh:
+                raise BookError(f"{cw}: the sentence {s['zh']!r} appears twice")
+            seen_zh.add(s["zh"])
         say = ch.get("say")
         if say is not None and (not isinstance(say, int) or not 0 <= say < len(flat)):
             raise BookError(f"{cw}: 'say' must index a sentence of the chapter")

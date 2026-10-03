@@ -217,7 +217,7 @@ def vocabulary_report(db: Session, book: dict) -> dict:
             "difficulty": difficulty(db, book), "minutes": prof["minutes"],
             # Advanced (7-9) literature may use a few characters beyond the
             # 3,000 of the curriculum; they are read without curriculum pinyin.
-            "ok": (len(unknown) <= 3 * len(book["chapters"]) if book["level"] >= 7 else not unknown)
+            "ok": (len(unknown) <= 3 + 2 * len(book["chapters"]) if book["level"] >= 7 else not unknown)
             and (cap is None or len(prof["above"]) <= cap)}
 
 
