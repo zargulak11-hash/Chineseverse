@@ -229,9 +229,9 @@ with TestClient(app) as client:
         assert "grammar 了 vs 过 (answered 过, correct 了)" in prompt, prompt
         assert "lessons completed: 0" in prompt, prompt
         assert "main companion: none chosen yet" in prompt, prompt
-        assert "Learning DNA overall: 0.0%" in prompt and "vocabulary words mastered: 0" in prompt, prompt
+        assert "Learning Compass overall: 0.0%" in prompt and "vocabulary words mastered: 0" in prompt, prompt
         # No practice yet: every skill is 0, so there is no weakest one to name.
-        assert "weakest Learning DNA skills: not enough practice yet to tell" in prompt, prompt
+        assert "weakest Learning Compass skills: not enough practice yet to tell" in prompt, prompt
         assert "skill mastery" not in prompt, prompt
         assert "secret" not in prompt.lower() and "api_key" not in prompt.lower()
         assert captured[-1]["max_tokens"] >= 500  # room for a real answer
@@ -248,9 +248,9 @@ with TestClient(app) as client:
         db.close()
         chat(client, h, "Какой у меня самый слабый навык?", "ru")
         prompt = captured[-1]["messages"][0]["content"]
-        weak_line = next(l for l in prompt.splitlines() if l.startswith("- weakest Learning DNA skills:"))
+        weak_line = next(l for l in prompt.splitlines() if l.startswith("- weakest Learning Compass skills:"))
         assert "not enough practice" not in weak_line and "Speaking" not in weak_line, weak_line
-        mastery_line = next(l for l in prompt.splitlines() if l.startswith("- Learning DNA skill mastery:"))
+        mastery_line = next(l for l in prompt.splitlines() if l.startswith("- Learning Compass skill mastery:"))
         assert "12%" in mastery_line and "55%" in mastery_line, mastery_line
         assert mastery_line.index("12%") < mastery_line.index("55%")  # weakest first
         print("[PASS] real Learning DNA skill mastery is passed, weakest first, in the selected language")

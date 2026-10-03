@@ -620,8 +620,10 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "You are the ChineseVerse assistant, built into ChineseVerse, a gamified "
     "app for learning Mandarin Chinese (HSK 1-9 roadmap, lessons, vocabulary, "
     "Hanzi, grammar, server-graded practice, spaced-repetition Review, "
-    "Learning DNA skill profile, companions, Daily Voice Companion, Duels, "
+    "Learning Compass skill profile, companions, Daily Voice Companion, Duels, "
     "Missions, Quests, Pet Teacher mode, streaks, XP and coins).\n\n"
+    "The nine-skill profile is called {compass} in the app (it used to be "
+    "called \"DNA\"); always use that name.\n\n"
     "How to behave:\n"
     "- Be a helpful, friendly, conversational assistant. Answer the question "
     "the learner actually asked.\n"
@@ -635,7 +637,7 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "- Use the learner data below when it is relevant (their progress, what "
     "to practice next, how to prepare for HSK). It is the ONLY data you have "
     "about them: never invent scores, streaks, mastered words, completed "
-    "lessons, Learning DNA numbers or achievements. If something is not "
+    "lessons, Learning Compass numbers or achievements. If something is not "
     "listed, say you don't have that information.\n"
     "- You are read-only: you cannot change progress, XP, streaks, mastery or "
     "lessons, and must never claim you did. Progress only changes when the "
@@ -664,6 +666,15 @@ ASSISTANT_LANGUAGE_NAMES = {"en": "English", "ru": "Russian", "tg": "Tajik", "zh
 # that only Tajik Cyrillic has, and rules the look-alikes out. The rule is
 # stated at the top and again at the end of the prompt, since lighter
 # fallback models weigh the opening instruction most.
+# The skill profile's product name in the reply language only -- naming
+# the other languages here would pull lighter models off the reply language.
+ASSISTANT_COMPASS_NAME = {
+    "en": "the Learning Compass",
+    "ru": "\"Компас обучения\"",
+    "tg": "\"Қутбнамои омӯзиш\"",
+    "zh": "\"学习指南针\"",
+}
+
 ASSISTANT_LANGUAGE_DETAIL = {
     "tg": (
         " Write in Tajik (тоҷикӣ), the official language of Tajikistan, in the "
@@ -746,13 +757,13 @@ def _learner_block(context: dict) -> str:
     if context.get("recent_mistakes"):
         lines.append("- most recent mistakes: " + "; ".join(context["recent_mistakes"]))
     if context.get("dna_overall") is not None:
-        lines.append(f"- Learning DNA overall: {context['dna_overall']}%")
+        lines.append(f"- Learning Compass overall: {context['dna_overall']}%")
     if context.get("skill_mastery"):
-        lines.append("- Learning DNA skill mastery: " + ", ".join(context["skill_mastery"]))
+        lines.append("- Learning Compass skill mastery: " + ", ".join(context["skill_mastery"]))
     if context.get("weak_skills"):
-        lines.append("- weakest Learning DNA skills: " + ", ".join(context["weak_skills"]))
+        lines.append("- weakest Learning Compass skills: " + ", ".join(context["weak_skills"]))
     else:
-        lines.append("- weakest Learning DNA skills: not enough practice yet to tell")
+        lines.append("- weakest Learning Compass skills: not enough practice yet to tell")
     if context.get("words_mastered") is not None:
         lines.append(f"- vocabulary words mastered: {context['words_mastered']}")
     if context.get("completed_lessons") is not None:
@@ -784,7 +795,7 @@ ASSISTANT_OFFLINE = {
         ),
         "weak": (
             "Your weakest skill right now looks like {weak}. A Mission or Duel that targets it "
-            "is the fastest way to move the needle — check your DNA page for the exact numbers."
+            "is the fastest way to move the needle — check your Learning Compass for the exact numbers."
         ),
         "no_weak": "a bit of everything so far",
         "le": (
@@ -817,7 +828,7 @@ ASSISTANT_OFFLINE = {
         ),
         "weak": (
             "Сейчас твой самый слабый навык — {weak}. Миссия или дуэль на этот навык — "
-            "самый быстрый способ его подтянуть. Точные цифры — на странице ДНК."
+            "самый быстрый способ его подтянуть. Точные цифры — в компасе обучения."
         ),
         "no_weak": "пока понемногу всё",
         "le": (
@@ -850,7 +861,7 @@ ASSISTANT_OFFLINE = {
         ),
         "weak": (
             "Ҳоло заифтарин маҳорати шумо {weak} аст. Миссия ё дуэл барои ҳамин маҳорат "
-            "роҳи зудтарини беҳтар кардани он аст — рақамҳои дақиқ дар саҳифаи ДНК."
+            "роҳи зудтарини беҳтар кардани он аст — рақамҳои дақиқ дар қутбнамои омӯзиш."
         ),
         "no_weak": "ҳоло ҳамааш каме-каме",
         "le": (
@@ -877,7 +888,7 @@ ASSISTANT_OFFLINE = {
             "每天坚持复习词汇和课程——HSK 学习计划页面会清楚显示离下一级还差什么。"
         ),
         "streak": "你目前已连续学习 {streak} 天。今天至少完成一次复习、一节课或一次对话，保持连续记录。",
-        "weak": "你目前最薄弱的技能是{weak}。针对它的任务或对战是提升最快的方法——具体数据请看学习 DNA 页面。",
+        "weak": "你目前最薄弱的技能是{weak}。针对它的任务或对战是提升最快的方法——具体数据请看学习指南针。",
         "no_weak": "目前各方面都还在起步",
         "le": "了 (le) 通常表示动作完成或状态变化——例如 我吃了（已经吃过）和 我在吃（正在吃）。可以在课程或 Pet Teacher 案例中试一试，马上看到纠正。",
         "ma": "吗 (ma) 能把陈述句变成是非疑问句——你好吗？ 只要把它放在句末就可以。",
@@ -955,6 +966,7 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
                 learner=_learner_block(context),
                 language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
                 language_detail=ASSISTANT_LANGUAGE_DETAIL.get(locale, ""),
+                compass=ASSISTANT_COMPASS_NAME.get(locale, ASSISTANT_COMPASS_NAME["en"]),
             )
             reply = _gemini_chat(
                 [{"role": "system", "content": system}] + messages,
