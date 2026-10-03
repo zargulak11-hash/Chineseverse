@@ -35,9 +35,11 @@ const NAV_INDEX = [
 
 // The places of the living world (backend services/world_places.py).
 const WORLD_PLACES = [
-  "home", "library", "calligraphy", "word_garden", "street", "restaurant", "shop", "shopping_district",
-  "internet_cafe", "detective", "sound_plaza", "passport_office", "university", "hospital", "office",
-  "train_station", "hotel", "old_town", "airport",
+  "home", "word_garden", "cafe", "university", "library", "bookstore", "street", "shop", "internet_cafe",
+  "detective", "sound_plaza", "passport_office", "post_office", "bank", "police_station", "office", "hospital",
+  "pharmacy", "metro", "train_station", "bus_station", "airport", "hotel", "park", "riverside", "sports_center",
+  "bamboo_garden", "restaurant", "food_street", "market", "tea_house", "calligraphy", "museum", "temple", "hutong",
+  "old_town", "shopping_district", "mall", "cinema", "ktv",
 ];
 
 const DATE_LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
