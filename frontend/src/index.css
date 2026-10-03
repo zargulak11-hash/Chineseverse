@@ -1133,8 +1133,20 @@ select.input {
 .lw-svg { display: block; width: 100%; height: auto; }
 .lw-glow-in { stop-color: var(--surface-3); }
 .lw-glow-out { stop-color: var(--bg); }
-.lw-zone { fill: var(--surface-2); fill-opacity: 0.55; stroke: var(--border); stroke-width: 0.15; stroke-dasharray: 0.6 0.6; }
-.lw-zone.is-centre { fill: var(--accent-dim); fill-opacity: 0.35; }
+/* Districts: discs under the places joined along their own streets, faded
+   as one shape (group opacity) so the overlaps don't darken. Two alternating
+   ground tones tell neighbouring districts apart without a new hue. */
+.lw-district { opacity: 0.6; }
+.lw-district circle { fill: var(--surface-2); }
+.lw-district line { stroke: var(--surface-2); }
+.lw-district.tone-b circle { fill: var(--surface-3); }
+.lw-district.tone-b line { stroke: var(--surface-3); }
+/* The river: a bank, the water (jade, mixed from --good so both themes have
+   it) and a faint moving shine. */
+.lw-river path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lw-river-bank { stroke: var(--border); stroke-width: 9; opacity: 0.7; }
+.lw-river-water { stroke: color-mix(in srgb, var(--good) 26%, var(--surface-2)); stroke-width: 7.4; }
+.lw-river-shine { stroke: var(--surface-1); stroke-width: 0.5; stroke-dasharray: 4 7; opacity: 0.55; animation: lwFlow 18s linear infinite; }
 .lw-road { fill: none; stroke: var(--border-strong); stroke-width: 0.45; stroke-linecap: round; stroke-dasharray: 0.4 1.1; opacity: 0.7; }
 .lw-road.is-open { stroke: var(--accent); stroke-dasharray: 1.4 1.2; opacity: 0.55; animation: lwFlow 12s linear infinite; }
 .lw-road.is-walked { stroke: var(--good); stroke-dasharray: none; opacity: 0.75; stroke-width: 0.55; animation: none; }

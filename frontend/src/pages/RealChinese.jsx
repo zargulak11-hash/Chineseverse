@@ -22,11 +22,17 @@ import { speakChinese } from "../zhSpeech.js";
 // Chinese Internet, Detective Mode, lessons, Character DNA, the Vocabulary
 // Ecosystem, the Passport). Nothing here unlocks or completes anything.
 
-const VIEW_W = 100;
-const VIEW_H = 70;
-const R = 3.7;
+// The canvas size, the river and the district order come with the world
+// (GET /api/real-life/world -> map); these are the node and label sizes in
+// canvas units.
+const R = 4.6;
 const RING = 2 * Math.PI * R;
-const DISTRICT_ORDER = ["home", "centre", "campus", "travel"];
+const EDGE = 16; // within this of a side edge a label grows inward
+const LINK_LABEL = {
+  "/assistant": "nav.assistant", "/sentence": "nav.sentence", "/detective": "nav.detective",
+  "/sound-world": "nav.soundWorld", "/ecosystem": "nav.ecosystem", "/voice-companion": "nav.voiceCompanion",
+  "/hanzi": "nav.hanzi", "/review": "nav.review", "/duels": "nav.duels", "/vocabulary": "nav.vocabulary",
+};
 const MOOD = { locked: "encouraging", open: "happy", explored: "proud", mastered: "celebrating" };
 const NODE_STATE_ICON = { locked: "lock", mastered: "star" };
 
@@ -53,26 +59,39 @@ function road(a, b) {
   return `M ${a.x} ${a.y} Q ${mx - (dy / len) * bow} ${my + (dx / len) * bow} ${b.x} ${b.y}`;
 }
 
-function districts(places) {
-  const out = [];
-  for (const key of DISTRICT_ORDER) {
-    const ps = places.filter((p) => p.district === key);
-    if (!ps.length) continue;
-    const xs = ps.map((p) => p.x);
-    const ys = ps.map((p) => p.y);
-    const pad = 5.5;
-    const x = Math.max(1, Math.min(...xs) - pad);
-    const y = Math.max(1, Math.min(...ys) - pad);
-    out.push({
-      key, x, y,
-      w: Math.min(VIEW_W - 1, Math.max(...xs) + pad) - x,
-      h: Math.min(VIEW_H - 1, Math.max(...ys) + pad + 2.5) - y,
-    });
+// A smooth line through points (Catmull-Rom as cubic Béziers) -- the river.
+function smoothPath(pts) {
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [p0, p1, p2, p3] = [pts[i - 1] || pts[i], pts[i], pts[i + 1], pts[i + 2] || pts[i + 1]];
+    d += ` C ${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]} ${p2[1]}`;
   }
-  return out;
+  return d;
 }
 
-function PlaceNode({ p, current, selected, animal, label, onPick }) {
+// A district is the ground its places and the streets between them stand
+// on: a soft disc under each place joined by wide strokes along its own
+// roads, drawn as one shape (the group's opacity, not each piece's, so the
+// overlaps don't darken). Organic areas instead of boxes -- the riverside
+// district follows the water, the centre fills the middle of the city.
+function DistrictArea({ district, places, paths, tone, title }) {
+  const ps = places.filter((p) => p.district === district);
+  const inside = new Set(ps.map((p) => p.key));
+  const byKey = Object.fromEntries(ps.map((p) => [p.key, p]));
+  return (
+    <g className={`lw-district tone-${tone}`}>
+      <title>{title}</title>
+      {ps.map((p) => <circle key={p.key} cx={p.x} cy={p.y} r={R * 2.6} />)}
+      {paths.filter((r) => inside.has(r.from) && inside.has(r.to)).map((r) => (
+        <line key={`${r.from}-${r.to}`} x1={byKey[r.from].x} y1={byKey[r.from].y} x2={byKey[r.to].x} y2={byKey[r.to].y}
+              strokeWidth={R * 3.4} strokeLinecap="round" />
+      ))}
+    </g>
+  );
+}
+
+function PlaceNode({ p, current, selected, animal, label, onPick, W }) {
   const ratio = p.theme.total ? p.theme.known / p.theme.total : 0;
   return (
     <g
@@ -99,7 +118,7 @@ function PlaceNode({ p, current, selected, animal, label, onPick }) {
         {p.status !== "locked" && ratio > 0 && (
           <circle r={R} className="lw-arc" strokeDasharray={`${ratio * RING} ${RING}`} transform="rotate(-90)" />
         )}
-        <text className="lw-icon" fontSize="3" textAnchor="middle" dominantBaseline="central">{p.icon}</text>
+        <text className="lw-icon" fontSize={R * 0.85} textAnchor="middle" dominantBaseline="central">{p.icon}</text>
         {NODE_STATE_ICON[p.status] && (
           <g transform={`translate(${R * 0.78} ${-R * 0.78})`}>
             <circle r="1.35" className={`lw-badge is-${p.status}`} />
@@ -112,7 +131,7 @@ function PlaceNode({ p, current, selected, animal, label, onPick }) {
       {current && animal?.slug && (
         <image
           href={`${import.meta.env.BASE_URL}animals/${animal.slug}.png`}
-          x={companionX(p)} y={-2.1} width="4.2" height="4.2"
+          x={companionX(p, W)} y={-COMPANION / 2} width={COMPANION} height={COMPANION}
           className="lw-companion"
           preserveAspectRatio="xMidYMid slice"
         />
@@ -123,11 +142,13 @@ function PlaceNode({ p, current, selected, animal, label, onPick }) {
 
 // The companion stands beside the current place's disc (labels sit above or
 // below discs, never beside them); near the right edge it stands on the left.
-function companionX(p) {
-  return p.x > 84 ? -R - 4.6 : R + 0.4;
+const COMPANION = 5.6; // the companion's picture beside the current place
+
+function companionX(p, w) {
+  return p.x > w - EDGE ? -R - COMPANION - 0.4 : R + 0.4;
 }
 
-const LABEL_SIZE = 1.9;
+const LABEL_SIZE = 2.5;
 
 // Rough rendered width of a label: CJK glyphs are a full em, Latin and
 // Cyrillic letters about 0.58 em in the UI font at this weight.
@@ -144,32 +165,32 @@ const overlaps = (a, b) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a
 // a name already placed -- names differ in length across EN/RU/TG/ZH, so this
 // is measured per locale instead of hand-tuned for one. Near the side edges a
 // label grows inward instead of running off the canvas.
-function layoutLabels(places, names, current) {
+function layoutLabels(places, names, current, W, H) {
   const discs = places.map((p) => ({ key: p.key, x1: p.x - R, x2: p.x + R, y1: p.y - R, y2: p.y + R }));
   const cur = places.find((p) => p.key === current);
   if (cur) {
-    const cx = cur.x + companionX(cur);
-    discs.push({ key: "", x1: cx, x2: cx + 4.2, y1: cur.y - 2.1, y2: cur.y + 2.1 });
+    const cx = cur.x + companionX(cur, W);
+    discs.push({ key: "", x1: cx, x2: cx + COMPANION, y1: cur.y - COMPANION / 2, y2: cur.y + COMPANION / 2 });
   }
   const placed = [];
   const out = {};
   for (const p of places) {
     const w = labelWidth(names[p.key]);
-    const edge = p.x < 16 ? "start" : p.x > 84 ? "end" : "middle";
+    const edge = p.x < EDGE ? "start" : p.x > W - EDGE ? "end" : "middle";
     const edgeX = edge === "start" ? p.x - R : edge === "end" ? p.x + R : p.x;
     // Below, above, then beside the disc (right, left) when a long name has
     // nowhere else to go.
     const candidates = [
-      { x: edgeX, y: p.y + R + 2.6, anchor: edge },
-      { x: edgeX, y: p.y - R - 1.1, anchor: edge },
-      { x: p.x + R + 0.8, y: p.y + 0.6, anchor: "start" },
-      { x: p.x - R - 0.8, y: p.y + 0.6, anchor: "end" },
+      { x: edgeX, y: p.y + R + LABEL_SIZE * 1.3, anchor: edge },
+      { x: edgeX, y: p.y - R - LABEL_SIZE * 0.55, anchor: edge },
+      { x: p.x + R + 1, y: p.y + LABEL_SIZE * 0.3, anchor: "start" },
+      { x: p.x - R - 1, y: p.y + LABEL_SIZE * 0.3, anchor: "end" },
     ];
     const boxOf = (c) => {
       const x1 = c.anchor === "start" ? c.x : c.anchor === "end" ? c.x - w : c.x - w / 2;
       return { x1, x2: x1 + w, y1: c.y - LABEL_SIZE * 0.8, y2: c.y + LABEL_SIZE * 0.25 };
     };
-    const inside = (b) => b.y1 >= 0 && b.y2 <= VIEW_H && b.x1 >= 0 && b.x2 <= VIEW_W;
+    const inside = (b) => b.y1 >= 0 && b.y2 <= H && b.x1 >= 0 && b.x2 <= W;
     const clear = (b) => !discs.some((d) => d.key !== p.key && overlaps(b, d)) && !placed.some((o) => overlaps(b, o));
     // Nothing clear: an overlap is still better than a name cut off the map.
     const at = candidates.find((c) => inside(boxOf(c)) && clear(boxOf(c)))
@@ -366,7 +387,7 @@ function PlacePanel({ p, animal, onClose }) {
             </div>
           )}
 
-          {(p.sound || p.internet.length > 0) && (
+          {(p.sound || p.internet.length > 0 || p.links?.length > 0) && (
             <div className="lw-section">
               <p className="side-title">{t("world.alsoHere")}</p>
               <ul className="lw-list-plain">
@@ -378,6 +399,13 @@ function PlacePanel({ p, animal, onClose }) {
                     </Link>
                   </li>
                 )}
+                {(p.links || []).filter((to) => LINK_LABEL[to]).map((to) => (
+                  <li key={to}>
+                    <Link to={to} className="lw-talk">
+                      <Icon name="arrowRight" size={13} /> {t(LINK_LABEL[to])}
+                    </Link>
+                  </li>
+                ))}
                 {p.internet.map((it) => (
                   <li key={it.slug}>
                     <Link to={`/internet/${it.slug}`} className="lw-talk">
@@ -429,7 +457,6 @@ export default function RealChinese() {
   const selectedKey = params.get("place") || data?.current;
 
   const byKey = useMemo(() => Object.fromEntries((data?.places || []).map((p) => [p.key, p])), [data]);
-  const zones = useMemo(() => (data ? districts(data.places) : []), [data]);
 
   function pick(key) {
     setParams({ place: key }, { replace: true });
@@ -445,7 +472,10 @@ export default function RealChinese() {
   // map (the district list below names the rest), so only those take space.
   const shown = data.places.filter((p) => !narrow || p.key === selected?.key || p.key === data.current);
   const names = Object.fromEntries(data.places.map((p) => [p.key, t(`world.place.${p.key}.name`)]));
-  const labels = layoutLabels(shown, names, data.current);
+  const W = data.map?.w || 100;
+  const H = data.map?.h || 70;
+  const order = data.map?.districts || [...new Set(data.places.map((p) => p.district))];
+  const labels = layoutLabels(shown, names, data.current, W, H);
   return (
     <Layout>
       <header className="page-head">
@@ -473,19 +503,25 @@ export default function RealChinese() {
       <div className="ws">
         <div className="ws-main">
           <div className="lw-map" data-self-animate="true">
-            <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}>
+            <svg viewBox={`0 0 ${W} ${H}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}>
               <defs>
                 <radialGradient id="lw-glow" cx="50%" cy="45%" r="70%">
                   <stop offset="0%" className="lw-glow-in" />
                   <stop offset="100%" className="lw-glow-out" />
                 </radialGradient>
               </defs>
-              <rect x="0" y="0" width={VIEW_W} height={VIEW_H} fill="url(#lw-glow)" />
-              {zones.map((z) => (
-                <rect key={z.key} x={z.x} y={z.y} width={z.w} height={z.h} rx="4" className={`lw-zone is-${z.key}`}>
-                  <title>{t(`world.district.${z.key}`)}</title>
-                </rect>
+              <rect x="0" y="0" width={W} height={H} fill="url(#lw-glow)" />
+              {order.map((d, i) => (
+                <DistrictArea key={d} district={d} places={data.places} paths={data.paths} tone={i % 2 ? "b" : "a"}
+                              title={t(`world.district.${d}`)} />
               ))}
+              {data.map?.river && (
+                <g className="lw-river" aria-hidden="true">
+                  <path d={smoothPath(data.map.river)} className="lw-river-bank" />
+                  <path d={smoothPath(data.map.river)} className="lw-river-water" />
+                  <path d={smoothPath(data.map.river)} className="lw-river-shine" />
+                </g>
+              )}
               {data.paths.map((r) => {
                 const a = byKey[r.from];
                 const b = byKey[r.to];
@@ -502,6 +538,7 @@ export default function RealChinese() {
                   selected={p.key === selected?.key}
                   animal={animal}
                   onPick={pick}
+                  W={W}
                 />
               ))}
               {shown.map((p) => <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} />)}
@@ -516,7 +553,7 @@ export default function RealChinese() {
 
           {narrow && (
             <div className="lw-places" aria-label={t("world.allPlaces")}>
-              {DISTRICT_ORDER.map((d) => (
+              {order.map((d) => (
                 <div key={d}>
                   <p className="side-title">{t(`world.district.${d}`)}</p>
                   <ul className="lw-list-plain">

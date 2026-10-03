@@ -1705,10 +1705,15 @@
     "pickPlace": "点击地图上的地点。",
     "companionTitle": "{{name}}和你一起旅行",
     "district": {
-      "home": "家附近",
+      "home": "住宅区",
       "centre": "市中心",
-      "campus": "校园和工作",
-      "travel": "出行"
+      "campus": "文教区",
+      "health": "医疗区",
+      "transport": "交通枢纽",
+      "riverside": "河畔公园",
+      "food": "美食区",
+      "culture": "传统文化区",
+      "shopping": "购物娱乐区"
     },
     "status": {
       "locked": "未开放",
@@ -1847,6 +1852,94 @@
       "airport": {
         "name": "机场",
         "desc": "值机、行李、航班——计划有变时怎么办。"
+      },
+      "cafe": {
+        "name": "咖啡馆",
+        "desc": "按自己的口味点一杯咖啡——再和助手边喝边聊。"
+      },
+      "bookstore": {
+        "name": "书店",
+        "desc": "买书、请人推荐，再翻翻你正在学的所有词。",
+        "enter": "去看词汇"
+      },
+      "post_office": {
+        "name": "邮局",
+        "desc": "寄信寄快递、写地址、填表格。"
+      },
+      "bank": {
+        "name": "银行",
+        "desc": "钱、银行卡和换钱——真正用得上的数字。"
+      },
+      "police_station": {
+        "name": "派出所",
+        "desc": "报失、求助——侦探社就在附近。"
+      },
+      "pharmacy": {
+        "name": "药店",
+        "desc": "说说感冒、头疼，听懂药一天吃几次。"
+      },
+      "metro": {
+        "name": "地铁站",
+        "desc": "线路、换乘和出口——坐地铁走遍城市。"
+      },
+      "bus_station": {
+        "name": "公交车站",
+        "desc": "坐几路车、等多久、在哪儿下车。"
+      },
+      "park": {
+        "name": "公园",
+        "desc": "散步、天气、花——也是安静复习词语的好地方。",
+        "enter": "边散步边复习"
+      },
+      "riverside": {
+        "name": "河边",
+        "desc": "船、桥和河水——穿过整座城市的那条河。"
+      },
+      "sports_center": {
+        "name": "体育中心",
+        "desc": "跑步、游泳、比赛——还能和其他学习者实时对战。",
+        "enter": "开始对战"
+      },
+      "bamboo_garden": {
+        "name": "竹园",
+        "desc": "鱼、鸟和竹林里的风——慢慢学自然词语。"
+      },
+      "food_street": {
+        "name": "美食街",
+        "desc": "饺子、包子和各种小吃——辣的甜的都值得尝尝。"
+      },
+      "market": {
+        "name": "菜市场",
+        "desc": "水果蔬菜论斤卖——新鲜、便宜、还能讲价。"
+      },
+      "tea_house": {
+        "name": "茶馆",
+        "desc": "点一壶茶，和朋友聊聊天——老城区慢悠悠的说话角落。"
+      },
+      "museum": {
+        "name": "博物馆",
+        "desc": "用中文讲历史——还有今天汉字背后的古老字形。"
+      },
+      "temple": {
+        "name": "寺庙",
+        "desc": "历史与传统的安静之地——看懂牌子，小声说话。"
+      },
+      "hutong": {
+        "name": "胡同",
+        "desc": "老院子、老邻居和楼里的通知——传统的日常生活。"
+      },
+      "mall": {
+        "name": "商场",
+        "desc": "楼层、电梯和商店——可以逛一下午。"
+      },
+      "cinema": {
+        "name": "电影院",
+        "desc": "买票、赶场次——夜晚从这里开始。"
+      },
+      "ktv": {
+        "name": "KTV",
+        "desc": "唱歌、跳舞、大声说——晚上的口语练习。",
+        "enter": "和今日语音伙伴说话"
       }
     },
     "topic": {
@@ -1879,7 +1972,49 @@
       "sightseeing": "参观游览",
       "photos": "拍照看风景",
       "tickets": "门票",
-      "flight": "航班"
+      "flight": "航班",
+      "coffee": "点咖啡",
+      "milk": "加奶加糖",
+      "buy_book": "买书",
+      "recommend": "推荐",
+      "send": "寄东西",
+      "address": "写地址",
+      "exchange": "换钱",
+      "card": "银行卡和取钱",
+      "lost": "东西丢了",
+      "police_help": "请警察帮忙",
+      "cold": "感冒",
+      "dosage": "怎么吃药",
+      "ride": "坐地铁",
+      "transfer": "换乘",
+      "wait": "等车",
+      "route": "坐几路车",
+      "walk": "散步",
+      "weather": "天气",
+      "boat": "坐船",
+      "bridge": "过桥",
+      "exercise": "锻炼",
+      "match": "比赛",
+      "nature": "鱼和鸟",
+      "wind": "安静和风",
+      "snack": "小吃",
+      "spicy": "辣和甜",
+      "quantity": "论斤买",
+      "fresh": "新鲜蔬菜",
+      "order_tea": "点茶",
+      "tea_chat": "喝茶聊天",
+      "visit": "参观",
+      "history": "历史",
+      "culture": "文化",
+      "quiet": "保持安静",
+      "neighbours": "邻居",
+      "courtyard": "院子",
+      "floor": "楼层和电梯",
+      "browse": "逛商店",
+      "movie_tickets": "电影票",
+      "showtime": "场次",
+      "sing": "唱歌",
+      "dance": "跳舞"
     }
   }
 }

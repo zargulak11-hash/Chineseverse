@@ -18,7 +18,7 @@ from app import models  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services import sentence as sent  # noqa: E402
-from app.services.world_places import PLACE_BY_KEY, PLACES  # noqa: E402
+from app.services.world_places import CANVAS_H, CANVAS_W, DISTRICTS, PATHS, PLACE_BY_KEY, PLACES  # noqa: E402
 
 
 def expect(client, method, url, expected, **kwargs):
@@ -68,7 +68,35 @@ with TestClient(app) as client:
                 assert all(w in have and w in t["sentence"] for w in t["words"]), (p["key"], t["key"])
                 sent.validate(db, t["sentence"])
     assert len({p["scene"] for p in PLACES if p["scene"]}) == 10
-    print("[PASS] 19 places: real theme words, valid topic sentences, all 10 Real Chinese scenes placed")
+    print(f"[PASS] {len(PLACES)} places: real theme words, valid topic sentences, all 10 Real Chinese scenes placed")
+
+    # ---- the city: every place on the canvas, apart from the others, in a
+    # known district, reachable by road; the 19 original places all still there
+    ORIGINAL = {"home", "library", "calligraphy", "word_garden", "street", "restaurant", "shop", "shopping_district",
+                "internet_cafe", "detective", "sound_plaza", "passport_office", "university", "hospital", "office",
+                "train_station", "hotel", "old_town", "airport"}
+    keys = [p["key"] for p in PLACES]
+    assert len(keys) == len(set(keys)) and ORIGINAL <= set(keys) and len(set(keys) - ORIGINAL) >= 20, len(keys)
+    for p in PLACES:
+        assert 6 <= p["x"] <= CANVAS_W - 6 and 6 <= p["y"] <= CANVAS_H - 6, p["key"]
+        assert p["district"] in DISTRICTS, p["key"]
+        assert all(link.startswith("/") for link in p["links"]), p["key"]
+        assert p["topics"] or p["gateway"], f"{p['key']} has nothing to learn or open"
+    for i, a in enumerate(PLACES):
+        for b in PLACES[i + 1:]:
+            assert ((a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2) ** 0.5 >= 14, (a["key"], b["key"])
+    assert set(DISTRICTS) == {p["district"] for p in PLACES}
+    assert all(a in PLACE_BY_KEY and b in PLACE_BY_KEY for a, b in PATHS)
+    reach, todo = {"home"}, ["home"]
+    while todo:
+        k = todo.pop()
+        for a, b in PATHS:
+            for x, y in ((a, b), (b, a)):
+                if x == k and y not in reach:
+                    reach.add(y)
+                    todo.append(y)
+    assert reach == set(keys), set(keys) - reach
+    print(f"[PASS] a {CANVAS_W}x{CANVAS_H} city: {len(DISTRICTS)} districts, {len(PATHS)} roads, every place reachable from home")
 
     # ---- a brand-new learner: nothing claimed
     uid, h = register(client, "newcomer")
@@ -112,6 +140,23 @@ with TestClient(app) as client:
     assert ps["restaurant"]["status"] in ("explored", "mastered") and ps["restaurant"]["scene"]["best"] == 100
     assert w["current"] == "restaurant" and w["passport"]["explored"] >= 1 and w["passport"]["scenes_done"] == 1
     print("[PASS] a completed scene explores the place, records its best score and moves the companion there")
+
+    # ---- a new place with no scene: learning one of its sentences is being there
+    assert ps["cafe"]["status"] == "open" and ps["cafe"]["links"] == ["/assistant"] and not ps["cafe"]["scene"]
+    assert w["map"]["w"] == CANVAS_W and len(w["map"]["river"]) >= 2 and w["map"]["districts"] == list(DISTRICTS)
+    cafe_sentence = PLACE_BY_KEY["cafe"]["topics"][0]["sentence"]
+    s = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "sentence", "sentence": cafe_sentence})
+    with SessionLocal() as db:
+        keys_ = db.get(models.PracticeSession, s["id"]).questions
+    for q in s["questions"]:
+        expect(client, "post", f"/api/practice/sessions/{s['id']}/answer", 200, headers=h,
+               json={"index": q["index"], "choice_id": keys_[q["index"]]["item_id"]})
+    expect(client, "post", f"/api/practice/sessions/{s['id']}/complete", 200, headers=h)
+    w = expect(client, "get", "/api/real-life/world", 200, headers=h)
+    ps = places(w)
+    assert ps["cafe"]["status"] == "explored" and w["current"] == "cafe", (ps["cafe"]["status"], w["current"])
+    assert ps["bookstore"]["status"] == "open" and ps["park"]["status"] == "open", "nothing else claimed"
+    print("[PASS] learning a cafe sentence explores the cafe and moves the companion there; nothing else is claimed")
 
     # ---- Learning DNA adapts the scenes
     aid, ah = register(client, "goodlistener")

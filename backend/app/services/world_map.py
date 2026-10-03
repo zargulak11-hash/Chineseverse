@@ -13,7 +13,9 @@ completed unless the data says so:
                   really known (half of them; "learning" counts half)
   explored        a completed round there (Real Chinese scene, Sound World
                   place, Chinese Internet item), a World voice turn there,
-                  or the gateway's own activity (lessons, Hanzi, cases...)
+                  one of its topic sentences learned as a One Sentence
+                  lesson, or the gateway's own activity (lessons, Hanzi,
+                  cases, review, duels, the Daily Voice Companion...)
   mastered        the scene passed at >= MASTERED and most theme words known
   current         where their most recent activity happened (home at first)
   talks           the World voice conversations / cases stationed there,
@@ -34,7 +36,18 @@ from sqlalchemy.orm import Session
 from app import models
 from app.services import sentence as sent
 from app.services import story_slots as ss
-from app.services.world_places import OPEN_BY_WORDS, PATHS, PLACE_BY_KEY, PLACE_BY_SCENE, PLACES
+from app.services.world_places import (
+    CANVAS_H,
+    CANVAS_W,
+    DISTRICTS,
+    OPEN_BY_WORDS,
+    PATHS,
+    PLACE_BY_KEY,
+    PLACE_BY_SCENE,
+    PLACE_BY_SENTENCE,
+    PLACES,
+    RIVER,
+)
 
 MASTERED = 80.0
 KNOWN = ("reviewing", "mastered")
@@ -151,11 +164,18 @@ def _gateway_activity(db: Session, user: models.User, sessions_by_source: dict) 
                                                  models.UserHanzi.status != "new").first() is not None
     words = db.query(models.UserVocabulary.id).filter(models.UserVocabulary.user_id == user.id,
                                                       models.UserVocabulary.status.in_(KNOWN)).first() is not None
+    duels = (db.query(models.DuelParticipant.id).join(models.Duel, models.Duel.id == models.DuelParticipant.duel_id)
+             .filter(models.DuelParticipant.user_id == user.id, models.Duel.finished_at.isnot(None)).first() is not None)
+    # The Daily Voice Companion's turns are the voice attempts with no World scenario.
+    voice = db.query(models.VoiceAttempt.id).filter(models.VoiceAttempt.user_id == user.id,
+                                                    models.VoiceAttempt.scenario_id.is_(None)).first() is not None
     return {
         "/lessons": lessons or bool(sessions_by_source.get("sentence")) or bool(sessions_by_source.get("lesson")),
         "/hanzi": hanzi, "/ecosystem": words,
         "/internet": bool(sessions_by_source.get("internet")), "/detective": bool(sessions_by_source.get("detective")),
         "/sound-world": bool(sessions_by_source.get("sound")), "/passport": False,
+        "/vocabulary": bool(sessions_by_source.get("vocab")), "/review": bool(sessions_by_source.get("review")),
+        "/duels": duels, "/voice-companion": voice,
     }
 
 
@@ -169,7 +189,13 @@ def _place_of_session(s: models.PracticeSession) -> str | None:
         return "internet_cafe"
     if s.source == "detective":
         return "detective"
-    if s.source in ("sentence", "lesson", "review", "vocab", "grammar"):
+    if s.source == "sentence":
+        return PLACE_BY_SENTENCE.get(ctx.get("text")) or "library"
+    if s.source == "vocab":
+        return "bookstore"
+    if s.source == "review":
+        return "park"
+    if s.source in ("lesson", "grammar"):
         return "library"
     if s.source == "hanzi":
         return "calligraphy"
@@ -193,6 +219,7 @@ def world(db: Session, user: models.User, locale: str) -> dict:
     scenes = pp._completed_by_ctx(sessions, "scene", "slug")
     sound = pp._completed_by_ctx(sessions, "sound", "env")
     net = pp._completed_by_ctx(sessions, "internet", "slug")
+    sentences = pp._completed_by_ctx(sessions, "sentence", "text")
     gateway = _gateway_activity(db, user, by_source)
 
     words = {w for p in PLACES for w in p["theme"]} | {w for p in PLACES for t in p["topics"] for w in t["words"]}
@@ -229,7 +256,8 @@ def world(db: Session, user: models.User, locale: str) -> dict:
                      "best": round(max((s.score or 0 for s in net.get(slug, [])), default=0.0), 1),
                      "read": bool(net.get(slug))} for slug in p["internet"]]
         explored = bool((scene_info and scene_info["rounds"]) or any(t["tried"] for t in talks) or sound_rows
-                        or any(i["read"] for i in internet) or (p["gateway"] and gateway.get(p["gateway"])))
+                        or any(i["read"] for i in internet) or (p["gateway"] and gateway.get(p["gateway"]))
+                        or any(t["sentence"] in sentences for t in p["topics"]))
         mastered = bool(scene_info and scene_info["best"] >= MASTERED and known * 2 >= len(p["theme"]))
         status = "locked" if not is_open else "mastered" if mastered else "explored" if explored else "open"
         out.append({
@@ -240,7 +268,7 @@ def world(db: Session, user: models.User, locale: str) -> dict:
             "topics": topics, "scene": scene_info, "talks": talks,
             "sound": {"env": p["sound"], "rounds": len(sound_rows),
                       "best": round(max((s.score or 0 for s in sound_rows), default=0.0), 1)} if p["sound"] else None,
-            "internet": internet, "gateway": p["gateway"],
+            "internet": internet, "gateway": p["gateway"], "links": list(p["links"]),
             "greeting": _greeting(db, p, tier, locale) if is_open else None,
         })
 
@@ -263,6 +291,7 @@ def world(db: Session, user: models.User, locale: str) -> dict:
     caps = pp.capabilities(db, user, sessions, answers, pp._skills(user))
     return {
         "level": level, "tier": tier, "current": current,
+        "map": {"w": CANVAS_W, "h": CANVAS_H, "river": [list(pt) for pt in RIVER], "districts": list(DISTRICTS)},
         "adaptation": real_life.dna_adaptation(user),
         "places": out,
         "paths": [{"from": a, "to": b, "open": a in open_keys and b in open_keys} for a, b in PATHS],

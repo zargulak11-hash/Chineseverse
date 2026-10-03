@@ -1747,10 +1747,15 @@
     "pickPlace": "Tap a place on the map.",
     "companionTitle": "{{name}} travels with you",
     "district": {
-      "home": "Home quarter",
-      "centre": "City centre",
-      "campus": "Campus & work",
-      "travel": "Travel"
+      "home": "Residential quarter",
+      "centre": "Downtown",
+      "campus": "Education district",
+      "health": "Healthcare",
+      "transport": "Transport hub",
+      "riverside": "Riverside & parks",
+      "food": "Food district",
+      "culture": "Traditional quarter",
+      "shopping": "Shopping & fun"
     },
     "status": {
       "locked": "Locked",
@@ -1891,6 +1896,94 @@
       "airport": {
         "name": "Airport",
         "desc": "Check in, luggage and flights — and what to do when plans change."
+      },
+      "cafe": {
+        "name": "Café",
+        "desc": "Order a coffee your way — and chat with the assistant over a cup."
+      },
+      "bookstore": {
+        "name": "Bookstore",
+        "desc": "Buy a book, ask for a recommendation, and browse every word you are learning.",
+        "enter": "Browse words"
+      },
+      "post_office": {
+        "name": "Post office",
+        "desc": "Send letters and parcels, write an address, fill in a form."
+      },
+      "bank": {
+        "name": "Bank",
+        "desc": "Money, cards and exchanging currency — numbers you will really use."
+      },
+      "police_station": {
+        "name": "Police station",
+        "desc": "Report something lost and ask for help — the Detective agency is just down the road."
+      },
+      "pharmacy": {
+        "name": "Pharmacy",
+        "desc": "Describe a cold or a headache and understand how often to take the medicine."
+      },
+      "metro": {
+        "name": "Metro station",
+        "desc": "Lines, transfers and exits — getting around the city underground."
+      },
+      "bus_station": {
+        "name": "Bus station",
+        "desc": "Which bus, how long to wait, where to get off."
+      },
+      "park": {
+        "name": "Park",
+        "desc": "A walk, the weather, the flowers — and a calm place to review your words.",
+        "enter": "Review on a walk"
+      },
+      "riverside": {
+        "name": "Riverside",
+        "desc": "Boats, bridges and the water — the river that runs through the whole city."
+      },
+      "sports_center": {
+        "name": "Sports centre",
+        "desc": "Running, swimming, matches — and live duels against other learners.",
+        "enter": "Start a duel"
+      },
+      "bamboo_garden": {
+        "name": "Bamboo garden",
+        "desc": "Fish, birds and the wind in the bamboo — nature words, slowly."
+      },
+      "food_street": {
+        "name": "Food street",
+        "desc": "Dumplings, buns and street snacks — spicy, sweet, and worth a taste."
+      },
+      "market": {
+        "name": "Market",
+        "desc": "Fruit and vegetables by the jin — fresh, cheap, and haggled over."
+      },
+      "tea_house": {
+        "name": "Tea house",
+        "desc": "Order tea and talk with friends — the slow, spoken heart of the old quarter."
+      },
+      "museum": {
+        "name": "Museum",
+        "desc": "History told in Chinese — and the ancient shapes behind today's characters."
+      },
+      "temple": {
+        "name": "Temple",
+        "desc": "A quiet place of history and tradition — read the signs, speak softly."
+      },
+      "hutong": {
+        "name": "Hutong",
+        "desc": "Old courtyard lanes, neighbours and building notices — everyday life, the traditional way."
+      },
+      "mall": {
+        "name": "Shopping mall",
+        "desc": "Floors, lifts and shops — browsing for the whole afternoon."
+      },
+      "cinema": {
+        "name": "Cinema",
+        "desc": "Buy tickets and catch the showtime — the night out starts here."
+      },
+      "ktv": {
+        "name": "Karaoke (KTV)",
+        "desc": "Sing, dance and speak out loud — the voice practice of the evening.",
+        "enter": "Speak with today's companion"
       }
     },
     "topic": {
@@ -1923,7 +2016,49 @@
       "sightseeing": "Sightseeing",
       "photos": "Photos & views",
       "tickets": "Entry tickets",
-      "flight": "Flights"
+      "flight": "Flights",
+      "coffee": "Ordering coffee",
+      "milk": "Milk & sugar",
+      "buy_book": "Buying a book",
+      "recommend": "Recommendations",
+      "send": "Sending mail",
+      "address": "Addresses",
+      "exchange": "Changing money",
+      "card": "Cards & cash",
+      "lost": "Something lost",
+      "police_help": "Getting help",
+      "cold": "A cold",
+      "dosage": "How to take it",
+      "ride": "Riding the metro",
+      "transfer": "Transfers",
+      "wait": "Waiting",
+      "route": "Bus routes",
+      "walk": "A walk",
+      "weather": "The weather",
+      "boat": "Boats",
+      "bridge": "Bridges",
+      "exercise": "Exercise",
+      "match": "Matches",
+      "nature": "Fish & birds",
+      "wind": "Quiet & wind",
+      "snack": "Street snacks",
+      "spicy": "Spicy or sweet",
+      "quantity": "How much by weight",
+      "fresh": "Fresh produce",
+      "order_tea": "Ordering tea",
+      "tea_chat": "Talking over tea",
+      "visit": "Visiting",
+      "history": "History",
+      "culture": "Culture",
+      "quiet": "Keeping quiet",
+      "neighbours": "Neighbours",
+      "courtyard": "Courtyards",
+      "floor": "Floors & lifts",
+      "browse": "Browsing shops",
+      "movie_tickets": "Movie tickets",
+      "showtime": "Showtimes",
+      "sing": "Singing",
+      "dance": "Dancing"
     }
   }
 }
