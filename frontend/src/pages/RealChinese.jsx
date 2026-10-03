@@ -347,15 +347,15 @@ function PlacePanel({ p, animal, onClose, rec, current }) {
           </button>
         )}
       </div>
-      <div className="row" style={{ gap: 6, flexWrap: "wrap", margin: "12px 0 0" }}>
+      <div className="row lw-badges" style={{ gap: 6, flexWrap: "wrap", margin: "12px 0 0" }}>
         <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>{status}</span>
         {p.status !== "locked" && p.theme.total > 0 && (
           <span className="badge">{t("world.wordsKnown", { known: p.theme.known, total: p.theme.total })}</span>
         )}
         <StateBadges p={p} recommended={rec?.key === p.key} current={current} />
       </div>
-      {rec?.key === p.key && <p className="sub lw-rec-why">{recommendReason(t, rec)}</p>}
-      <p className="sub" style={{ marginTop: 8 }}>{t(`world.place.${p.key}.desc`)}</p>
+      {rec?.key === p.key && <p className="sub lw-rec-why lw-peek-hide">{recommendReason(t, rec)}</p>}
+      <p className="sub lw-peek-hide" style={{ marginTop: 8 }}>{t(`world.place.${p.key}.desc`)}</p>
 
       {p.status !== "locked" && (
         <>
@@ -648,6 +648,21 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
   const byKey = useMemo(() => Object.fromEntries(data.places.map((p) => [p.key, p])), [data]);
   const scenery = useMemo(() => buildScenery(data, (d) => t(`world.district.${d}`)), [data, t]);
 
+  // Fullscreen: the whole map card (toolbar, city, details) takes the screen.
+  // Hidden where the browser can't do it for an element (iPhone Safari).
+  const mapRef = useRef(null);
+  const [full, setFull] = useState(false);
+  const canFull = typeof document !== "undefined" && document.fullscreenEnabled;
+  useEffect(() => {
+    const on = () => setFull(document.fullscreenElement === mapRef.current);
+    document.addEventListener("fullscreenchange", on);
+    return () => document.removeEventListener("fullscreenchange", on);
+  }, []);
+  const toggleFull = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else mapRef.current?.requestFullscreen?.().catch(() => {});
+  };
+
   const anim = useRef(0);
   const flyTo = (target) => {
     cancelAnimationFrame(anim.current);
@@ -804,7 +819,7 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
   const hovered = hover && byKey[hover];
 
   return (
-    <div className="lw-map is-hero" data-self-animate="true">
+    <div className={`lw-map is-hero${full ? " is-fullscreen" : ""}`} data-self-animate="true" ref={mapRef}>
       {/* Above the city, never on it: the next stop and the map's controls. */}
       <div className="lw-toolbar">
         {overlay || <span />}
@@ -826,8 +841,15 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
             </button>
             <button type="button" className="icon-btn" title={t("world.nav.whole")} aria-label={t("world.nav.whole")}
                     onClick={() => flyTo({ k: fitK(W, H, aspect), cx: W / 2, cy: H / 2 })}>
-              <Icon name="expand" size={16} />
+              <Icon name="world" size={16} />
             </button>
+            {canFull && (
+              <button type="button" className="icon-btn" aria-pressed={full} onClick={toggleFull}
+                      title={t(full ? "world.nav.exitFullscreen" : "world.nav.fullscreen")}
+                      aria-label={t(full ? "world.nav.exitFullscreen" : "world.nav.fullscreen")}>
+                <Icon name={full ? "x" : "expand"} size={16} />
+              </button>
+            )}
           </div>
       </div>
       <div className="lw-viewport" ref={boxRef} tabIndex={0} onKeyDown={onKeyDown}
@@ -893,7 +915,10 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
         )}
         {!narrow && sheet}
       </div>
-      <div className="lw-legend sub">
+      {/* The key to the map: a strip on wide screens, folded away on a phone. */}
+      <details className="lw-legend sub" open={!narrow}>
+        <summary>{t("world.legend")}</summary>
+        <div className="lw-legend-items">
         <span><i className="lw-dot is-mastered" /> {t("world.status.mastered")}</span>
         <span><i className="lw-dot is-explored" /> {t("world.status.explored")}</span>
         <span><i className="lw-dot is-open" /> {t("world.status.open")}</span>
@@ -903,7 +928,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
         <span><i className="lw-dot is-new" /> {t("world.state.new")}</span>
         <span><i className="lw-dot is-visited" /> {t("world.state.visited")}</span>
         <span className="lw-hint-nav">{t(narrow ? "world.nav.hintTouch" : "world.nav.hintMouse")}</span>
-      </div>
+        </div>
+      </details>
     </div>
   );
 }
@@ -953,9 +979,13 @@ export default function RealChinese() {
           <h1 className="h1">{t("world.title")}</h1>
         </div>
         <Link to="/passport" className="lw-head-stats lw-passport" aria-label={t("world.passportLink")}>
-          <span className="lw-stat"><b>{pp.explored}/{pp.total}</b> {t("world.explored")}</span>
-          <span className="lw-stat"><b>{pp.scenes_done}/{pp.scenes_total}</b> {t("world.scenesDone")}</span>
-          <span className="lw-stat"><b>{pp.skills_shown}/{pp.skills_total}</b> {t("world.skillsShown")}</span>
+          {[["mapPin", `${pp.explored}/${pp.total}`, "world.explored"],
+            ["play", `${pp.scenes_done}/${pp.scenes_total}`, "world.scenesDone"],
+            ["award", `${pp.skills_shown}/${pp.skills_total}`, "world.skillsShown"]].map(([icon, value, label]) => (
+            <span key={label} className="lw-stat" title={t(label)}>
+              <Icon name={icon} size={13} /> <b>{value}</b> <span className="lw-stat-label">{t(label)}</span>
+            </span>
+          ))}
         </Link>
       </header>
 

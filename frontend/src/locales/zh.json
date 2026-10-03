@@ -2023,7 +2023,9 @@
       "whole": "查看整座城市",
       "hintMouse": "拖动移动 · Ctrl + 滚轮缩放",
       "hintTouch": "拖动移动 · 双指缩放",
-      "keys": "方向键移动地图，+ 和 − 缩放，0 显示整座城市。"
+      "keys": "方向键移动地图，+ 和 − 缩放，0 显示整座城市。",
+      "fullscreen": "全屏",
+      "exitFullscreen": "退出全屏"
     },
     "state": {
       "current": "你在这里",
@@ -2042,6 +2044,7 @@
     "sheet": {
       "expand": "展开详情",
       "collapse": "收起"
-    }
+    },
+    "legend": "图例"
   }
 }

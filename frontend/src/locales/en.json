@@ -2067,7 +2067,9 @@
       "whole": "Show the whole city",
       "hintMouse": "Drag to move · Ctrl + scroll to zoom",
       "hintTouch": "Drag to move · pinch to zoom",
-      "keys": "Arrow keys move the map, + and − zoom, 0 shows the whole city."
+      "keys": "Arrow keys move the map, + and − zoom, 0 shows the whole city.",
+      "fullscreen": "Full screen",
+      "exitFullscreen": "Exit full screen"
     },
     "state": {
       "current": "You are here",
@@ -2087,6 +2089,7 @@
     "sheet": {
       "expand": "Show all details",
       "collapse": "Show less"
-    }
+    },
+    "legend": "Map key"
   }
 }
