@@ -2059,6 +2059,15 @@
       "showtime": "Showtimes",
       "sing": "Singing",
       "dance": "Dancing"
+    },
+    "nav": {
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "toCompanion": "Back to your companion",
+      "whole": "Show the whole city",
+      "hintMouse": "Drag to move · Ctrl + scroll to zoom",
+      "hintTouch": "Drag to move · pinch to zoom",
+      "keys": "Arrow keys move the map, + and − zoom, 0 shows the whole city."
     }
   }
 }

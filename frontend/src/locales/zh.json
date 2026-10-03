@@ -2015,6 +2015,15 @@
       "showtime": "场次",
       "sing": "唱歌",
       "dance": "跳舞"
+    },
+    "nav": {
+      "zoomIn": "放大",
+      "zoomOut": "缩小",
+      "toCompanion": "回到伙伴身边",
+      "whole": "查看整座城市",
+      "hintMouse": "拖动移动 · Ctrl + 滚轮缩放",
+      "hintTouch": "拖动移动 · 双指缩放",
+      "keys": "方向键移动地图，+ 和 − 缩放，0 显示整座城市。"
     }
   }
 }

@@ -7,6 +7,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import WordHelper from "../components/WordHelper.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
+import { prefersReducedMotion } from "../anime.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
@@ -91,7 +92,7 @@ function DistrictArea({ district, places, paths, tone, title }) {
   );
 }
 
-function PlaceNode({ p, current, selected, animal, label, onPick, W }) {
+function PlaceNode({ p, current, selected, animal, label, onPick, W, onHover, onFocusPlace }) {
   const ratio = p.theme.total ? p.theme.known / p.theme.total : 0;
   return (
     <g
@@ -102,6 +103,10 @@ function PlaceNode({ p, current, selected, animal, label, onPick, W }) {
       aria-label={label}
       aria-pressed={selected}
       onClick={() => onPick(p.key)}
+      onPointerEnter={(e) => e.pointerType === "mouse" && onHover?.(p.key)}
+      onPointerLeave={() => onHover?.(null)}
+      onFocus={() => onFocusPlace?.(p)}
+      onBlur={() => onHover?.(null)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -446,6 +451,314 @@ function AdaptationCard({ ad, tier }) {
   );
 }
 
+// ---------------------------------------------------------------- navigation
+// The city is larger than the screen, so the map is a viewport onto it: a
+// centre (cx, cy) and a zoom k, where k = 1 shows the whole width. Drag (or
+// one finger) pans, Ctrl/⌘ + wheel or two fingers zoom, the buttons and the
+// keyboard do both. The view never leaves the city. A place chosen anywhere
+// (the map, the district list, the topbar search) is flown to.
+const K_MAX = 4;
+const LABEL_MIN_PX = 8; // below this on screen, only the important names show
+
+function fitK(W, H, aspect) {
+  return Math.min(1, W / (H * aspect));
+}
+
+function clampView(v, W, H, aspect) {
+  const k = Math.min(K_MAX, Math.max(fitK(W, H, aspect), v.k));
+  const vw = W / k;
+  const vh = vw / aspect;
+  return {
+    k,
+    cx: vw >= W ? W / 2 : Math.min(W - vw / 2, Math.max(vw / 2, v.cx)),
+    cy: vh >= H ? H / 2 : Math.min(H - vh / 2, Math.max(vh / 2, v.cy)),
+  };
+}
+
+function useElementSize(ref) {
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(([entry]) => setSize({ w: entry.contentRect.width, h: entry.contentRect.height }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return size;
+}
+
+function HoverCard({ p, at }) {
+  const { t } = useTranslation();
+  return (
+    <div className="lw-hovercard" style={{ left: at.x, top: at.y }} role="presentation">
+      <b>{p.icon} {t(`world.place.${p.key}.name`)}</b>
+      <span className="sub">{t(`world.district.${p.district}`)}</span>
+      <span className="row" style={{ gap: 6, margin: "6px 0 0", flexWrap: "wrap" }}>
+        <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>
+          {t(`world.status.${p.status}`)}
+        </span>
+        {p.status === "locked"
+          ? <span className="badge">HSK {p.min_level}</span>
+          : p.theme.total > 0 && <span className="badge">{t("world.wordsKnown", { known: p.theme.known, total: p.theme.total })}</span>}
+      </span>
+    </div>
+  );
+}
+
+function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow }) {
+  const { t } = useTranslation();
+  const boxRef = useRef(null);
+  const svgRef = useRef(null);
+  const size = useElementSize(boxRef);
+  const aspect = size.w && size.h ? size.w / size.h : 1.5;
+  const home = narrow ? 3 : 1.5;
+  const focus = selected || data.places.find((p) => p.key === data.current);
+  const [view, setView] = useState(() => ({ cx: focus?.x ?? W / 2, cy: focus?.y ?? H / 2, k: home }));
+  const [hover, setHover] = useState(null);
+  const v = clampView(view, W, H, aspect);
+  const viewRef = useRef(v);
+  viewRef.current = v;
+  const vw = W / v.k;
+  const vh = vw / aspect;
+  const x0 = v.cx - vw / 2;
+  const y0 = v.cy - vh / 2;
+  const pxPerUnit = size.w ? size.w / vw : 0;
+  const byKey = useMemo(() => Object.fromEntries(data.places.map((p) => [p.key, p])), [data]);
+
+  const anim = useRef(0);
+  const flyTo = (target) => {
+    cancelAnimationFrame(anim.current);
+    const from = viewRef.current;
+    const to = { ...from, ...target };
+    if (prefersReducedMotion()) {
+      setView(to);
+      return;
+    }
+    const t0 = performance.now();
+    const step = (now) => {
+      const f = Math.min(1, (now - t0) / 420);
+      const e = 1 - (1 - f) ** 3;
+      setView({ cx: from.cx + (to.cx - from.cx) * e, cy: from.cy + (to.cy - from.cy) * e, k: from.k + (to.k - from.k) * e });
+      if (f < 1) anim.current = requestAnimationFrame(step);
+    };
+    anim.current = requestAnimationFrame(step);
+  };
+  useEffect(() => () => cancelAnimationFrame(anim.current), []);
+
+  // Fly to the chosen place whenever it changes (map tap, list, search).
+  const selKey = selected?.key;
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
+    const p = byKey[selKey];
+    if (p) flyTo({ cx: p.x, cy: p.y, k: Math.max(viewRef.current.k, home) });
+  }, [selKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Zoom by a factor around a canvas point that stays where it is on screen.
+  const zoomAt = (factor, ux = viewRef.current.cx, uy = viewRef.current.cy, animate = false) => {
+    const cur = viewRef.current;
+    const k = Math.min(K_MAX, Math.max(fitK(W, H, aspect), cur.k * factor));
+    const ow = W / cur.k;
+    const nw = W / k;
+    const fx = (ux - (cur.cx - ow / 2)) / ow;
+    const fy = (uy - (cur.cy - ow / aspect / 2)) / (ow / aspect);
+    const target = { k, cx: ux - fx * nw + nw / 2, cy: uy - fy * (nw / aspect) + nw / aspect / 2 };
+    if (animate) flyTo(target);
+    else setView(target);
+  };
+
+  const toUnits = (clientX, clientY) => {
+    const r = svgRef.current.getBoundingClientRect();
+    const cur = viewRef.current;
+    const w = W / cur.k;
+    return { x: cur.cx - w / 2 + ((clientX - r.left) / r.width) * w, y: cur.cy - w / aspect / 2 + ((clientY - r.top) / r.height) * (w / aspect) };
+  };
+
+  // Ctrl/⌘ + wheel zooms (a plain wheel keeps scrolling the page).
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const u = toUnits(e.clientX, e.clientY);
+      zoomAt(Math.exp(-e.deltaY * 0.0022), u.x, u.y);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  });
+
+  // Drag to pan, two fingers to pinch. The pointer is captured only once it
+  // really moves, so a plain tap still reaches the place under it; a drag
+  // swallows the click that ends it.
+  const pointers = useRef(new Map());
+  const gesture = useRef(null);
+  const dragged = useRef(false);
+  const onPointerDown = (e) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    dragged.current = false;
+    cancelAnimationFrame(anim.current);
+    const pts = [...pointers.current.values()];
+    gesture.current = {
+      view: viewRef.current, start: pts.map((q) => ({ ...q })),
+      dist: pts.length === 2 ? Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) : 0,
+    };
+  };
+  const onPointerMove = (e) => {
+    if (!pointers.current.has(e.pointerId) || !gesture.current) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = gesture.current;
+    const pts = [...pointers.current.values()];
+    const r = svgRef.current.getBoundingClientRect();
+    const unitsPerPx = W / g.view.k / r.width;
+    if (pts.length >= 2 && g.dist) {
+      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const mid0 = { x: (g.start[0].x + g.start[1].x) / 2, y: (g.start[0].y + g.start[1].y) / 2 };
+      setView({ k: g.view.k * (d / g.dist), cx: g.view.cx - (mid.x - mid0.x) * unitsPerPx, cy: g.view.cy - (mid.y - mid0.y) * unitsPerPx });
+      dragged.current = true;
+      return;
+    }
+    const dx = e.clientX - g.start[0].x;
+    const dy = e.clientY - g.start[0].y;
+    if (!dragged.current && Math.hypot(dx, dy) < 5) return;
+    if (!dragged.current) {
+      dragged.current = true;
+      svgRef.current.setPointerCapture?.(e.pointerId);
+    }
+    setView({ k: g.view.k, cx: g.view.cx - dx * unitsPerPx, cy: g.view.cy - dy * unitsPerPx });
+  };
+  const onPointerUp = (e) => {
+    pointers.current.delete(e.pointerId);
+    const pts = [...pointers.current.values()];
+    gesture.current = pts.length ? { view: viewRef.current, start: pts.map((q) => ({ ...q })), dist: 0 } : null;
+  };
+
+  const onKeyDown = (e) => {
+    const step = (W / viewRef.current.k) * 0.12;
+    const move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+    if (move) {
+      e.preventDefault();
+      flyTo({ cx: viewRef.current.cx + move[0], cy: viewRef.current.cy + move[1] });
+    } else if (e.key === "+" || e.key === "=") {
+      zoomAt(1.4, undefined, undefined, true);
+    } else if (e.key === "-" || e.key === "_") {
+      zoomAt(1 / 1.4, undefined, undefined, true);
+    } else if (e.key === "0") {
+      flyTo({ k: fitK(W, H, aspect), cx: W / 2, cy: H / 2 });
+    }
+  };
+
+  // A place reached with Tab that is off screen comes into view.
+  const onFocusPlace = (p) => {
+    setHover(p.key);
+    const cur = viewRef.current;
+    const w = W / cur.k;
+    const h = w / aspect;
+    if (Math.abs(p.x - cur.cx) > w / 2 - R * 2 || Math.abs(p.y - cur.cy) > h / 2 - R * 2) flyTo({ cx: p.x, cy: p.y });
+  };
+
+  // Names: all of them once they are readable at this zoom, otherwise only
+  // the chosen place, the current one and the one under the pointer.
+  const readable = LABEL_SIZE * pxPerUnit >= LABEL_MIN_PX;
+  const important = new Set([selected?.key, data.current, hover].filter(Boolean));
+  const shown = data.places.filter((p) => readable || important.has(p.key));
+  const labels = layoutLabels(shown, names, data.current, W, H);
+  const hovered = hover && byKey[hover];
+
+  return (
+    <div className="lw-map" data-self-animate="true">
+      <div className="lw-viewport" ref={boxRef} tabIndex={0} onKeyDown={onKeyDown}
+           role="region" aria-label={`${t("world.mapLabel")}. ${t("world.nav.keys")}`}>
+        <svg ref={svgRef} viewBox={`${x0} ${y0} ${vw} ${vh}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}
+             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+             onPointerCancel={onPointerUp}
+             onClickCapture={(e) => {
+               if (dragged.current) {
+                 e.stopPropagation();
+                 dragged.current = false;
+               }
+             }}>
+          <defs>
+            <radialGradient id="lw-glow" cx="50%" cy="45%" r="70%">
+              <stop offset="0%" className="lw-glow-in" />
+              <stop offset="100%" className="lw-glow-out" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width={W} height={H} fill="url(#lw-glow)" />
+          {order.map((d, i) => (
+            <DistrictArea key={d} district={d} places={data.places} paths={data.paths} tone={i % 2 ? "b" : "a"}
+                          title={t(`world.district.${d}`)} />
+          ))}
+          {data.map?.river && (
+            <g className="lw-river" aria-hidden="true">
+              <path d={smoothPath(data.map.river)} className="lw-river-bank" />
+              <path d={smoothPath(data.map.river)} className="lw-river-water" />
+              <path d={smoothPath(data.map.river)} className="lw-river-shine" />
+            </g>
+          )}
+          {data.paths.map((r) => {
+            const a = byKey[r.from];
+            const b = byKey[r.to];
+            if (!a || !b) return null;
+            const walked = ["explored", "mastered"].includes(a.status) && ["explored", "mastered"].includes(b.status);
+            return <path key={`${r.from}-${r.to}`} d={road(a, b)} className={`lw-road${r.open ? " is-open" : ""}${walked ? " is-walked" : ""}`} />;
+          })}
+          {data.places.map((p) => (
+            <PlaceNode
+              key={p.key}
+              p={p}
+              label={`${names[p.key]} — ${t(`world.status.${p.status}`)}`}
+              current={p.key === data.current}
+              selected={p.key === selected?.key}
+              animal={animal}
+              onPick={onPick}
+              W={W}
+              onHover={setHover}
+              onFocusPlace={onFocusPlace}
+            />
+          ))}
+          {shown.map((p) => <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} />)}
+        </svg>
+        {hovered && size.w > 0 && (
+          <HoverCard p={hovered} at={{ x: ((hovered.x - x0) / vw) * size.w, y: ((hovered.y - y0) / vh) * size.h - R * pxPerUnit - 8 }} />
+        )}
+        <div className="lw-controls">
+          <button type="button" className="icon-btn" onClick={() => zoomAt(1.4, undefined, undefined, true)}
+                  aria-label={t("world.nav.zoomIn")} title={t("world.nav.zoomIn")} disabled={v.k >= K_MAX - 0.01}>
+            <Icon name="plus" size={16} />
+          </button>
+          <button type="button" className="icon-btn" onClick={() => zoomAt(1 / 1.4, undefined, undefined, true)}
+                  aria-label={t("world.nav.zoomOut")} title={t("world.nav.zoomOut")} disabled={v.k <= fitK(W, H, aspect) + 0.01}>
+            <Icon name="minus" size={16} />
+          </button>
+          <button type="button" className="icon-btn" title={t("world.nav.toCompanion")} aria-label={t("world.nav.toCompanion")}
+                  onClick={() => {
+                    const c = byKey[data.current];
+                    if (c) flyTo({ cx: c.x, cy: c.y, k: Math.max(viewRef.current.k, home) });
+                  }}>
+            <Icon name="crosshair" size={16} />
+          </button>
+          <button type="button" className="icon-btn" title={t("world.nav.whole")} aria-label={t("world.nav.whole")}
+                  onClick={() => flyTo({ k: fitK(W, H, aspect), cx: W / 2, cy: H / 2 })}>
+            <Icon name="expand" size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="lw-legend sub">
+        <span><i className="lw-dot is-mastered" /> {t("world.status.mastered")}</span>
+        <span><i className="lw-dot is-explored" /> {t("world.status.explored")}</span>
+        <span><i className="lw-dot is-open" /> {t("world.status.open")}</span>
+        <span><i className="lw-dot is-locked" /> {t("world.status.locked")}</span>
+        <span className="lw-hint-nav">{t(narrow ? "world.nav.hintTouch" : "world.nav.hintMouse")}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function RealChinese() {
   const { t } = useTranslation();
   const { dashboard } = useDashboard() || {};
@@ -468,14 +781,10 @@ export default function RealChinese() {
 
   const selected = byKey[selectedKey] || byKey[data.current];
   const pp = data.passport;
-  // On a phone only the chosen place and the current one are named on the
-  // map (the district list below names the rest), so only those take space.
-  const shown = data.places.filter((p) => !narrow || p.key === selected?.key || p.key === data.current);
   const names = Object.fromEntries(data.places.map((p) => [p.key, t(`world.place.${p.key}.name`)]));
   const W = data.map?.w || 100;
   const H = data.map?.h || 70;
   const order = data.map?.districts || [...new Set(data.places.map((p) => p.district))];
-  const labels = layoutLabels(shown, names, data.current, W, H);
   return (
     <Layout>
       <header className="page-head">
@@ -502,60 +811,17 @@ export default function RealChinese() {
 
       <div className="ws">
         <div className="ws-main">
-          <div className="lw-map" data-self-animate="true">
-            <svg viewBox={`0 0 ${W} ${H}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}>
-              <defs>
-                <radialGradient id="lw-glow" cx="50%" cy="45%" r="70%">
-                  <stop offset="0%" className="lw-glow-in" />
-                  <stop offset="100%" className="lw-glow-out" />
-                </radialGradient>
-              </defs>
-              <rect x="0" y="0" width={W} height={H} fill="url(#lw-glow)" />
-              {order.map((d, i) => (
-                <DistrictArea key={d} district={d} places={data.places} paths={data.paths} tone={i % 2 ? "b" : "a"}
-                              title={t(`world.district.${d}`)} />
-              ))}
-              {data.map?.river && (
-                <g className="lw-river" aria-hidden="true">
-                  <path d={smoothPath(data.map.river)} className="lw-river-bank" />
-                  <path d={smoothPath(data.map.river)} className="lw-river-water" />
-                  <path d={smoothPath(data.map.river)} className="lw-river-shine" />
-                </g>
-              )}
-              {data.paths.map((r) => {
-                const a = byKey[r.from];
-                const b = byKey[r.to];
-                if (!a || !b) return null;
-                const walked = ["explored", "mastered"].includes(a.status) && ["explored", "mastered"].includes(b.status);
-                return <path key={`${r.from}-${r.to}`} d={road(a, b)} className={`lw-road${r.open ? " is-open" : ""}${walked ? " is-walked" : ""}`} />;
-              })}
-              {data.places.map((p) => (
-                <PlaceNode
-                  key={p.key}
-                  p={p}
-                  label={`${t(`world.place.${p.key}.name`)} — ${t(`world.status.${p.status}`)}`}
-                  current={p.key === data.current}
-                  selected={p.key === selected?.key}
-                  animal={animal}
-                  onPick={pick}
-                  W={W}
-                />
-              ))}
-              {shown.map((p) => <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} />)}
-            </svg>
-            <div className="lw-legend sub">
-              <span><i className="lw-dot is-mastered" /> {t("world.status.mastered")}</span>
-              <span><i className="lw-dot is-explored" /> {t("world.status.explored")}</span>
-              <span><i className="lw-dot is-open" /> {t("world.status.open")}</span>
-              <span><i className="lw-dot is-locked" /> {t("world.status.locked")}</span>
-            </div>
-          </div>
+          <CityMap data={data} W={W} H={H} order={order} names={names} selected={selected} animal={animal}
+                   onPick={pick} narrow={narrow} />
 
           {narrow && (
             <div className="lw-places" aria-label={t("world.allPlaces")}>
               {order.map((d) => (
-                <div key={d}>
-                  <p className="side-title">{t(`world.district.${d}`)}</p>
+                <details key={d} className="lw-district-list" open={selected?.district === d}>
+                  <summary className="side-title">
+                    {t(`world.district.${d}`)}
+                    <span className="sub"> · {data.places.filter((p) => p.district === d && p.status !== "locked").length}/{data.places.filter((p) => p.district === d).length}</span>
+                  </summary>
                   <ul className="lw-list-plain">
                     {data.places.filter((p) => p.district === d).map((p) => (
                       <li key={p.key}>
@@ -570,7 +836,7 @@ export default function RealChinese() {
                       </li>
                     ))}
                   </ul>
-                </div>
+                </details>
               ))}
             </div>
           )}
