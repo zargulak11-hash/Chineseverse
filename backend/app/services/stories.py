@@ -213,7 +213,22 @@ def vocabulary_report(db: Session, book: dict) -> dict:
     loose = {t for ch in prof["chapters"] for row in ch for t, wid, kind in row if kind == "char"}
     unknown = sorted(loose - set(sent.hanzi_rows(db, loose)))
     cap = above_level_cap(book)
+    # Likely mis-splits by the longest-match segmenter: a word above the
+    # book's level whose last character, joined to what follows, makes a
+    # word at the level (不知|道 for 不知道, 要点|菜 for 要点菜). The reader
+    # would show the learner the wrong word; the author should rephrase.
+    levels = sent._level_map(db)
+    vocab = {w.simplified: levels.get(w.hsk_level_id, 9) for w in db.query(models.VocabularyWord)}
+    suspicious = set()
+    for ch in prof["chapters"]:
+        for row in ch:
+            for (t, wid, _k), (nxt, _w2, _k2) in zip(row, row[1:]):
+                if wid and len(t) >= 2 and vocab.get(t, 9) > book["level"] and book["level"] < 7:
+                    joined = t[-1] + nxt[:1]
+                    if vocab.get(joined, 99) <= book["level"]:
+                        suspicious.add(f"{t}|{nxt} ({joined})")
     return {"above": prof["above"], "cap": cap, "unknown_chars": unknown, "avg_len": prof["avg_len"],
+            "suspicious": sorted(suspicious),
             "difficulty": difficulty(db, book), "minutes": prof["minutes"],
             # Advanced (7-9) literature may use a few characters beyond the
             # 3,000 of the curriculum; they are read without curriculum pinyin.
