@@ -18,6 +18,12 @@ completed unless the data says so:
                   cases, review, duels, the Daily Voice Companion...)
   mastered        the scene passed at >= MASTERED and most theme words known
   current         where their most recent activity happened (home at first)
+  visited         a round started there and left unfinished (not yet explored)
+  new             open and untouched, and opened by their own words or by
+                  reaching their current HSK level (above HSK 1)
+  recommended     one next stop: an open, unexplored place scored by how many
+                  of its words they know, whether it trains their weakest
+                  Learning Compass skill, and how far it is from where they are
   talks           the World voice conversations / cases stationed there,
                   locked exactly as the voice endpoints lock them
   greeting        the line its person says first, at the learner's tier,
@@ -202,6 +208,72 @@ def _place_of_session(s: models.PracticeSession) -> str | None:
     return None
 
 
+# What a place trains, for the "recommended" pick (by its content only).
+def _trains(p: dict) -> set[str]:
+    out = set()
+    if p["sound"] or p["scene"] or "/sound-world" in (p["gateway"], *p["links"]):
+        out.add("listening")
+    if p["location"] or p["scene"] or "/voice-companion" in (p["gateway"], *p["links"]):
+        out.add("speaking")
+    if p["internet"] or p["gateway"] == "/internet":
+        out.add("reading")
+    if p["topics"] or p["gateway"] in ("/vocabulary", "/review", "/ecosystem"):
+        out.add("vocabulary")
+    if p["gateway"] == "/hanzi" or "/hanzi" in p["links"]:
+        out.add("writing")
+    return out
+
+
+def _hops(start: str) -> dict[str, int]:
+    dist, todo = {start: 0}, [start]
+    while todo:
+        k = todo.pop(0)
+        for a, b in PATHS:
+            for x, y in ((a, b), (b, a)):
+                if x == k and y not in dist:
+                    dist[y] = dist[k] + 1
+                    todo.append(y)
+    return dist
+
+
+def _unfinished_places(sessions) -> set[str]:
+    """Places where a round was started and never completed."""
+    out = set()
+    for s in sessions:
+        if s.completed_at is not None:
+            continue
+        ctx = (s.questions or [{}])[0].get("ctx") or {}
+        if s.source == "scene":
+            key = PLACE_BY_SCENE.get(ctx.get("slug"))
+            if key:
+                out.add(key)
+        elif s.source == "sentence" and ctx.get("text") in PLACE_BY_SENTENCE:
+            out.add(PLACE_BY_SENTENCE[ctx["text"]])
+        elif s.source == "sound":
+            out |= {p["key"] for p in PLACES if p["sound"] and p["sound"] == ctx.get("env")}
+        elif s.source == "internet":
+            out |= {p["key"] for p in PLACES if ctx.get("slug") in p["internet"]}
+    return out
+
+
+def _recommend(out: list[dict], current: str, weak: str | None) -> dict | None:
+    hops = _hops(current)
+    best, best_score = None, None
+    for p in out:
+        if p["status"] != "open" or p["key"] == current:
+            continue
+        content = PLACE_BY_KEY[p["key"]]
+        ratio = p["theme"]["known"] / p["theme"]["total"] if p["theme"]["total"] else 0.0
+        trains = bool(weak and weak in _trains(content))
+        score = (3 * ratio + (2 if trains else 0) + (1 if content["scene"] else 0) + (0.5 if p["new"] else 0)
+                 - 0.15 * hops.get(p["key"], 12))
+        if best_score is None or score > best_score:
+            reason = "skill" if trains else "words" if ratio >= 0.34 else "next"
+            best, best_score = {"key": p["key"], "reason": reason, "skill": weak if trains else None,
+                                "known": p["theme"]["known"]}, score
+    return best
+
+
 def world(db: Session, user: models.User, locale: str) -> dict:
     from app.services import passport as pp
     from app.services import real_life
@@ -220,6 +292,7 @@ def world(db: Session, user: models.User, locale: str) -> dict:
     sound = pp._completed_by_ctx(sessions, "sound", "env")
     net = pp._completed_by_ctx(sessions, "internet", "slug")
     sentences = pp._completed_by_ctx(sessions, "sentence", "text")
+    unfinished = _unfinished_places(sessions)
     gateway = _gateway_activity(db, user, by_source)
 
     words = {w for p in PLACES for w in p["theme"]} | {w for p in PLACES for t in p["topics"] for w in t["words"]}
@@ -260,9 +333,11 @@ def world(db: Session, user: models.User, locale: str) -> dict:
                         or any(t["sentence"] in sentences for t in p["topics"]))
         mastered = bool(scene_info and scene_info["best"] >= MASTERED and known * 2 >= len(p["theme"]))
         status = "locked" if not is_open else "mastered" if mastered else "explored" if explored else "open"
+        visited = status == "open" and p["key"] in unfinished
+        new = status == "open" and not visited and (by == "words" or (p["min_level"] == level and level > 1))
         out.append({
             "key": p["key"], "icon": p["icon"], "district": p["district"], "x": p["x"], "y": p["y"],
-            "status": status, "opened_by": by, "min_level": p["min_level"],
+            "status": status, "opened_by": by, "min_level": p["min_level"], "visited": visited, "new": new,
             "theme": {"known": known, "total": len(p["theme"]), "words": [card(w) for w in p["theme"]]},
             "to_open": [card(w) for w in p["theme"] if statuses.get(w) not in KNOWN][:OPEN_BY_WORDS] if not is_open else [],
             "topics": topics, "scene": scene_info, "talks": talks,
@@ -286,11 +361,18 @@ def world(db: Session, user: models.User, locale: str) -> dict:
     elif latest is not None:
         current = _place_of_session(latest) or current
 
+    # The weakest Learning Compass skill a place can train -- only once there
+    # is evidence (a new learner has no weakest skill, just an empty profile).
+    skills = pp._skills(user)
+    trained = {k: v for k, v in skills.items() if k in ("listening", "speaking", "reading", "vocabulary", "writing")}
+    weak = min(trained, key=trained.get) if any(v > 0 for v in skills.values()) and trained else None
+    recommended = _recommend(out, current, weak)
+
     open_keys = {p["key"] for p in out if p["status"] != "locked"}
     answers = pp._Answers(sessions)
     caps = pp.capabilities(db, user, sessions, answers, pp._skills(user))
     return {
-        "level": level, "tier": tier, "current": current,
+        "level": level, "tier": tier, "current": current, "recommended": recommended,
         "map": {"w": CANVAS_W, "h": CANVAS_H, "river": [list(pt) for pt in RIVER], "districts": list(DISTRICTS)},
         "adaptation": real_life.dna_adaptation(user),
         "places": out,

@@ -114,6 +114,13 @@ with TestClient(app) as client:
     assert counts(uid) == before, "the map must not write progress"
     print("[PASS] new learner: only level-1 places open, nothing explored or lit, standard difficulty, read-only")
 
+    # ---- states: nothing is "new" or "visited" for a newcomer; one next stop
+    assert not any(p["new"] or p["visited"] for p in ps.values())
+    rec = w["recommended"]
+    assert rec and ps[rec["key"]]["status"] == "open" and rec["key"] != w["current"] and rec["reason"] in ("words", "next")
+    assert rec["skill"] is None, "no weakest skill without evidence"
+    print(f"[PASS] a newcomer has no 'new'/'visited' places and one next stop ({rec['key']}, {rec['reason']})")
+
     # ---- the server enforces the same lock
     expect(client, "post", "/api/practice/sessions", 403, headers=h, json={"source": "scene", "scene": "hospital"})
     expect(client, "get", "/api/real-life/scenes/hospital", 403, headers=h)
@@ -126,6 +133,14 @@ with TestClient(app) as client:
     assert any(t["lit"] for t in ps["hospital"]["topics"] if t["key"] == "doctor")
     expect(client, "get", "/api/real-life/scenes/hospital", 200, headers=h)
     print("[PASS] knowing 3 hospital words opens the hospital early and lights its 'doctor' topic")
+    assert ps["hospital"]["new"] and not ps["restaurant"]["new"]
+    print("[PASS] a place opened by the learner's own words is marked new")
+
+    # ---- a round started and left: visited, not explored
+    expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "convenience-store"})
+    ps = places(expect(client, "get", "/api/real-life/world", 200, headers=h))
+    assert ps["shop"]["status"] == "open" and ps["shop"]["visited"] and not ps["shop"]["new"]
+    print("[PASS] an unfinished round marks the place visited, not explored")
 
     # ---- playing a scene explores the place and moves the learner there
     s = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "restaurant"})
@@ -157,6 +172,18 @@ with TestClient(app) as client:
     assert ps["cafe"]["status"] == "explored" and w["current"] == "cafe", (ps["cafe"]["status"], w["current"])
     assert ps["bookstore"]["status"] == "open" and ps["park"]["status"] == "open", "nothing else claimed"
     print("[PASS] learning a cafe sentence explores the cafe and moves the companion there; nothing else is claimed")
+
+    # ---- the next stop follows the weakest Learning Compass skill
+    wid, wh = register(client, "weakreader")
+    with SessionLocal() as db:
+        for us in db.query(models.UserSkill).filter_by(user_id=wid):
+            us.mastery = 10.0 if us.skill.code == "reading" else 55.0
+        db.commit()
+    w = expect(client, "get", "/api/real-life/world", 200, headers=wh)
+    rec = w["recommended"]
+    from app.services.world_map import _trains  # noqa: E402
+    assert rec["reason"] == "skill" and rec["skill"] == "reading" and "reading" in _trains(PLACE_BY_KEY[rec["key"]]), rec
+    print(f"[PASS] weakest skill reading -> the next stop trains reading ({rec['key']})")
 
     # ---- Learning DNA adapts the scenes
     aid, ah = register(client, "goodlistener")

@@ -1264,6 +1264,25 @@ select.input {
   transform-origin: center;
 }
 .lw-companion { clip-path: circle(50%); }
+/* More states: recommended (a slowly turning dashed ring), new (a small
+   brass dot), visited (a dashed disc -- started, not finished). */
+.lw-rec-ring {
+  fill: none;
+  stroke: var(--accent-strong);
+  stroke-width: 0.35;
+  stroke-dasharray: 1.4 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spin 14s linear infinite;
+}
+.lw-new-dot { fill: var(--accent); stroke: var(--surface-1); stroke-width: 0.35; }
+.lw-node.is-visited .lw-disc { stroke: var(--accent); stroke-dasharray: 1.3 0.7; }
+.lw-label.is-recommended { fill: var(--accent-strong); }
+.lw-dot.is-current { background: var(--accent); }
+.lw-dot.is-recommended { border-style: dashed; border-color: var(--accent-strong); }
+.lw-dot.is-new { width: 8px; height: 8px; border: 0; background: var(--accent); }
+.lw-dot.is-visited { border-style: dotted; }
+.lw-rec-why { margin-top: var(--space-2); color: var(--accent-strong); }
 .lw-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-2) var(--space-4) var(--space-3); }
 .lw-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .lw-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--accent); }

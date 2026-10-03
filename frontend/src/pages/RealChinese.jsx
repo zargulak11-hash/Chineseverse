@@ -93,11 +93,12 @@ function DistrictArea({ district, places, paths, tone, title }) {
   );
 }
 
-function PlaceNode({ p, current, selected, animal, label, onPick, W, onHover, onFocusPlace }) {
+function PlaceNode({ p, current, selected, recommended, animal, label, onPick, W, onHover, onFocusPlace }) {
   const ratio = p.theme.total ? p.theme.known / p.theme.total : 0;
   return (
     <g
-      className={`lw-node is-${p.status}${current ? " is-current" : ""}${selected ? " is-selected" : ""}`}
+      className={`lw-node is-${p.status}${current ? " is-current" : ""}${selected ? " is-selected" : ""}${
+        recommended ? " is-recommended" : ""}${p.new ? " is-new" : ""}${p.visited ? " is-visited" : ""}`}
       transform={`translate(${p.x} ${p.y})`}
       role="button"
       tabIndex={0}
@@ -120,11 +121,13 @@ function PlaceNode({ p, current, selected, animal, label, onPick, W, onHover, on
           fill-box) so the node never slides out from under the pointer. */}
       <g className="lw-node-body">
         {current && <circle r={R + 1.6} className="lw-pulse" />}
+        {recommended && <circle r={R + 2.6} className="lw-rec-ring" />}
         <circle r={R} className="lw-disc" />
         {p.status !== "locked" && ratio > 0 && (
           <circle r={R} className="lw-arc" strokeDasharray={`${ratio * RING} ${RING}`} transform="rotate(-90)" />
         )}
         <text className="lw-icon" fontSize={R * 0.85} textAnchor="middle" dominantBaseline="central">{p.icon}</text>
+        {p.new && <circle cx={-R * 0.78} cy={-R * 0.78} r="1.1" className="lw-new-dot" />}
         {NODE_STATE_ICON[p.status] && (
           <g transform={`translate(${R * 0.78} ${-R * 0.78})`}>
             <circle r="1.35" className={`lw-badge is-${p.status}`} />
@@ -209,9 +212,9 @@ function layoutLabels(places, names, current, W, H) {
 
 // Labels are drawn in their own layer above every node, so a node drawn
 // later can never cover an earlier node's name.
-function PlaceLabel({ p, name, at }) {
+function PlaceLabel({ p, name, at, recommended }) {
   return (
-    <text className={`lw-label is-${p.status}`} fontSize={LABEL_SIZE} x={at.x} y={at.y} textAnchor={at.anchor}>
+    <text className={`lw-label is-${p.status}${recommended ? " is-recommended" : ""}`} fontSize={LABEL_SIZE} x={at.x} y={at.y} textAnchor={at.anchor}>
       {name}
     </text>
   );
@@ -263,7 +266,45 @@ function Greeting({ g, onWord, picked }) {
   );
 }
 
-function PlacePanel({ p, animal, onClose }) {
+// The extra states a place can be in, as badges (map card, panel, list).
+function StateBadges({ p, recommended, current }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {current && <span className="badge accent">{t("world.state.current")}</span>}
+      {recommended && <span className="badge accent">{t("world.state.recommended")}</span>}
+      {p.new && <span className="badge accent">{t("world.state.new")}</span>}
+      {p.visited && <span className="badge">{t("world.state.visited")}</span>}
+    </>
+  );
+}
+
+function recommendReason(t, rec) {
+  if (!rec) return "";
+  if (rec.reason === "skill") return t("world.recommend.skill", { skill: t(`companionReact.skill.${rec.skill}`).toLowerCase() });
+  if (rec.reason === "words") return t("world.recommend.words", { count: rec.known });
+  return t("world.recommend.next");
+}
+
+function NextStopCard({ rec, place, onShow }) {
+  const { t } = useTranslation();
+  if (!rec || !place) return null;
+  return (
+    <div className="card side-card lw-next">
+      <p className="side-title">{t("world.recommend.title")}</p>
+      <div className="row" style={{ margin: 0, gap: 12 }}>
+        <span className="scene-icon" aria-hidden="true">{place.icon}</span>
+        <b>{t(`world.place.${place.key}.name`)}</b>
+      </div>
+      <p className="sub" style={{ marginTop: 8 }}>{recommendReason(t, rec)}</p>
+      <button type="button" className="btn small" onClick={() => onShow(place.key)}>
+        <Icon name="mapPin" size={13} /> {t("world.recommend.show")}
+      </button>
+    </div>
+  );
+}
+
+function PlacePanel({ p, animal, onClose, rec, current }) {
   const { t } = useTranslation();
   const [word, setWord] = useState(null);
   useEffect(() => setWord(null), [p.key]);
@@ -289,7 +330,9 @@ function PlacePanel({ p, animal, onClose }) {
         {p.status !== "locked" && p.theme.total > 0 && (
           <span className="badge">{t("world.wordsKnown", { known: p.theme.known, total: p.theme.total })}</span>
         )}
+        <StateBadges p={p} recommended={rec?.key === p.key} current={current} />
       </div>
+      {rec?.key === p.key && <p className="sub lw-rec-why">{recommendReason(t, rec)}</p>}
       <p className="sub" style={{ marginTop: 8 }}>{t(`world.place.${p.key}.desc`)}</p>
 
       <div className={`companion-reaction mood-${MOOD[p.status]} lw-companion-line`}>
@@ -488,7 +531,7 @@ function useElementSize(ref) {
   return size;
 }
 
-function HoverCard({ p, at }) {
+function HoverCard({ p, at, recommended }) {
   const { t } = useTranslation();
   return (
     <div className="lw-hovercard" style={{ left: at.x, top: at.y }} role="presentation">
@@ -501,6 +544,7 @@ function HoverCard({ p, at }) {
         {p.status === "locked"
           ? <span className="badge">HSK {p.min_level}</span>
           : p.theme.total > 0 && <span className="badge">{t("world.wordsKnown", { known: p.theme.known, total: p.theme.total })}</span>}
+        <StateBadges p={p} recommended={recommended} />
       </span>
     </div>
   );
@@ -666,7 +710,7 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
   // Names: all of them once they are readable at this zoom, otherwise only
   // the chosen place, the current one and the one under the pointer.
   const readable = LABEL_SIZE * pxPerUnit >= LABEL_MIN_PX;
-  const important = new Set([selected?.key, data.current, hover].filter(Boolean));
+  const important = new Set([selected?.key, data.current, hover, data.recommended?.key].filter(Boolean));
   const shown = data.places.filter((p) => readable || important.has(p.key));
   const labels = layoutLabels(shown, names, data.current, W, H);
   const hovered = hover && byKey[hover];
@@ -719,6 +763,7 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
               label={`${names[p.key]} — ${t(`world.status.${p.status}`)}`}
               current={p.key === data.current}
               selected={p.key === selected?.key}
+              recommended={p.key === data.recommended?.key}
               animal={animal}
               onPick={onPick}
               W={W}
@@ -726,10 +771,12 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
               onFocusPlace={onFocusPlace}
             />
           ))}
-          {shown.map((p) => <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} />)}
+          {shown.map((p) => (
+            <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} recommended={p.key === data.recommended?.key} />
+          ))}
         </svg>
         {hovered && size.w > 0 && (
-          <HoverCard p={hovered} at={{ x: ((hovered.x - x0) / vw) * size.w, y: ((hovered.y - y0) / vh) * size.h - R * pxPerUnit - 8 }} />
+          <HoverCard p={hovered} recommended={hovered.key === data.recommended?.key} at={{ x: ((hovered.x - x0) / vw) * size.w, y: ((hovered.y - y0) / vh) * size.h - R * pxPerUnit - 8 }} />
         )}
         <div className="lw-controls">
           <button type="button" className="icon-btn" onClick={() => zoomAt(1.4, undefined, undefined, true)}
@@ -758,6 +805,10 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
         <span><i className="lw-dot is-explored" /> {t("world.status.explored")}</span>
         <span><i className="lw-dot is-open" /> {t("world.status.open")}</span>
         <span><i className="lw-dot is-locked" /> {t("world.status.locked")}</span>
+        <span><i className="lw-dot is-current" /> {t("world.state.current")}</span>
+        <span><i className="lw-dot is-recommended" /> {t("world.state.recommended")}</span>
+        <span><i className="lw-dot is-new" /> {t("world.state.new")}</span>
+        <span><i className="lw-dot is-visited" /> {t("world.state.visited")}</span>
         <span className="lw-hint-nav">{t(narrow ? "world.nav.hintTouch" : "world.nav.hintMouse")}</span>
       </div>
     </div>
@@ -834,6 +885,8 @@ export default function RealChinese() {
                                 onClick={() => pick(p.key)}>
                           <span aria-hidden="true" className="lw-place-icon">{p.icon}</span>
                           <span className="lw-place-name">{t(`world.place.${p.key}.name`)}</span>
+                          {p.key === data.recommended?.key && <span className="badge accent">{t("world.state.recommended")}</span>}
+                          {p.new && <span className="badge accent">{t("world.state.new")}</span>}
                           <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>
                             {t(`world.status.${p.status}`)}
                           </span>
@@ -854,8 +907,11 @@ export default function RealChinese() {
 
         <aside className="ws-side">
           <div className="card side-card" ref={panelRef}>
-            {selected ? <PlacePanel p={selected} animal={animal} /> : <Empty>{t("world.pickPlace")}</Empty>}
+            {selected
+              ? <PlacePanel p={selected} animal={animal} rec={data.recommended} current={selected.key === data.current} />
+              : <Empty>{t("world.pickPlace")}</Empty>}
           </div>
+          <NextStopCard rec={data.recommended} place={byKey[data.recommended?.key]} onShow={pick} />
           <AdaptationCard ad={data.adaptation} tier={data.tier} />
           <div className="card side-card">
             <p className="side-title">{t("world.howTitle")}</p>

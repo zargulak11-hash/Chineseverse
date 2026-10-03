@@ -2068,6 +2068,20 @@
       "hintMouse": "Drag to move · Ctrl + scroll to zoom",
       "hintTouch": "Drag to move · pinch to zoom",
       "keys": "Arrow keys move the map, + and − zoom, 0 shows the whole city."
+    },
+    "state": {
+      "current": "You are here",
+      "recommended": "Next stop",
+      "new": "New",
+      "visited": "Started"
+    },
+    "recommend": {
+      "title": "Your next stop",
+      "words_one": "You already know {{count}} of its words — a good place to use them.",
+      "words_other": "You already know {{count}} of its words — a good place to use them.",
+      "skill": "It trains {{skill}} — the weakest point on your Learning Compass.",
+      "next": "The nearest place you haven't explored yet.",
+      "show": "Show on the map"
     }
   }
 }

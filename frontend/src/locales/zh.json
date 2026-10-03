@@ -2024,6 +2024,19 @@
       "hintMouse": "拖动移动 · Ctrl + 滚轮缩放",
       "hintTouch": "拖动移动 · 双指缩放",
       "keys": "方向键移动地图，+ 和 − 缩放，0 显示整座城市。"
+    },
+    "state": {
+      "current": "你在这里",
+      "recommended": "下一站",
+      "new": "新开放",
+      "visited": "去过"
+    },
+    "recommend": {
+      "title": "你的下一站",
+      "words_other": "这里的词你已经会{{count}}个了——正好去用一用。",
+      "skill": "这里练的是{{skill}}——你学习指南针上最弱的一项。",
+      "next": "离你最近、还没探索过的地方。",
+      "show": "在地图上查看"
     }
   }
 }
