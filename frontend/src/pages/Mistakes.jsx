@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
+import NextStepBar from "../components/NextStep.jsx";
 import { Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
@@ -96,7 +97,13 @@ export default function Mistakes() {
           </div>
         </div>
       )}
-      {mistakes.length === 0 && <Empty>{t("pages.mistakes.empty")}</Empty>}
+      {mistakes.length === 0 && (
+        <>
+          <Empty>{t("pages.mistakes.empty")}</Empty>
+          <p className="sub empty-teach">{t("pages.mistakes.emptyTeach")}</p>
+          <NextStepBar />
+        </>
+      )}
     </Layout>
   );
 }

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
+import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -113,6 +114,7 @@ export default function SentenceLesson() {
           </div>
         )}
       </header>
+      <FeatureIntro feature="sentence" />
 
       <div className="ws">
         <div className="ws-main">

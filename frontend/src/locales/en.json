@@ -463,7 +463,8 @@
       "mastered": "Mastered",
       "masteredBadge": "mastered",
       "empty": "No mistakes recorded yet. Go make some.",
-      "reviewNow": "Review now"
+      "reviewNow": "Review now",
+      "emptyTeach": "When you miss an answer anywhere, it is saved here and comes back in your practice until you get it right."
     },
     "progress": {
       "title": "Your progress",
@@ -847,7 +848,8 @@
     "accuracy": "Accuracy",
     "roundProgress": "This round",
     "nextLesson": "Next lesson",
-    "toneRound": "Sounds & tones"
+    "toneRound": "Sounds & tones",
+    "reviewWhat": "Review brings back what you've practised just before you would forget it. Every word you meet in lessons, stories and rounds comes back here on its own schedule."
   },
   "companionReact": {
     "fallbackName": "Your companion",
@@ -2322,5 +2324,57 @@
     "bestSoFar": "Your best so far: {{best}}%",
     "back": "All stories",
     "why": "Why stories? Reading connected Chinese turns separate words into real understanding — and every round feeds your review."
+  },
+  "intro": {
+    "eyebrow": "How this helps you",
+    "what": "What it is",
+    "why": "Why it helps",
+    "when": "When to use it",
+    "firstTask": "Your first task:",
+    "journey": "Your next step on the journey:",
+    "hide": "Hide this explanation",
+    "whatIsThis": "What is this?",
+    "sound-world": {
+      "what": "Real places — a café, a street, a station — full of people speaking Chinese. Each place has stages that get faster.",
+      "why": "Your ear has to learn Chinese tones and speed. Listening slow first, then faster, is how understanding real speech becomes possible.",
+      "when": "From day one — right after the tones step, and a few minutes beside every lesson.",
+      "task": "Open the first place and play its slow stage — just listen and pick what you heard."
+    },
+    "detective": {
+      "what": "Short mysteries told in Chinese. You read and listen to clues, then choose the answer that solves the case.",
+      "why": "Solving a case makes you read for meaning, not word by word. Cases use your level, your words and your past mistakes.",
+      "when": "After your first lesson, when you know some HSK 1 words. A good way to use what a lesson just taught.",
+      "task": "Open the first case, read every clue, and pick the answer the clues point to."
+    },
+    "passport": {
+      "what": "Your Chinese passport: a record of what you can really do — places used, cases solved, words and characters mastered.",
+      "why": "Every stamp is earned by your own practice, so you can see real progress — and show it to others.",
+      "when": "Any time you want to see how far you've come. It fills up as you study — nothing to do here first.",
+      "task": "Finish any round — a lesson, the tones or a story — and come back to see your first stamp."
+    },
+    "dna": {
+      "what": "Your Learning Compass: nine skills — listening, speaking, reading, tones, characters and more — measured from every answer you give.",
+      "why": "It shows which skill is weakest, so you practise what will help most instead of guessing.",
+      "when": "Every few days, when you choose what to practise. It needs a few rounds before it says much.",
+      "task": "Find your lowest skill below and do one round of practice for it."
+    },
+    "sentence": {
+      "what": "One real Chinese sentence, taken apart: its words, characters, grammar and sounds — then practised.",
+      "why": "Seeing how one sentence is built connects everything you learn separately — and its words go into your review.",
+      "when": "After your first lesson, a few minutes a day — with a sentence from your lessons or one you typed yourself.",
+      "task": "Pick a sentence from your curriculum, tap through its words, then start its practice round."
+    },
+    "internet": {
+      "what": "Chinese the way it appears online — posts, comments, reviews, shop pages and chats — adapted to what you already know.",
+      "why": "Real texts show how Chinese is actually used. Tap any word for help; each post ends with questions that feed your review.",
+      "when": "From HSK 2, when short real texts become readable. Before that, Chinese Stories are the better place to read.",
+      "task": "Open one post at your level, read it with word help, then answer its questions."
+    },
+    "ecosystem": {
+      "what": "A map of how Chinese words grow from characters: start from one character and see the real words it builds.",
+      "why": "One character you know unlocks many words. Learning in families makes new words easier to guess and remember.",
+      "when": "Once you know about 20 words — then the connections start to mean something.",
+      "task": "Choose a character you already know and follow it to one word you haven't learned yet."
+    }
   }
 }

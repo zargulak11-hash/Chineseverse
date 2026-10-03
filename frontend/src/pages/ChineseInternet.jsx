@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
+import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import WordHelper from "../components/WordHelper.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
@@ -44,6 +45,7 @@ export default function ChineseInternet() {
           </div>
         </div>
       </header>
+      <FeatureIntro feature="internet" />
 
       <div className="ws">
         <div className="ws-main">

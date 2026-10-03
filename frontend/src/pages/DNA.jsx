@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
+import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -33,6 +34,7 @@ export default function DNA() {
       <Link to="/passport" className="btn small" style={{ marginTop: 12 }}>
         <Icon name="award" size={13} /> {t("passport.fromDna")}
       </Link>
+      <FeatureIntro feature="dna" />
 
       <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
         <div className="h1" style={{ fontSize: 42 }}>{dna.overall.toFixed(1)}</div>

@@ -262,12 +262,15 @@ export default function Practice({ forceSource }) {
             size={88}
           />
           <p className="sub" style={{ marginTop: 10 }}>{t("practice.nothingDue")}</p>
+          {/* An empty queue teaches what fills it, then leads on. */}
+          <p className="sub empty-teach">{t("practice.reviewWhat")}</p>
           <div className="row" style={{ justifyContent: "center", marginTop: 12, flexWrap: "wrap" }}>
             <Link to="/vocabulary"><button className="btn">{t("nav.vocabulary")}</button></Link>
             <Link to="/hanzi"><button className="btn">{t("nav.hanzi")}</button></Link>
             <Link to="/grammar"><button className="btn">{t("nav.grammar")}</button></Link>
           </div>
         </div>
+        <NextStepBar />
       </Layout>
     );
   }

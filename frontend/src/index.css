@@ -1335,6 +1335,21 @@ select.input {
 .foundation-round { border-color: var(--accent-border); }
 .foundation-round .btn { margin-top: var(--space-2); }
 .practice-translation { margin-top: 4px; font-style: italic; }
+/* FeatureIntro.jsx: what / why / when / first task, at the top of each
+   special place; hidden, it leaves a small "What is this?" button. */
+.feature-intro { margin-top: var(--space-5); border-color: var(--accent-border); }
+.feature-intro-head { display: flex; align-items: center; gap: var(--space-2); }
+.feature-intro-head .side-title { margin: 0; color: var(--accent-strong); }
+.feature-intro-close { margin-left: auto; }
+.feature-intro-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); margin: var(--space-3) 0 0; }
+.feature-intro-grid dt { font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.feature-intro-grid dd { margin: 4px 0 0; color: var(--text-dim); font-size: var(--text-sm); }
+.feature-intro-task { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-4) 0 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--accent-dim); }
+.feature-intro-task > svg { flex-shrink: 0; margin-top: 3px; color: var(--accent-strong); }
+.feature-intro-journey { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: var(--space-3) 0 0; }
+.feature-intro-open { margin-top: var(--space-4); }
+/* Empty states say what will fill them (Review, Mistakes). */
+.empty-teach { max-width: 62ch; margin: var(--space-2) auto 0; text-align: center; }
 @media (max-width: 640px) {
   .next-hero { padding: var(--space-4); }
   .next-hero-title { font-size: var(--text-lg); }

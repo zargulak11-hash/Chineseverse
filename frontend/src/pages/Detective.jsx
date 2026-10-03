@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
+import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -37,6 +38,7 @@ export default function Detective() {
           </div>
         </div>
       </header>
+      <FeatureIntro feature="detective" />
 
       <div className="ws">
         <div className="ws-main">
