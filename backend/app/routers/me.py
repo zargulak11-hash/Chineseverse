@@ -1,5 +1,4 @@
 import uuid
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
@@ -8,6 +7,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
+from app.services.avatars import AVATAR_DIR, UPLOAD_PREFIX, file_for
 from app.services.gamification import touch_streak
 from app.services.notifications import remember_locale
 
@@ -15,16 +15,16 @@ router = APIRouter(prefix="/api/me", tags=["me"])
 
 # Local static storage for uploaded profile pictures — no cloud storage
 # integration exists anywhere else in this project, so this doesn't invent
-# one. Files are served back out via the /static mount in main.py.
-BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
-AVATAR_DIR = BACKEND_DIR / "static" / "uploads" / "avatars"
+# one. Files are served back out via the /static mount in main.py; the
+# photo-or-initial rule lives in services/avatars.py.
 AVATAR_CONTENT_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
 MAX_AVATAR_BYTES = 3 * 1024 * 1024
 
 
 def _delete_existing_avatar(avatar_url: str | None) -> None:
-    if avatar_url and avatar_url.startswith("/static/uploads/avatars/"):
-        (BACKEND_DIR / avatar_url.lstrip("/")).unlink(missing_ok=True)
+    path = file_for(avatar_url)
+    if path is not None:
+        path.unlink(missing_ok=True)
 
 
 class AnimalChoice(BaseModel):
@@ -164,7 +164,7 @@ async def upload_avatar(
     AVATAR_DIR.mkdir(parents=True, exist_ok=True)
     filename = f"user{user.id}_{uuid.uuid4().hex[:10]}.{ext}"
     (AVATAR_DIR / filename).write_bytes(data)
-    profile.avatar_url = f"/static/uploads/avatars/{filename}"
+    profile.avatar_url = f"{UPLOAD_PREFIX}{filename}"
     db.commit()
     db.refresh(profile)
     return profile

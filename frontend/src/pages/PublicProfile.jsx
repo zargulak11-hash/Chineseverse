@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import { Empty, Loading, MotionButton } from "../components/ui.jsx";
 
 function FollowRow({ u }) {
@@ -11,11 +12,7 @@ function FollowRow({ u }) {
   return (
     <Link to={`/u/${u.id}`} className="row spread" style={{ padding: "8px 0" }}>
       <span className="row" style={{ gap: 10 }}>
-        {u.avatar_url ? (
-          <img src={u.avatar_url} alt="" className="avatar-preview" style={{ width: 30, height: 30 }} />
-        ) : (
-          <Icon name="user" size={18} />
-        )}
+        <UserAvatar url={u.avatar_url} name={u.username} size={30} />
         <b style={{ fontSize: 13.5 }}>{u.username}</b>
       </span>
       <span className="muted" style={{ fontSize: 11.5 }}>{u.followers_count} {t("pages.profile.followers")}</span>
@@ -71,13 +68,7 @@ export default function PublicProfile() {
       {/* The same header band as every page, the list below at full width. */}
       <header className="page-head">
           <div className="row" style={{ gap: 14, margin: 0 }}>
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="avatar-preview" style={{ width: 64, height: 64 }} />
-            ) : (
-              <span className="sidebar-profile-fallback" style={{ width: 64, height: 64 }}>
-                <Icon name="user" size={26} />
-              </span>
-            )}
+            <UserAvatar url={profile.avatar_url} name={profile.username} size={64} />
             <div>
               <h1 className="h1">@{profile.username}</h1>
               <p className="sub">

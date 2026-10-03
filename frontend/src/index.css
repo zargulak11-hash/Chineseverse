@@ -4907,16 +4907,23 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 .lesson-word b {
   font-size: 20px;
 }
+/* A person without a photo: the initial of their name on the accent, the
+   same circle and edge as a photo (.avatar-preview) so the two swap in
+   place. Tokens only, so it reads on both Ink and Paper. */
 .user-avatar-initial {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
+  border: 2px solid var(--accent-border);
+  background: var(--accent-gradient);
+  color: var(--on-accent);
+  font-family: var(--font-display);
   font-weight: 800;
   line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
   user-select: none;
 }
 

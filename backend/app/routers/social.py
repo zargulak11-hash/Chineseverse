@@ -7,6 +7,7 @@ from app.crud import get_or_404
 from app.database import get_db
 from app.deps import get_current_user
 from app.services import notifications
+from app.services.avatars import photo_url
 
 # Shares the /api/users prefix with routers/users.py (plain CRUD, no auth —
 # a pre-existing separate concern). These routes are registered BEFORE
@@ -32,7 +33,7 @@ def _to_public(db: Session, target: models.User, viewer: models.User) -> schemas
         username=target.username,
         animal_id=target.animal_id,
         total_xp=target.total_xp,
-        avatar_url=target.profile.avatar_url if target.profile else None,
+        avatar_url=photo_url(target),
         created_at=target.created_at,
         followers_count=followers_count,
         following_count=following_count,

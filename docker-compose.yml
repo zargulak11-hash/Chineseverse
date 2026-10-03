@@ -36,6 +36,11 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
+    volumes:
+      # Uploaded profile photos. Without a volume they lived in the container
+      # and every deploy (a rebuilt container) dropped them while the database
+      # still pointed at them.
+      - uploads:/app/static/uploads
 
   frontend:
     build:
@@ -50,3 +55,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

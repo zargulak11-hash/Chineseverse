@@ -11,6 +11,7 @@ from app.routers.animals import _localize_animal
 from app.routers.missions import _localize_mission
 from app.routers.quests import _localize_quest
 from app.services import achievements as achievements_svc
+from app.services.avatars import photo_url
 from app.services.dna import compute_dna
 from app.services.gamification import (
     check_achievements,
@@ -102,7 +103,7 @@ def dashboard(
 
     return schemas.DashboardResponse(
         user=user,
-        avatar_url=user.profile.avatar_url if user.profile else None,
+        avatar_url=photo_url(user),
         animal=_localize_animal(animal, animal_tr) if animal else None,
         hsk_level=current,
         mastery=mastery,

@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
-import AnimalAvatar from "../components/AnimalAvatar.jsx";
-import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import { Empty, MotionButton } from "../components/ui.jsx";
 
 function FollowButton({ result, onChange }) {
@@ -97,13 +96,7 @@ export default function Community() {
         {(results || []).map((r) => (
           <div key={r.id} className="card row spread">
             <Link to={`/u/${r.id}`} className="row" style={{ gap: 12 }}>
-              {r.avatar_url ? (
-                <img src={r.avatar_url} alt="" className="avatar-preview" style={{ width: 40, height: 40 }} />
-              ) : r.animal_id ? (
-                <Icon name="userPlus" size={24} />
-              ) : (
-                <Icon name="user" size={24} />
-              )}
+              <UserAvatar url={r.avatar_url} name={r.username} size={40} />
               <div>
                 <b>{r.username}</b>
                 <p className="sub" style={{ fontSize: 12, margin: 0 }}>

@@ -44,6 +44,7 @@ from app import models
 from app.services import notifications
 from app.services import practice
 from app.services.activity import log_activity
+from app.services.avatars import photo_url
 from app.services.gamification import check_achievements, progress_missions, progress_quests, user_rank
 
 ENGINE = "practice_v1"
@@ -560,7 +561,7 @@ def _person(db: Session, user_id: int | None) -> dict:
     return {
         "id": u.id,
         "username": u.username,
-        "avatar_url": u.profile.avatar_url if u.profile else None,
+        "avatar_url": photo_url(u),
         "animal_slug": u.animal.slug if u.animal else None,
     }
 

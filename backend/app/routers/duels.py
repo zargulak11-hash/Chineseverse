@@ -18,6 +18,7 @@ from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import duel as duel_svc
+from app.services.avatars import photo_url
 from app.services.gamification import user_rank
 from app.services.localization import load_translations, tr
 
@@ -288,7 +289,7 @@ def list_opponents(
         out.append({
             "id": u.id,
             "username": u.username,
-            "avatar_url": u.profile.avatar_url if u.profile else None,
+            "avatar_url": photo_url(u),
             "animal_slug": u.animal.slug if u.animal else None,
             "hsk_level": user_rank(db, u)[0],
             "open_duel_id": open_duel.id if open_duel else None,

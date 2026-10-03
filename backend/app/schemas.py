@@ -70,6 +70,8 @@ class UserProfileResponse(BaseModel):
     goal_text: Optional[str] = None
     daily_goal_minutes: int
     avatar_color: str
+    # Only a photo that really exists (services/avatars.py); null -> the UI
+    # shows the user's initial. There is no default picture.
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
     level_test_score: Optional[int] = None
@@ -78,6 +80,13 @@ class UserProfileResponse(BaseModel):
     discovery_source: Optional[str] = None
     discovery_source_other: Optional[str] = None
     onboarding_completed: bool = False
+
+    @field_validator("avatar_url")
+    @classmethod
+    def _real_photo_only(cls, v: Optional[str]) -> Optional[str]:
+        from app.services.avatars import existing_url
+
+        return existing_url(v)
 
     model_config = ConfigDict(from_attributes=True)
 

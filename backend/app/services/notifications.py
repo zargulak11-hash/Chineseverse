@@ -36,6 +36,7 @@ from app import models
 from app.config import settings
 from app.database import SessionLocal
 from app.services import email as mailer
+from app.services.avatars import photo_url
 
 log = logging.getLogger("app.notifications")
 
@@ -150,7 +151,7 @@ def serialize(n: models.Notification) -> dict:
             {
                 "id": actor.id,
                 "username": actor.username,
-                "avatar_url": actor.profile.avatar_url if actor.profile else None,
+                "avatar_url": photo_url(actor),
             }
             if actor is not None
             else None
