@@ -28,6 +28,9 @@ class SessionCreate(BaseModel):
     case: str | None = Field(default=None, max_length=30)
     env: str | None = Field(default=None, max_length=30)
     stage: int | None = Field(default=None, ge=1, le=4)
+    # source "internet": the content item and (optionally) which version.
+    item: str | None = Field(default=None, max_length=40)
+    version: str | None = Field(default=None, max_length=20)
 
 
 class SpeakPayload(BaseModel):
@@ -74,6 +77,7 @@ def create_session(
         hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size, locale=locale,
         scene=payload.scene, sentence=payload.sentence,
         case=payload.case, env=payload.env, stage=payload.stage,
+        item=payload.item, version=payload.version,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.

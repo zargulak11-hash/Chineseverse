@@ -22,6 +22,7 @@ const GROUPS = [
       ["/real-chinese", "nav.realChinese", "mapPin"],
       ["/sound-world", "nav.soundWorld", "ear"],
       ["/detective", "nav.detective", "search"],
+      ["/passport", "nav.passport", "award"],
       ["/dna", "nav.dna", "dna"],
       ["/duels", "nav.duels", "swords"],
       ["/progress", "nav.progress", "chart"],
@@ -32,6 +33,7 @@ const GROUPS = [
     links: [
       ["/lessons", "nav.lessons", "book"],
       ["/sentence", "nav.sentence", "sparkles"],
+      ["/internet", "nav.internet", "eye"],
       ["/review", "nav.review", "clock"],
       ["/vocabulary", "nav.vocabulary", "type"],
       ["/hanzi", "nav.hanzi", "pen"],

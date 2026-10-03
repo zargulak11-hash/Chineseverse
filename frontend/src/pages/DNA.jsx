@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
@@ -30,6 +30,9 @@ export default function DNA() {
     <Layout>
       <h1 className="h1">{t("pages.dna.title")}</h1>
       <p className="sub">{t("pages.dna.subtitle")}</p>
+      <Link to="/passport" className="btn small" style={{ marginTop: 12 }}>
+        <Icon name="award" size={13} /> {t("passport.fromDna")}
+      </Link>
 
       <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
         <div className="h1" style={{ fontSize: 42 }}>{dna.overall.toFixed(1)}</div>

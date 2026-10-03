@@ -18,6 +18,7 @@ const SECTION_COLORS = {
   sentence: "#9ccc65",
   detective: "#8d6e63",
   sound_world: "#26c6da",
+  internet: "#7e57c2",
 };
 
 function fmtMinutes(m) {

@@ -127,6 +127,7 @@ from app.routers import (  # noqa: E402
     grammar,
     hanzi,
     hsk,
+    internet,
     lessons,
     me,
     missions,
@@ -134,6 +135,7 @@ from app.routers import (  # noqa: E402
     mistakes,
     notifications,
     onboarding,
+    passport,
     pet_teacher,
     practice,
     progress,
@@ -184,6 +186,8 @@ for module in (
     companion,
     detective,
     sound_world,
+    internet,
+    passport,
     admin,
 ):
     app.include_router(module.router)

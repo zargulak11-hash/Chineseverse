@@ -36,6 +36,8 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     "sentence_lesson": ("sentence", 2.0),
     "detective_case": ("detective", 4.0),
     "sound_world": ("sound_world", 3.0),
+    "internet_read": ("internet", 3.0),
+    "word_saved": ("vocabulary", 0.2),
 }
 
 SECTION_LABELS: dict[str, str] = {
@@ -53,6 +55,7 @@ SECTION_LABELS: dict[str, str] = {
     "sentence": "Sentence Lessons",
     "detective": "Detective Mode",
     "sound_world": "Sound World",
+    "internet": "Chinese Internet",
 }
 
 

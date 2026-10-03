@@ -68,6 +68,21 @@ DYNAMIC = (
     + [f"companionReact.cause.{c}" for c in ("detective_start", "sound_start")]
     + [f"companionReact.noun.{n}" for n in ("case", "sound")]
     + [f"pages.progress.section.{x}" for x in ("detective", "sound_world")]
+    + ["practice.title.internet", "pages.progress.section.internet", "companionReact.cause.internet_start",
+       "companionReact.noun.reading", "companionMemory.kind.passport_milestone", "companionMemory.action.passport_milestone"]
+    + [f"internet.kind.{k}" for k in ("news", "social", "comments", "product", "review", "notice", "travel",
+                                        "shopping", "messages", "chat")]
+    + [f"internet.version.{v}" for v in ("beginner", "intermediate", "original")]
+    + [f"passport.band.{b}" for b in ("strong", "developing", "emerging", "none")]
+    + [f"passport.cap.{c}.{f}" for c in ("vocabulary", "characters", "reading", "listening", "grammar", "speaking") for f in ("title", "facts", "basis", "action")]
+    + [f"passport.cap.{c}.can.{b}" for c in ("vocabulary", "characters", "reading", "listening", "grammar", "speaking") for b in ("strong", "developing", "emerging", "none")]
+    + [f"passport.world.{w}" for w in ("restaurant", "shopping", "travel", "university", "health", "work", "daily")]
+    + [f"passport.worldStatus.{w}" for w in ("can_do", "trying", "not_yet")]
+    + [f"passport.exam.{e}" for e in ("passed", "ready", "cleared", "locked")]
+    + [f"passport.event.{e}" for e in ("joined", "first_practice", "first_lesson", "level_started", "exam_passed",
+                                         "words_mastered", "chars_mastered", "first_written", "mistake_conquered",
+                                         "review_recovery", "comeback", "scene_done", "cases_solved", "sound_stage",
+                                         "first_internet", "first_sentence", "first_voice", "first_duel_win", "achievement")]
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

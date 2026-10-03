@@ -64,10 +64,11 @@ ZH = {
     "reviews_done": "复习做得很好，记忆更牢了！",
     "stale_area": "好久没练{area}了，我们去看看吧。",
     "weak_skill": "我们一起加强这个能力吧。",
+    "passport_milestone": "你的中文护照上又多了一页！",
 }
 _AREA_ZH = {"vocab": "词汇", "hanzi": "汉字", "grammar": "语法"}
 PRIORITY = [
-    "welcome_back", "word_milestone", "achievement", "lesson_completed", "mastered_hard", "streak",
+    "welcome_back", "passport_milestone", "word_milestone", "achievement", "lesson_completed", "mastered_hard", "streak",
     "improving_listening", "confused_pair", "difficult_chars", "recent_mistakes", "mastered_recently",
     "reviews_done", "stale_area", "weak_skill", "new_learner",
 ]
@@ -329,6 +330,17 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
         weak = min(skills, key=lambda s: (s.mastery or 0, s.skill.code))
         if (weak.mastery or 0) < 30:
             out.append(_m("weak_skill", "encouraging", {"skill": weak.skill.code, "value": round(weak.mastery or 0, 1)}))
+
+    # --- the newest page of their Chinese Passport story (this week)
+    from app.services.passport import timeline
+
+    fresh = [e for e in timeline(db, user, locale=locale)
+             if e["kind"] not in ("joined", "first_practice", "achievement", "words_mastered")
+             and e["at"] and datetime.fromisoformat(e["at"]) >= recent_cut]
+    if fresh:
+        e = fresh[-1]
+        out.append(_m("passport_milestone", "celebrating", {"event": e["kind"], "event_data": e["data"], "link": e["link"]},
+                      at=datetime.fromisoformat(e["at"])))
 
     if not out:
         out.append(_m("new_learner", "happy"))

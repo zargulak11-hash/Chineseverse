@@ -36,6 +36,7 @@ export default function Profile() {
           </div>
         </div>
         <div className="row">
+          <Link to="/passport" className="btn primary"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
           <Link to="/community">
             <button className="btn ghost"><Icon name="users" size={13} /> {t("pages.profile.findPeople")}</button>
           </Link>

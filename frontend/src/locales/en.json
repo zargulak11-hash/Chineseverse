@@ -55,7 +55,9 @@
     "sentence": "One Sentence",
     "detective": "Detective Mode",
     "soundWorld": "Sound World",
-    "ecosystem": "Word Ecosystem"
+    "ecosystem": "Word Ecosystem",
+    "internet": "Chinese Internet",
+    "passport": "Chinese Passport"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -489,7 +491,8 @@
         "real_life": "Real Chinese",
         "sentence": "Sentence lessons",
         "detective": "Detective Mode",
-        "sound_world": "Sound World"
+        "sound_world": "Sound World",
+        "internet": "Chinese Internet"
       }
     },
     "profile": {
@@ -785,7 +788,8 @@
       "scene": "Real Chinese · {{title}}",
       "sentence": "One-sentence lesson",
       "detective": "Detective case",
-      "sound": "Sound World · {{place}}"
+      "sound": "Sound World · {{place}}",
+      "internet": "Chinese Internet · {{title}}"
     },
     "retry": "Try again",
     "back": "Back",
@@ -890,7 +894,8 @@
       "line": "line",
       "sentence": "sentence",
       "case": "clue",
-      "sound": "line"
+      "sound": "line",
+      "reading": "sentence"
     },
     "skill": {
       "speaking": "Speaking",
@@ -942,7 +947,8 @@
       "sentence_start": "{{name}} loves this: one sentence, a whole lesson.",
       "words_milestone": "{{name}} is celebrating — this round took you past {{milestone}} mastered words!",
       "detective_start": "{{name}} grabs the magnifying glass — let's crack this case in Chinese!",
-      "sound_start": "{{name}} is all ears — listen to the people around you."
+      "sound_start": "{{name}} is all ears — listen to the people around you.",
+      "internet_start": "{{name}} is curious — let's see what people are writing online."
     }
   },
   "wordType": {
@@ -1247,7 +1253,8 @@
       "reviews_done_other": "You finished {{count}} reviews this week — your memory is getting stronger.",
       "stale_area": "You haven't practised {{area}} for {{days}} days — {{name}} saved your place.",
       "stale_area_never": "You started {{area}} but haven't practised it in a round yet.",
-      "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next."
+      "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next.",
+      "passport_milestone": "A new page in your Chinese Passport: {{event}}"
     },
     "area": {
       "vocab": "vocabulary",
@@ -1266,7 +1273,8 @@
       "weak_skill": "See my DNA",
       "new_learner": "Start a lesson",
       "achievement": "See achievements",
-      "mastered_recently": "My vocabulary"
+      "mastered_recently": "My vocabulary",
+      "passport_milestone": "Open my passport"
     }
   },
   "detective": {
@@ -1484,5 +1492,259 @@
     "statsLine": "{{total}} curriculum words contain it up to HSK {{level}}.",
     "openDna": "Open Character DNA",
     "nextToLearn": "Next to learn here"
+  },
+  "internet": {
+    "title": "Chinese Internet",
+    "subtitle": "Real-world Chinese — news, posts, comments, shop pages, reviews and chats — adapted to what you already know, so you can read the real thing without drowning.",
+    "checked": "Checked",
+    "kind": {
+      "news": "News",
+      "social": "Social post",
+      "comments": "Comments",
+      "product": "Product page",
+      "review": "Restaurant review",
+      "notice": "Announcement",
+      "travel": "Travel info",
+      "shopping": "Shopping deals",
+      "messages": "Group chat",
+      "chat": "Chat"
+    },
+    "version": {
+      "beginner": "Easy",
+      "intermediate": "Adapted",
+      "original": "Original"
+    },
+    "forYou": "for you",
+    "coverage": "you can read ~{{pct}}% of the words",
+    "howTitle": "How texts are chosen for you",
+    "how": "Every text exists in its original form and two adaptations. You're offered the hardest one you can mostly read.",
+    "howLevel": "Words below HSK {{level}} count as familiar",
+    "howReading": "Your Learning DNA reading: {{reading}}",
+    "howBar": "A version is “for you” when you can read about {{pct}}% of it",
+    "readable": "Readable for you",
+    "newWords": "New words",
+    "versionLabel": "Version",
+    "coverageLine": "Of {{total}} words: {{known}} you know, {{familiar}} from earlier levels, {{learning}} you're learning, {{fresh}} new.",
+    "listenAll": "Listen to it all",
+    "showGist": "What is it about?",
+    "hideGist": "Hide the gist",
+    "legend": {
+      "weak": "needs work",
+      "due": "due for review",
+      "learning": "learning",
+      "above": "above your level"
+    },
+    "tapHint": "Tap any word for help.",
+    "glossary": "Words worth stopping for",
+    "noGlossary": "Nothing new for you here — read it straight through.",
+    "inText": "In the text:",
+    "expressions": "Internet & written expressions",
+    "expressionsHint": "These appear in the original version.",
+    "checkTitle": "Check your understanding",
+    "checkText_one": "{{count}} question about the text, a listening check and the words you need.",
+    "checkText_other": "{{count}} questions about the text, a listening check and the words you need.",
+    "yourBest": "Your best: {{score}}%",
+    "check": "Start the check",
+    "helper": {
+      "title": "Word help",
+      "empty": "Tap a word in the text to see its meaning, your history with it, its characters and related words.",
+      "missed_one": "missed {{count}}×",
+      "missed_other": "missed {{count}}×",
+      "mastered": "You've mastered this word — nothing to add.",
+      "inReview": "Already in your review — next on {{date}}.",
+      "added": "Added — it's due in your review now.",
+      "notYet": "Not in your review yet.",
+      "add": "Add to review",
+      "adding": "Adding…",
+      "context": "In this text",
+      "related": "Related words",
+      "dna": "Learning DNA — vocabulary {{vocabulary}}, reading {{reading}}."
+    }
+  },
+  "passport": {
+    "title": "Chinese Passport",
+    "subtitle": "What {{name}} can really do in Chinese — every line backed by your own practice since {{date}}.",
+    "level": "Level",
+    "wordsKnown": "Words known",
+    "charsLearned": "Characters learned",
+    "hskTitle": "HSK {{level}} progress",
+    "hskLessons": "Lessons: {{done}}/{{total}}",
+    "hskVocab": "Words mastered: {{done}}/{{total}}",
+    "hskHanzi": "Characters mastered: {{done}}/{{total}}",
+    "hskGrammar": "Grammar mastered: {{done}}/{{total}}",
+    "exam": {
+      "passed": "You passed the HSK {{level}} exam.",
+      "ready": "All HSK {{level}} lessons done — the exam is ready for you.",
+      "cleared": "Your progress is already beyond the HSK {{level}} exam.",
+      "locked": "Finish the HSK {{level}} lessons to open the exam."
+    },
+    "canDo": "What I can do",
+    "band": {
+      "strong": "Strong",
+      "developing": "Developing",
+      "emerging": "Emerging",
+      "none": "No evidence yet"
+    },
+    "why": "Why does ChineseVerse think so?",
+    "evidence": {
+      "recent_one": "Based on your last {{count}} answer (60 days): {{pct}}% correct.",
+      "recent_other": "Based on your last {{count}} answers (60 days): {{pct}}% correct.",
+      "allTime_one": "Based on {{count}} answer overall: {{pct}}% correct.",
+      "allTime_other": "Based on {{count}} answers overall: {{pct}}% correct.",
+      "notEnough": "Only {{count}} answer(s) so far — {{min}} are needed before ChineseVerse judges this.",
+      "last": "Last practised: {{date}}",
+      "dna": "Learning DNA {{skill}}: {{value}}/100",
+      "speaking_one": "Based on {{count}} spoken turn: average score {{avg}}.",
+      "speaking_other": "Based on {{count}} spoken turns: average score {{avg}}."
+    },
+    "openDna": "Open Learning DNA",
+    "cap": {
+      "vocabulary": {
+        "title": "Vocabulary",
+        "facts": "{{known}} known · {{mastered}} mastered · {{active}} in review · {{due}} due now",
+        "basis": "Counted from your graded vocabulary answers in every kind of round, plus your spaced-repetition records.",
+        "action": "Practise vocabulary",
+        "can": {
+          "strong": "You reliably recognise and recall the words you've studied.",
+          "developing": "You recognise most of the words you've studied; some still slip.",
+          "emerging": "Your words are still forming — review will lock them in.",
+          "none": "Not enough answers yet to say."
+        }
+      },
+      "characters": {
+        "title": "Characters",
+        "facts": "{{learned}} learned · {{mastered}} mastered · {{written}} written ({{writing_mastered}} from memory)",
+        "basis": "Counted from character questions (meaning and tone) and your stroke-order tracing.",
+        "action": "Practise characters",
+        "can": {
+          "strong": "You read the characters you've practised, tones included.",
+          "developing": "You read most practised characters; tones or meanings sometimes trip you.",
+          "emerging": "Characters are still new to you — keep meeting them.",
+          "none": "Not enough answers yet to say."
+        }
+      },
+      "reading": {
+        "title": "Reading",
+        "facts": "{{internet_reads}} Chinese Internet checks · best {{internet_best}}%",
+        "basis": "Counted from questions where you had to read Chinese: meanings, sentences, replies, case clues and real texts.",
+        "action": "Read Chinese Internet",
+        "can": {
+          "strong": "You can read short real Chinese texts and get the point.",
+          "developing": "You understand most of what you read at your level.",
+          "emerging": "Reading takes effort — adapted texts will help.",
+          "none": "Not enough answers yet to say."
+        }
+      },
+      "listening": {
+        "title": "Listening",
+        "facts": "Sound World: speed {{sound_stage}} passed · {{sound_rounds}} rounds",
+        "basis": "Counted from questions you could only hear: listening drills, scene and sentence audio, Sound World and spoken clues.",
+        "action": "Go to Sound World",
+        "can": {
+          "strong": "You can follow everyday spoken Chinese at your level.",
+          "developing": "You catch most of what you hear; fast speech is harder.",
+          "emerging": "Listening is your growing edge — slow it down and replay.",
+          "none": "Not enough answers yet to say."
+        }
+      },
+      "grammar": {
+        "title": "Grammar",
+        "facts": "{{mastered}} points mastered · {{active}} in progress",
+        "basis": "Counted from grammar-point and word-order questions, plus your grammar records.",
+        "action": "Practise grammar",
+        "can": {
+          "strong": "You recognise and use the patterns you've studied.",
+          "developing": "You recognise most patterns; word order sometimes slips.",
+          "emerging": "Grammar patterns are still settling.",
+          "none": "Not enough answers yet to say."
+        }
+      },
+      "speaking": {
+        "title": "Speaking",
+        "facts": "{{attempts}} spoken turns · average {{average}}",
+        "basis": "Counted from your spoken turns, scored from what the speech recogniser heard.",
+        "action": "Talk with a companion",
+        "can": {
+          "strong": "You can say short sentences clearly enough to be understood.",
+          "developing": "You're understood most of the time; tones need care.",
+          "emerging": "Speaking is just starting — short phrases first.",
+          "none": "Not enough answers yet to say."
+        }
+      }
+    },
+    "worldTitle": "Real-world skills",
+    "world": {
+      "restaurant": "Eat out",
+      "shopping": "Go shopping",
+      "travel": "Travel around",
+      "university": "Study at a university",
+      "health": "See a doctor",
+      "work": "Work and interviews",
+      "daily": "Everyday chats"
+    },
+    "worldStatus": {
+      "can_do": "I can do this",
+      "trying": "Getting there",
+      "not_yet": "Not tried yet"
+    },
+    "worldEvidence": {
+      "scene": "“{{title}}” at {{tier}} level: best {{score}}% ({{date}})",
+      "sound_one": "Sound World: {{count}} round, best {{best}}%",
+      "sound_other": "Sound World: {{count}} rounds, best {{best}}%",
+      "net_one": "Chinese Internet: {{count}} real text checked",
+      "net_other": "Chinese Internet: {{count}} real texts checked",
+      "none": "No practice in this area yet."
+    },
+    "worldGo": "Try it",
+    "worldAgain": "Practise again",
+    "storyTitle": "My Chinese story",
+    "storyEmpty": "Your story starts with your first round — every milestone you reach will appear here with its real date.",
+    "event": {
+      "joined": "Joined ChineseVerse",
+      "first_practice": "First practice round",
+      "first_lesson": "First lesson completed: {{title}}",
+      "level_started": "Started HSK {{level}}",
+      "exam_passed": "Passed the HSK {{level}} exam ({{score}}%)",
+      "words_mastered_one": "First word mastered: {{word}}",
+      "words_mastered_other": "{{count}} words mastered",
+      "chars_mastered_one": "First character mastered: {{char}}",
+      "chars_mastered_other": "{{count}} characters mastered",
+      "first_written": "First character you can write from memory: {{char}}",
+      "mistake_conquered_one": "Conquered a stubborn mistake: {{reference}} (missed {{count}}×)",
+      "mistake_conquered_other": "Conquered a stubborn mistake: {{reference}} (missed {{count}}×)",
+      "review_recovery_one": "Big review: {{count}} item at {{score}}%",
+      "review_recovery_other": "Big review: {{count}} items at {{score}}%",
+      "comeback_one": "Came back after {{count}} day away",
+      "comeback_other": "Came back after {{count}} days away",
+      "scene_done": "Real Chinese: “{{title}}” completed ({{score}}%)",
+      "cases_solved_one": "First Detective case solved",
+      "cases_solved_other": "{{count}} Detective cases solved",
+      "sound_stage": "Sound World: passed speed {{stage}}",
+      "first_internet": "First real Chinese text checked",
+      "first_sentence": "First one-sentence lesson",
+      "first_voice": "First words spoken aloud",
+      "first_duel_win": "First duel won",
+      "achievement": "Achievement unlocked: {{title}}"
+    },
+    "next": "Where to go next",
+    "allGood": "Everything is on track — keep your rhythm.",
+    "rec": {
+      "review_one": "{{count}} word is due for review",
+      "review_other": "{{count}} words are due for review",
+      "exam": "Take the HSK {{level}} exam",
+      "weakChars_one": "{{count}} character keeps tripping you",
+      "weakChars_other": "{{count}} characters keep tripping you",
+      "world": "Try a real-world skill: {{skill}}",
+      "noEvidence": "{{skill}}: not enough practice to judge yet",
+      "capability": "{{skill}}: {{pct}}% over {{count}} answers — worth practising"
+    },
+    "weakChars": "Characters that trip you up",
+    "missedTimes_one": "missed {{count}}×",
+    "missedTimes_other": "missed {{count}}×",
+    "howTitle": "How the passport works",
+    "how": "Every ability is judged from your graded answers and records, never from points. With fewer than {{min}} answers, it says so instead of guessing.",
+    "fromDna": "See the evidence in your Chinese Passport",
+    "totals_one": "So far: {{answers}} graded answers in {{count}} round.",
+    "totals_other": "So far: {{answers}} graded answers in {{count}} rounds."
   }
 }

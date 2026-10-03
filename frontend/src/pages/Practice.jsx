@@ -31,6 +31,9 @@ export default function Practice({ forceSource }) {
   const caseKey = params.get("case");
   const env = params.get("env");
   const stage = params.get("stage") ? Number(params.get("stage")) : null;
+  // Chinese Internet item and version.
+  const item = params.get("item");
+  const version = params.get("version");
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -59,6 +62,10 @@ export default function Practice({ forceSource }) {
     if (source === "scene" && scene) body.scene = scene;
     if (source === "sentence" && sentence) body.sentence = sentence;
     if (source === "detective" && caseKey) body.case = caseKey;
+    if (source === "internet" && item) {
+      body.item = item;
+      if (version) body.version = version;
+    }
     if (source === "sound" && env) {
       body.env = env;
       if (stage) body.stage = stage;
@@ -73,7 +80,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, i18n]);
+  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, i18n]);
 
   useEffect(start, [start]);
 
@@ -118,7 +125,7 @@ export default function Practice({ forceSource }) {
     // Lines heard before they're read: listening checks, and advanced
     // scenes (the server sends no text until the line is answered).
     const heardFirst =
-      ["scene_listen", "sentence_listen"].includes(question?.type) ||
+      ["scene_listen", "sentence_listen", "net_listen"].includes(question?.type) ||
       (question?.type === "scene_reply" && !question.prompt.text) ||
       (question?.type === "case_clue" && !question.prompt.text);
     if (heardFirst && question.prompt.speak && !result && canSpeakChinese()) {
@@ -190,7 +197,9 @@ export default function Practice({ forceSource }) {
             ? "/detective"
             : source === "sound"
               ? "/sound-world"
-              : `/${source === "vocab" ? "vocabulary" : source}`;
+              : source === "internet"
+                ? `/internet/${item || ""}`
+                : `/${source === "vocab" ? "vocabulary" : source}`;
   const eyebrow = level
     ? `HSK ${level}`
     : source === "scene"
@@ -201,7 +210,9 @@ export default function Practice({ forceSource }) {
           ? t("nav.detective")
           : source === "sound"
             ? t("nav.soundWorld")
-            : t(source === "review" ? "nav.review" : "nav.lessons");
+            : source === "internet"
+              ? t("nav.internet")
+              : t(source === "review" ? "nav.review" : "nav.lessons");
   const head = (kpis = null) => (
     <header className="page-head">
       <div>
@@ -332,11 +343,12 @@ export default function Practice({ forceSource }) {
   const correctCount = Object.values(outcomes).filter(Boolean).length;
   const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin"].includes(question.type);
   const qtype = question.type;
-  const listenOnly = ["scene_listen", "sentence_listen"].includes(qtype);
+  const listenOnly = ["scene_listen", "sentence_listen", "net_listen"].includes(qtype);
   // Options written in Chinese (scene replies and the sentence activities).
   const cjkOptions =
     qtype === "meaning_to_word" ||
-    ["scene_reply", "sentence_listen", "sentence_order", "sentence_word", "case_deduce", "sound_respond"].includes(qtype);
+    ["scene_reply", "sentence_listen", "sentence_order", "sentence_word", "case_deduce", "sound_respond",
+      "net_comprehension", "net_listen"].includes(qtype);
   // Detective Mode / Sound World questions word their own ask from the round.
   const custom = qtype.startsWith("case_") || qtype.startsWith("sound_");
   const say = result?.say;
@@ -410,9 +422,9 @@ export default function Practice({ forceSource }) {
                     <Icon name="ear" size={16} style={{ verticalAlign: -3, marginRight: 6 }} />
                     {t("practice.playAgain")}
                   </button>
-                  {!canSpeakChinese() && question.prompt.pinyin && (
+                  {!canSpeakChinese() && (question.prompt.pinyin || question.prompt.fallback) && (
                     <div className="practice-no-voice">
-                      <div className="practice-text">{question.prompt.pinyin}</div>
+                      <div className="practice-text">{question.prompt.pinyin || question.prompt.fallback}</div>
                       <p className="sub">{t("practice.noChineseVoice")}</p>
                     </div>
                   )}

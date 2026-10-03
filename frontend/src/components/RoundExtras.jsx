@@ -190,6 +190,21 @@ export function RoundContextCard({ context }) {
       </div>
     );
   }
+  if (context.kind === "internet") {
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("nav.internet")}</p>
+        <div className="row" style={{ margin: 0, gap: 12 }}>
+          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <div>
+            <b lang="zh-CN">{context.title}</b>
+            <div className="sub" lang="zh-CN">{context.source}</div>
+          </div>
+        </div>
+        <span className="badge accent" style={{ marginTop: 12 }}>{t(`internet.version.${context.version}`)}</span>
+      </div>
+    );
+  }
   if (context.kind === "sound") {
     return (
       <div className="card side-card">

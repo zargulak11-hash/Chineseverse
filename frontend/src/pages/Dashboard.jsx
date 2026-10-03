@@ -199,6 +199,7 @@ export default function Dashboard() {
         <div className="row spread" style={{ margin: 0, flexWrap: "wrap" }}>
           <h2 className="h2">{t("companionMemory.title", { name: d.animal?.name || t("companionReact.fallbackName") })}</h2>
           <div className="row" style={{ gap: 8, margin: 0, flexWrap: "wrap" }}>
+            <Link to="/passport" className="btn small primary"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
             <Link to="/real-chinese" className="btn small"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</Link>
             <Link to="/sentence" className="btn small ghost"><Icon name="sparkles" size={13} /> {t("nav.sentence")}</Link>
           </div>

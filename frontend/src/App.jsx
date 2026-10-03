@@ -40,6 +40,8 @@ import Detective from "./pages/Detective.jsx";
 import SoundWorld from "./pages/SoundWorld.jsx";
 import CharacterDNA from "./pages/CharacterDNA.jsx";
 import Ecosystem from "./pages/Ecosystem.jsx";
+import ChineseInternet, { InternetItem } from "./pages/ChineseInternet.jsx";
+import Passport from "./pages/Passport.jsx";
 import Exam from "./pages/Exam.jsx";
 import Progress from "./pages/Progress.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -215,6 +217,30 @@ export default function App() {
             element={
               <RequireAuth>
                 <Ecosystem />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/internet"
+            element={
+              <RequireAuth>
+                <ChineseInternet />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/internet/:slug"
+            element={
+              <RequireAuth>
+                <InternetItem />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/passport"
+            element={
+              <RequireAuth>
+                <Passport />
               </RequireAuth>
             }
           />

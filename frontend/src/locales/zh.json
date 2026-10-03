@@ -55,7 +55,9 @@
     "sentence": "一句话",
     "detective": "侦探模式",
     "soundWorld": "声音世界",
-    "ecosystem": "词汇生态"
+    "ecosystem": "词汇生态",
+    "internet": "中文网络",
+    "passport": "中文护照"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -488,7 +490,8 @@
         "real_life": "真实中文",
         "sentence": "一句话课堂",
         "detective": "侦探模式",
-        "sound_world": "声音世界"
+        "sound_world": "声音世界",
+        "internet": "中文网络"
       }
     },
     "profile": {
@@ -784,7 +787,8 @@
       "scene": "真实中文 · {{title}}",
       "sentence": "一句话课堂",
       "detective": "侦探案件",
-      "sound": "声音世界 · {{place}}"
+      "sound": "声音世界 · {{place}}",
+      "internet": "中文网络 · {{title}}"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -889,7 +893,8 @@
       "line": "句子",
       "sentence": "句子",
       "case": "线索",
-      "sound": "句子"
+      "sound": "句子",
+      "reading": "句子"
     },
     "skill": {
       "speaking": "口语",
@@ -941,7 +946,8 @@
       "sentence_start": "{{name}}很喜欢：一句话，一堂课。",
       "words_milestone": "{{name}}在庆祝——这一轮让你掌握的词超过了{{milestone}}个！",
       "detective_start": "{{name}}拿起了放大镜——我们用中文破案吧！",
-      "sound_start": "{{name}}竖起了耳朵——仔细听听周围的人在说什么。"
+      "sound_start": "{{name}}竖起了耳朵——仔细听听周围的人在说什么。",
+      "internet_start": "{{name}}很好奇——我们看看网上大家在说什么。"
     }
   },
   "wordType": {
@@ -1228,7 +1234,8 @@
       "reviews_done_other": "这周你完成了{{count}}次复习——记忆越来越牢了。",
       "stale_area": "你已经{{days}}天没练{{area}}了——{{name}}帮你记着进度。",
       "stale_area_never": "你开始学{{area}}了，但还没有在练习中练过。",
-      "weak_skill": "你的{{skill}}目前最弱（{{value}}/100）——下一步可以重点提高。"
+      "weak_skill": "你的{{skill}}目前最弱（{{value}}/100）——下一步可以重点提高。",
+      "passport_milestone": "你的中文护照新的一页：{{event}}"
     },
     "area": {
       "vocab": "词汇",
@@ -1247,7 +1254,8 @@
       "weak_skill": "查看学习DNA",
       "new_learner": "开始上课",
       "achievement": "查看成就",
-      "mastered_recently": "我的词汇"
+      "mastered_recently": "我的词汇",
+      "passport_milestone": "打开我的护照"
     }
   },
   "detective": {
@@ -1459,5 +1467,242 @@
     "statsLine": "HSK {{level}}级以内共有{{total}}个词含有这个字。",
     "openDna": "打开汉字DNA",
     "nextToLearn": "接下来可以学"
+  },
+  "internet": {
+    "title": "中文网络",
+    "subtitle": "真实的中文——新闻、帖子、评论、购物页面、点评和聊天——按你已经掌握的内容调整，让你读得懂真实中文而不被淹没。",
+    "checked": "已完成",
+    "kind": {
+      "news": "新闻",
+      "social": "动态",
+      "comments": "评论",
+      "product": "商品页",
+      "review": "餐厅点评",
+      "notice": "公告",
+      "travel": "旅游信息",
+      "shopping": "购物优惠",
+      "messages": "群聊",
+      "chat": "聊天"
+    },
+    "version": {
+      "beginner": "简单版",
+      "intermediate": "改写版",
+      "original": "原文"
+    },
+    "forYou": "推荐",
+    "coverage": "你能读懂约{{pct}}%的词",
+    "howTitle": "怎么为你选择版本",
+    "how": "每篇内容都有原文和两个改写版。我们给你推荐你基本能读懂的最难版本。",
+    "howLevel": "HSK {{level}}级以下的词算作熟悉",
+    "howReading": "你的学习DNA阅读：{{reading}}",
+    "howBar": "能读懂约{{pct}}%的版本会推荐给你",
+    "readable": "你能读懂",
+    "newWords": "新词",
+    "versionLabel": "版本",
+    "coverageLine": "共{{total}}个词：{{known}}个已会，{{familiar}}个来自之前的级别，{{learning}}个在学，{{fresh}}个新词。",
+    "listenAll": "全部朗读",
+    "showGist": "讲的是什么？",
+    "hideGist": "隐藏大意",
+    "legend": {
+      "weak": "易错",
+      "due": "该复习",
+      "learning": "在学",
+      "above": "超出你的级别"
+    },
+    "tapHint": "点击任何词查看帮助。",
+    "glossary": "值得注意的词",
+    "noGlossary": "这里没有你的新词——直接读吧。",
+    "inText": "原文：",
+    "expressions": "网络用语和书面表达",
+    "expressionsHint": "这些出现在原文里。",
+    "checkTitle": "检查理解",
+    "checkText_other": "{{count}}道理解题、一道听力题，还有你需要的词。",
+    "yourBest": "你的最佳成绩：{{score}}%",
+    "check": "开始检查",
+    "helper": {
+      "title": "词语帮助",
+      "empty": "点击文中的词，查看意思、你的学习记录、汉字和相关词。",
+      "missed_other": "错过{{count}}次",
+      "mastered": "这个词你已经掌握了，不用再加入。",
+      "inReview": "已经在复习中——下次复习：{{date}}。",
+      "added": "已加入——现在就可以复习。",
+      "notYet": "还没加入复习。",
+      "add": "加入复习",
+      "adding": "正在加入…",
+      "context": "在这段文字里",
+      "related": "相关词",
+      "dna": "学习DNA——词汇{{vocabulary}}，阅读{{reading}}。"
+    }
+  },
+  "passport": {
+    "title": "中文护照",
+    "subtitle": "{{name}}用中文真正能做什么——每一项都有你从{{date}}起的练习记录作为依据。",
+    "level": "级别",
+    "wordsKnown": "已会的词",
+    "charsLearned": "学过的字",
+    "hskTitle": "HSK {{level}}级进度",
+    "hskLessons": "课程：{{done}}/{{total}}",
+    "hskVocab": "已掌握词语：{{done}}/{{total}}",
+    "hskHanzi": "已掌握汉字：{{done}}/{{total}}",
+    "hskGrammar": "已掌握语法：{{done}}/{{total}}",
+    "exam": {
+      "passed": "你已通过HSK {{level}}级考试。",
+      "ready": "HSK {{level}}级课程已全部完成——可以参加考试了。",
+      "cleared": "你的进度已经超过HSK {{level}}级考试。",
+      "locked": "完成HSK {{level}}级课程即可解锁考试。"
+    },
+    "canDo": "我能做什么",
+    "band": {
+      "strong": "扎实",
+      "developing": "进步中",
+      "emerging": "起步",
+      "none": "暂无依据"
+    },
+    "why": "为什么这样判断？",
+    "evidence": {
+      "recent_other": "根据你最近60天的{{count}}次回答：正确率{{pct}}%。",
+      "allTime_other": "根据你全部{{count}}次回答：正确率{{pct}}%。",
+      "notEnough": "目前只有{{count}}次回答——至少需要{{min}}次才会判断。",
+      "last": "上次练习：{{date}}",
+      "dna": "学习DNA·{{skill}}：{{value}}/100",
+      "speaking_other": "根据你{{count}}次口语练习：平均分{{avg}}。"
+    },
+    "openDna": "查看学习DNA",
+    "cap": {
+      "vocabulary": {
+        "title": "词汇",
+        "facts": "已会{{known}} · 已掌握{{mastered}} · 复习中{{active}} · 待复习{{due}}",
+        "basis": "依据你在各类练习中的词汇答题，以及你的间隔复习记录。",
+        "action": "练习词汇",
+        "can": {
+          "strong": "学过的词你能稳定地认出并想起来。",
+          "developing": "学过的词大多能认出，还有一些会忘。",
+          "emerging": "词汇还在积累——复习会帮你记牢。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      },
+      "characters": {
+        "title": "汉字",
+        "facts": "学过{{learned}} · 已掌握{{mastered}} · 写过{{written}}（{{writing_mastered}}个能默写）",
+        "basis": "依据你的汉字题（意思和声调）以及笔顺描写。",
+        "action": "练习汉字",
+        "can": {
+          "strong": "练过的字你能读出来，包括声调。",
+          "developing": "练过的字大多能认，有时声调或意思会出错。",
+          "emerging": "汉字对你来说还很新——多多接触。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      },
+      "reading": {
+        "title": "阅读",
+        "facts": "中文网络检查{{internet_reads}}次 · 最佳{{internet_best}}%",
+        "basis": "依据需要读中文的题：词义、句子、对话回答、案件线索和真实文本。",
+        "action": "去读中文网络",
+        "can": {
+          "strong": "你能读懂简短的真实中文，抓住要点。",
+          "developing": "你这个级别的内容大多能读懂。",
+          "emerging": "阅读还比较吃力——改写版会有帮助。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      },
+      "listening": {
+        "title": "听力",
+        "facts": "声音世界：已通过第{{sound_stage}}档 · {{sound_rounds}}轮",
+        "basis": "依据只能听的题：听力练习、场景和句子音频、声音世界和听到的线索。",
+        "action": "去声音世界",
+        "can": {
+          "strong": "你能听懂你这个级别的日常中文。",
+          "developing": "你能听懂大部分，语速快时会难一些。",
+          "emerging": "听力是你正在成长的地方——放慢速度，多听几遍。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      },
+      "grammar": {
+        "title": "语法",
+        "facts": "已掌握{{mastered}}个语法点 · 进行中{{active}}个",
+        "basis": "依据语法点题、语序题和你的语法记录。",
+        "action": "练习语法",
+        "can": {
+          "strong": "学过的句型你能认出来并会用。",
+          "developing": "大多数句型你能认出来，语序有时会错。",
+          "emerging": "语法句型还在巩固中。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      },
+      "speaking": {
+        "title": "口语",
+        "facts": "口语{{attempts}}次 · 平均{{average}}",
+        "basis": "依据你的口语练习，按语音识别结果评分。",
+        "action": "和伙伴聊天",
+        "can": {
+          "strong": "你说的短句别人能听懂。",
+          "developing": "大多数时候别人能听懂，声调还要注意。",
+          "emerging": "口语刚刚起步——先从短句开始。",
+          "none": "目前答题还不够，暂时无法判断。"
+        }
+      }
+    },
+    "worldTitle": "真实生活能力",
+    "world": {
+      "restaurant": "去餐厅吃饭",
+      "shopping": "购物",
+      "travel": "出行旅游",
+      "university": "在大学学习",
+      "health": "看医生",
+      "work": "工作和面试",
+      "daily": "日常聊天"
+    },
+    "worldStatus": {
+      "can_do": "我能做到",
+      "trying": "正在努力",
+      "not_yet": "还没尝试"
+    },
+    "worldEvidence": {
+      "scene": "《{{title}}》{{tier}}：最佳{{score}}%（{{date}}）",
+      "sound_other": "声音世界：{{count}}轮，最佳{{best}}%",
+      "net_other": "中文网络：检查过{{count}}篇真实文本",
+      "none": "这方面还没有练习。"
+    },
+    "worldGo": "去试试",
+    "worldAgain": "再练一次",
+    "storyTitle": "我的中文故事",
+    "storyEmpty": "你的故事从第一轮练习开始——每个里程碑都会带着真实日期出现在这里。",
+    "event": {
+      "joined": "加入ChineseVerse",
+      "first_practice": "第一次练习",
+      "first_lesson": "完成第一课：{{title}}",
+      "level_started": "开始学习HSK {{level}}级",
+      "exam_passed": "通过HSK {{level}}级考试（{{score}}%）",
+      "words_mastered_other": "已掌握{{count}}个词",
+      "chars_mastered_other": "已掌握{{count}}个汉字",
+      "first_written": "第一个能默写的字：{{char}}",
+      "mistake_conquered_other": "攻克了一个顽固错误：{{reference}}（错过{{count}}次）",
+      "review_recovery_other": "大复习：{{count}}项，正确率{{score}}%",
+      "comeback_other": "休息{{count}}天后回来继续学习",
+      "scene_done": "真实中文：完成《{{title}}》（{{score}}%）",
+      "cases_solved_other": "破了{{count}}个侦探案件",
+      "sound_stage": "声音世界：通过第{{stage}}档语速",
+      "first_internet": "第一次读懂真实中文文本",
+      "first_sentence": "第一堂一句话课",
+      "first_voice": "第一次开口说中文",
+      "first_duel_win": "第一次赢得对战",
+      "achievement": "获得成就：{{title}}"
+    },
+    "next": "下一步",
+    "allGood": "一切顺利——保持节奏。",
+    "rec": {
+      "review_other": "有{{count}}个词该复习了",
+      "exam": "参加HSK {{level}}级考试",
+      "weakChars_other": "有{{count}}个字老是出错",
+      "world": "试试真实生活能力：{{skill}}",
+      "noEvidence": "{{skill}}：练习还不够，暂时无法判断",
+      "capability": "{{skill}}：{{count}}次回答正确率{{pct}}%——值得多练"
+    },
+    "weakChars": "常出错的字",
+    "missedTimes_other": "错{{count}}次",
+    "howTitle": "护照怎么判断",
+    "how": "每项能力都根据你的答题和学习记录判断，从不看积分。答题少于{{min}}次时会直接说明，而不是猜测。",
+    "fromDna": "在中文护照里查看依据",
+    "totals_other": "目前：{{count}}轮练习中共{{answers}}次答题。"
   }
 }

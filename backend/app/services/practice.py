@@ -18,6 +18,8 @@ Sources:
                            (services/sentence.py)
   detective                a generated Chinese mystery (services/detective.py)
   sound                    an immersive listening place (services/sound_world.py)
+  internet                 a Chinese Internet item at the learner's version
+                           (services/internet.py)
 
 Scene and sentence rounds add question types whose options are lines of
 text rather than curriculum rows (item_type "line" / "sentence"): the
@@ -51,8 +53,8 @@ from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
-SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound")
-VIRTUAL = ("line", "sentence", "case", "sound")  # item types whose options are text, not rows
+SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet")
+VIRTUAL = ("line", "sentence", "case", "sound", "reading")  # item types whose options are text, not rows
 SPEAK_LIMIT = 3  # spoken attempts per question (each one is a VoiceAttempt)
 VOCAB_TYPES = ("meaning_to_word", "word_to_meaning", "listen_to_word")
 HANZI_TYPES = ("char_to_meaning", "char_to_pinyin")
@@ -370,6 +372,7 @@ def build_session(
     lesson_id: int | None = None, size: int = 10, locale: str = "en",
     scene: str | None = None, sentence: str | None = None,
     case: str | None = None, env: str | None = None, stage: int | None = None,
+    item: str | None = None, version: str | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -404,10 +407,10 @@ def build_session(
         if locale in ("ru", "tg") else None
     )
     questions = []
-    if source in ("scene", "sentence", "detective", "sound"):
+    if source in ("scene", "sentence", "detective", "sound", "internet"):
         # The learner's real level decides the tier (imported here: these
         # modules build on this one).
-        from app.services import detective, real_life, sound_world
+        from app.services import detective, internet, real_life, sound_world
         from app.services import sentence as sentence_svc
         from app.services.gamification import user_rank
 
@@ -419,11 +422,14 @@ def build_session(
                 questions = sentence_svc.build_questions(db, user, sentence or "", hsk_level, rng, translated)
             elif source == "detective":
                 questions = detective.build_questions(db, user, case or "", hsk_level, rng, translated)
+            elif source == "internet":
+                questions = internet.build_questions(db, user, item or "", version, hsk_level, rng, translated)
             else:
                 if stage is None:
                     stage = sound_world.stage_status(db, user)["recommended"]
                 questions = sound_world.build_questions(db, user, env or "", stage, hsk_level, rng, translated)
-        except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError) as exc:
+        except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError,
+                internet.InternetError) as exc:
             raise PracticeError(exc.status, exc.detail) from exc
     for i, (item_type, row) in enumerate(picked):
         q = _question(db, item_type, row, i, rng, translated)
@@ -672,6 +678,10 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
         from app.services import sound_world
 
         return sound_world.card(db, q, locale)
+    if q["item_type"] == "reading":
+        from app.services import internet
+
+        return internet.card(db, q, locale)
     if qtype == "scene_reply":
         r = q["reply"]
         return {"hanzi": r["zh"], "pinyin": r["py"], "meaning": _line_tr(r.get("tr"), locale)}
@@ -688,10 +698,10 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
 def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, locale: str) -> dict:
     qtype = q["type"]
     answered = answer is not None
-    if q["item_type"] in ("case", "sound"):
-        from app.services import detective, sound_world
+    if q["item_type"] in ("case", "sound", "reading"):
+        from app.services import detective, internet, sound_world
 
-        mod = detective if q["item_type"] == "case" else sound_world
+        mod = {"case": detective, "sound": sound_world, "reading": internet}[q["item_type"]]
         prompt, options = mod.render(db, q, answered, locale)
         item = {"index": index, "type": qtype, "item_type": q["item_type"], "prompt": prompt, "options": options,
                 "answer": None, "can_speak": bool(q.get("say"))}
@@ -839,6 +849,9 @@ _VIRTUAL_SKILLS = {
     "sound_respond": (("listening", 1.5, -0.3), ("speaking", 0.5, 0.0)),
     "sound_conversation": (("listening", 2.0, -0.3), ("memory", 0.5, 0.0)),
     "sound_memory": (("listening", 1.5, -0.3), ("memory", 2.0, -0.3)),
+    # Chinese Internet: real-text comprehension and a heard line.
+    "net_comprehension": (("reading", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
+    "net_listen": (("listening", 2.0, -0.3), ("reading", 0.5, 0.0)),
 }
 _LISTEN_CLUE = (("listening", 2.0, -0.3), ("tones", 0.5, 0.0))
 
@@ -881,7 +894,7 @@ def _record_virtual(db: Session, user: models.User, session: models.PracticeSess
     if correct:
         if focus is not None:
             reinforce_mistake(db, user, "word", focus.simplified)
-        if qtype in ("scene_listen", "sentence_listen") or q["item_type"] == "sound" or (
+        if qtype in ("scene_listen", "sentence_listen", "net_listen") or q["item_type"] == "sound" or (
                 qtype == "case_clue" and q.get("mode") == "listen"):
             progress_quests(db, user, "listening", amount=1)
         user.total_xp += XP_PER_CORRECT
@@ -1038,6 +1051,8 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
                 progress_missions(db, user, "case")
         elif session.source == "sound":
             log_activity(db, user, "sound_world")
+        elif session.source == "internet":
+            log_activity(db, user, "internet_read")
         if session.lesson_id:
             # Imported here: lesson_path builds on this module.
             from app.services import lesson_path

@@ -69,9 +69,11 @@ PRIMARY_SKILL = {
     "sound_respond": "listening",
     "sound_conversation": "listening",
     "sound_memory": "memory",
+    "net_comprehension": "reading",
+    "net_listen": "listening",
 }
 
-_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法", "line": "句子", "sentence": "句子", "case": "线索", "sound": "句子"}
+_NOUN = {"vocab": "词", "hanzi": "字", "grammar": "语法", "line": "句子", "sentence": "句子", "case": "线索", "sound": "句子", "reading": "句子"}
 
 _ZH = {
     # answer, correct
@@ -113,6 +115,7 @@ _ZH = {
     "sentence_start": "一句话，一堂课！",
     "detective_start": "侦探，我们出发吧！",
     "sound_start": "仔细听，周围都是中文！",
+    "internet_start": "我们来看看网上的真实中文吧！",
     "words_milestone": "太棒了！你掌握的词越来越多了！",
     # handwriting
     "clean_trace": "写得真漂亮！",
@@ -280,7 +283,7 @@ def start_reaction(user: models.User, source: str, *, words: list[dict] | None =
     if away_days is not None and away_days >= 3:
         event = {"lesson": "lesson_start", "review": "review_start"}.get(source, "session_start")
         return _base(user, "excited", event, "welcome_back", words=words or [], due=due, away_days=away_days)
-    if source in ("scene", "sentence", "detective", "sound"):
+    if source in ("scene", "sentence", "detective", "sound", "internet"):
         return _base(user, "happy", f"{source}_start", f"{source}_start")
     if source == "lesson":
         return _base(user, "happy", "lesson_start", "lesson_start", "vocab", words=words or [])
@@ -337,7 +340,7 @@ def session_reaction(
 
 
 COMPLETE_EVENT = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete",
-                  "detective": "detective_complete", "sound": "sound_complete"}
+                  "detective": "detective_complete", "sound": "sound_complete", "internet": "internet_complete"}
 
 
 def trained_skill(user: models.User, questions: list, answers: list) -> dict | None:

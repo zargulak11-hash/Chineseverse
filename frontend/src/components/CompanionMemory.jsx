@@ -29,6 +29,7 @@ const DAY_KINDS = new Set(["welcome_back", "streak", "lesson_completed", "stale_
 const AREA_PATH = { vocab: "/vocabulary", hanzi: "/hanzi", grammar: "/grammar" };
 
 function linkFor(m) {
+  if (m.kind === "passport_milestone") return "/passport";
   if (m.kind === "lesson_completed") return `/lessons/${m.data.lesson_id}`;
   if (m.kind === "stale_area") return AREA_PATH[m.data.area];
   return LINKS[m.kind] || null;
@@ -59,6 +60,13 @@ function useMemoryLine() {
     if (m.kind === "lesson_completed" && d.days === 0) key = "companionMemory.kind.lesson_completed_today";
     if (m.kind === "stale_area" && d.days == null) key = "companionMemory.kind.stale_area_never";
     if (m.kind === "welcome_back" && d.active_today) key = "companionMemory.kind.welcome_back_active";
+    if (m.kind === "passport_milestone") {
+      const e = d.event_data || {};
+      vars.event = t(`passport.event.${d.event}`, {
+        ...e, count: e.count ?? e.items ?? e.times ?? e.days,
+        score: e.score != null ? Math.round(e.score) : "", title: e.title || "",
+      });
+    }
     return t(key, vars);
   };
 }

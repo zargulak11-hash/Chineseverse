@@ -75,3 +75,22 @@ def vocabulary_ecosystem(
         return svc.ecosystem(db, user, center, hsk_max, locale)
     except svc.CharacterError as exc:
         raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+
+
+@router.post("/{word_id}/track")
+def track_word(
+    word_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Add one word to the learner's review schedule (e.g. from the Chinese
+    Internet word helper). Refused with 409 when the word is already being
+    reviewed or is mastered -- nothing is duplicated, mastery is untouched."""
+    from fastapi import HTTPException
+
+    from app.services import internet as svc
+
+    try:
+        return svc.track_word(db, user, word_id)
+    except svc.InternetError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
