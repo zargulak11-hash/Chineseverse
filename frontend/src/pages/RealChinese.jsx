@@ -174,7 +174,9 @@ const overlaps = (a, b) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a
 // a name already placed -- names differ in length across EN/RU/TG/ZH, so this
 // is measured per locale instead of hand-tuned for one. Near the side edges a
 // label grows inward instead of running off the canvas.
-function layoutLabels(places, names, current, W, H) {
+// `view` is the part of the city on screen: a name first looks for a spot
+// inside it, so a place fully in view never has its name cut by the edge.
+function layoutLabels(places, names, current, W, H, view) {
   const discs = places.map((p) => ({ key: p.key, x1: p.x - R, x2: p.x + R, y1: p.y - R, y2: p.y + R }));
   const cur = places.find((p) => p.key === current);
   if (cur) {
@@ -192,6 +194,12 @@ function layoutLabels(places, names, current, W, H) {
     const candidates = [
       { x: edgeX, y: p.y + R + LABEL_SIZE * 1.3, anchor: edge },
       { x: edgeX, y: p.y - R - LABEL_SIZE * 0.55, anchor: edge },
+      // ... then hung from the disc's left or right edge, below or above,
+      // for a long name near the side of the screen.
+      { x: p.x - R, y: p.y + R + LABEL_SIZE * 1.3, anchor: "start" },
+      { x: p.x + R, y: p.y + R + LABEL_SIZE * 1.3, anchor: "end" },
+      { x: p.x - R, y: p.y - R - LABEL_SIZE * 0.55, anchor: "start" },
+      { x: p.x + R, y: p.y - R - LABEL_SIZE * 0.55, anchor: "end" },
       { x: p.x + R + 1, y: p.y + LABEL_SIZE * 0.3, anchor: "start" },
       { x: p.x - R - 1, y: p.y + LABEL_SIZE * 0.3, anchor: "end" },
     ];
@@ -200,9 +208,11 @@ function layoutLabels(places, names, current, W, H) {
       return { x1, x2: x1 + w, y1: c.y - LABEL_SIZE * 0.8, y2: c.y + LABEL_SIZE * 0.25 };
     };
     const inside = (b) => b.y1 >= 0 && b.y2 <= H && b.x1 >= 0 && b.x2 <= W;
+    const onScreen = (b) => !view || (b.x1 >= view.x0 && b.x2 <= view.x1 && b.y1 >= view.y0 && b.y2 <= view.y1);
     const clear = (b) => !discs.some((d) => d.key !== p.key && overlaps(b, d)) && !placed.some((o) => overlaps(b, o));
     // Nothing clear: an overlap is still better than a name cut off the map.
-    const at = candidates.find((c) => inside(boxOf(c)) && clear(boxOf(c)))
+    const at = candidates.find((c) => inside(boxOf(c)) && onScreen(boxOf(c)) && clear(boxOf(c)))
+      || candidates.find((c) => inside(boxOf(c)) && clear(boxOf(c)))
       || candidates.find((c) => inside(boxOf(c))) || candidates[0];
     placed.push(boxOf(at));
     out[p.key] = at;
@@ -289,8 +299,20 @@ function recommendReason(t, rec) {
 function NextStopCard({ rec, place, onShow, compact }) {
   const { t } = useTranslation();
   if (!rec || !place) return null;
+  // Over the map it is only a chip -- the city stays in view; the reason is
+  // in the place's details once it opens.
+  if (compact) {
+    return (
+      <button type="button" className="lw-nextstop" onClick={() => onShow(place.key)} title={recommendReason(t, rec)}>
+        <span className="lw-nextstop-k">{t("world.state.recommended")}</span>
+        <span aria-hidden="true">{place.icon}</span>
+        <b>{t(`world.place.${place.key}.name`)}</b>
+        <Icon name="chevronRight" size={14} />
+      </button>
+    );
+  }
   return (
-    <div className={compact ? "lw-nextstop" : "card side-card lw-next"}>
+    <div className="card side-card lw-next">
       <p className="side-title">{t("world.recommend.title")}</p>
       <div className="row" style={{ margin: 0, gap: 12 }}>
         <span className="scene-icon" aria-hidden="true">{place.icon}</span>
@@ -778,12 +800,36 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
   const readable = LABEL_SIZE * pxPerUnit >= LABEL_MIN_PX;
   const important = new Set([selected?.key, data.current, hover, data.recommended?.key].filter(Boolean));
   const shown = data.places.filter((p) => readable || important.has(p.key));
-  const labels = layoutLabels(shown, names, data.current, W, H);
+  const labels = layoutLabels(shown, names, data.current, W, H, { x0, y0, x1: x0 + vw, y1: y0 + vh });
   const hovered = hover && byKey[hover];
 
   return (
-    <div className={`lw-map is-hero${sheet && !narrow ? " has-sheet" : ""}`} data-self-animate="true"
-         style={sheetPx ? { "--lw-sheet": `${sheetPx}px` } : undefined}>
+    <div className="lw-map is-hero" data-self-animate="true">
+      {/* Above the city, never on it: the next stop and the map's controls. */}
+      <div className="lw-toolbar">
+        {overlay || <span />}
+          <div className="lw-controls">
+            <button type="button" className="icon-btn" onClick={() => zoomAt(1.4, undefined, undefined, true)}
+                    aria-label={t("world.nav.zoomIn")} title={t("world.nav.zoomIn")} disabled={v.k >= K_MAX - 0.01}>
+              <Icon name="plus" size={16} />
+            </button>
+            <button type="button" className="icon-btn" onClick={() => zoomAt(1 / 1.4, undefined, undefined, true)}
+                    aria-label={t("world.nav.zoomOut")} title={t("world.nav.zoomOut")} disabled={v.k <= fitK(W, H, aspect) + 0.01}>
+              <Icon name="minus" size={16} />
+            </button>
+            <button type="button" className="icon-btn" title={t("world.nav.toCompanion")} aria-label={t("world.nav.toCompanion")}
+                    onClick={() => {
+                      const c = byKey[data.current];
+                      if (c) flyTo({ cx: c.x, cy: c.y, k: Math.max(viewRef.current.k, home) });
+                    }}>
+              <Icon name="crosshair" size={16} />
+            </button>
+            <button type="button" className="icon-btn" title={t("world.nav.whole")} aria-label={t("world.nav.whole")}
+                    onClick={() => flyTo({ k: fitK(W, H, aspect), cx: W / 2, cy: H / 2 })}>
+              <Icon name="expand" size={16} />
+            </button>
+          </div>
+      </div>
       <div className="lw-viewport" ref={boxRef} tabIndex={0} onKeyDown={onKeyDown}
            role="region" aria-label={`${t("world.mapLabel")}. ${t("world.nav.keys")}`}>
         <svg ref={svgRef} viewBox={`${x0} ${y0} ${vw} ${vh}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}
@@ -845,28 +891,6 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
         {hovered && size.w > 0 && (
           <HoverCard p={hovered} recommended={hovered.key === data.recommended?.key} at={{ x: ((hovered.x - x0) / vw) * size.w, y: ((hovered.y - y0) / vh) * size.h - R * pxPerUnit - 8 }} />
         )}
-        <div className="lw-controls">
-          <button type="button" className="icon-btn" onClick={() => zoomAt(1.4, undefined, undefined, true)}
-                  aria-label={t("world.nav.zoomIn")} title={t("world.nav.zoomIn")} disabled={v.k >= K_MAX - 0.01}>
-            <Icon name="plus" size={16} />
-          </button>
-          <button type="button" className="icon-btn" onClick={() => zoomAt(1 / 1.4, undefined, undefined, true)}
-                  aria-label={t("world.nav.zoomOut")} title={t("world.nav.zoomOut")} disabled={v.k <= fitK(W, H, aspect) + 0.01}>
-            <Icon name="minus" size={16} />
-          </button>
-          <button type="button" className="icon-btn" title={t("world.nav.toCompanion")} aria-label={t("world.nav.toCompanion")}
-                  onClick={() => {
-                    const c = byKey[data.current];
-                    if (c) flyTo({ cx: c.x, cy: c.y, k: Math.max(viewRef.current.k, home) });
-                  }}>
-            <Icon name="crosshair" size={16} />
-          </button>
-          <button type="button" className="icon-btn" title={t("world.nav.whole")} aria-label={t("world.nav.whole")}
-                  onClick={() => flyTo({ k: fitK(W, H, aspect), cx: W / 2, cy: H / 2 })}>
-            <Icon name="expand" size={16} />
-          </button>
-        </div>
-        {overlay}
         {!narrow && sheet}
       </div>
       <div className="lw-legend sub">
