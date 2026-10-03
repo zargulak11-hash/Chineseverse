@@ -26,7 +26,7 @@ const COLLAPSE_KEY = "chineseverse_sidebar_collapsed";
 // spinner, then let the real content pop in untouched afterwards. A
 // MutationObserver waits for that swap and reveals whichever children are
 // actually the real content, not a transient placeholder.
-function PageReveal({ children }) {
+function PageReveal({ children, variant }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ function PageReveal({ children }) {
   }, []);
 
   return (
-    <main ref={ref} className="page route-reveal">
+    <main ref={ref} className={`page route-reveal${variant ? ` page-${variant}` : ""}`}>
       {children}
     </main>
   );
@@ -176,9 +176,11 @@ export function AppShell() {
 // What every page wraps itself in: its content, revealed on each route.
 // Inside AppShell that is all it renders; a page rendered outside it (no
 // layout route) still gets the full shell, so nothing can lose its chrome.
-export default function Layout({ children }) {
+// `variant` lets a page that IS its content (the world map on /real-chinese)
+// drop the reading-width column: <Layout variant="world">.
+export default function Layout({ children, variant }) {
   const inShell = useContext(ShellContext);
   const location = useLocation();
-  const page = <PageReveal key={location.pathname}>{children}</PageReveal>;
+  const page = <PageReveal key={location.pathname} variant={variant}>{children}</PageReveal>;
   return inShell ? page : <Shell>{page}</Shell>;
 }

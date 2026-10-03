@@ -286,11 +286,11 @@ function recommendReason(t, rec) {
   return t("world.recommend.next");
 }
 
-function NextStopCard({ rec, place, onShow }) {
+function NextStopCard({ rec, place, onShow, compact }) {
   const { t } = useTranslation();
   if (!rec || !place) return null;
   return (
-    <div className="card side-card lw-next">
+    <div className={compact ? "lw-nextstop" : "card side-card lw-next"}>
       <p className="side-title">{t("world.recommend.title")}</p>
       <div className="row" style={{ margin: 0, gap: 12 }}>
         <span className="scene-icon" aria-hidden="true">{place.icon}</span>
@@ -550,15 +550,20 @@ function HoverCard({ p, at, recommended }) {
   );
 }
 
-function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow }) {
+function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, sheet, overlay }) {
   const { t } = useTranslation();
   const boxRef = useRef(null);
   const svgRef = useRef(null);
   const size = useElementSize(boxRef);
   const aspect = size.w && size.h ? size.w / size.h : 1.5;
-  const home = narrow ? 3 : 1.5;
+  // The zoom a visit starts at: names about 13px on a desktop, 11px on a
+  // phone, whatever the map's real width.
+  const home = size.w ? Math.max(fitK(W, H, aspect), (W * (narrow ? 4.4 : 5.4)) / size.w) : narrow ? 3 : 1.2;
   const focus = selected || data.places.find((p) => p.key === data.current);
   const [view, setView] = useState(() => ({ cx: focus?.x ?? W / 2, cy: focus?.y ?? H / 2, k: home }));
+  // The details panel covers the right of the map on a desktop; a place
+  // flown to is centred in the part left uncovered.
+  const sheetPx = sheet && !narrow && size.w ? Math.min(400, size.w * 0.4) + 16 : 0;
   const [hover, setHover] = useState(null);
   const v = clampView(view, W, H, aspect);
   const viewRef = useRef(v);
@@ -591,16 +596,24 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
   };
   useEffect(() => () => cancelAnimationFrame(anim.current), []);
 
+  // Once the map knows its size: start at the right zoom, on the chosen
+  // place (or the companion's), clear of the details panel.
+  const sized = useRef(false);
+  useEffect(() => {
+    if (sized.current || !size.w) return;
+    sized.current = true;
+    const k = home;
+    setView({ k, cx: (focus?.x ?? W / 2) + (sheetPx / 2) * (W / k / size.w), cy: focus?.y ?? H / 2 });
+  }, [size.w]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fly to the chosen place whenever it changes (map tap, list, search).
   const selKey = selected?.key;
-  const firstRun = useRef(true);
   useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
+    if (!sized.current) return;
     const p = byKey[selKey];
-    if (p) flyTo({ cx: p.x, cy: p.y, k: Math.max(viewRef.current.k, home) });
+    if (!p) return;
+    const k = Math.max(viewRef.current.k, home);
+    flyTo({ cx: p.x + (sheetPx / 2) * (W / k / (size.w || 1)), cy: p.y, k });
   }, [selKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Zoom by a factor around a canvas point that stays where it is on screen.
@@ -684,6 +697,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
   };
 
   const onKeyDown = (e) => {
+    // Only the map's own keys: arrows inside a floating panel scroll it.
+    if (e.target !== boxRef.current && !svgRef.current?.contains(e.target)) return;
     const step = (W / viewRef.current.k) * 0.12;
     const move = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
     if (move) {
@@ -716,7 +731,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
   const hovered = hover && byKey[hover];
 
   return (
-    <div className="lw-map" data-self-animate="true">
+    <div className={`lw-map is-hero${sheet && !narrow ? " has-sheet" : ""}`} data-self-animate="true"
+         style={sheetPx ? { "--lw-sheet": `${sheetPx}px` } : undefined}>
       <div className="lw-viewport" ref={boxRef} tabIndex={0} onKeyDown={onKeyDown}
            role="region" aria-label={`${t("world.mapLabel")}. ${t("world.nav.keys")}`}>
         <svg ref={svgRef} viewBox={`${x0} ${y0} ${vw} ${vh}`} className="lw-svg" role="group" aria-label={t("world.mapLabel")}
@@ -799,6 +815,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
             <Icon name="expand" size={16} />
           </button>
         </div>
+        {overlay}
+        {!narrow && sheet}
       </div>
       <div className="lw-legend sub">
         <span><i className="lw-dot is-mastered" /> {t("world.status.mastered")}</span>
@@ -823,7 +841,8 @@ export default function RealChinese() {
   const [params, setParams] = useSearchParams();
   const narrow = useNarrow();
   const panelRef = useRef(null);
-  const selectedKey = params.get("place") || data?.current;
+  // Map first: details open only for a place the learner chose (?place=).
+  const selectedKey = params.get("place");
 
   const byKey = useMemo(() => Object.fromEntries((data?.places || []).map((p) => [p.key, p])), [data]);
 
@@ -831,96 +850,86 @@ export default function RealChinese() {
     setParams({ place: key }, { replace: true });
     if (narrow) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
+  const close = () => setParams({}, { replace: true });
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading>{t("world.loading")}</Loading></Layout>;
 
-  const selected = byKey[selectedKey] || byKey[data.current];
+  const selected = byKey[selectedKey] || null;
   const pp = data.passport;
   const names = Object.fromEntries(data.places.map((p) => [p.key, t(`world.place.${p.key}.name`)]));
   const W = data.map?.w || 100;
   const H = data.map?.h || 70;
   const order = data.map?.districts || [...new Set(data.places.map((p) => p.district))];
+  const rec = data.recommended;
+  const panel = selected && (
+    <PlacePanel p={selected} animal={animal} rec={rec} current={selected.key === data.current} onClose={close} />
+  );
   return (
-    <Layout>
-      <header className="page-head">
-        <div>
+    <Layout variant="world">
+      <header className="lw-head">
+        <div className="lw-head-title">
           <div className="page-eyebrow"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</div>
           <h1 className="h1">{t("world.title")}</h1>
-          <p className="sub">{t("world.subtitle")}</p>
         </div>
-        <Link to="/passport" className="kpi-row lw-passport" aria-label={t("world.passportLink")}>
-          <span className="kpi">
-            <span className="kpi-value">{pp.explored}/{pp.total}</span>
-            <span className="kpi-label">{t("world.explored")}</span>
-          </span>
-          <span className="kpi">
-            <span className="kpi-value">{pp.scenes_done}/{pp.scenes_total}</span>
-            <span className="kpi-label">{t("world.scenesDone")}</span>
-          </span>
-          <span className="kpi">
-            <span className="kpi-value">{pp.skills_shown}/{pp.skills_total}</span>
-            <span className="kpi-label">{t("world.skillsShown")}</span>
-          </span>
+        <Link to="/passport" className="lw-head-stats lw-passport" aria-label={t("world.passportLink")}>
+          <span className="lw-stat"><b>{pp.explored}/{pp.total}</b> {t("world.explored")}</span>
+          <span className="lw-stat"><b>{pp.scenes_done}/{pp.scenes_total}</b> {t("world.scenesDone")}</span>
+          <span className="lw-stat"><b>{pp.skills_shown}/{pp.skills_total}</b> {t("world.skillsShown")}</span>
         </Link>
       </header>
 
-      <div className="ws">
-        <div className="ws-main">
-          <CityMap data={data} W={W} H={H} order={order} names={names} selected={selected} animal={animal}
-                   onPick={pick} narrow={narrow} />
+      <CityMap data={data} W={W} H={H} order={order} names={names} selected={selected} animal={animal}
+               onPick={pick} narrow={narrow}
+               sheet={panel && <aside className="lw-sheet" aria-label={names[selected.key]}>{panel}</aside>}
+               overlay={!selected && <NextStopCard rec={rec} place={byKey[rec?.key]} onShow={pick} compact />} />
 
-          {narrow && (
-            <div className="lw-places" aria-label={t("world.allPlaces")}>
-              {order.map((d) => (
-                <details key={d} className="lw-district-list" open={selected?.district === d}>
-                  <summary className="side-title">
-                    {t(`world.district.${d}`)}
-                    <span className="sub"> · {data.places.filter((p) => p.district === d && p.status !== "locked").length}/{data.places.filter((p) => p.district === d).length}</span>
-                  </summary>
-                  <ul className="lw-list-plain">
-                    {data.places.filter((p) => p.district === d).map((p) => (
-                      <li key={p.key}>
-                        <button type="button" className={`lw-place-row is-${p.status}${p.key === selected?.key ? " is-selected" : ""}`}
-                                onClick={() => pick(p.key)}>
-                          <span aria-hidden="true" className="lw-place-icon">{p.icon}</span>
-                          <span className="lw-place-name">{t(`world.place.${p.key}.name`)}</span>
-                          {p.key === data.recommended?.key && <span className="badge accent">{t("world.state.recommended")}</span>}
-                          {p.new && <span className="badge accent">{t("world.state.new")}</span>}
-                          <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>
-                            {t(`world.status.${p.status}`)}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              ))}
-            </div>
-          )}
+      {narrow && panel && <div className="card side-card lw-panel-card" ref={panelRef}>{panel}</div>}
 
-          <div className="card">
-            <h2 className="h2">{t("world.companionTitle", { name: animal?.name || t("companionReact.fallbackName") })}</h2>
-            <CompanionMemory animal={animal} />
-          </div>
+      {narrow && (
+        <div className="lw-places" aria-label={t("world.allPlaces")}>
+          {order.map((d) => (
+            <details key={d} className="lw-district-list" open={selected?.district === d}>
+              <summary className="side-title">
+                {t(`world.district.${d}`)}
+                <span className="sub"> · {data.places.filter((p) => p.district === d && p.status !== "locked").length}/{data.places.filter((p) => p.district === d).length}</span>
+              </summary>
+              <ul className="lw-list-plain">
+                {data.places.filter((p) => p.district === d).map((p) => (
+                  <li key={p.key}>
+                    <button type="button" className={`lw-place-row is-${p.status}${p.key === selected?.key ? " is-selected" : ""}`}
+                            onClick={() => pick(p.key)}>
+                      <span aria-hidden="true" className="lw-place-icon">{p.icon}</span>
+                      <span className="lw-place-name">{t(`world.place.${p.key}.name`)}</span>
+                      {p.key === rec?.key && <span className="badge accent">{t("world.state.recommended")}</span>}
+                      {p.new && <span className="badge accent">{t("world.state.new")}</span>}
+                      <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>
+                        {t(`world.status.${p.status}`)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
         </div>
+      )}
 
-        <aside className="ws-side">
-          <div className="card side-card" ref={panelRef}>
-            {selected
-              ? <PlacePanel p={selected} animal={animal} rec={data.recommended} current={selected.key === data.current} />
-              : <Empty>{t("world.pickPlace")}</Empty>}
-          </div>
-          <NextStopCard rec={data.recommended} place={byKey[data.recommended?.key]} onShow={pick} />
-          <AdaptationCard ad={data.adaptation} tier={data.tier} />
-          <div className="card side-card">
-            <p className="side-title">{t("world.howTitle")}</p>
-            <p className="sub">{t("world.how", { count: data.open_by_words })}</p>
-            <Bar value={data.passport.open} max={data.passport.total} />
-            <p className="sub" style={{ marginTop: 8 }}>{t("world.openCount", { open: pp.open, total: pp.total })}</p>
-          </div>
-        </aside>
-      </div>
+      {/* Below the map: what travels with you and how the city works. */}
+      <section className="lw-below">
+        <div className="card lw-below-wide">
+          <h2 className="h2">{t("world.companionTitle", { name: animal?.name || t("companionReact.fallbackName") })}</h2>
+          <CompanionMemory animal={animal} />
+        </div>
+        <AdaptationCard ad={data.adaptation} tier={data.tier} />
+        <div className="card side-card">
+          <p className="side-title">{t("world.howTitle")}</p>
+          <p className="sub">{t("world.subtitle")}</p>
+          <p className="sub">{t("world.how", { count: data.open_by_words })}</p>
+          <Bar value={data.passport.open} max={data.passport.total} />
+          <p className="sub" style={{ marginTop: 8 }}>{t("world.openCount", { open: pp.open, total: pp.total })}</p>
+        </div>
+      </section>
     </Layout>
   );
 }
