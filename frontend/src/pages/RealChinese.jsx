@@ -112,7 +112,7 @@ function PlaceNode({ p, current, selected, animal, label, onPick }) {
       {current && animal?.slug && (
         <image
           href={`${import.meta.env.BASE_URL}animals/${animal.slug}.png`}
-          x={R - 1.2} y={-R - 3.4} width="4.2" height="4.2"
+          x={companionX(p)} y={-2.1} width="4.2" height="4.2"
           className="lw-companion"
           preserveAspectRatio="xMidYMid slice"
         />
@@ -121,14 +121,72 @@ function PlaceNode({ p, current, selected, animal, label, onPick }) {
   );
 }
 
-// Labels are drawn in their own layer above every node, so a node drawn
-// later can never cover an earlier node's name. Near the map's side edges a
+// The companion stands beside the current place's disc (labels sit above or
+// below discs, never beside them); near the right edge it stands on the left.
+function companionX(p) {
+  return p.x > 84 ? -R - 4.6 : R + 0.4;
+}
+
+const LABEL_SIZE = 1.9;
+
+// Rough rendered width of a label: CJK glyphs are a full em, Latin and
+// Cyrillic letters about 0.58 em in the UI font at this weight.
+function labelWidth(name) {
+  let w = 0;
+  for (const ch of name) w += /[⺀-鿿＀-￯]/.test(ch) ? LABEL_SIZE : LABEL_SIZE * 0.58;
+  return w;
+}
+
+const overlaps = (a, b) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2;
+
+// Where each place's name goes. Below the disc by default; above when below
+// would leave the canvas or run into another place's disc, the companion or
+// a name already placed -- names differ in length across EN/RU/TG/ZH, so this
+// is measured per locale instead of hand-tuned for one. Near the side edges a
 // label grows inward instead of running off the canvas.
-function PlaceLabel({ p, name }) {
+function layoutLabels(places, names, current) {
+  const discs = places.map((p) => ({ key: p.key, x1: p.x - R, x2: p.x + R, y1: p.y - R, y2: p.y + R }));
+  const cur = places.find((p) => p.key === current);
+  if (cur) {
+    const cx = cur.x + companionX(cur);
+    discs.push({ key: "", x1: cx, x2: cx + 4.2, y1: cur.y - 2.1, y2: cur.y + 2.1 });
+  }
+  const placed = [];
+  const out = {};
+  for (const p of places) {
+    const w = labelWidth(names[p.key]);
+    const edge = p.x < 16 ? "start" : p.x > 84 ? "end" : "middle";
+    const edgeX = edge === "start" ? p.x - R : edge === "end" ? p.x + R : p.x;
+    // Below, above, then beside the disc (right, left) when a long name has
+    // nowhere else to go.
+    const candidates = [
+      { x: edgeX, y: p.y + R + 2.6, anchor: edge },
+      { x: edgeX, y: p.y - R - 1.1, anchor: edge },
+      { x: p.x + R + 0.8, y: p.y + 0.6, anchor: "start" },
+      { x: p.x - R - 0.8, y: p.y + 0.6, anchor: "end" },
+    ];
+    const boxOf = (c) => {
+      const x1 = c.anchor === "start" ? c.x : c.anchor === "end" ? c.x - w : c.x - w / 2;
+      return { x1, x2: x1 + w, y1: c.y - LABEL_SIZE * 0.8, y2: c.y + LABEL_SIZE * 0.25 };
+    };
+    const inside = (b) => b.y1 >= 0 && b.y2 <= VIEW_H && b.x1 >= 0 && b.x2 <= VIEW_W;
+    const clear = (b) => !discs.some((d) => d.key !== p.key && overlaps(b, d)) && !placed.some((o) => overlaps(b, o));
+    // Nothing clear: an overlap is still better than a name cut off the map.
+    const at = candidates.find((c) => inside(boxOf(c)) && clear(boxOf(c)))
+      || candidates.find((c) => inside(boxOf(c))) || candidates[0];
+    placed.push(boxOf(at));
+    out[p.key] = at;
+  }
+  return out;
+}
+
+// Labels are drawn in their own layer above every node, so a node drawn
+// later can never cover an earlier node's name.
+function PlaceLabel({ p, name, at }) {
   return (
-    <text className={`lw-label is-${p.status}`} fontSize="1.9" y={p.y + R + 2.6}
-          x={p.x < 16 ? p.x - R : p.x > 84 ? p.x + R : p.x}
-          textAnchor={p.x < 16 ? "start" : p.x > 84 ? "end" : "middle"}>{name}</text>
+    <text className={`lw-label is-${p.status}`} fontSize={LABEL_SIZE} x={at.x} y={at.y} textAnchor={at.anchor}>
+      {name}
+    </text>
   );
 }
 
@@ -383,6 +441,11 @@ export default function RealChinese() {
 
   const selected = byKey[selectedKey] || byKey[data.current];
   const pp = data.passport;
+  // On a phone only the chosen place and the current one are named on the
+  // map (the district list below names the rest), so only those take space.
+  const shown = data.places.filter((p) => !narrow || p.key === selected?.key || p.key === data.current);
+  const names = Object.fromEntries(data.places.map((p) => [p.key, t(`world.place.${p.key}.name`)]));
+  const labels = layoutLabels(shown, names, data.current);
   return (
     <Layout>
       <header className="page-head">
@@ -441,9 +504,7 @@ export default function RealChinese() {
                   onPick={pick}
                 />
               ))}
-              {data.places
-                .filter((p) => !narrow || p.key === selected?.key || p.key === data.current)
-                .map((p) => <PlaceLabel key={p.key} p={p} name={t(`world.place.${p.key}.name`)} />)}
+              {shown.map((p) => <PlaceLabel key={p.key} p={p} name={names[p.key]} at={labels[p.key]} />)}
             </svg>
             <div className="lw-legend sub">
               <span><i className="lw-dot is-mastered" /> {t("world.status.mastered")}</span>
