@@ -107,7 +107,9 @@ function PlaceNode({ p, current, selected, recommended, animal, label, onPick, W
       onClick={() => onPick(p.key)}
       onPointerEnter={(e) => e.pointerType === "mouse" && onHover?.(p.key)}
       onPointerLeave={() => onHover?.(null)}
-      onFocus={() => onFocusPlace?.(p)}
+      // A mouse press focuses the node too; only keyboard focus (Tab) should
+      // move the map, or the place slides out from under a click.
+      onFocus={(e) => onFocusPlace?.(p, e.currentTarget.matches(":focus-visible"))}
       onBlur={() => onHover?.(null)}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -721,7 +723,11 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
       if (!(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       const u = toUnits(e.clientX, e.clientY);
-      zoomAt(Math.exp(-e.deltaY * 0.0022), u.x, u.y);
+      // Firefox reports a mouse wheel in lines (deltaMode 1, ~3 a notch)
+      // where Chrome reports pixels (~100): measure both in pixels, or a
+      // notch barely zooms in Firefox.
+      const px = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? size.h || 800 : 1);
+      zoomAt(Math.exp(-px * 0.0022), u.x, u.y);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -791,7 +797,12 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
   };
 
   // A place reached with Tab that is off screen comes into view.
-  const onFocusPlace = (p) => {
+  const onFocusPlace = (p, keyboard) => {
+    // A click focuses the place as well. Panning then would slide it out
+    // from under the pointer between press and release, and the browser
+    // sends the click to the map behind it -- Firefox lost those clicks on
+    // places near the edge. Only Tab-focus brings a place into view.
+    if (!keyboard) return;
     setHover(p.key);
     const cur = viewRef.current;
     const w = W / cur.k;
@@ -985,6 +996,8 @@ export default function RealChinese() {
                overlay={!selected && <NextStopCard rec={rec} place={byKey[rec?.key]} onShow={pick} compact />} />
 
       {narrow && panel && <BottomSheet key={selected.key} label={names[selected.key]} onClose={close}>{panel}</BottomSheet>}
+      {/* Room at the end of the page so nothing hides behind the sheet. */}
+      {narrow && panel && <div className="lw-sheet-spacer" aria-hidden="true" />}
 
       {narrow && (
         <div className="lw-places" aria-label={t("world.allPlaces")}>

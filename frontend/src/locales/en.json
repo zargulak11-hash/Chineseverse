@@ -1049,7 +1049,8 @@
       "grammar": "Grammar"
     },
     "focusTip": "Focus tip: {{skill}} was your softest spot this time, and that's exactly what {{name}} would practise with you next.",
-    "focusTipDefault": "Focus tip: {{skill}} was your softest spot this time, and that's exactly what your companion would practise with you next."
+    "focusTipDefault": "Focus tip: {{skill}} was your softest spot this time, and that's exactly what your companion would practise with you next.",
+    "micUnsupportedSkip": "Saying it aloud needs speech recognition, which this browser doesn't have (Chrome, Edge and Safari do). Your round carries on without it."
   },
   "ui": {
     "heatmapLess": "Less",

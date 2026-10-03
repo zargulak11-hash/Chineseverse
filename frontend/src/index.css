@@ -1284,8 +1284,9 @@ select.input {
 }
 .lw-grip span { width: 44px; height: 5px; border-radius: var(--radius-full); background: var(--border-strong); }
 .lw-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-/* Space under the page so its end isn't hidden behind the sheet. */
-.page-world:has(.lw-bottomsheet) { padding-bottom: 300px; }
+/* Space under the page so its end isn't hidden behind the sheet (an
+   element, not :has() -- older Firefox has no :has()). */
+.lw-sheet-spacer { height: 280px; }
 @media (max-width: 1080px) {
   .lw-below-wide { grid-column: auto; }
 }

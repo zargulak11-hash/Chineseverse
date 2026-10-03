@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 import Icon from "./Icon.jsx";
-import MicRecorder from "./MicRecorder.jsx";
+import MicRecorder, { micSupported } from "./MicRecorder.jsx";
 
 // Pieces Practice.jsx adds for Real Chinese scenes and One Sentence lessons.
 // Everything shown is what the server rendered for the stored round
@@ -125,10 +125,15 @@ export function SpeakLine({ sessionId, index, text, onSpoken }) {
     <div className="speak-line" aria-live="polite">
       <p className="side-title">{t("realLife.sayIt")}</p>
       <div className="row" style={{ gap: 12, margin: 0, alignItems: "center" }}>
-        <MicRecorder onTranscript={send} disabled={busy || done} />
+        {/* Speaking is graded from what the browser heard, so there is no
+            typed stand-in: without speech recognition the round simply
+            goes on without this optional step. */}
+        {micSupported && <MicRecorder onTranscript={send} disabled={busy || done} />}
         <div style={{ minWidth: 0 }}>
           <span className="scene-line-zh" lang="zh-CN">{text}</span>
-          <div className="sub">{busy ? t("realLife.grading") : t("realLife.sayItHint")}</div>
+          <div className="sub">
+            {!micSupported ? t("voice.micUnsupportedSkip") : busy ? t("realLife.grading") : t("realLife.sayItHint")}
+          </div>
         </div>
       </div>
       {result && (

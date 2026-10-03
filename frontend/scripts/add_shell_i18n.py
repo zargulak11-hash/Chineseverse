@@ -13,6 +13,11 @@ def L(en, ru, tg, zh):
 
 
 S = {
+    "voice.micUnsupportedSkip": L(
+        "Saying it aloud needs speech recognition, which this browser doesn't have (Chrome, Edge and Safari do). Your round carries on without it.",
+        "Чтобы сказать это вслух, нужно распознавание речи — в этом браузере его нет (есть в Chrome, Edge и Safari). Раунд продолжится без этого шага.",
+        "Барои баланд гуфтан шинохти нутқ лозим аст, ки дар ин браузер нест (дар Chrome, Edge ва Safari ҳаст). Давр бе ин қадам идома меёбад.",
+        "大声说出来需要语音识别，这个浏览器没有（Chrome、Edge和Safari有）。本轮会跳过这一步继续。"),
     "nav.toLanding": L("ChineseVerse — main page", "ChineseVerse — главная страница",
                        "ChineseVerse — саҳифаи асосӣ", "ChineseVerse——首页"),
 }

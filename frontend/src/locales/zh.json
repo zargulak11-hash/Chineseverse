@@ -1047,7 +1047,8 @@
       "grammar": "语法"
     },
     "focusTip": "重点提示：这次「{{skill}}」最薄弱，{{name}}接下来会和你重点练习这一项。",
-    "focusTipDefault": "重点提示：这次「{{skill}}」最薄弱，你的伙伴接下来会和你重点练习这一项。"
+    "focusTipDefault": "重点提示：这次「{{skill}}」最薄弱，你的伙伴接下来会和你重点练习这一项。",
+    "micUnsupportedSkip": "大声说出来需要语音识别，这个浏览器没有（Chrome、Edge和Safari有）。本轮会跳过这一步继续。"
   },
   "ui": {
     "heatmapLess": "少",

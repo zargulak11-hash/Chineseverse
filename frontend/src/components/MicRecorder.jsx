@@ -7,6 +7,11 @@ const SpeechRecognitionImpl =
     ? window.SpeechRecognition || window.webkitSpeechRecognition
     : null;
 
+// Whether this browser can turn speech into text at all (Chrome, Edge,
+// Safari: yes; Firefox: no Web Speech recognition). Callers without a typed
+// alternative use it to say so instead of showing a dead mic.
+export const micSupported = Boolean(SpeechRecognitionImpl);
+
 // Real microphone capture: uses the browser's own speech recognizer (Web
 // Speech API) to turn spoken Chinese into text, then hands that text to the
 // caller exactly like typed input. No audio ever leaves the browser — only
