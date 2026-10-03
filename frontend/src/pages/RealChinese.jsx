@@ -335,6 +335,38 @@ function PlacePanel({ p, animal, onClose, rec, current }) {
       {rec?.key === p.key && <p className="sub lw-rec-why">{recommendReason(t, rec)}</p>}
       <p className="sub" style={{ marginTop: 8 }}>{t(`world.place.${p.key}.desc`)}</p>
 
+      {p.status !== "locked" && (
+        <>
+          <div className="lw-actions">
+            {p.scene && (
+              <Link to={`/practice?source=scene&scene=${p.scene.slug}`} className="btn primary">
+                <Icon name="play" size={15} /> {p.scene.rounds ? t("world.sceneAgain") : t("world.sceneStart")}
+              </Link>
+            )}
+            {p.gateway && (
+              <Link to={p.gateway} className={`btn ${p.scene ? "" : "primary"}`}>
+                <Icon name="arrowRight" size={15} /> {t(`world.place.${p.key}.enter`)}
+              </Link>
+            )}
+            {!p.scene && !p.gateway && p.topics.length > 0 && (
+              <Link to={`/sentence?text=${encodeURIComponent(p.topics[0].sentence)}`} className="btn primary">
+                <Icon name="sparkles" size={15} /> {t("world.learnHere")}
+              </Link>
+            )}
+            {p.scene && (
+              <Link to={`/real-chinese/${p.scene.slug}`} className="btn small ghost">{t("world.sceneDetails")}</Link>
+            )}
+          </div>
+          {p.scene && (
+            <p className="sub" style={{ marginTop: 8 }}>
+              {p.scene.rounds
+                ? t("world.sceneRecord", { best: Math.round(p.scene.best), count: p.scene.rounds })
+                : t("world.sceneNew", { count: p.scene.exchanges })}
+            </p>
+          )}
+        </>
+      )}
+
       <div className={`companion-reaction mood-${MOOD[p.status]} lw-companion-line`}>
         {animal?.slug && <CompanionFigure slug={animal.slug} mood={MOOD[p.status]} size={56} />}
         <p className="cr-line" style={{ margin: 0 }}>{companionLine(t, p)}</p>
@@ -363,29 +395,6 @@ function PlacePanel({ p, animal, onClose, rec, current }) {
       ) : (
         <>
           <Greeting g={p.greeting} onWord={setWord} picked={word} />
-
-          <div className="lw-actions">
-            {p.scene && (
-              <Link to={`/practice?source=scene&scene=${p.scene.slug}`} className="btn primary">
-                <Icon name="play" size={15} /> {p.scene.rounds ? t("world.sceneAgain") : t("world.sceneStart")}
-              </Link>
-            )}
-            {p.gateway && (
-              <Link to={p.gateway} className="btn primary">
-                <Icon name="arrowRight" size={15} /> {t(`world.place.${p.key}.enter`)}
-              </Link>
-            )}
-            {p.scene && (
-              <Link to={`/real-chinese/${p.scene.slug}`} className="btn small ghost">{t("world.sceneDetails")}</Link>
-            )}
-          </div>
-          {p.scene && (
-            <p className="sub" style={{ marginTop: 8 }}>
-              {p.scene.rounds
-                ? t("world.sceneRecord", { best: Math.round(p.scene.best), count: p.scene.rounds })
-                : t("world.sceneNew", { count: p.scene.exchanges })}
-            </p>
-          )}
 
           {p.talks.length > 0 && (
             <div className="lw-section">
@@ -478,6 +487,39 @@ function PlacePanel({ p, animal, onClose, rec, current }) {
   );
 }
 
+// On a phone the chosen place's details are a bottom sheet: a peek (name,
+// state, the main action) that drags or taps open to most of the screen,
+// and down to close. The map stays visible and usable above it.
+function BottomSheet({ children, label, onClose }) {
+  const { t } = useTranslation();
+  const [full, setFull] = useState(false);
+  const drag = useRef(null);
+  const [dy, setDy] = useState(0);
+  const end = () => {
+    if (drag.current === null) return;
+    if (dy > 70) {
+      if (full) setFull(false);
+      else onClose();
+    } else if (dy < -50) setFull(true);
+    drag.current = null;
+    setDy(0);
+  };
+  return (
+    <aside className={`lw-bottomsheet${full ? " is-full" : ""}`} aria-label={label}
+           style={dy ? { transform: `translateY(${Math.max(dy, full ? 0 : -40)}px)`, transition: "none" } : undefined}>
+      <button type="button" className="lw-grip" aria-expanded={full}
+              aria-label={full ? t("world.sheet.collapse") : t("world.sheet.expand")}
+              onClick={() => setFull((f) => !f)}
+              onTouchStart={(e) => { drag.current = e.touches[0].clientY; }}
+              onTouchMove={(e) => drag.current !== null && setDy(e.touches[0].clientY - drag.current)}
+              onTouchEnd={end} onTouchCancel={end}>
+        <span aria-hidden="true" />
+      </button>
+      <div className="lw-bottomsheet-body">{children}</div>
+    </aside>
+  );
+}
+
 function AdaptationCard({ ad, tier }) {
   const { t } = useTranslation();
   return (
@@ -508,14 +550,19 @@ function fitK(W, H, aspect) {
   return Math.min(1, W / (H * aspect));
 }
 
-function clampView(v, W, H, aspect) {
+// `pad` (canvas units) lets the view run past the city's right/bottom edge
+// by as much as a details panel covers there, so a place on that edge can
+// still be brought out from under the panel.
+function clampView(v, W, H, aspect, pad = { r: 0, b: 0 }) {
   const k = Math.min(K_MAX, Math.max(fitK(W, H, aspect), v.k));
   const vw = W / k;
   const vh = vw / aspect;
+  const w = W + pad.r;
+  const h = H + pad.b;
   return {
     k,
-    cx: vw >= W ? W / 2 : Math.min(W - vw / 2, Math.max(vw / 2, v.cx)),
-    cy: vh >= H ? H / 2 : Math.min(H - vh / 2, Math.max(vh / 2, v.cy)),
+    cx: vw >= w ? w / 2 : Math.min(w - vw / 2, Math.max(vw / 2, v.cx)),
+    cy: vh >= h ? h / 2 : Math.min(h - vh / 2, Math.max(vh / 2, v.cy)),
   };
 }
 
@@ -564,8 +611,11 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
   // The details panel covers the right of the map on a desktop; a place
   // flown to is centred in the part left uncovered.
   const sheetPx = sheet && !narrow && size.w ? Math.min(400, size.w * 0.4) + 16 : 0;
+  // ... and on a phone the bottom sheet's peek covers the bottom of the map.
+  const sheetPy = sheet && narrow ? 240 : 0;
   const [hover, setHover] = useState(null);
-  const v = clampView(view, W, H, aspect);
+  const perPx = size.w ? W / Math.max(view.k, fitK(W, H, aspect)) / size.w : 0;
+  const v = clampView(view, W, H, aspect, { r: sheetPx * perPx, b: Math.min(sheetPy, size.h * 0.45) * perPx });
   const viewRef = useRef(v);
   viewRef.current = v;
   const vw = W / v.k;
@@ -613,7 +663,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow, s
     const p = byKey[selKey];
     if (!p) return;
     const k = Math.max(viewRef.current.k, home);
-    flyTo({ cx: p.x + (sheetPx / 2) * (W / k / (size.w || 1)), cy: p.y, k });
+    const unit = W / k / (size.w || 1);
+    flyTo({ cx: p.x + (sheetPx / 2) * unit, cy: p.y + (Math.min(sheetPy, size.h * 0.45) / 2) * unit, k });
   }, [selKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Zoom by a factor around a canvas point that stays where it is on screen.
@@ -840,7 +891,6 @@ export default function RealChinese() {
   const { data, error } = useApi("/real-life/world");
   const [params, setParams] = useSearchParams();
   const narrow = useNarrow();
-  const panelRef = useRef(null);
   // Map first: details open only for a place the learner chose (?place=).
   const selectedKey = params.get("place");
 
@@ -848,9 +898,15 @@ export default function RealChinese() {
 
   function pick(key) {
     setParams({ place: key }, { replace: true });
-    if (narrow) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   }
   const close = () => setParams({}, { replace: true });
+  const open = Boolean(selectedKey);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => e.key === "Escape" && setParams({}, { replace: true });
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, setParams]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading>{t("world.loading")}</Loading></Layout>;
@@ -884,7 +940,7 @@ export default function RealChinese() {
                sheet={panel && <aside className="lw-sheet" aria-label={names[selected.key]}>{panel}</aside>}
                overlay={!selected && <NextStopCard rec={rec} place={byKey[rec?.key]} onShow={pick} compact />} />
 
-      {narrow && panel && <div className="card side-card lw-panel-card" ref={panelRef}>{panel}</div>}
+      {narrow && panel && <BottomSheet key={selected.key} label={names[selected.key]} onClose={close}>{panel}</BottomSheet>}
 
       {narrow && (
         <div className="lw-places" aria-label={t("world.allPlaces")}>

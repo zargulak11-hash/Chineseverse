@@ -1193,12 +1193,56 @@ select.input {
   align-items: start;
 }
 .lw-below-wide { grid-column: span 2; }
-.lw-panel-card { margin-top: var(--space-4); }
+/* Phone: the chosen place as a bottom sheet over the map (z 50: over the
+   topbar's 40, under popovers' 60). A peek shows the name, state and main
+   action; .is-full opens it to most of the screen. */
+.lw-bottomsheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  transition: max-height var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+  animation: fadeInUp var(--dur-base) var(--ease-out) both;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.lw-bottomsheet.is-full { max-height: 82dvh; }
+.lw-bottomsheet-body { overflow-y: auto; overscroll-behavior: contain; padding: 0 var(--space-4) var(--space-5); }
+.lw-bottomsheet:not(.is-full) .lw-bottomsheet-body { overflow: hidden; }
+.lw-grip {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 28px;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+.lw-grip span { width: 44px; height: 5px; border-radius: var(--radius-full); background: var(--border-strong); }
+.lw-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Space under the page so its end isn't hidden behind the sheet. */
+.page-world:has(.lw-bottomsheet) { padding-bottom: 300px; }
 @media (max-width: 1080px) {
   .lw-below-wide { grid-column: auto; }
 }
 @media (max-width: 720px) {
   .page.page-world { padding: var(--space-3) var(--space-3) var(--space-7); }
+}
+@media (max-width: 640px) {
+  /* The next stop shrinks to a one-line chip so the city stays in view. */
+  .lw-nextstop { width: auto; max-width: calc(100% - 72px); padding: var(--space-2) var(--space-3); }
+  .lw-nextstop .sub, .lw-nextstop .side-title { display: none; }
+  .lw-nextstop .row { gap: var(--space-2) !important; }
+  .lw-nextstop .btn { margin-top: var(--space-2); }
 }
 
 /* ---------- Живой китайский: the living world map (RealChinese.jsx) ----------
