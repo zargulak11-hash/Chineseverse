@@ -78,7 +78,11 @@ def evidence(db: Session, user: models.User) -> dict:
     known = (db.query(models.UserVocabulary.id)
              .filter(models.UserVocabulary.user_id == user.id,
                      models.UserVocabulary.status.in_(("reviewing", "mastered"))).count())
-    return {"best": best, "voice": voice, "lessons": lessons, "known_words": known, "any": bool(done) or voice}
+    from app.services import stories
+
+    books = len(stories.read_slugs(db, user))
+    return {"best": best, "voice": voice, "lessons": lessons, "known_words": known, "any": bool(done) or voice,
+            "books": books}
 
 
 def _step_done(key: str, ev: dict) -> bool:
@@ -96,7 +100,8 @@ def _step_done(key: str, ev: dict) -> bool:
     if key == "speak":
         return ev["voice"]
     if key == "story":
-        return "story" in best
+        # A story round, or a book read to its end.
+        return "story" in best or ev["books"] > 0
     if key == "review":
         return "review" in best
     return False
@@ -141,6 +146,7 @@ def journey(db: Session, user: models.User) -> dict:
         nxt = {"kind": "stories", "key": "stories", "to": "/stories"}
 
     # HSK 1-9 as stages, with the learner's real progress in each.
+    from app.services import books as books_lib
     from app.services import stories as stories_svc
 
     summaries = {s["level"]: s for s in lesson_path.level_summaries(state)}
@@ -148,7 +154,7 @@ def journey(db: Session, user: models.User) -> dict:
     levels = []
     for lvl in range(1, 10):
         s = summaries.get(lvl, {})
-        lib = [st for st in stories_svc.STORIES if st["level"] == lvl]
+        lib = [b for b in books_lib.all_books() if b["level"] == lvl]
         levels.append({
             "level": lvl, "stage": STAGE_OF[lvl],
             "lessons_done": s.get("completed", 0), "lessons_total": s.get("total", 0),

@@ -77,6 +77,7 @@ class User(Base):
     practice_sessions = relationship("PracticeSession", back_populates="user", cascade="all, delete-orphan")
     exam_attempts = relationship("HSKExamAttempt", back_populates="user", cascade="all, delete-orphan")
     trace_attempts = relationship("HanziTraceAttempt", back_populates="user", cascade="all, delete-orphan")
+    story_progress = relationship("StoryProgress", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -757,6 +758,54 @@ class HSKExamAttempt(Base):
     last_seen_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="exam_attempts")
+
+
+class StoryProgress(Base):
+    """One learner's reading of one Chinese Stories book (services/stories.py).
+
+    The book itself is a content file (seed_content/books), keyed by slug;
+    this row is only what the learner really did with it: where they are
+    (chapter/position -- the bookmark "Continue reading" returns to), which
+    chapters they finished, and counters of real help they asked for while
+    reading (sentences explained, listening, words looked up). Created by
+    the first reading action, never by opening the library."""
+
+    __tablename__ = "story_progress"
+    __table_args__ = (UniqueConstraint("user_id", "slug", name="uq_story_progress"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    slug = Column(String(60), nullable=False, index=True)
+    chapter = Column(Integer, nullable=False, default=0)      # current chapter, 0-based
+    position = Column(Integer, nullable=False, default=0)     # sentence index inside it
+    chapters_done = Column(JSON, nullable=False, default=list)  # 0-based chapter indexes
+    explained = Column(Integer, nullable=False, default=0)
+    listened = Column(Integer, nullable=False, default=0)
+    looked_up = Column(JSON, nullable=False, default=dict)    # {word_id: times}
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="story_progress")
+
+
+class AIExplanation(Base):
+    """A cached AI reading explanation of one Chinese text (services/stories.py).
+
+    Keyed by what the explanation depends on -- the text, the kind of help,
+    the learner's language and level band -- and nothing about the person,
+    so one learner's request can safely answer the next learner's identical
+    one without a second paid call."""
+
+    __tablename__ = "ai_explanations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(64), nullable=False, unique=True, index=True)
+    kind = Column(String(20), nullable=False)
+    locale = Column(String(5), nullable=False)
+    text = Column(Text, nullable=False)
+    payload = Column(JSON, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 class HanziTraceAttempt(Base):

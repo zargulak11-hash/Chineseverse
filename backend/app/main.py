@@ -64,6 +64,12 @@ async def lifespan(_app: FastAPI):
         # the DB was first seeded — e.g. seed_pet_teacher_cases — silently
         # never ran on existing databases.
         seed_all(db)
+    # The Chinese Stories library is content files; a malformed book stops
+    # the start here (with the file and place named) instead of failing a
+    # learner later.
+    from app.services import books
+
+    logging.getLogger("app").info("Story library: %d books.", len(books.all_books()))
     # Deliver notification emails earlier runs could not (including follows
     # made before SMTP was configured) and keep retrying failures, in a
     # background thread; does nothing when SMTP isn't configured.

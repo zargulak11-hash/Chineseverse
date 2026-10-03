@@ -378,6 +378,7 @@ def build_session(
     scene: str | None = None, sentence: str | None = None,
     case: str | None = None, env: str | None = None, stage: int | None = None,
     item: str | None = None, version: str | None = None, story: str | None = None,
+    chapter: int | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -437,7 +438,7 @@ def build_session(
             elif source == "internet":
                 questions = internet.build_questions(db, user, item or "", version, hsk_level, rng, translated)
             elif source == "story":
-                questions = stories.build_questions(db, user, story or "", hsk_level, rng, translated)
+                questions = stories.build_questions(db, user, story or "", hsk_level, rng, translated, chapter)
             else:
                 if stage is None:
                     stage = sound_world.stage_status(db, user)["recommended"]
@@ -1077,6 +1078,9 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             log_activity(db, user, "tones_practice")
         elif session.source == "story":
             log_activity(db, user, "story_read")
+            from app.services import stories
+
+            stories.round_finished(db, user, session)
         if session.lesson_id:
             # Imported here: lesson_path builds on this module.
             from app.services import lesson_path

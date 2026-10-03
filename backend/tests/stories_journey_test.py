@@ -16,8 +16,8 @@ from fastapi.testclient import TestClient  # noqa: E402
 from app import models  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
-from app.services import sentence as sent  # noqa: E402
-from app.services.stories_content import STORIES  # noqa: E402
+from app.services import books as books_lib  # noqa: E402
+from app.services import stories as stories_svc  # noqa: E402
 
 
 def expect(client, method, url, expected, **kwargs):
@@ -65,28 +65,26 @@ with TestClient(app) as client:
     expect(client, "get", "/api/journey", 401)
 
     # ---- content: every level, every translation, words within the level
+    BOOKS = books_lib.all_books()
     with SessionLocal() as db:
-        lv = {l.id: l.level for l in db.query(models.HSKLevel).all()}
-        assert sorted({s["level"] for s in STORIES}) == list(range(1, 10))
-        for st in STORIES:
-            assert all(st["title"].get(k) for k in ("zh", "en", "ru", "tg")), st["slug"]
-            assert all(st["summary"].get(k) for k in ("zh", "en", "ru", "tg")), st["slug"]
-            for s in st["sentences"]:
-                assert all(s.get(k) for k in ("zh", "en", "ru", "tg")), (st["slug"], s["zh"])
-            assert 0 <= st["say"] < len(st["sentences"])
-            for q in st["questions"]:
-                assert 0 <= q["answer"] < len(q["options"]) and len(q["options"]) == 3
-                if st["level"] <= 3:
-                    assert all((q["tr"] or {}).get(k) for k in ("en", "ru", "tg")), (st["slug"], q["q"])
-            if st["level"] <= 6:
-                above = {t["text"] for s in st["sentences"] for t in sent.segment(db, s["zh"])
-                         if t["word"] is not None and lv.get(t["word"].hsk_level_id, 9) > st["level"]}
-                cap = 2 if st["level"] <= 4 else 4
-                assert len(above) <= cap, (st["slug"], above)
-        sizes = [sum(len(s["zh"]) for s in st["sentences"]) for st in sorted(STORIES, key=lambda s: s["level"])]
-        assert sizes[0] < sizes[-1] and sizes[-1] > 3 * sizes[0], sizes
-    print(f"[PASS] {len(STORIES)} stories cover HSK 1-9; every sentence translated (EN/RU/TG); "
-          "beginner stories stay within their level; length grows with the level")
+        assert sorted({b["level"] for b in BOOKS}) == list(range(1, 10))
+        for b in BOOKS:
+            assert all(b["title"].get(k) for k in ("zh", "en", "ru", "tg")), b["slug"]
+            assert all(b["summary"].get(k) for k in ("zh", "en", "ru", "tg")), b["slug"]
+            for ch in b["chapters"]:
+                for s in ch["sentences"]:
+                    assert all(s.get(k) for k in ("zh", "en", "ru", "tg")), (b["slug"], s["zh"])
+                for q in ch["questions"]:
+                    assert 0 <= q["answer"] < len(q["options"])
+                    if b["level"] <= 3:
+                        assert all((q["tr"] or {}).get(k) for k in ("en", "ru", "tg")), (b["slug"], q["q"])
+            rep = stories_svc.vocabulary_report(db, b)
+            assert rep["ok"], (b["slug"], rep)
+        avg = {lvl: sum(b["characters"] for b in BOOKS if b["level"] == lvl) / sum(b["sentence_count"] for b in BOOKS if b["level"] == lvl)
+               for lvl in range(1, 10)}
+        assert avg[1] < avg[3] < avg[5] < avg[9] and avg[9] > 3 * avg[1], avg
+    print(f"[PASS] {len(BOOKS)} books cover HSK 1-9; every sentence translated (EN/RU/TG); "
+          "every book within its level's vocabulary; sentences grow with the level")
 
     # ---- a brand-new learner: the foundation, step 1, nothing claimed
     uid, h = register(client, "beginner")
@@ -97,14 +95,15 @@ with TestClient(app) as client:
     assert [s["status"] for s in j["foundation"]["steps"]] == ["current"] + ["todo"] * 7
     assert j["foundation"]["done"] == 0 and j["levels"][0]["status"] == "current"
     lib = expect(client, "get", "/api/stories", 200, headers=h)
-    status = {s["slug"]: s["status"] for s in lib["stories"]}
+    status = {s["slug"]: s["status"] for s in lib["books"]}
     assert status["my-family"] == "new" and status["rainy-day"] == "locked" and status["night-courier"] == "locked"
-    assert lib["recommended"] in ("my-family", "at-the-restaurant")
+    assert books_lib.get(lib["recommended"])["level"] == 1 and lib["continue"] is None
     assert count_rows(uid) == before, "reading the journey or the library must not write progress"
     print("[PASS] new learner: the foundation, step 1 'tones' is next, nothing done; only HSK 1 stories open")
 
     # ---- locked stories are refused by the reader AND the round
     expect(client, "get", "/api/stories/rainy-day", 403, headers=h)
+    expect(client, "get", "/api/stories/rainy-day/chapters/1", 403, headers=h)
     expect(client, "post", "/api/practice/sessions", 403, headers=h, json={"source": "story", "story": "rainy-day"})
     expect(client, "get", "/api/stories/no-such-story", 404, headers=h)
     print("[PASS] a story above the learner's level is refused by the reader and by the practice round (403)")
@@ -125,15 +124,19 @@ with TestClient(app) as client:
     assert j2["foundation"]["steps"][0]["status"] == "current", "a failed round must not complete a step"
     print("[PASS] a failed tones round leaves the step open")
 
-    # ---- the reader: pinyin, the learner's language, word states
+    # ---- the reader: Chinese with curriculum pinyin, words marked; translation only on request
     v = expect(client, "get", "/api/stories/my-family", 200, headers={**h, "X-Locale": "ru"})
-    assert v["support"]["pinyin"] == "on" and v["support"]["translation"] == "inline"
-    assert all(s["pinyin"] and s["tr"] for s in v["sentences"])
-    assert v["sentences"][0]["tr"] == "Меня зовут Сяомин."
-    assert v["counts"]["new"] > 0 and any(t.get("state") == "new" for t in v["sentences"][0]["tokens"])
+    assert v["support"]["pinyin"] == "on" and v["title"] == "Моя семья" and v["counts"]["new"] > 0
+    c = expect(client, "get", "/api/stories/my-family/chapters/1", 200, headers={**h, "X-Locale": "ru"})
+    sents = [s for p in c["paragraphs"] for s in p]
+    assert all(s["pinyin"] and "tr" not in s for s in sents), "no translation laid over the text"
+    assert any(t.get("state") == "new" for t in sents[0]["tokens"])
+    ex = expect(client, "post", "/api/stories/my-family/explain", 200, headers={**h, "X-Locale": "ru"},
+                json={"chapter": 1, "text": sents[0]["zh"], "focus": "translate"})
+    assert ex["translation"] == {"text": "Меня зовут Сяомин.", "source": "book"}
     vz = expect(client, "get", "/api/stories/my-family", 200, headers={**h, "X-Locale": "zh"})
-    assert all(s["tr"] is None for s in vz["sentences"]) and vz["title"] == "我的家"
-    print("[PASS] the reader: curriculum pinyin, Russian translations (none in the Chinese UI), words marked new")
+    assert vz["title"] == "我的家"
+    print("[PASS] the reader: curriculum pinyin and word states, no translation until asked; then the book's own (RU)")
 
     # ---- a story round: graded, recorded, the journey moves
     before = count_rows(uid)
@@ -143,7 +146,7 @@ with TestClient(app) as client:
     assert any(t in ("meaning_to_word", "word_to_meaning", "listen_to_word") for t in types), types
     assert done["score"] == 100.0
     lib = expect(client, "get", "/api/stories", 200, headers=h)
-    assert next(x for x in lib["stories"] if x["slug"] == "my-family")["status"] == "read"
+    assert next(x for x in lib["books"] if x["slug"] == "my-family")["status"] == "completed"
     j = expect(client, "get", "/api/journey", 200, headers=h)
     assert next(x for x in j["foundation"]["steps"] if x["key"] == "story")["status"] == "done"
     assert j["levels"][0]["stories_read"] == 1
@@ -170,17 +173,17 @@ with TestClient(app) as client:
     assert j3["level"] == 3 and j3["stage"] == "growing" and j3["foundation"]["past"]
     assert all(s["status"] == "past" for s in j3["foundation"]["steps"]), "past, never claimed as done"
     assert j3["next"]["kind"] in ("lesson", "review", "exam", "stories")
-    lib3 = {x["slug"]: x["status"] for x in expect(client, "get", "/api/stories", 200, headers=h3)["stories"]}
+    lib3 = {x["slug"]: x["status"] for x in expect(client, "get", "/api/stories", 200, headers=h3)["books"]}
     assert lib3["first-metro-ride"] == "new" and lib3["the-interview"] == "locked"
     print("[PASS] a learner at HSK 3 skips the foundation (shown as 'past', not 'done'); HSK 1-3 stories open, HSK 4 locked")
 
     # ---- HSK 7-9 is one band: all three advanced stories open at level 7
     uid7, h7 = register(client, "advanced7")
     set_level(uid7, 7)
-    lib7 = {x["slug"]: x["status"] for x in expect(client, "get", "/api/stories", 200, headers=h7)["stories"]}
+    lib7 = {x["slug"]: x["status"] for x in expect(client, "get", "/api/stories", 200, headers=h7)["books"]}
     assert all(lib7[k] == "new" for k in ("night-courier", "last-bookshop", "echoes-of-the-silk-road"))
     v9 = expect(client, "get", "/api/stories/echoes-of-the-silk-road", 200, headers=h7)
-    assert v9["support"] == {"pinyin": "off", "translation": "hidden", "rate": 1.0}
+    assert v9["support"] == {"pinyin": "off", "rate": 1.0}
     print("[PASS] at HSK 7 the 7-9 band's three stories open; HSK 9 support is minimal (no pinyin, translation on request)")
 
     print("ALL STORIES / JOURNEY TESTS PASSED")

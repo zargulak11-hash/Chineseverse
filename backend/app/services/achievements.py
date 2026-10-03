@@ -244,7 +244,7 @@ CATALOG: tuple[Rule, ...] = (
       "First Listen", "Understand Chinese by ear for the first time."),
     R("first_voice", "start", "🎙️", lambda f: f.voice, 1, "turns", "/real-chinese/talk/greet-grandma",
       "First Spoken Conversation", "Complete your first voice turn."),
-    R("first_story", "start", "📖", lambda f: f.rounds("story"), 1, "stories", "/stories",
+    R("first_story", "start", "📖", lambda f: max(f.rounds("story"), f.stories_read), 1, "stories", "/stories",
       "First Story", "Read your first Chinese story."),
     R("first_review", "start", "🔁", lambda f: f.rounds("review"), 1, "rounds", "/review",
       "First Review", "Finish your first review round."),

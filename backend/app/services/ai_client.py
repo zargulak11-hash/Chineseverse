@@ -553,6 +553,91 @@ def translate_sentence(text: str, locale: str) -> Optional[str]:
     return out
 
 
+EXPLAIN_LANGUAGE = {**TRANSLATE_LANGUAGE, "zh": "very simple Simplified Chinese"}
+# How much a reading explanation may assume, by the learner's HSK level.
+_EXPLAIN_DEPTH = (
+    (2, "The learner is a beginner (HSK 1-2): use very short, plain sentences, at most 2 grammar points, "
+        "no linguistic terms."),
+    (4, "The learner is lower-intermediate (HSK 3-4): explain clearly, at most 3 grammar points, "
+        "name a structure only with an example."),
+    (6, "The learner is upper-intermediate (HSK 5-6): you may name structures and explain nuance, "
+        "at most 4 points."),
+    (9, "The learner is advanced (HSK 7-9): explain register, connotation, set phrases, idioms and how the "
+        "sentence is built, at most 5 points."),
+)
+
+
+def explain_reading(text: str, locale: str, level: int, glossary: List[dict],
+                    grammar: List[str]) -> Optional[dict]:
+    """A learning explanation of one selected piece of Chinese from a story,
+    or None when no AI provider answers (the reader then shows the
+    curriculum's own word-by-word data, which is never invented).
+
+    The model is given the curriculum's meanings for the words it will
+    meet and told to rely on them: it explains the text in context -- what
+    it means, how it is built, what is hard -- and must not state HSK
+    levels, cite books or invent vocabulary. Its reply is validated field by
+    field; anything malformed is dropped rather than shown."""
+    language = EXPLAIN_LANGUAGE.get(locale)
+    if language is None or _active_provider() != "gemini":
+        return None
+    depth = next(d for top, d in _EXPLAIN_DEPTH if level <= top)
+    gloss = "\n".join(f"{g['text']} ({g.get('pinyin') or ''}): {g.get('meaning') or ''}" for g in glossary[:40])
+    system = (
+        "You are a Chinese reading tutor inside a language-learning app. Explain ONLY the selected Chinese text "
+        f"to the learner, in {language}. {depth} "
+        "Rely on the dictionary glosses provided for word meanings; never invent meanings, never mention HSK "
+        "levels, textbooks, sources or citations. If something is uncertain, leave it out. "
+        "Reply as JSON with exactly these keys: "
+        '"translation" (a natural translation of the selected text), '
+        '"meaning" (one or two sentences: what the text says in its context), '
+        '"points" (a list of {"title": short label, "body": explanation} about grammar, word usage or anything '
+        'difficult in this text), '
+        '"example" ({"zh": one new short Chinese sentence using the main point, "translation": its translation}, '
+        "or null)."
+        + (' For a Chinese-language learner interface, "translation" is null.' if locale == "zh" else "")
+    )
+    user = f"Selected text: {text}\nDictionary glosses:\n{gloss or '-'}"
+    if grammar:
+        user += "\nGrammar points the app recognises in it: " + "; ".join(grammar[:6])
+    try:
+        raw = _gemini_chat(
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            max_tokens=900, temperature=0.3, json_mode=True,
+        )
+        data = json.loads(raw)
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+
+    def clean(v, limit):
+        if not isinstance(v, str):
+            return None
+        v = v.strip()
+        if locale == "tg":
+            v = _tg_clean_mixed_script(v)
+        return v[:limit] or None
+
+    out = {"translation": None if locale == "zh" else clean(data.get("translation"), 600),
+           "meaning": clean(data.get("meaning"), 600), "points": [], "example": None}
+    if out["translation"] and _CJK_CHAR.search(out["translation"]):
+        out["translation"] = None
+    for p in (data.get("points") or [])[:5]:
+        if isinstance(p, dict):
+            title, body = clean(p.get("title"), 120), clean(p.get("body"), 700)
+            if title and body:
+                out["points"].append({"title": title, "body": body})
+    ex = data.get("example")
+    if isinstance(ex, dict):
+        zh = ex.get("zh") if isinstance(ex.get("zh"), str) else ""
+        if _CJK_CHAR.search(zh) and len(zh) <= 80:
+            out["example"] = {"zh": zh.strip(), "translation": None if locale == "zh" else clean(ex.get("translation"), 300)}
+    if not (out["meaning"] or out["points"] or out["translation"]):
+        return None
+    return out
+
+
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:
     """Graceful degradation when the live AI call fails mid-flight."""
     return _offline_evaluate(prompt, transcript, expected_keywords or [])

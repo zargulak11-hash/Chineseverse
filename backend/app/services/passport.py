@@ -359,9 +359,24 @@ def timeline(db: Session, user: models.User, sessions=None, locale: str = "en") 
         if good:
             add("sound_stage", good.completed_at, "/sound-world", stage=int(stage))
 
+    # Chinese Stories: the first story (a round or a book read to its end),
+    # how many books, and the first book finished at each HSK level.
+    from app.services import stories as stories_svc
+
     story = next((s for s in sessions if s.source == "story" and s.completed_at), None)
-    if story:
-        add("first_story", story.completed_at, "/stories")
+    finished = stories_svc.completed_books(db, user)
+    firsts = [w for w in ((story.completed_at if story else None), (finished[0][1] if finished else None)) if w]
+    if firsts:
+        add("first_story", min(firsts), "/stories")
+    for n in (5, 10, 25, 50):
+        if len(finished) >= n:
+            add("books_read", finished[n - 1][1], "/stories", count=n)
+    seen_levels: set[int] = set()
+    for book, when in finished:
+        lvl = book["level"]
+        if lvl >= 2 and lvl not in seen_levels:
+            seen_levels.add(lvl)
+            add("level_book", when, f"/stories/{book['slug']}", level=lvl, title=book["title"]["zh"])
     net = next((s for s in sessions if s.source == "internet" and s.completed_at), None)
     if net:
         add("first_internet", net.completed_at, "/internet")

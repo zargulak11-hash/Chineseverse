@@ -65,11 +65,12 @@ ZH = {
     "stale_area": "好久没练{area}了，我们去看看吧。",
     "weak_skill": "我们一起加强这个能力吧。",
     "passport_milestone": "你的中文护照上又多了一页！",
+    "reading_word": "你读故事时常常查“{w}”，我们复习一下吧！",
 }
 _AREA_ZH = {"vocab": "词汇", "hanzi": "汉字", "grammar": "语法"}
 PRIORITY = [
     "welcome_back", "passport_milestone", "word_milestone", "achievement", "lesson_completed", "mastered_hard", "streak",
-    "improving_listening", "confused_pair", "difficult_chars", "recent_mistakes", "mastered_recently",
+    "improving_listening", "confused_pair", "reading_word", "difficult_chars", "recent_mistakes", "mastered_recently",
     "reviews_done", "stale_area", "weak_skill", "new_learner",
 ]
 
@@ -331,6 +332,28 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
         weak = min(skills, key=lambda s: (s.mastery or 0, s.skill.code))
         if (weak.mastery or 0) < 30:
             out.append(_m("weak_skill", "encouraging", {"skill": weak.skill.code, "value": round(weak.mastery or 0, 1)}))
+
+    # --- a word they keep looking up while reading stories (and don't know yet)
+    looked: Counter = Counter()
+    for (counts,) in db.query(models.StoryProgress.looked_up).filter(models.StoryProgress.user_id == user.id):
+        for wid, n in (counts or {}).items():
+            if str(wid).isdigit():
+                looked[int(wid)] += int(n or 0)
+    often = [wid for wid, n in looked.most_common(10) if n >= 3]
+    if often:
+        known = {r.word_id for r in db.query(models.UserVocabulary).filter(
+            models.UserVocabulary.user_id == user.id, models.UserVocabulary.word_id.in_(often),
+            models.UserVocabulary.status.in_(("reviewing", "mastered")))}
+        wid = next((w for w in often if w not in known), None)
+        w = db.get(models.VocabularyWord, wid) if wid else None
+        if w is not None:
+            wtr = load_translations(db, "vocab_word", [str(w.id)], locale)
+            meaning = tr(wtr, w.id, "meanings", w.meanings)
+            out.append(_m("reading_word", "encouraging", {
+                "item": {"hanzi": w.simplified, "pinyin": w.pinyin,
+                         "meaning": w.meanings if (meaning or "").strip() == w.simplified else meaning},
+                "count": looked[wid], "word_id": w.id,
+            }, w=w.simplified))
 
     # --- the newest page of their Chinese Passport story (this week)
     from app.services.passport import timeline

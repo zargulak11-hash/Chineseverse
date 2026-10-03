@@ -33,6 +33,7 @@ class SessionCreate(BaseModel):
     version: str | None = Field(default=None, max_length=20)
     # source "story": a Chinese Stories slug (refused above the learner's level).
     story: str | None = Field(default=None, max_length=40)
+    chapter: int | None = Field(default=None, ge=1, le=200)  # the book's chapter (1-based)
 
 
 class SpeakPayload(BaseModel):
@@ -79,7 +80,7 @@ def create_session(
         hsk_level=payload.hsk_level, lesson_id=payload.lesson_id, size=payload.size, locale=locale,
         scene=payload.scene, sentence=payload.sentence,
         case=payload.case, env=payload.env, stage=payload.stage,
-        item=payload.item, version=payload.version, story=payload.story,
+        item=payload.item, version=payload.version, story=payload.story, chapter=payload.chapter,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.
