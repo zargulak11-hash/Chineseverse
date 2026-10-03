@@ -16,8 +16,12 @@ export default function Login() {
 
   function afterAuth(user) {
     setCurrentUser(user);
-    let dest = location.state?.from?.pathname;
+    // Back to exactly where the learner was sent from -- with its query, so
+    // e.g. /real-chinese?place=tea_house reopens that place, not just the page.
+    const from = location.state?.from;
+    let dest = from?.pathname;
     if (!dest || dest === "/login") dest = "/dashboard";
+    else dest += `${from.search || ""}${from.hash || ""}`;
     navigate(dest, { replace: true });
   }
 
