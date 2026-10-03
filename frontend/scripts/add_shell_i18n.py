@@ -13,6 +13,26 @@ def L(en, ru, tg, zh):
 
 
 S = {
+    "pages.conversation.turns": L("Turns", "Реплики", "Навбатҳо", "轮次"),
+    "pages.conversation.progressTitle": L("How far you are", "Как далеко вы продвинулись", "Чӣ қадар пеш рафтед", "进度"),
+    "pages.conversation.turnOf": L("Turn {{n}} of {{total}}", "Реплика {{n}} из {{total}}", "Навбати {{n}} аз {{total}}",
+                                   "第{{n}}轮，共{{total}}轮"),
+    "pages.conversation.keyWords": L("Words that help here", "Слова, которые здесь пригодятся",
+                                     "Калимаҳое, ки дар ин ҷо ба кор меоянд", "这里用得上的词"),
+    "pages.petTeacher.howTitle": L("How it works", "Как это работает", "Чӣ тавр кор мекунад", "怎么玩"),
+    "pages.petTeacher.how1": L("Your companion says a sentence with one real mistake in it.",
+                               "Компаньон говорит фразу с одной настоящей ошибкой.",
+                               "Ҳамроҳ ҷумлаеро бо як хатои воқеӣ мегӯяд.", "你的伙伴说一句带有一个真实错误的句子。"),
+    "pages.petTeacher.how2": L("Write the sentence correctly.", "Напишите фразу правильно.",
+                               "Ҷумларо дуруст нависед.", "把句子改写正确。"),
+    "pages.petTeacher.how3": L("Explain the rule in your own words — teaching it is how you keep it.",
+                               "Объясните правило своими словами — объясняя, вы его запоминаете.",
+                               "Қоидаро бо суханони худ шарҳ диҳед — омӯзонда, онро дар ёд нигоҳ медоред.",
+                               "用自己的话解释规则——教会别人，自己才记得牢。"),
+    "pages.publicProfile.pickList": L("Choose Followers or Following above to see the list.",
+                                      "Выберите «Подписчики» или «Подписки» выше, чтобы увидеть список.",
+                                      "Барои дидани рӯйхат дар боло «Обуначиён» ё «Обунаҳо»-ро интихоб кунед.",
+                                      "点击上方的“粉丝”或“关注”查看列表。"),
     "voice.micUnsupportedSkip": L(
         "Saying it aloud needs speech recognition, which this browser doesn't have (Chrome, Edge and Safari do). Your round carries on without it.",
         "Чтобы сказать это вслух, нужно распознавание речи — в этом браузере его нет (есть в Chrome, Edge и Safari). Раунд продолжится без этого шага.",

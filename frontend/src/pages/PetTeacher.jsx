@@ -52,12 +52,24 @@ export default function PetTeacher() {
 
   return (
     <Layout>
-      <h1 className="h1">{t("pages.petTeacher.title")}</h1>
-      <p className="sub">
-        {t("pages.petTeacher.subtitle", { name: animal ? animal.name : t("pages.petTeacher.yourCompanion") })}
-      </p>
+      <header className="page-head">
+        <div>
+          <h1 className="h1">{t("pages.petTeacher.title")}</h1>
+          <p className="sub">
+            {t("pages.petTeacher.subtitle", { name: animal ? animal.name : t("pages.petTeacher.yourCompanion") })}
+          </p>
+        </div>
+        <div className="kpi-row">
+          <div className="kpi">
+            <span className="kpi-value">{result?.taught_count ?? "—"}</span>
+            <span className="kpi-label">{t("pages.petTeacher.rulesTaught")}</span>
+          </div>
+        </div>
+      </header>
 
-      <div className="chat" style={{ marginTop: 18 }}>
+      <div className="ws">
+      <div className="ws-main">
+      <div className="card"><div className="chat">
         <div className="bubble npc">
           <span className="speaker" style={{ display: "flex", alignItems: "center", gap: 5 }}>
             {animal ? (
@@ -74,7 +86,7 @@ export default function PetTeacher() {
         {!result && (
           <div
             className="microw"
-            style={{ flexDirection: "column", alignItems: "stretch", maxWidth: 520, margin: "0 auto" }}
+            style={{ flexDirection: "column", alignItems: "stretch" }}
           >
             <div className="field">
               <label>{t("pages.petTeacher.yourCorrection")}</label>
@@ -144,11 +156,19 @@ export default function PetTeacher() {
               </div>
             </>
           ))}
+      </div></div>
       </div>
-
-      <p className="sub center" style={{ marginTop: 20 }}>
-        {t("pages.petTeacher.rulesTaught")}: <b>{result?.taught_count ?? "—"}</b>
-      </p>
+      <aside className="ws-side">
+        <div className="card side-card">
+          <p className="side-title">{t("pages.petTeacher.howTitle")}</p>
+          <ol className="scene-rules">
+            <li>{t("pages.petTeacher.how1")}</li>
+            <li>{t("pages.petTeacher.how2")}</li>
+            <li>{t("pages.petTeacher.how3")}</li>
+          </ol>
+        </div>
+      </aside>
+      </div>
     </Layout>
   );
 }

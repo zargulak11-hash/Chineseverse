@@ -68,9 +68,9 @@ export default function PublicProfile() {
 
   return (
     <Layout>
-      <div className="card" style={{ maxWidth: 520 }}>
-        <div className="row spread">
-          <div className="row" style={{ gap: 14 }}>
+      {/* The same header band as every page, the list below at full width. */}
+      <header className="page-head">
+          <div className="row" style={{ gap: 14, margin: 0 }}>
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt="" className="avatar-preview" style={{ width: 64, height: 64 }} />
             ) : (
@@ -85,43 +85,38 @@ export default function PublicProfile() {
               </p>
             </div>
           </div>
-          {!profile.is_self && (
-            <MotionButton
-              className={`btn${profile.is_following ? " ghost" : " primary"}`}
-              disabled={busy}
-              onClick={toggleFollow}
-            >
-              <Icon name={profile.is_following ? "check" : "userPlus"} size={14} />
-              {profile.is_following ? t("pages.community.following") : t("pages.community.follow")}
-            </MotionButton>
-          )}
-        </div>
-        {followError && (
-          <p className="sub" role="alert" style={{ color: "var(--bad)", margin: "10px 0 0" }}>{followError}</p>
-        )}
+          <div className="kpi-row" style={{ alignItems: "center" }}>
+            <button type="button" className={`kpi kpi-button${tab === "followers" ? " is-active" : ""}`}
+                    aria-pressed={tab === "followers"} onClick={() => setTab(tab === "followers" ? null : "followers")}>
+              <span className="kpi-value">{profile.followers_count}</span>
+              <span className="kpi-label">{t("pages.profile.followers")}</span>
+            </button>
+            <button type="button" className={`kpi kpi-button${tab === "following" ? " is-active" : ""}`}
+                    aria-pressed={tab === "following"} onClick={() => setTab(tab === "following" ? null : "following")}>
+              <span className="kpi-value">{profile.following_count}</span>
+              <span className="kpi-label">{t("pages.profile.following")}</span>
+            </button>
+            {!profile.is_self && (
+              <MotionButton
+                className={`btn${profile.is_following ? " ghost" : " primary"}`}
+                disabled={busy}
+                onClick={toggleFollow}
+              >
+                <Icon name={profile.is_following ? "check" : "userPlus"} size={14} />
+                {profile.is_following ? t("pages.community.following") : t("pages.community.follow")}
+              </MotionButton>
+            )}
+          </div>
+      </header>
+      {followError && (
+        <p className="sub" role="alert" style={{ color: "var(--bad)", margin: "10px 0 0" }}>{followError}</p>
+      )}
 
-        <div className="row" style={{ marginTop: 18, gap: 24 }}>
-          <button
-            type="button"
-            className="voice-feedback-text"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}
-            onClick={() => setTab(tab === "followers" ? null : "followers")}
-          >
-            <b style={{ fontSize: 18 }}>{profile.followers_count}</b>
-            <div className="sub" style={{ fontSize: 12 }}>{t("pages.profile.followers")}</div>
-          </button>
-          <button
-            type="button"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}
-            onClick={() => setTab(tab === "following" ? null : "following")}
-          >
-            <b style={{ fontSize: 18 }}>{profile.following_count}</b>
-            <div className="sub" style={{ fontSize: 12 }}>{t("pages.profile.following")}</div>
-          </button>
-        </div>
-
+      <div className="card" style={{ marginTop: 16 }}>
+        <p className="side-title">{tab === "following" ? t("pages.profile.following") : t("pages.profile.followers")}</p>
+        {!tab && <p className="sub">{t("pages.publicProfile.pickList")}</p>}
         {tab && (
-          <div className="col" style={{ marginTop: 14, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+          <div className="col" style={{ marginTop: 10 }}>
             {list === null && <Loading />}
             {list && list.length === 0 && <Empty>{t("pages.publicProfile.nobodyHere")}</Empty>}
             {list && list.map((u) => <FollowRow key={u.id} u={u} />)}

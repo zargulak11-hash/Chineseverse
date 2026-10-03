@@ -1028,6 +1028,22 @@ select.input {
   max-width: none !important;
   margin: var(--space-4) 0 0;
 }
+/* Onboarding: the step is a full-width card in the app's content area; the
+   question itself stays a readable column inside it. */
+.formcard.is-step {
+  max-width: none !important;
+  margin: var(--space-5) 0;
+}
+.formcard.is-step > * {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Buttons are inline, so auto margins don't move them: line them up with
+   the question column's left edge instead. */
+.formcard.is-step > .btn {
+  margin-left: max(0px, calc(50% - 320px));
+}
 
 .formerr {
   color: var(--bad);
@@ -1592,12 +1608,13 @@ a.lw-talk:focus-visible, .lw-topic-link:focus-visible, .lw-place-row:focus-visib
 }
 
 /* ---------- Chat ---------- */
+/* A chat takes the width of the card or column it is placed in; its
+   bubbles keep a readable measure (max-width below). */
 .chat {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-width: 720px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .bubble {
@@ -1940,9 +1957,9 @@ table.data td {
   justify-content: flex-end;
 }
 .duel-panel {
-  max-width: 620px;
-  margin: 0 auto;
+  width: 100%;
 }
+.duel-panel > * { max-width: 760px; margin-left: auto; margin-right: auto; }
 .duel-panel .h1 {
   margin-top: 6px;
 }
@@ -4178,9 +4195,18 @@ table.data td {
   color: var(--bad);
 }
 
+/* A full-width card; the result itself is a readable column inside it. */
 .exam-result {
-  max-width: 560px;
-  margin: 0 auto;
+  width: 100%;
+}
+/* A KPI tile that is also a toggle (public profile: followers/following). */
+.kpi.kpi-button { font: inherit; color: inherit; text-align: left; cursor: pointer; border: 1px solid transparent; }
+.kpi.kpi-button:hover, .kpi.kpi-button.is-active { border-color: var(--accent-border); }
+.kpi.kpi-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.exam-result > * {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .exam-score {
@@ -4406,7 +4432,7 @@ table.data td {
 .recent-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .recent-list li { display: flex; align-items: center; gap: var(--space-2); }
 .eco-card { overflow: hidden; }
-.eco-graph { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; }
+.eco-graph { display: block; width: 100%; max-width: 980px; height: auto; margin: 0 auto; }
 .eco-edge { stroke: var(--border-strong); stroke-width: 2; transition: stroke var(--dur-fast) var(--ease-out); }
 .eco-edge.is-lit { stroke: var(--accent); stroke-width: 3; }
 .eco-node { cursor: pointer; transition: opacity var(--dur-fast) var(--ease-out); }

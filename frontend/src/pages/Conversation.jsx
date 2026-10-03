@@ -5,7 +5,7 @@ import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
-import { Empty, Loading } from "../components/ui.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 
@@ -91,12 +91,17 @@ export default function Conversation() {
     setChosen(choice);
   }
 
+  // Workspace shape: the conversation in the main column, what it is about
+  // and how far along it is beside it -- not a narrow chat floating alone.
+  const turns = Object.keys(dialoguesByTurn).length;
+  const turnNo = Math.min(history.length, turns);
+  const keyWords = [...new Set(Object.values(dialoguesByTurn).flatMap((d) => d.expected_keywords || []))];
   return (
     <Layout>
       <Link to={backTo} className="sub">
         ← {sc.scenario_type === "case" ? t("pages.conversation.leaveCase") : t("pages.conversation.leaveConversation")}
       </Link>
-      <div className="row spread" style={{ marginTop: 10 }}>
+      <header className="page-head" style={{ marginTop: 10 }}>
         <div>
           <h1 className="h1">
             <Icon name={sc.is_case ? "search" : "chat"} size={20} style={{ verticalAlign: -3, marginRight: 6 }} />
@@ -104,11 +109,20 @@ export default function Conversation() {
           </h1>
           <p className="sub">{sc.description}</p>
         </div>
-        <span className="ilb">HSK {sc.min_hsk_level} · ★{sc.difficulty}</span>
-      </div>
+        <div className="kpi-row">
+          <div className="kpi"><span className="kpi-value">HSK {sc.min_hsk_level}</span><span className="kpi-label">★{sc.difficulty}</span></div>
+          <div className="kpi">
+            <span className="kpi-value">{done ? turns : turnNo}/{turns}</span>
+            <span className="kpi-label">{t("pages.conversation.turns")}</span>
+          </div>
+        </div>
+      </header>
+
+      <div className="ws">
+      <div className="ws-main">
 
       {done ? (
-        <div className="card center" style={{ marginTop: 20 }}>
+        <div className="card center">
           <div style={{ fontSize: 40 }}>🎉</div>
           <p>{t("pages.conversation.completed")}</p>
           <Link to={backTo}>
@@ -116,7 +130,7 @@ export default function Conversation() {
           </Link>
         </div>
       ) : (
-        <div className="chat" style={{ marginTop: 18 }}>
+        <div className="card"><div className="chat">
           {history.map((turn, i) => {
             const d = dialoguesByTurn[turn];
             if (!d) return null;
@@ -234,8 +248,25 @@ export default function Conversation() {
             );
           })}
           <div ref={scrollRef} />
-        </div>
+        </div></div>
       )}
+      </div>
+      <aside className="ws-side">
+        <div className="card side-card">
+          <p className="side-title">{t("pages.conversation.progressTitle")}</p>
+          <Bar value={done ? 100 : (turnNo / Math.max(1, turns)) * 100} />
+          <p className="sub" style={{ marginTop: 8 }}>{t("pages.conversation.turnOf", { n: done ? turns : turnNo, total: turns })}</p>
+        </div>
+        {keyWords.length > 0 && (
+          <div className="card side-card">
+            <p className="side-title">{t("pages.conversation.keyWords")}</p>
+            <div className="chip-row">
+              {keyWords.map((w) => <span key={w} className="badge" lang="zh-CN">{w}</span>)}
+            </div>
+          </div>
+        )}
+      </aside>
+      </div>
     </Layout>
   );
 }

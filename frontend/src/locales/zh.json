@@ -432,7 +432,11 @@
       "correctSentence": "正确的句子",
       "teachAnother": "教另一条规则",
       "tryAgain": "再试一次",
-      "rulesTaught": "已教授的规则数"
+      "rulesTaught": "已教授的规则数",
+      "howTitle": "怎么玩",
+      "how1": "你的伙伴说一句带有一个真实错误的句子。",
+      "how2": "把句子改写正确。",
+      "how3": "用自己的话解释规则——教会别人，自己才记得牢。"
     },
     "world": {
       "title": "中文世界",
@@ -598,7 +602,11 @@
       "checking": "检查中…",
       "speak": "开口说",
       "skipForNow": "暂时跳过",
-      "hint": "提示"
+      "hint": "提示",
+      "turns": "轮次",
+      "progressTitle": "进度",
+      "turnOf": "第{{n}}轮，共{{total}}轮",
+      "keyWords": "这里用得上的词"
     },
     "caseSolve": {
       "opening": "正在打开卷宗…",
@@ -626,7 +634,8 @@
       "followError": "关注操作失败，请重试。"
     },
     "publicProfile": {
-      "nobodyHere": "这里还没有人。"
+      "nobodyHere": "这里还没有人。",
+      "pickList": "点击上方的“粉丝”或“关注”查看列表。"
     },
     "grammar": {
       "title": "语法",

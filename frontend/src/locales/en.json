@@ -433,7 +433,11 @@
       "correctSentence": "Correct sentence",
       "teachAnother": "Teach another rule",
       "tryAgain": "Try again",
-      "rulesTaught": "Rules taught so far"
+      "rulesTaught": "Rules taught so far",
+      "howTitle": "How it works",
+      "how1": "Your companion says a sentence with one real mistake in it.",
+      "how2": "Write the sentence correctly.",
+      "how3": "Explain the rule in your own words — teaching it is how you keep it."
     },
     "world": {
       "title": "Chinese World",
@@ -599,7 +603,11 @@
       "checking": "Checking…",
       "speak": "Speak",
       "skipForNow": "Skip for now",
-      "hint": "hint"
+      "hint": "hint",
+      "turns": "Turns",
+      "progressTitle": "How far you are",
+      "turnOf": "Turn {{n}} of {{total}}",
+      "keyWords": "Words that help here"
     },
     "caseSolve": {
       "opening": "Opening the file…",
@@ -627,7 +635,8 @@
       "followError": "Couldn't update follow. Please try again."
     },
     "publicProfile": {
-      "nobodyHere": "Nobody here yet."
+      "nobodyHere": "Nobody here yet.",
+      "pickList": "Choose Followers or Following above to see the list."
     },
     "grammar": {
       "title": "Grammar",

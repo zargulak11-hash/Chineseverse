@@ -144,7 +144,7 @@ export default function Onboarding() {
 
   return (
     <Layout>
-      <div className="card formcard" style={{ maxWidth: 560, margin: "24px auto" }}>
+      <div className="card formcard is-step">
         {error && <p className="formerr">{error}</p>}
 
         {step === "motivation" && (
