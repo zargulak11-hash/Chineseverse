@@ -1704,5 +1704,195 @@
     "how": "每项能力都根据你的答题和学习记录判断，从不看积分。答题少于{{min}}次时会直接说明，而不是猜测。",
     "fromDna": "在中文护照里查看依据",
     "totals_other": "目前：{{count}}轮练习中共{{answers}}次答题。"
+  },
+  "world": {
+    "title": "你的中文城市",
+    "subtitle": "每个地方都是使用中文的真实场景。随着你的学习，地方会开放、点亮、热闹起来——城市因你的成长而成长。",
+    "loading": "正在走进城市……",
+    "mapLabel": "你的中文城市地图",
+    "passportLink": "打开中文护照",
+    "explored": "已探索地点",
+    "scenesDone": "已完成场景",
+    "skillsShown": "已证明能力",
+    "allPlaces": "所有地点",
+    "pickPlace": "点击地图上的地点。",
+    "companionTitle": "{{name}}和你一起旅行",
+    "district": {
+      "home": "家附近",
+      "centre": "市中心",
+      "campus": "校园和工作",
+      "travel": "出行"
+    },
+    "status": {
+      "locked": "未开放",
+      "open": "已开放",
+      "explored": "已探索",
+      "mastered": "已掌握"
+    },
+    "wordsKnown": "已会{{known}}/{{total}}个词",
+    "companion": {
+      "locked": "这里在HSK {{level}}级开放——如果你真正学会{{words}}这些词，会更早开放。",
+      "fresh": "新地方——我们一起去看看吧。",
+      "freshTopics": "我们还没来过这里。你学过的词已经点亮了{{total}}个话题中的{{lit}}个。",
+      "openedByWords": "你学会了这里的词，提前打开了这个地方。我们来用用吧！",
+      "explored": "我们来过这里——你最好的成绩是{{score}}%。再来一次就能掌握了？",
+      "exploredOther": "我们来过这里——还有更多可以发现。",
+      "mastered": "你已经掌握了这里——{{score}}%，大部分词也会了。我为你骄傲！"
+    },
+    "toOpen": "怎样打开",
+    "toOpenText": "达到HSK {{level}}级，或者真正学会下面几个词：",
+    "learnThem": "用一句话课堂学会它们",
+    "tapWords": "点击词语查看。",
+    "sceneStart": "开始对话",
+    "sceneAgain": "再聊一次",
+    "sceneDetails": "要练什么",
+    "sceneRecord_other": "{{count}}次对话，最佳{{best}}%",
+    "sceneNew_other": "按你的水平共{{count}}轮对话",
+    "people": "可以聊天的人",
+    "talked": "聊过",
+    "topics": "在这里能聊什么",
+    "topicLit": "可以聊",
+    "topicDim": "先学这些词",
+    "alsoHere": "这里还有",
+    "listenHere": "听听这里的人说话",
+    "adaptTitle": "城市怎样适应你",
+    "adapt": {
+      "speech": {
+        "faster": "大家说得更快、更自然——你的听力是{{value}}。",
+        "standard": "大家按你这个级别的正常语速说话。",
+        "slower": "大家说得慢一些，帮助你练听力（{{value}}）。"
+      },
+      "words": {
+        "richer": "场景里新词更多——你的词汇是{{value}}。",
+        "standard": "场景里的新词数量正常。",
+        "familiar": "场景以熟悉的词为主，新词少一些（{{value}}）。"
+      },
+      "grammar": {
+        "stretch": "你会遇到下一级的句型——语法{{value}}。",
+        "standard": "句型符合你的级别。",
+        "controlled": "句型简单一些，并加强练习（{{value}}）。"
+      }
+    },
+    "adaptNoEvidence": "还没有学习DNA数据——城市先按你的HSK级别安排。",
+    "howTitle": "城市怎样成长",
+    "how": "地点随HSK级别开放——如果你真正学会其中{{count}}个词，会更早开放。话题会随着词语成为你的而点亮，每次完成的对话都会记录在地图和护照上。",
+    "openCount": "已开放{{open}}/{{total}}个地点",
+    "place": {
+      "home": {
+        "name": "家",
+        "desc": "你的伙伴在这里等你——用中文聊家人和日常生活。"
+      },
+      "library": {
+        "name": "图书馆",
+        "desc": "课程、HSK学习路线和一句话课堂——城市安静的中心。",
+        "enter": "去上课"
+      },
+      "calligraphy": {
+        "name": "书法馆",
+        "desc": "汉字、结构和笔顺——还有你常写错的字。",
+        "enter": "学习汉字"
+      },
+      "word_garden": {
+        "name": "词语花园",
+        "desc": "在词汇生态里看词语怎样从汉字长出来。",
+        "enter": "打开词汇生态"
+      },
+      "street": {
+        "name": "城市街道",
+        "desc": "问路、找路——左边、右边、附近。"
+      },
+      "restaurant": {
+        "name": "饭馆",
+        "desc": "点菜、问价、付钱——用中文和服务员聊天。"
+      },
+      "shop": {
+        "name": "便利店",
+        "desc": "价格、钱和买日用品。"
+      },
+      "shopping_district": {
+        "name": "购物街",
+        "desc": "尺码、颜色、打折——像本地人一样购物。"
+      },
+      "internet_cafe": {
+        "name": "网吧",
+        "desc": "新闻、帖子、点评、聊天——为你改写的真实网络中文。",
+        "enter": "打开中文网络"
+      },
+      "detective": {
+        "name": "侦探社",
+        "desc": "通过读和听中文线索来破案。",
+        "enter": "开始破案"
+      },
+      "sound_plaza": {
+        "name": "声音广场",
+        "desc": "站在热闹的地方，听身边的人说话——从慢速到母语速度。",
+        "enter": "去声音世界"
+      },
+      "passport_office": {
+        "name": "护照办公室",
+        "desc": "你的中文护照：你真正能做什么，有依据，也有你的故事。",
+        "enter": "打开我的护照"
+      },
+      "university": {
+        "name": "大学",
+        "desc": "上课、教室、同学——用中文过校园生活。"
+      },
+      "hospital": {
+        "name": "医院",
+        "desc": "说说哪里不舒服，听懂医生的话。"
+      },
+      "office": {
+        "name": "写字楼",
+        "desc": "求职面试和工作生活。"
+      },
+      "train_station": {
+        "name": "火车站",
+        "desc": "车票、发车时间和站台。"
+      },
+      "hotel": {
+        "name": "酒店",
+        "desc": "办入住、问早饭、请人帮忙。"
+      },
+      "old_town": {
+        "name": "古城",
+        "desc": "跟导游游览、拍照、买门票、了解风俗。"
+      },
+      "airport": {
+        "name": "机场",
+        "desc": "值机、行李、航班——计划有变时怎么办。"
+      }
+    },
+    "topic": {
+      "family": "家人",
+      "daily": "日常生活",
+      "directions": "方向",
+      "nearby": "附近有什么",
+      "order": "点菜",
+      "price": "问价钱",
+      "taste": "口味和推荐",
+      "bargain": "讲价",
+      "buy_sell": "买和卖",
+      "size": "尺码",
+      "colour": "颜色",
+      "discount": "打折",
+      "schedule": "上课时间",
+      "classroom": "教室",
+      "introduce": "介绍",
+      "symptoms": "身体感觉",
+      "doctor": "看医生",
+      "medicine": "吃药",
+      "interview": "面试",
+      "work": "工作",
+      "ticket": "买票",
+      "time": "发车时间",
+      "boarding": "上车",
+      "check_in": "登记入住",
+      "breakfast": "早饭",
+      "help": "请人帮忙",
+      "sightseeing": "参观游览",
+      "photos": "拍照看风景",
+      "tickets": "门票",
+      "flight": "航班"
+    }
   }
 }

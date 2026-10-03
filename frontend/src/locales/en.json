@@ -1746,5 +1746,197 @@
     "fromDna": "See the evidence in your Chinese Passport",
     "totals_one": "So far: {{answers}} graded answers in {{count}} round.",
     "totals_other": "So far: {{answers}} graded answers in {{count}} rounds."
+  },
+  "world": {
+    "title": "Your living Chinese city",
+    "subtitle": "Every place is a real way to use Chinese. Places open, light up and fill with people as you learn — the city grows because you do.",
+    "loading": "Walking into the city…",
+    "mapLabel": "Map of your Chinese city",
+    "passportLink": "Open your Chinese Passport",
+    "explored": "Places explored",
+    "scenesDone": "Scenes completed",
+    "skillsShown": "Skills shown",
+    "allPlaces": "All places",
+    "pickPlace": "Tap a place on the map.",
+    "companionTitle": "{{name}} travels with you",
+    "district": {
+      "home": "Home quarter",
+      "centre": "City centre",
+      "campus": "Campus & work",
+      "travel": "Travel"
+    },
+    "status": {
+      "locked": "Locked",
+      "open": "Open",
+      "explored": "Explored",
+      "mastered": "Mastered"
+    },
+    "wordsKnown": "{{known}}/{{total}} words known",
+    "companion": {
+      "locked": "This place opens at HSK {{level}} — or sooner, once you really know words like {{words}}.",
+      "fresh": "A new place — let's take a look around together.",
+      "freshTopics": "We haven't been here yet. Your words already light up {{lit}} of {{total}} topics here.",
+      "openedByWords": "You opened this place early — by learning its words. Let's use them!",
+      "explored": "We've been here — your best conversation was {{score}}%. One more to master it?",
+      "exploredOther": "We've been here before — there's more to discover.",
+      "mastered": "You've mastered this place — {{score}}% and most of its words. I'm proud of you!"
+    },
+    "toOpen": "How to open it",
+    "toOpenText": "Reach HSK {{level}}, or really learn a few of these words:",
+    "learnThem": "Learn them in a One Sentence lesson",
+    "tapWords": "Tap a word to explore it.",
+    "sceneStart": "Start the conversation",
+    "sceneAgain": "Talk again",
+    "sceneDetails": "What you'll practise",
+    "sceneRecord_one": "Best {{best}}% after {{count}} conversation",
+    "sceneRecord_other": "Best {{best}}% after {{count}} conversations",
+    "sceneNew_one": "{{count}} exchange at your level",
+    "sceneNew_other": "{{count}} exchanges at your level",
+    "people": "People to talk to",
+    "talked": "talked",
+    "topics": "What you can talk about here",
+    "topicLit": "ready",
+    "topicDim": "learn its words",
+    "alsoHere": "Also here",
+    "listenHere": "Listen to the people here",
+    "adaptTitle": "How the city adapts to you",
+    "adapt": {
+      "speech": {
+        "faster": "People speak faster and more naturally — your listening is {{value}}.",
+        "standard": "People speak at your level's normal pace.",
+        "slower": "People speak more slowly to support your listening ({{value}})."
+      },
+      "words": {
+        "richer": "Scenes bring more new words — your vocabulary is {{value}}.",
+        "standard": "Scenes bring the usual number of new words.",
+        "familiar": "Scenes stay with familiar words and fewer new ones ({{value}})."
+      },
+      "grammar": {
+        "stretch": "You meet the next level's sentence patterns — grammar {{value}}.",
+        "standard": "Sentence patterns match your level.",
+        "controlled": "Patterns stay simple and get reinforced ({{value}})."
+      }
+    },
+    "adaptNoEvidence": "No Learning DNA evidence yet — the city uses your HSK level as it is.",
+    "howTitle": "How the city grows",
+    "how": "Places open with your HSK level — or earlier when you really know {{count}} of their words. Topics light up as their words become yours, and every completed conversation is recorded on the map and in your Passport.",
+    "openCount": "{{open}} of {{total}} places open",
+    "place": {
+      "home": {
+        "name": "Home",
+        "desc": "Where your companion waits — family and daily life in Chinese."
+      },
+      "library": {
+        "name": "Library",
+        "desc": "Lessons, the HSK path and One Sentence lessons — the quiet heart of the city.",
+        "enter": "Go to lessons"
+      },
+      "calligraphy": {
+        "name": "Calligraphy hall",
+        "desc": "Characters, their structure and stroke order — and the ones that trip you up.",
+        "enter": "Study characters"
+      },
+      "word_garden": {
+        "name": "Word garden",
+        "desc": "Watch Chinese words grow from characters in your Vocabulary Ecosystem.",
+        "enter": "Open the Ecosystem"
+      },
+      "street": {
+        "name": "City street",
+        "desc": "Ask for directions and find your way — left, right, nearby."
+      },
+      "restaurant": {
+        "name": "Restaurant",
+        "desc": "Order, ask the price, pay — and talk with the waiter in Chinese."
+      },
+      "shop": {
+        "name": "Corner shop",
+        "desc": "Prices, money and buying the everyday things."
+      },
+      "shopping_district": {
+        "name": "Shopping district",
+        "desc": "Sizes, colours and discounts — shop like a local."
+      },
+      "internet_cafe": {
+        "name": "Internet café",
+        "desc": "News, posts, reviews and chats — real online Chinese, adapted for you.",
+        "enter": "Open Chinese Internet"
+      },
+      "detective": {
+        "name": "Detective agency",
+        "desc": "Mysteries solved by reading and listening to Chinese clues.",
+        "enter": "Open a case"
+      },
+      "sound_plaza": {
+        "name": "Sound plaza",
+        "desc": "Stand in busy places and follow the voices around you — from slow to native speed.",
+        "enter": "Go to Sound World"
+      },
+      "passport_office": {
+        "name": "Passport office",
+        "desc": "Your Chinese Passport: what you can really do, with the evidence and your story.",
+        "enter": "Open my Passport"
+      },
+      "university": {
+        "name": "University",
+        "desc": "Classes, classrooms and classmates — campus life in Chinese."
+      },
+      "hospital": {
+        "name": "Hospital",
+        "desc": "Describe how you feel and understand the doctor."
+      },
+      "office": {
+        "name": "Office tower",
+        "desc": "Job interviews and working life."
+      },
+      "train_station": {
+        "name": "Train station",
+        "desc": "Tickets, departure times and platforms."
+      },
+      "hotel": {
+        "name": "Hotel",
+        "desc": "Check in, breakfast and asking for help."
+      },
+      "old_town": {
+        "name": "Old town",
+        "desc": "Sightseeing with a guide, photos, tickets and local customs."
+      },
+      "airport": {
+        "name": "Airport",
+        "desc": "Check in, luggage and flights — and what to do when plans change."
+      }
+    },
+    "topic": {
+      "family": "Family",
+      "daily": "Daily routine",
+      "directions": "Directions",
+      "nearby": "What's nearby",
+      "order": "Ordering",
+      "price": "Asking the price",
+      "taste": "Taste & recommendations",
+      "bargain": "Bargaining",
+      "buy_sell": "Buying & selling",
+      "size": "Sizes",
+      "colour": "Colours",
+      "discount": "Discounts",
+      "schedule": "Class times",
+      "classroom": "Classrooms",
+      "introduce": "Introductions",
+      "symptoms": "How you feel",
+      "doctor": "At the doctor's",
+      "medicine": "Medicine",
+      "interview": "Interviews",
+      "work": "At work",
+      "ticket": "Tickets",
+      "time": "Departure times",
+      "boarding": "Boarding",
+      "check_in": "Checking in",
+      "breakfast": "Breakfast",
+      "help": "Asking for help",
+      "sightseeing": "Sightseeing",
+      "photos": "Photos & views",
+      "tickets": "Entry tickets",
+      "flight": "Flights"
+    }
   }
 }

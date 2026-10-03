@@ -11,6 +11,8 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src")
 LOCALES = ("en", "ru", "tg", "zh")
 
@@ -83,6 +85,7 @@ DYNAMIC = (
                                          "words_mastered", "chars_mastered", "first_written", "mistake_conquered",
                                          "review_recovery", "comeback", "scene_done", "cases_solved", "sound_stage",
                                          "first_internet", "first_sentence", "first_voice", "first_duel_win", "achievement")]
+    + [k for k in __import__("add_world_i18n").S if not isinstance(__import__("add_world_i18n").S[k]["en"], dict)]
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]
