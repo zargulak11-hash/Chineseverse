@@ -57,7 +57,9 @@
     "ecosystem": "Word Ecosystem",
     "internet": "Chinese Internet",
     "passport": "Chinese Passport",
-    "toLanding": "ChineseVerse — main page"
+    "toLanding": "ChineseVerse — main page",
+    "journey": "Your journey",
+    "stories": "Stories"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -495,7 +497,9 @@
         "sentence": "Sentence lessons",
         "detective": "Detective Mode",
         "sound_world": "Sound World",
-        "internet": "Chinese Internet"
+        "internet": "Chinese Internet",
+        "foundation": "Sounds & tones",
+        "stories": "Chinese Stories"
       }
     },
     "profile": {
@@ -562,7 +566,16 @@
       "resultTitle": "You're all set!",
       "resultLevel": "Starting level: HSK{{level}}",
       "resultScore": "{{correct}}/{{total}} correct on the placement test",
-      "continueToDashboard": "Continue to dashboard"
+      "continueToDashboard": "Continue to dashboard",
+      "levelTitle": "What's your Chinese level?",
+      "levelSub": "We'll start you in the right place. You can always change course later.",
+      "levelBeginner": "I'm a complete beginner",
+      "levelBeginnerHint": "Start from the sounds, step by step.",
+      "levelSome": "I know some Chinese",
+      "levelSomeHint": "A short test finds your level.",
+      "levelStudy": "I already study Chinese",
+      "levelStudyHint": "Take the placement test to skip what you know.",
+      "startJourney": "Start learning"
     },
     "assistant": {
       "title": "Study Assistant",
@@ -786,7 +799,9 @@
       "sentence": "One-sentence lesson",
       "detective": "Detective case",
       "sound": "Sound World · {{place}}",
-      "internet": "Chinese Internet · {{title}}"
+      "internet": "Chinese Internet · {{title}}",
+      "tones": "Sounds & tones round",
+      "story": "Story · {{title}}"
     },
     "retry": "Try again",
     "back": "Back",
@@ -822,12 +837,17 @@
       "scene_listen": "Listen: what did they say?",
       "sentence_listen": "Listen: which sentence did you hear?",
       "sentence_order": "Put the pieces in the right order.",
-      "sentence_word": "In this sentence, which word means “{{meaning}}”?"
+      "sentence_word": "In this sentence, which word means “{{meaning}}”?",
+      "net_comprehension": "Read and choose the right answer.",
+      "net_listen": "Which line did you hear?",
+      "story_q": "Answer the question about the story.",
+      "story_listen": "Which sentence from the story did you hear?"
     },
     "questionLabel": "Question",
     "accuracy": "Accuracy",
     "roundProgress": "This round",
-    "nextLesson": "Next lesson"
+    "nextLesson": "Next lesson",
+    "toneRound": "Sounds & tones"
   },
   "companionReact": {
     "fallbackName": "Your companion",
@@ -1109,7 +1129,8 @@
     "invalidInput": "Some of the entered data isn't valid. Please check it and try again.",
     "server": "Something went wrong on the server. Please try again in a moment.",
     "requestFailed": "The request failed ({{status}}). Please try again.",
-    "placeLocked": "This place opens at HSK {{level}}."
+    "placeLocked": "This place opens at HSK {{level}}.",
+    "storyLocked": "This story opens at HSK {{level}}."
   },
   "realLife": {
     "title": "Real-life Chinese",
@@ -1723,7 +1744,8 @@
       "first_sentence": "First one-sentence lesson",
       "first_voice": "First words spoken aloud",
       "first_duel_win": "First duel won",
-      "achievement": "Achievement unlocked: {{title}}"
+      "achievement": "Achievement unlocked: {{title}}",
+      "first_story": "First Chinese story read"
     },
     "next": "Where to go next",
     "allGood": "Everything is on track — keep your rhythm.",
@@ -2102,5 +2124,203 @@
     },
     "legend": "Map key",
     "toRoadmap": "Go to your HSK path"
+  },
+  "journey": {
+    "eyebrow": "Start here",
+    "title": "Your Chinese journey",
+    "subtitle": "One step at a time. ChineseVerse always shows you what to do next — and every step only counts when you have really done it.",
+    "level": "Your level",
+    "lessonsDone": "Lessons done",
+    "wordsKnown": "Words you know",
+    "stage": {
+      "foundation": "Foundation",
+      "beginner": "Beginner",
+      "growing": "Growing",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "nextTitle": "Your next step",
+    "go": "Start",
+    "continue": "Continue",
+    "allSteps": "See your whole journey",
+    "next": {
+      "lesson": "Continue your lesson: {{title}}",
+      "review": "Review {{count}} words that are waiting",
+      "exam": "Take the HSK {{level}} exam",
+      "stories": "Read a story at your level"
+    },
+    "nextWhy": {
+      "lesson": "Lessons are the backbone of your HSK path: new words, grammar and a short practice round.",
+      "review": "Words come back just before you'd forget them — a few minutes now saves hours later.",
+      "exam": "You finished this level's lessons. The exam opens the next level.",
+      "stories": "Reading real stories turns the words you know into understanding."
+    },
+    "foundationTitle": "Foundation: your first steps",
+    "foundationSub": "The basics of Chinese, in the order that makes them easy. Each step opens the moment you really do it.",
+    "foundationPast": "Your level is already above the foundation — these steps are optional.",
+    "stepOf": "Step {{n}} of {{total}}",
+    "status": {
+      "done": "Done",
+      "current": "Now",
+      "todo": "Later",
+      "past": "Past it"
+    },
+    "levelsTitle": "HSK levels: the road ahead",
+    "levelsSub": "HSK is the official ladder of Chinese. Each level is a little longer, a little more natural, with a little less support.",
+    "levelStatus": {
+      "current": "You are here",
+      "done": "Behind you",
+      "ahead": "Ahead"
+    },
+    "levelLessons": "{{done}}/{{total}} lessons",
+    "levelStories": "{{read}}/{{total}} stories",
+    "examPassed": "Exam passed",
+    "levelDesc": {
+      "1": "Very short, fully supported: pinyin and translation everywhere.",
+      "2": "Longer sentences, still lots of help.",
+      "3": "More natural text; pinyin becomes optional.",
+      "4": "More complex structures, everyday topics in depth.",
+      "5": "Longer, authentic-style texts.",
+      "6": "Advanced vocabulary and grammar.",
+      "7": "Advanced reading and listening.",
+      "8": "Authentic, demanding Chinese.",
+      "9": "Very advanced: essays, ideas, nuance."
+    },
+    "band79": "HSK 7–9 share one word list; these levels are steps of difficulty within it.",
+    "exploreTitle": "Explore when you're ready",
+    "exploreSub": "Special ways to learn. You can open any of them now — the ones marked “Good now” fit where you are.",
+    "goodNow": "Good now",
+    "later": "Better a little later",
+    "step": {
+      "tones": {
+        "title": "Learn the sounds and tones",
+        "what": "How pinyin spells Chinese sounds, and the four tones that change a word's meaning."
+      },
+      "characters": {
+        "title": "Meet your first characters",
+        "what": "Recognise simple, common Hanzi and how they are pronounced."
+      },
+      "first_lesson": {
+        "title": "Your first lesson",
+        "what": "Greetings and your first useful words — 你好, 谢谢, 再见 — with a short practice round."
+      },
+      "sentence": {
+        "title": "Build your first sentence",
+        "what": "Take one real sentence apart: its words, characters, grammar and sound."
+      },
+      "listen": {
+        "title": "Listen and understand",
+        "what": "Hear Chinese in real places — slowly at first — and pick out what you know."
+      },
+      "speak": {
+        "title": "Say it out loud",
+        "what": "Greet Grandma in Chinese. Speak (or type if your browser can't hear you)."
+      },
+      "story": {
+        "title": "Read your first story",
+        "what": "A very short story with pinyin, translation and audio — then a few questions."
+      },
+      "review": {
+        "title": "Review what you learned",
+        "what": "Words come back just before you'd forget them. A few minutes a day is enough."
+      }
+    },
+    "feature": {
+      "sound-world": "Learn how Chinese sounds work — real places, slow to fast.",
+      "sentence": "Learn Chinese through one real sentence at a time.",
+      "detective": "Practise understanding by solving cases with Chinese clues.",
+      "passport": "Your record of everything you can really do in Chinese.",
+      "dna": "See what you're good at and what to practise next.",
+      "ecosystem": "See how words grow from characters and connect.",
+      "internet": "Understand Chinese the way it appears online.",
+      "stories": "Graded stories from HSK 1 to 9 — read, listen, understand.",
+      "real-chinese": "A living city: use Chinese in real places as your level opens them."
+    }
+  },
+  "foundation": {
+    "eyebrow": "Step 1 · Foundation",
+    "title": "The sounds and tones of Chinese",
+    "subtitle": "Before words and characters: how Chinese sounds, and how to read pinyin. Ten minutes here makes everything after easier.",
+    "pinyinTitle": "Pinyin: Chinese in Latin letters",
+    "pinyinBody": "Every Chinese syllable has three parts: a starting sound, an ending sound and a tone. 妈 is written mā: m + a + the first tone.",
+    "partInitial": "Starting sound",
+    "partFinal": "Ending sound",
+    "partTone": "Tone",
+    "tonesTitle": "The four tones (and a light one)",
+    "tonesBody": "The same sound with a different tone is a different word. Tap each one and listen.",
+    "tone1": "1st tone — high and level",
+    "tone2": "2nd tone — rising, like a question",
+    "tone3": "3rd tone — low, dips down",
+    "tone4": "4th tone — falling, short and firm",
+    "tone0": "Light tone — short and soft",
+    "mean": {
+      "ma1": "mother",
+      "ma2": "hemp",
+      "ma3": "horse",
+      "ma4": "to scold",
+      "ma0": "question word"
+    },
+    "hear": "Hear it",
+    "pairsTitle": "Hear the difference",
+    "pairsBody": "Words beginners mix up most. Play both and listen for the tone and the first sound.",
+    "noVoice": "This device has no Chinese voice, so you'll see the pinyin instead of hearing it.",
+    "roundTitle": "Now try it",
+    "roundBody": "A short graded round on real HSK 1 characters and words: pick the right tone, and the word you hear. Score 60% or more to complete this step.",
+    "startRound": "Start the tones round",
+    "bestScore": "Your best: {{score}}%",
+    "alsoTitle": "Keep your ears busy",
+    "alsoBody": "Sound World lets you hear Chinese in real places, slowly at first."
+  },
+  "stories": {
+    "eyebrow": "Chinese Stories",
+    "title": "Read Chinese stories",
+    "subtitle": "Real stories for every HSK level. Start where you are: short, fully supported stories at HSK 1, longer and more natural ones as you grow.",
+    "read": "Stories read",
+    "yourLevel": "Your level",
+    "all": "All levels",
+    "startHere": "Start here",
+    "beginnerHint": "New to Chinese? Start with HSK 1 — every sentence has pinyin, a translation and audio.",
+    "length": "{{count}} sentences · {{chars}} characters",
+    "status": {
+      "new": "Not read yet",
+      "started": "Started",
+      "read": "Read · best {{best}}%",
+      "locked": "Opens at HSK {{level}}"
+    },
+    "lockedHow": "Continue your HSK path to unlock it.",
+    "open": "Read",
+    "empty": "No stories at this level yet.",
+    "loop": {
+      "read": "Read & listen",
+      "words": "Learn the words",
+      "questions": "Answer questions",
+      "say": "Say it aloud"
+    },
+    "playAll": "Play the story",
+    "stop": "Stop",
+    "playLine": "Play this sentence",
+    "pinyin": "Pinyin",
+    "translation": "Translation",
+    "translate": "Translate",
+    "support": {
+      "on": "Pinyin and translations are shown to help you.",
+      "tap": "Tap “Translate” under a sentence when you need it.",
+      "hidden": "Real-text mode: try to understand first; translations stay hidden until you switch them on."
+    },
+    "wordsTitle": "Words in this story",
+    "wordsHint": "Tap any word in the story to see its meaning and characters, and add it to your review.",
+    "state": {
+      "new": "New",
+      "review": "Review",
+      "learning": "Learning",
+      "known": "Known"
+    },
+    "questionsTitle": "Check your understanding",
+    "questionsBody": "{{count}} questions, one sentence to recognise by ear and then say aloud, and a few of the story's new words.",
+    "startQuestions": "Answer the questions",
+    "again": "Answer again",
+    "bestSoFar": "Your best so far: {{best}}%",
+    "back": "All stories",
+    "why": "Why stories? Reading connected Chinese turns separate words into real understanding — and every round feeds your review."
   }
 }

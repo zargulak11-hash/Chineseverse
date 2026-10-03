@@ -1162,6 +1162,238 @@ select.input {
   transition: transform var(--dur-base) var(--ease-out);
 }
 
+/* ---------- The journey: next step, foundation, levels (NextStep.jsx, Journey.jsx) ----------
+   One question answered everywhere: what do I do now? The hero leads the
+   Dashboard and /journey; the bar ends a practice round. Tokens only. */
+.next-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--accent-dim), transparent 60%),
+    var(--surface-1);
+  box-shadow: var(--shadow-md);
+}
+.page-head + .next-hero { margin-top: var(--space-5); }
+.next-hero-step {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--accent-strong);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.next-hero-title { margin: var(--space-2) 0 var(--space-2); font-size: var(--text-xl); font-weight: 800; line-height: 1.2; }
+.next-hero .sub { max-width: 70ch; }
+.next-hero-go { font-size: var(--text-base); padding-inline: var(--space-5); }
+.next-hero-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+.next-hero-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+.next-hero-steps li.is-current { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.next-hero-steps li.is-done { color: var(--text); }
+.next-dot {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-weight: 800;
+  font-size: var(--text-2xs);
+}
+.is-current > .next-dot { border-color: var(--accent); color: var(--accent-strong); }
+.is-done > .next-dot { border-color: var(--good); background: var(--good-dim); color: var(--good); }
+.next-dot-label { min-width: 0; line-height: 1.3; overflow-wrap: anywhere; }
+.next-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  background: var(--accent-dim);
+}
+.next-bar-label { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-strong); font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.next-bar-title { flex: 1 1 220px; min-width: 0; }
+.journey-section { margin-top: var(--space-6); }
+.journey-section > .sub { max-width: 80ch; }
+.journey-steps, .journey-levels {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.journey-steps { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.journey-levels { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.journey-step, .journey-level { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
+.journey-step.is-current, .journey-level.is-current { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-sm); }
+.journey-step.is-past, .journey-step.is-todo { opacity: 0.85; }
+.journey-step .btn { align-self: flex-start; margin-top: auto; }
+.journey-step-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.journey-step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  font-weight: 800;
+  font-size: var(--text-xs);
+}
+.journey-step.is-current .journey-step-no { border-color: var(--accent); color: var(--accent-strong); }
+.journey-step.is-done .journey-step-no { border-color: var(--good); background: var(--good-dim); color: var(--good); }
+.journey-step-title { margin: 0; font-size: var(--text-base); font-weight: 800; }
+.journey-level-name { font-size: var(--text-md); font-weight: 800; }
+.journey-level-stage { color: var(--accent-strong); font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.journey-level.is-ahead { opacity: 0.8; }
+.journey-level-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--text-xs); color: var(--text-dim); }
+.journey-level-facts .is-good { color: var(--good); }
+.journey-feature { display: flex; flex-direction: column; gap: var(--space-2); text-decoration: none; color: inherit; }
+.journey-feature.is-suggested { border-color: var(--accent-border); }
+.journey-feature-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-md); background: var(--accent-dim); color: var(--accent-strong); }
+.journey-feature:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Onboarding: three honest starting points. */
+.level-choices { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
+.level-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.level-choice:hover:not(:disabled), .level-choice.is-primary { border-color: var(--accent); }
+.level-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* /foundation: pinyin parts and the tones. */
+.pinyin-parts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+.pinyin-part { display: inline-flex; flex-direction: column; align-items: center; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); border: 1px solid var(--border); }
+.pinyin-part b { font-size: var(--text-lg); }
+.pinyin-part small { color: var(--text-faint); font-size: var(--text-2xs); }
+.pinyin-part.is-result { border-color: var(--accent); }
+.pinyin-plus { color: var(--text-faint); font-weight: 800; }
+.tone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.tone-say {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.tone-say:hover { border-color: var(--accent); }
+.tone-say:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tone-contour { width: 56px; height: 40px; }
+.tone-contour path { fill: none; stroke: var(--accent-strong); stroke-width: 3; stroke-linecap: round; }
+.tone-contour circle { fill: var(--accent-strong); }
+.tone-zh { font-size: var(--text-2xl); font-weight: 800; }
+.tone-py { color: var(--accent-strong); font-weight: 700; }
+.tone-name { font-size: var(--text-xs); font-weight: 700; }
+.tone-pairs { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.tone-pairs li { display: flex; align-items: center; gap: var(--space-2); }
+.tone-pairs .tone-say { flex-direction: row; gap: 6px; padding: var(--space-2) var(--space-3); font-size: var(--text-lg); }
+.tone-pairs small { color: var(--accent-strong); font-size: var(--text-sm); }
+.foundation-round { border-color: var(--accent-border); }
+.foundation-round .btn { margin-top: var(--space-2); }
+.practice-translation { margin-top: 4px; font-style: italic; }
+@media (max-width: 640px) {
+  .next-hero { padding: var(--space-4); }
+  .next-hero-title { font-size: var(--text-lg); }
+}
+
+/* ---------- Chinese Stories: library and reader (Stories.jsx, StoryReader.jsx) ----------
+   Classes are tale-*: Passport's timeline owns .story-*.
+   Words are marked by the learner's own state (new/review/learning/known)
+   with the underline's style, not new hues. Tokens only. */
+.tale-hint { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); }
+.tale-filter { flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.tale-card { display: flex; flex-direction: column; gap: var(--space-2); text-decoration: none; color: inherit; min-width: 0; }
+.tale-card.is-recommended { border-color: var(--accent); }
+.tale-card.is-locked { opacity: 0.78; }
+.tale-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tale-icon { font-size: var(--text-xl); line-height: 1; }
+.tale-title { margin: 0; font-size: var(--text-md); font-weight: 800; }
+.tale-title-zh { color: var(--accent-strong); font-weight: 700; }
+.tale-length { font-size: var(--text-xs); }
+.tale-status { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-top: auto; }
+.tale-locked-how { font-size: var(--text-xs); }
+.tale-loop { list-style: none; margin: 0 0 var(--space-5); padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tale-loop li { display: inline-flex; align-items: center; gap: var(--space-2); padding: 6px var(--space-3); border-radius: var(--radius-full); background: var(--surface-2); border: 1px solid var(--border); font-size: var(--text-xs); font-weight: 700; color: var(--text-dim); }
+.tale-loop li.is-current { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+.tale-loop li span { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border-strong); font-size: var(--text-2xs); }
+.tale-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+.tale-support { margin-left: auto; font-size: var(--text-xs); }
+.tale-text { display: flex; flex-direction: column; gap: var(--space-3); }
+.tale-sentence { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid transparent; transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.tale-sentence.is-playing { background: var(--accent-dim); border-color: var(--accent-border); }
+.tale-say { flex-shrink: 0; margin-top: 4px; }
+.tale-line { min-width: 0; flex: 1; }
+.tale-zh { margin: 0; font-size: var(--text-lg); line-height: 1.8; overflow-wrap: anywhere; }
+.tale-py { margin: 2px 0 0; color: var(--accent-strong); font-size: var(--text-sm); }
+.tale-tr { margin: 4px 0 0; color: var(--text-dim); font-size: var(--text-sm); }
+.tale-tr-btn { margin-top: 4px; padding: 0; border: 0; background: none; color: var(--text-faint); font: inherit; font-size: var(--text-xs); text-decoration: underline; cursor: pointer; }
+.tale-tr-btn:hover { color: var(--text-dim); }
+.tale-tr-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tale-word { display: inline; padding: 0 1px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: inherit; font: inherit; cursor: pointer; transition: background var(--dur-fast) var(--ease-out); }
+.tale-word:hover, .tale-word.is-open { background: var(--accent-dim); }
+.tale-word:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tale-word.is-new { border-bottom-color: var(--accent); }
+.tale-word.is-review { border-bottom: 2px dashed var(--bad); }
+.tale-word.is-learning { border-bottom: 2px dotted var(--accent-strong); }
+.tale-word.is-known { border-bottom-color: var(--good-dim); }
+.tale-legend { list-style: none; margin: var(--space-4) 0 0; padding: var(--space-3) 0 0; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: var(--space-4); font-size: var(--text-xs); }
+.tale-legend .tale-word { cursor: default; }
+.tale-questions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); border-color: var(--accent-border); }
+.tale-glossary { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tale-gloss-row { width: 100%; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); padding: 6px var(--space-2); border: 1px solid transparent; border-radius: var(--radius-sm); background: none; color: inherit; font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer; }
+.tale-gloss-row:hover { background: var(--surface-2); border-color: var(--border); }
+.tale-gloss-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tale-gloss-meaning { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+@media (max-width: 640px) {
+  .tale-zh { font-size: var(--text-md); }
+  .tale-support { margin-left: 0; flex-basis: 100%; }
+  .tale-sentence { padding: var(--space-2); gap: var(--space-2); }
+}
+
 /* ---------- /real-chinese is the map: <Layout variant="world"> ----------
    The page drops the reading-width column -- the city fills the content
    area -- and keeps only a slim header above it. Everything else about a

@@ -8,6 +8,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../components/RoundExtras.jsx";
 import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
+import NextStepBar from "../components/NextStep.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -34,6 +35,8 @@ export default function Practice({ forceSource }) {
   // Chinese Internet item and version.
   const item = params.get("item");
   const version = params.get("version");
+  // Chinese Stories slug (services/stories.py).
+  const story = params.get("story");
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -70,6 +73,7 @@ export default function Practice({ forceSource }) {
       body.env = env;
       if (stage) body.stage = stage;
     }
+    if (source === "story" && story) body.story = story;
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -125,7 +129,7 @@ export default function Practice({ forceSource }) {
     // Lines heard before they're read: listening checks, and advanced
     // scenes (the server sends no text until the line is answered).
     const heardFirst =
-      ["scene_listen", "sentence_listen", "net_listen"].includes(question?.type) ||
+      ["scene_listen", "sentence_listen", "net_listen", "story_listen"].includes(question?.type) ||
       (question?.type === "scene_reply" && !question.prompt.text) ||
       (question?.type === "case_clue" && !question.prompt.text);
     if (heardFirst && question.prompt.speak && !result && canSpeakChinese()) {
@@ -199,7 +203,11 @@ export default function Practice({ forceSource }) {
               ? "/sound-world"
               : source === "internet"
                 ? `/internet/${item || ""}`
-                : `/${source === "vocab" ? "vocabulary" : source}`;
+                : source === "story"
+                  ? `/stories/${story || ""}`
+                  : source === "tones"
+                    ? "/foundation"
+                    : `/${source === "vocab" ? "vocabulary" : source}`;
   const eyebrow = level
     ? `HSK ${level}`
     : source === "scene"
@@ -212,7 +220,11 @@ export default function Practice({ forceSource }) {
             ? t("nav.soundWorld")
             : source === "internet"
               ? t("nav.internet")
-              : t(source === "review" ? "nav.review" : "nav.lessons");
+              : source === "story"
+                ? t("nav.stories")
+                : source === "tones"
+                  ? t("nav.journey")
+                  : t(source === "review" ? "nav.review" : "nav.lessons");
   const head = (kpis = null) => (
     <header className="page-head">
       <div>
@@ -323,6 +335,8 @@ export default function Practice({ forceSource }) {
             )}
           </div>
         </div>
+        {/* What now? The journey's next step, fresh after this round. */}
+        <NextStepBar />
         <div className="row" style={{ marginTop: 16, flexWrap: "wrap" }}>
           {/* Set by the server only when this round just completed the lesson. */}
           {summary.next_lesson_id && (
@@ -343,12 +357,12 @@ export default function Practice({ forceSource }) {
   const correctCount = Object.values(outcomes).filter(Boolean).length;
   const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin"].includes(question.type);
   const qtype = question.type;
-  const listenOnly = ["scene_listen", "sentence_listen", "net_listen"].includes(qtype);
+  const listenOnly = ["scene_listen", "sentence_listen", "net_listen", "story_listen"].includes(qtype);
   // Options written in Chinese (scene replies and the sentence activities).
   const cjkOptions =
     qtype === "meaning_to_word" ||
     ["scene_reply", "sentence_listen", "sentence_order", "sentence_word", "case_deduce", "sound_respond",
-      "net_comprehension", "net_listen"].includes(qtype);
+      "net_comprehension", "net_listen", "story_q", "story_listen"].includes(qtype);
   // Detective Mode / Sound World questions word their own ask from the round.
   const custom = qtype.startsWith("case_") || qtype.startsWith("sound_");
   const say = result?.say;
@@ -447,6 +461,8 @@ export default function Practice({ forceSource }) {
                 <>
                   <div className={bigPrompt ? "practice-hanzi" : "practice-text"}>{question.prompt.text}</div>
                   {question.prompt.pinyin && <div className="sub" style={{ color: "var(--accent2)" }}>{question.prompt.pinyin}</div>}
+                  {/* Beginner stories carry the question in the learner's language too. */}
+                  {question.prompt.translation && <div className="sub practice-translation">{question.prompt.translation}</div>}
                   {question.prompt.speak && (
                     <button type="button" className="btn small ghost" onClick={() => speakChinese(question.prompt.speak)} aria-label={t("pages.hanzi.hear")}>
                       <Icon name="ear" size={14} style={{ verticalAlign: -2 }} />

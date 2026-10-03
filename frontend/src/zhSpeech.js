@@ -45,12 +45,14 @@ export function canSpeakChinese() {
  * Fails silently (calls onEnd) if the browser has no speechSynthesis at
  * all, rather than throwing -- audio is a nice-to-have, never a blocker.
  */
-export function speakChinese(text, { profile, onStart, onEnd } = {}) {
+// `whole`: read the text as written. By default a leading "Speaker：" label
+// is dropped (dialogue lines); narration like 服务员问：“…” needs all of it.
+export function speakChinese(text, { profile, onStart, onEnd, whole = false } = {}) {
   if (!text || typeof window === "undefined" || !window.speechSynthesis) {
     onEnd?.();
     return;
   }
-  const utter = new SpeechSynthesisUtterance(text.replace(/^[^：:]+[：:]\s*/, ""));
+  const utter = new SpeechSynthesisUtterance(whole ? text : text.replace(/^[^：:]+[：:]\s*/, ""));
   utter.lang = "zh-CN";
   const zhVoice = pickChineseVoice();
   if (zhVoice) utter.voice = zhVoice;

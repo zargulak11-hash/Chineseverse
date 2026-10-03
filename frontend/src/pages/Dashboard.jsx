@@ -8,8 +8,10 @@ import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
+import { NextStepHero } from "../components/NextStep.jsx";
 import { Bar, Badge, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 // Elastic, staggered card entrance for a grid/list of small elements — used
 // by the quick-action cards, the stat grid and the today's-quests rows.
@@ -73,6 +75,8 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { dashboard: d, error } = useDashboard();
+  // The Dashboard is a guide first: the one next step leads, the numbers follow.
+  const { data: journey } = useApi("/journey");
 
   // Hooks must run unconditionally on every render — including while `d`
   // is still loading — so these are called before the early returns below,
@@ -91,6 +95,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <NextStepHero journey={journey} />
       <div className="hero-banner" style={{ position: "relative" }}>
         <InkBrush variant="hero" />
         <span className="kicker">{t("landing.kicker")}</span>

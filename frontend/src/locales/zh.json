@@ -57,7 +57,9 @@
     "ecosystem": "词汇生态",
     "internet": "中文网络",
     "passport": "中文护照",
-    "toLanding": "ChineseVerse——首页"
+    "toLanding": "ChineseVerse——首页",
+    "journey": "我的学习之路",
+    "stories": "中文故事"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -494,7 +496,9 @@
         "sentence": "一句话课堂",
         "detective": "侦探模式",
         "sound_world": "声音世界",
-        "internet": "中文网络"
+        "internet": "中文网络",
+        "foundation": "声音和声调",
+        "stories": "中文故事"
       }
     },
     "profile": {
@@ -561,7 +565,16 @@
       "resultTitle": "一切准备就绪！",
       "resultLevel": "起始水平：HSK{{level}}",
       "resultScore": "水平测试中答对{{correct}}/{{total}}题",
-      "continueToDashboard": "前往仪表盘"
+      "continueToDashboard": "前往仪表盘",
+      "levelTitle": "你的中文水平怎么样？",
+      "levelSub": "我们会从合适的地方开始。之后随时可以调整。",
+      "levelBeginner": "我是零基础",
+      "levelBeginnerHint": "从发音开始，一步一步来。",
+      "levelSome": "我会一点中文",
+      "levelSomeHint": "一个简短的测试帮你确定水平。",
+      "levelStudy": "我已经在学中文",
+      "levelStudyHint": "做分级测试，跳过已经会的内容。",
+      "startJourney": "开始学习"
     },
     "assistant": {
       "title": "学习助手",
@@ -785,7 +798,9 @@
       "sentence": "一句话课堂",
       "detective": "侦探案件",
       "sound": "声音世界 · {{place}}",
-      "internet": "中文网络 · {{title}}"
+      "internet": "中文网络 · {{title}}",
+      "tones": "声音和声调练习",
+      "story": "故事 · {{title}}"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -821,12 +836,17 @@
       "scene_listen": "听一听：对方说了什么？",
       "sentence_listen": "听一听：你听到的是哪句话？",
       "sentence_order": "把这些部分排成正确的顺序。",
-      "sentence_word": "这句话里哪个词的意思是“{{meaning}}”？"
+      "sentence_word": "这句话里哪个词的意思是“{{meaning}}”？",
+      "net_comprehension": "阅读并选出正确答案。",
+      "net_listen": "你听到的是哪一句？",
+      "story_q": "回答关于故事的问题。",
+      "story_listen": "你听到的是故事里的哪一句？"
     },
     "questionLabel": "题目",
     "accuracy": "正确率",
     "roundProgress": "本轮进度",
-    "nextLesson": "下一课"
+    "nextLesson": "下一课",
+    "toneRound": "声音和声调"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",
@@ -1106,7 +1126,8 @@
     "invalidInput": "部分输入的数据无效，请检查后重试。",
     "server": "服务器出了点问题，请稍后再试。",
     "requestFailed": "请求失败（{{status}}），请重试。",
-    "placeLocked": "这个地方在HSK {{level}}开放。"
+    "placeLocked": "这个地方在HSK {{level}}开放。",
+    "storyLocked": "这个故事在 HSK {{level}} 开放。"
   },
   "realLife": {
     "title": "生活中的中文",
@@ -1685,7 +1706,8 @@
       "first_sentence": "第一堂一句话课",
       "first_voice": "第一次开口说中文",
       "first_duel_win": "第一次赢得对战",
-      "achievement": "获得成就：{{title}}"
+      "achievement": "获得成就：{{title}}",
+      "first_story": "读完第一个中文故事"
     },
     "next": "下一步",
     "allGood": "一切顺利——保持节奏。",
@@ -2057,5 +2079,203 @@
     },
     "legend": "图例",
     "toRoadmap": "去我的HSK路线"
+  },
+  "journey": {
+    "eyebrow": "从这里开始",
+    "title": "你的中文之路",
+    "subtitle": "一步一步来。ChineseVerse 会一直告诉你下一步做什么——每一步只有真正完成才算数。",
+    "level": "你的级别",
+    "lessonsDone": "已完成课程",
+    "wordsKnown": "已掌握的词",
+    "stage": {
+      "foundation": "入门基础",
+      "beginner": "初学",
+      "growing": "进步中",
+      "intermediate": "中级",
+      "advanced": "高级"
+    },
+    "nextTitle": "你的下一步",
+    "go": "开始",
+    "continue": "继续",
+    "allSteps": "查看完整路线",
+    "next": {
+      "lesson": "继续学习课程：{{title}}",
+      "review": "复习 {{count}} 个待复习的词",
+      "exam": "参加 HSK {{level}} 考试",
+      "stories": "读一个适合你水平的故事"
+    },
+    "nextWhy": {
+      "lesson": "课程是你 HSK 之路的主干：新词、语法和一轮简短练习。",
+      "review": "单词会在你快要忘记时回来——现在花几分钟，以后省下好几个小时。",
+      "exam": "你已经学完这一级的课程。通过考试就能开启下一级。",
+      "stories": "读真实的故事，能把认识的词变成真正的理解。"
+    },
+    "foundationTitle": "入门：你的第一步",
+    "foundationSub": "按最容易掌握的顺序学习中文基础。每一步在你真正完成时就算完成。",
+    "foundationPast": "你的水平已经超过入门阶段——这些步骤可以选做。",
+    "stepOf": "第 {{n}} 步，共 {{total}} 步",
+    "status": {
+      "done": "已完成",
+      "current": "现在",
+      "todo": "之后",
+      "past": "已超过"
+    },
+    "levelsTitle": "HSK 等级：前方的路",
+    "levelsSub": "HSK 是中文的官方等级阶梯。每升一级，内容更长一点、更自然一点，提示也更少一点。",
+    "levelStatus": {
+      "current": "你在这里",
+      "done": "已走过",
+      "ahead": "前方"
+    },
+    "levelLessons": "课程 {{done}}/{{total}}",
+    "levelStories": "故事 {{read}}/{{total}}",
+    "examPassed": "考试已通过",
+    "levelDesc": {
+      "1": "非常短，提示齐全：到处都有拼音和翻译。",
+      "2": "句子更长，但提示仍然很多。",
+      "3": "文本更自然，拼音变成可选。",
+      "4": "结构更复杂，日常话题更深入。",
+      "5": "更长的、接近真实风格的文章。",
+      "6": "高级词汇和语法。",
+      "7": "高级阅读和听力。",
+      "8": "真实而有挑战的中文。",
+      "9": "非常高级：文章、思想与细微差别。"
+    },
+    "band79": "HSK 7–9 共用一个词表，这三级是其中由易到难的阶段。",
+    "exploreTitle": "准备好了就去探索",
+    "exploreSub": "特别的学习方式。现在就可以打开任何一个——标着“现在合适”的最适合你目前的阶段。",
+    "goodNow": "现在合适",
+    "later": "稍后更合适",
+    "step": {
+      "tones": {
+        "title": "学习声音和声调",
+        "what": "拼音怎样拼写汉语的声音，以及改变词义的四个声调。"
+      },
+      "characters": {
+        "title": "认识第一批汉字",
+        "what": "认识简单常用的汉字和它们的读音。"
+      },
+      "first_lesson": {
+        "title": "你的第一课",
+        "what": "问候语和第一批实用词——你好、谢谢、再见——加一轮简短练习。"
+      },
+      "sentence": {
+        "title": "学会第一个句子",
+        "what": "拆开一个真实的句子：它的词、汉字、语法和读音。"
+      },
+      "listen": {
+        "title": "听懂",
+        "what": "在真实场景中听中文——先慢一点——听出你认识的内容。"
+      },
+      "speak": {
+        "title": "大声说出来",
+        "what": "用中文和奶奶打招呼。开口说（如果浏览器听不到，就打字）。"
+      },
+      "story": {
+        "title": "读第一个故事",
+        "what": "一个很短的故事，有拼音、翻译和音频——然后回答几个问题。"
+      },
+      "review": {
+        "title": "复习学过的内容",
+        "what": "单词会在你快忘记时回来。每天几分钟就够了。"
+      }
+    },
+    "feature": {
+      "sound-world": "了解中文的声音——真实场景，由慢到快。",
+      "sentence": "一次一个真实句子，学好中文。",
+      "detective": "通过中文线索破案，练习理解能力。",
+      "passport": "记录你用中文真正能做到的一切。",
+      "dna": "看看你擅长什么、接下来该练什么。",
+      "ecosystem": "看看词语怎样由汉字生长出来、彼此相连。",
+      "internet": "看懂网上真实的中文。",
+      "stories": "HSK 1 到 9 的分级故事——读、听、理解。",
+      "real-chinese": "一座活的城市：随着级别提升，在真实场景中使用中文。"
+    }
+  },
+  "foundation": {
+    "eyebrow": "第 1 步 · 入门",
+    "title": "汉语的声音和声调",
+    "subtitle": "在学词和汉字之前：先了解汉语怎么发音、拼音怎么读。在这里花十分钟，之后的一切都会更容易。",
+    "pinyinTitle": "拼音：用拉丁字母写汉语",
+    "pinyinBody": "每个汉语音节有三部分：声母、韵母和声调。“妈”写作 mā：m + a + 第一声。",
+    "partInitial": "声母",
+    "partFinal": "韵母",
+    "partTone": "声调",
+    "tonesTitle": "四个声调（和轻声）",
+    "tonesBody": "同一个音，声调不同就是不同的词。点一点，听一听。",
+    "tone1": "第一声——高而平",
+    "tone2": "第二声——上扬，像提问",
+    "tone3": "第三声——低，先降后升",
+    "tone4": "第四声——下降，短而有力",
+    "tone0": "轻声——短而轻",
+    "mean": {
+      "ma1": "妈妈",
+      "ma2": "麻（植物）",
+      "ma3": "马",
+      "ma4": "骂人",
+      "ma0": "疑问词"
+    },
+    "hear": "听一听",
+    "pairsTitle": "听出区别",
+    "pairsBody": "初学者最容易混淆的词。两个都听一听，注意声调和声母。",
+    "noVoice": "这台设备没有中文语音，所以你会看到拼音而不是听到声音。",
+    "roundTitle": "现在试一试",
+    "roundBody": "一轮简短练习，用真实的 HSK 1 汉字和词：选出正确的声调和你听到的词。得分 60% 以上即完成这一步。",
+    "startRound": "开始声调练习",
+    "bestScore": "你的最好成绩：{{score}}%",
+    "alsoTitle": "继续练耳朵",
+    "alsoBody": "声音世界让你在真实场景里听中文，先从慢速开始。"
+  },
+  "stories": {
+    "eyebrow": "中文故事",
+    "title": "读中文故事",
+    "subtitle": "为每个 HSK 等级准备的真实故事。从你的水平开始：HSK 1 的故事短小、提示齐全，随着进步，故事会更长、更自然。",
+    "read": "已读故事",
+    "yourLevel": "你的级别",
+    "all": "全部级别",
+    "startHere": "从这里开始",
+    "beginnerHint": "刚开始学中文？从 HSK 1 开始——每句话都有拼音、翻译和音频。",
+    "length": "{{count}} 句 · {{chars}} 字",
+    "status": {
+      "new": "未读",
+      "started": "已开始",
+      "read": "已读 · 最高 {{best}}%",
+      "locked": "HSK {{level}} 开放"
+    },
+    "lockedHow": "继续你的 HSK 之路即可解锁。",
+    "open": "阅读",
+    "empty": "这个级别还没有故事。",
+    "loop": {
+      "read": "读和听",
+      "words": "学词语",
+      "questions": "回答问题",
+      "say": "大声说"
+    },
+    "playAll": "播放故事",
+    "stop": "停止",
+    "playLine": "播放这句话",
+    "pinyin": "拼音",
+    "translation": "翻译",
+    "translate": "翻译",
+    "support": {
+      "on": "显示拼音和翻译来帮助你。",
+      "tap": "需要时点击句子下面的“翻译”。",
+      "hidden": "真实文本模式：先自己理解，翻译默认隐藏，需要时再打开。"
+    },
+    "wordsTitle": "这个故事里的词",
+    "wordsHint": "点击故事里的任何词，查看意思和汉字，并加入复习。",
+    "state": {
+      "new": "新词",
+      "review": "待复习",
+      "learning": "学习中",
+      "known": "已掌握"
+    },
+    "questionsTitle": "检查你的理解",
+    "questionsBody": "{{count}} 道题，一句话先听出来再说出来，还有故事里的几个新词。",
+    "startQuestions": "开始答题",
+    "again": "再答一次",
+    "bestSoFar": "你目前的最好成绩：{{best}}%",
+    "back": "全部故事",
+    "why": "为什么读故事？连贯的中文能把零散的词变成真正的理解——每一轮练习也会补充你的复习。"
   }
 }

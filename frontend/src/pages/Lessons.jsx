@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
@@ -17,13 +17,17 @@ export default function Lessons() {
   const { t } = useTranslation();
   const { data: path, error } = useApi("/lessons/path");
   const [level, setLevel] = useState(null);
+  // ?level=N (from the journey page) opens that level; otherwise the current one.
+  const [params] = useSearchParams();
+  const wanted = Number(params.get("level")) || null;
 
   useEffect(() => {
     if (path && level === null) {
       const last = path.levels[path.levels.length - 1];
-      setLevel(path.current_level ?? last?.level ?? 1);
+      const asked = wanted && path.levels.some((lv) => lv.level === wanted) ? wanted : null;
+      setLevel(asked ?? path.current_level ?? last?.level ?? 1);
     }
-  }, [path, level]);
+  }, [path, level, wanted]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!path) return <Layout><Loading /></Layout>;

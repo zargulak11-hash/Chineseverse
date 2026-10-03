@@ -46,6 +46,9 @@ export function localizeApiError(detail, status) {
     // services/world_map.scene_gate: a place above the learner's HSK level.
     const place = /^This place opens at HSK (\d+)$/.exec(detail);
     if (place) return i18n.t("apiErrors.placeLocked", { level: place[1] });
+    // services/stories.view: a story above the learner's HSK level.
+    const story = /^This story opens at HSK (\d+)$/.exec(detail);
+    if (story) return i18n.t("apiErrors.storyLocked", { level: story[1] });
     if (status === 404 && / not found$/i.test(detail)) return i18n.t("apiErrors.notFound");
     return detail;
   }

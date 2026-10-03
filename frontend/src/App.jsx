@@ -49,6 +49,10 @@ import Community from "./pages/Community.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
 import AdminHome from "./pages/AdminHome.jsx";
+import Journey from "./pages/Journey.jsx";
+import Foundation from "./pages/Foundation.jsx";
+import Stories from "./pages/Stories.jsx";
+import StoryReader from "./pages/StoryReader.jsx";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -167,6 +171,38 @@ export default function App() {
             element={
               <RequireAuth>
                 <Onboarding />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/journey"
+            element={
+              <RequireAuth>
+                <Journey />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/foundation"
+            element={
+              <RequireAuth>
+                <Foundation />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/stories"
+            element={
+              <RequireAuth>
+                <Stories />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/stories/:slug"
+            element={
+              <RequireAuth>
+                <StoryReader />
               </RequireAuth>
             }
           />

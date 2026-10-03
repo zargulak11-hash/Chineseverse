@@ -79,11 +79,16 @@ export default function Onboarding() {
     }
   }
 
-  async function skipTest() {
+  async function skipTest(beginner = false) {
     setBusy(true);
     setError("");
     try {
       const r = await api.post("/onboarding/placement-test/skip");
+      // A complete beginner goes straight to step 1 of the journey.
+      if (beginner) {
+        navigate("/journey", { replace: true });
+        return;
+      }
       setResult(r);
       setStep("result");
     } catch (err) {
@@ -219,15 +224,26 @@ export default function Onboarding() {
         )}
 
         {step === "intro" && (
+          // Three honest starting points: a complete beginner starts the
+          // foundation (no test, level 1); anyone who knows some Chinese takes
+          // the real placement test -- the level is never guessed.
           <>
-            <h1 className="h1">{t("pages.onboarding.testIntroTitle")}</h1>
-            <p className="sub">{t("pages.onboarding.testIntroBody")}</p>
-            <button className="btn primary" style={{ marginTop: 18 }} disabled={busy} onClick={startTest}>
-              {t("pages.onboarding.startTest")}
-            </button>
-            <button className="btn ghost" style={{ marginTop: 10 }} disabled={busy} onClick={skipTest}>
-              {t("pages.onboarding.skipTest")}
-            </button>
+            <h1 className="h1">{t("pages.onboarding.levelTitle")}</h1>
+            <p className="sub">{t("pages.onboarding.levelSub")}</p>
+            <div className="level-choices">
+              <button type="button" className="level-choice is-primary" disabled={busy} onClick={() => skipTest(true)}>
+                <b>{t("pages.onboarding.levelBeginner")}</b>
+                <span className="sub">{t("pages.onboarding.levelBeginnerHint")}</span>
+              </button>
+              <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
+                <b>{t("pages.onboarding.levelSome")}</b>
+                <span className="sub">{t("pages.onboarding.levelSomeHint")}</span>
+              </button>
+              <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
+                <b>{t("pages.onboarding.levelStudy")}</b>
+                <span className="sub">{t("pages.onboarding.levelStudyHint")}</span>
+              </button>
+            </div>
           </>
         )}
 
@@ -266,8 +282,8 @@ export default function Onboarding() {
             {result.total_count > 0 && (
               <p className="sub">{t("pages.onboarding.resultScore", { correct: result.correct_count, total: result.total_count })}</p>
             )}
-            <button className="btn primary" style={{ marginTop: 18 }} onClick={() => navigate("/dashboard", { replace: true })}>
-              {t("pages.onboarding.continueToDashboard")}
+            <button className="btn primary" style={{ marginTop: 18 }} onClick={() => navigate("/journey", { replace: true })}>
+              {t("pages.onboarding.startJourney")}
             </button>
           </div>
         )}

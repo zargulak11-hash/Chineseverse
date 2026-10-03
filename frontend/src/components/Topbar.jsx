@@ -8,6 +8,7 @@ import Icon from "./Icon.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 
 const NAV_INDEX = [
+  ["/journey", "nav.journey", "route"],
   ["/dashboard", "nav.home", "home"],
   ["/real-chinese", "nav.realChinese", "mapPin"],
   ["/sound-world", "nav.soundWorld", "ear"],
@@ -17,6 +18,7 @@ const NAV_INDEX = [
   ["/duels", "nav.duels", "swords"],
   ["/progress", "nav.progress", "chart"],
   ["/lessons", "nav.lessons", "book"],
+  ["/stories", "nav.stories", "bookOpen"],
   ["/sentence", "nav.sentence", "sparkles"],
   ["/internet", "nav.internet", "eye"],
   ["/review", "nav.review", "clock"],

@@ -17,6 +17,7 @@ const GROUPS = [
   {
     labelKey: "nav.groupMain",
     links: [
+      ["/journey", "nav.journey", "route"],
       ["/dashboard", "nav.home", "home"],
       ["/real-chinese", "nav.realChinese", "mapPin"],
       ["/sound-world", "nav.soundWorld", "ear"],
@@ -31,6 +32,7 @@ const GROUPS = [
     labelKey: "nav.groupLearning",
     links: [
       ["/lessons", "nav.lessons", "book"],
+      ["/stories", "nav.stories", "bookOpen"],
       ["/sentence", "nav.sentence", "sparkles"],
       ["/internet", "nav.internet", "eye"],
       ["/review", "nav.review", "clock"],

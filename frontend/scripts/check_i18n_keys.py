@@ -84,8 +84,10 @@ DYNAMIC = (
     + [f"passport.event.{e}" for e in ("joined", "first_practice", "first_lesson", "level_started", "exam_passed",
                                          "words_mastered", "chars_mastered", "first_written", "mistake_conquered",
                                          "review_recovery", "comeback", "scene_done", "cases_solved", "sound_stage",
-                                         "first_internet", "first_sentence", "first_voice", "first_duel_win", "achievement")]
+                                         "first_internet", "first_sentence", "first_voice", "first_duel_win", "achievement",
+                                         "first_story")]
     + [k for k in __import__("add_world_i18n").S if not isinstance(__import__("add_world_i18n").S[k]["en"], dict)]
+    + list(__import__("add_journey_i18n").S)
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]
