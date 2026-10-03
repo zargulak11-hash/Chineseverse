@@ -9,11 +9,15 @@ Duels, the Daily Voice Companion). `links` are further systems worth
 opening from a place; unlike the gateway they never count as having been
 there (another place already owns that evidence).
 
+`min_level` is the HSK level a place opens at -- the only gate: a learner
+sees it open once their current HSK level (gamification.user_rank, the
+same level the Dashboard and the Roadmap show) reaches it, and not before,
+whatever they already know. HSK 7-9 is one shared band (level 7).
+
 `theme` are the curriculum words that make the place what it is (every one
 exists in the vocabulary -- tests/world_map_test.py checks). Knowing them
-is what makes a place richer: each `topic` lights up once the learner
-really knows half its words, and a place still above the learner's HSK
-level opens early once they know OPEN_BY_WORDS of its theme words.
+is what makes an OPEN place richer: each `topic` lights up once the
+learner really knows half its words.
 A topic's `sentence` is a real sentence using those words; it opens as a
 One Sentence lesson, which drills exactly them -- and learning it there
 counts as having been to that place.
@@ -24,8 +28,6 @@ draws as water); roads that cross it get bridges.
 """
 
 from __future__ import annotations
-
-OPEN_BY_WORDS = 3  # theme words known that open a place before its level
 
 CANVAS_W, CANVAS_H = 270, 160
 

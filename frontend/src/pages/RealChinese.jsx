@@ -233,7 +233,7 @@ function PlaceLabel({ p, name, at, recommended }) {
 function companionLine(t, p) {
   const lit = p.topics.filter((x) => x.lit).length;
   if (p.status === "locked") {
-    return t("world.companion.locked", { words: p.to_open.map((w) => w.text).join("、"), level: p.min_level });
+    return t("world.companion.locked", { level: p.min_level });
   }
   if (p.status === "mastered") return t("world.companion.mastered", { score: Math.round(p.scene?.best || 0) });
   if (p.status === "explored") {
@@ -241,7 +241,6 @@ function companionLine(t, p) {
       ? t("world.companion.explored", { score: Math.round(p.scene.best) })
       : t("world.companion.exploredOther");
   }
-  if (p.opened_by === "words") return t("world.companion.openedByWords");
   return p.topics.length ? t("world.companion.freshTopics", { lit, total: p.topics.length }) : t("world.companion.fresh");
 }
 
@@ -326,7 +325,7 @@ function NextStopCard({ rec, place, onShow, compact }) {
   );
 }
 
-function PlacePanel({ p, animal, onClose, rec, current }) {
+function PlacePanel({ p, animal, onClose, rec, current, level }) {
   const { t } = useTranslation();
   const [word, setWord] = useState(null);
   useEffect(() => setWord(null), [p.key]);
@@ -395,24 +394,14 @@ function PlacePanel({ p, animal, onClose, rec, current }) {
       </div>
 
       {p.status === "locked" ? (
+        // A locked place shows only what opens it: its HSK level. Its words,
+        // talks and scene stay closed (the server doesn't even send them).
         <div className="lw-section">
           <p className="side-title">{t("world.toOpen")}</p>
-          <p className="sub">{t("world.toOpenText", { level: p.min_level })}</p>
-          <div className="chip-row">
-            {p.to_open.map((w) => (
-              <button key={w.text} type="button" className="char-chip" onClick={() => w.id && setWord(w.id)}>
-                <b lang="zh-CN">{w.text}</b>
-                <span className="sub">{w.pinyin}</span>
-                <span className="char-chip-meaning">{w.meaning}</span>
-              </button>
-            ))}
-          </div>
-          {p.to_open.length > 0 && (
-            <Link to={`/sentence?text=${encodeURIComponent(p.topics[0]?.sentence || p.to_open.map((w) => w.text).join(""))}`}
-                  className="btn small" style={{ marginTop: 12 }}>
-              <Icon name="sparkles" size={13} /> {t("world.learnThem")}
-            </Link>
-          )}
+          <p className="sub">{t("world.toOpenText", { level: p.min_level, current: level })}</p>
+          <Link to="/roadmap" className="btn small" style={{ marginTop: 4 }}>
+            <Icon name="trending" size={13} /> {t("world.toRoadmap")}
+          </Link>
         </div>
       ) : (
         <>
@@ -969,7 +958,8 @@ export default function RealChinese() {
   const order = data.map?.districts || [...new Set(data.places.map((p) => p.district))];
   const rec = data.recommended;
   const panel = selected && (
-    <PlacePanel p={selected} animal={animal} rec={rec} current={selected.key === data.current} onClose={close} />
+    <PlacePanel p={selected} animal={animal} rec={rec} current={selected.key === data.current} level={data.level}
+                onClose={close} />
   );
   return (
     <Layout variant="world">
@@ -1035,7 +1025,7 @@ export default function RealChinese() {
         <div className="card side-card">
           <p className="side-title">{t("world.howTitle")}</p>
           <p className="sub">{t("world.subtitle")}</p>
-          <p className="sub">{t("world.how", { count: data.open_by_words })}</p>
+          <p className="sub">{t("world.how")}</p>
           <Bar value={data.passport.open} max={data.passport.total} />
           <p className="sub" style={{ marginTop: 8 }}>{t("world.openCount", { open: pp.open, total: pp.total })}</p>
         </div>

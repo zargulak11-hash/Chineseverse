@@ -1094,7 +1094,8 @@
     "notFound": "找不到该内容。",
     "invalidInput": "部分输入的数据无效，请检查后重试。",
     "server": "服务器出了点问题，请稍后再试。",
-    "requestFailed": "请求失败（{{status}}），请重试。"
+    "requestFailed": "请求失败（{{status}}），请重试。",
+    "placeLocked": "这个地方在HSK {{level}}开放。"
   },
   "realLife": {
     "title": "生活中的中文",
@@ -1723,17 +1724,15 @@
     },
     "wordsKnown": "已会{{known}}/{{total}}个词",
     "companion": {
-      "locked": "这里在HSK {{level}}级开放——如果你真正学会{{words}}这些词，会更早开放。",
+      "locked": "这个地方在HSK {{level}}开放。继续你的HSK之路——我们一起来这里。",
       "fresh": "新地方——我们一起去看看吧。",
       "freshTopics": "我们还没来过这里。你学过的词已经点亮了{{total}}个话题中的{{lit}}个。",
-      "openedByWords": "你学会了这里的词，提前打开了这个地方。我们来用用吧！",
       "explored": "我们来过这里——你最好的成绩是{{score}}%。再来一次就能掌握了？",
       "exploredOther": "我们来过这里——还有更多可以发现。",
       "mastered": "你已经掌握了这里——{{score}}%，大部分词也会了。我为你骄傲！"
     },
-    "toOpen": "怎样打开",
-    "toOpenText": "达到HSK {{level}}级，或者真正学会下面几个词：",
-    "learnThem": "用一句话课堂学会它们",
+    "toOpen": "何时开放",
+    "toOpenText": "HSK {{level}}开放。你现在是HSK {{current}}。",
     "tapWords": "点击词语查看。",
     "sceneStart": "开始对话",
     "sceneAgain": "再聊一次",
@@ -1767,7 +1766,7 @@
     },
     "adaptNoEvidence": "还没有学习指南针数据——城市先按你的HSK级别安排。",
     "howTitle": "城市怎样成长",
-    "how": "地点随HSK级别开放——如果你真正学会其中{{count}}个词，会更早开放。话题会随着词语成为你的而点亮，每次完成的对话都会记录在地图和护照上。",
+    "how": "每个地方在你的HSK级别达到时开放——就是首页和HSK路线上显示的级别。在开放的地方，话题会随着词语成为你的而点亮，每次完成的对话都会记录在地图和护照上。",
     "openCount": "已开放{{open}}/{{total}}个地点",
     "place": {
       "home": {
@@ -2045,6 +2044,7 @@
       "expand": "展开详情",
       "collapse": "收起"
     },
-    "legend": "图例"
+    "legend": "图例",
+    "toRoadmap": "去我的HSK路线"
   }
 }

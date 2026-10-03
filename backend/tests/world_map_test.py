@@ -106,7 +106,7 @@ with TestClient(app) as client:
     assert w["level"] == 1 and w["current"] == "home"
     assert all(p["status"] in ("open", "locked") for p in ps.values()), [(k, p["status"]) for k, p in ps.items()]
     assert ps["restaurant"]["status"] == "open" and ps["hospital"]["status"] == "locked"
-    assert ps["hospital"]["to_open"] and ps["hospital"]["greeting"] is None
+    assert ps["hospital"]["greeting"] is None and ps["hospital"]["min_level"] == 3
     assert not any(t["lit"] for p in ps.values() for t in p["topics"])
     assert w["passport"]["explored"] == 0 and w["passport"]["scenes_done"] == 0 and w["passport"]["skills_shown"] == 0
     assert w["adaptation"]["speech"] == "standard" and not w["adaptation"]["evidence"]
@@ -126,15 +126,17 @@ with TestClient(app) as client:
     expect(client, "get", "/api/real-life/scenes/hospital", 403, headers=h)
     print("[PASS] a locked place's scene is refused by the server too (403)")
 
-    # ---- learning its words opens a place before its level
-    know(uid, ["医生", "医院", "药"])
-    ps = places(expect(client, "get", "/api/real-life/world", 200, headers=h))
-    assert ps["hospital"]["status"] == "open" and ps["hospital"]["opened_by"] == "words"
-    assert any(t["lit"] for t in ps["hospital"]["topics"] if t["key"] == "doctor")
-    expect(client, "get", "/api/real-life/scenes/hospital", 200, headers=h)
-    print("[PASS] knowing 3 hospital words opens the hospital early and lights its 'doctor' topic")
-    assert ps["hospital"]["new"] and not ps["restaurant"]["new"]
-    print("[PASS] a place opened by the learner's own words is marked new")
+    # ---- knowing a place's words never opens it before its HSK level
+    know(uid, list(PLACE_BY_KEY["hospital"]["theme"]))
+    w = expect(client, "get", "/api/real-life/world", 200, headers=h)
+    ps = places(w)
+    assert w["level"] == 1 and ps["hospital"]["status"] == "locked"
+    hosp = ps["hospital"]
+    assert not (hosp["topics"] or hosp["theme"]["words"] or hosp["talks"] or hosp["scene"] or hosp["internet"]
+                or hosp["sound"] or hosp["gateway"] or hosp["links"] or hosp["greeting"]), "a locked place leaks content"
+    expect(client, "post", "/api/practice/sessions", 403, headers=h, json={"source": "scene", "scene": "hospital"})
+    expect(client, "get", "/api/real-life/scenes/hospital", 403, headers=h)
+    print("[PASS] knowing every hospital word leaves it locked at HSK 1: no content sent, its scene still refused (403)")
 
     # ---- a round started and left: visited, not explored
     expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "convenience-store"})
@@ -204,6 +206,30 @@ with TestClient(app) as client:
     newbie = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "restaurant"})
     assert not any(q["type"] == "scene_listen" for q in newbie["questions"])
     print("[PASS] strong listening -> faster speech and an extra listening check; new learners get the tier as written")
+
+    # ---- the HSK level is the only gate, level by level (7 = the 7-9 band)
+    from app.services.gamification import user_rank  # noqa: E402
+    scene_places = [p for p in PLACES if p["scene"]]
+    for L in range(1, 8):
+        lid, lh = register(client, f"hsklevel{L}")
+        with SessionLocal() as db:
+            for us in db.query(models.UserSkill).filter_by(user_id=lid):
+                us.mastery = (L - 1) * 15 + 0.5
+            db.commit()
+            assert user_rank(db, db.get(models.User, lid))[0] == L
+        w = expect(client, "get", "/api/real-life/world", 200, headers=lh)
+        assert w["level"] == L
+        ps = places(w)
+        should = {p["key"] for p in PLACES if p["min_level"] <= L}
+        is_open = {k for k, p in ps.items() if p["status"] != "locked"}
+        assert is_open == should, (L, sorted(is_open ^ should))
+        assert all(not ps[k]["topics"] and not ps[k]["theme"]["words"] for k in ps if k not in should)
+        for p in scene_places:
+            code = 201 if p["min_level"] <= L else 403
+            expect(client, "post", "/api/practice/sessions", code, headers=lh, json={"source": "scene", "scene": p["scene"]})
+            expect(client, "get", f"/api/real-life/scenes/{p['scene']}", 200 if code == 201 else 403, headers=lh)
+        print(f"[PASS] HSK {L}: {len(should)} places open (all at HSK <= {L}), {len(PLACES) - len(should)} locked; "
+              f"every locked scene refused by the API")
 
     # The old World map is gone; its talks and cases live on inside this one.
     expect(client, "get", "/api/world/locations", 404, headers=h)

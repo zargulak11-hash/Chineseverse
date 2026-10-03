@@ -5,10 +5,13 @@ already exist; this module works out what each place looks like FOR THIS
 LEARNER, from their stored records only -- nothing is unlocked, lit or
 completed unless the data says so:
 
-  open / locked   their HSK level (user_rank) reached the place's level, OR
-                  they already know OPEN_BY_WORDS of its theme words
-                  (UserVocabulary reviewing/mastered) -- learning the words
-                  of a place opens it
+  open / locked   their current HSK level (user_rank -- the level the
+                  Dashboard and the Roadmap show) reached the place's
+                  min_level. Nothing else opens a place: knowing its words
+                  lights its topics up once it is open, never earlier.
+                  A locked place is sent as a silhouette only (where it is,
+                  what it is called, the level it opens at) -- none of its
+                  words, sentences, talks, scene or gateway.
   topics          a place's conversation topics light up as their words are
                   really known (half of them; "learning" counts half)
   explored        a completed round there (Real Chinese scene, Sound World
@@ -46,7 +49,6 @@ from app.services.world_places import (
     CANVAS_H,
     CANVAS_W,
     DISTRICTS,
-    OPEN_BY_WORDS,
     PATHS,
     PLACE_BY_KEY,
     PLACE_BY_SCENE,
@@ -87,12 +89,9 @@ def _known(statuses: dict[str, str], words) -> int:
     return sum(1 for w in words if statuses.get(w) in KNOWN)
 
 
-def place_open(place: dict, level: int, statuses: dict[str, str]) -> tuple[bool, str | None]:
-    if level >= place["min_level"]:
-        return True, "level"
-    if _known(statuses, place["theme"]) >= OPEN_BY_WORDS:
-        return True, "words"
-    return False, None
+def place_open(place: dict, level: int) -> bool:
+    """The world's one progression rule: the learner's current HSK level."""
+    return level >= place["min_level"]
 
 
 def scene_gate(db: Session, user: models.User, scene_slug: str) -> None:
@@ -106,13 +105,8 @@ def scene_gate(db: Session, user: models.User, scene_slug: str) -> None:
         return
     place = PLACE_BY_KEY[key]
     level, _ = user_rank(db, user)
-    if level >= place["min_level"]:
-        return
-    statuses = _statuses(db, user, _word_rows(db, set(place["theme"])))
-    ok, _by = place_open(place, level, statuses)
-    if not ok:
-        raise SceneError(403, f"This place opens at HSK {place['min_level']} — or once you know "
-                              f"{OPEN_BY_WORDS} of its words")
+    if not place_open(place, level):
+        raise SceneError(403, f"This place opens at HSK {place['min_level']}")
 
 
 def _greeting(db: Session, place: dict, tier: str, locale: str) -> dict | None:
@@ -307,7 +301,17 @@ def world(db: Session, user: models.User, locale: str) -> dict:
 
     out = []
     for p in PLACES:
-        is_open, by = place_open(p, level, statuses)
+        is_open = place_open(p, level)
+        if not is_open:
+            # A silhouette: where it is, what it is called, the level it opens
+            # at. None of its learning content leaves the server.
+            out.append({
+                "key": p["key"], "icon": p["icon"], "district": p["district"], "x": p["x"], "y": p["y"],
+                "status": "locked", "min_level": p["min_level"], "visited": False, "new": False,
+                "theme": {"known": 0, "total": 0, "words": []}, "topics": [], "scene": None, "talks": [],
+                "sound": None, "internet": [], "gateway": None, "links": [], "greeting": None,
+            })
+            continue
         known = _known(statuses, p["theme"])
         topics = []
         for t in p["topics"]:
@@ -332,19 +336,18 @@ def world(db: Session, user: models.User, locale: str) -> dict:
                         or any(i["read"] for i in internet) or (p["gateway"] and gateway.get(p["gateway"]))
                         or any(t["sentence"] in sentences for t in p["topics"]))
         mastered = bool(scene_info and scene_info["best"] >= MASTERED and known * 2 >= len(p["theme"]))
-        status = "locked" if not is_open else "mastered" if mastered else "explored" if explored else "open"
+        status = "mastered" if mastered else "explored" if explored else "open"
         visited = status == "open" and p["key"] in unfinished
-        new = status == "open" and not visited and (by == "words" or (p["min_level"] == level and level > 1))
+        new = status == "open" and not visited and p["min_level"] == level and level > 1
         out.append({
             "key": p["key"], "icon": p["icon"], "district": p["district"], "x": p["x"], "y": p["y"],
-            "status": status, "opened_by": by, "min_level": p["min_level"], "visited": visited, "new": new,
+            "status": status, "min_level": p["min_level"], "visited": visited, "new": new,
             "theme": {"known": known, "total": len(p["theme"]), "words": [card(w) for w in p["theme"]]},
-            "to_open": [card(w) for w in p["theme"] if statuses.get(w) not in KNOWN][:OPEN_BY_WORDS] if not is_open else [],
             "topics": topics, "scene": scene_info, "talks": talks,
             "sound": {"env": p["sound"], "rounds": len(sound_rows),
                       "best": round(max((s.score or 0 for s in sound_rows), default=0.0), 1)} if p["sound"] else None,
             "internet": internet, "gateway": p["gateway"], "links": list(p["links"]),
-            "greeting": _greeting(db, p, tier, locale) if is_open else None,
+            "greeting": _greeting(db, p, tier, locale),
         })
 
     # Where the learner was last: their most recent completed round, else
@@ -360,6 +363,10 @@ def world(db: Session, user: models.User, locale: str) -> dict:
         current = next((p["key"] for p in PLACES if p["location"] == loc), current)
     elif latest is not None:
         current = _place_of_session(latest) or current
+    # Never stand in a locked place (a round played there before the HSK-only
+    # rule, when knowing its words opened it): back home.
+    if not place_open(PLACE_BY_KEY.get(current, PLACE_BY_KEY["home"]), level):
+        current = "home"
 
     # The weakest Learning Compass skill a place can train -- only once there
     # is evidence (a new learner has no weakest skill, just an empty profile).
@@ -381,10 +388,9 @@ def world(db: Session, user: models.User, locale: str) -> dict:
             "explored": sum(1 for p in out if p["status"] in ("explored", "mastered")),
             "open": len(open_keys), "total": len(out),
             "scenes_done": sum(1 for p in out if p["scene"] and p["scene"]["best"] >= 70),
-            "scenes_total": sum(1 for p in out if p["scene"]),
+            "scenes_total": sum(1 for p in PLACES if p["scene"]),
             "skills_shown": sum(1 for c in caps if c["band"] in ("developing", "strong")),
             "skills_total": len(caps),
         },
-        "open_by_words": OPEN_BY_WORDS,
         "generated_at": datetime.utcnow().isoformat(),
     }

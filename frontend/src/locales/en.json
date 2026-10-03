@@ -1097,7 +1097,8 @@
     "notFound": "This item could not be found.",
     "invalidInput": "Some of the entered data isn't valid. Please check it and try again.",
     "server": "Something went wrong on the server. Please try again in a moment.",
-    "requestFailed": "The request failed ({{status}}). Please try again."
+    "requestFailed": "The request failed ({{status}}). Please try again.",
+    "placeLocked": "This place opens at HSK {{level}}."
   },
   "realLife": {
     "title": "Real-life Chinese",
@@ -1765,17 +1766,15 @@
     },
     "wordsKnown": "{{known}}/{{total}} words known",
     "companion": {
-      "locked": "This place opens at HSK {{level}} — or sooner, once you really know words like {{words}}.",
+      "locked": "This place opens at HSK {{level}}. Keep going on your HSK path — we'll come here together.",
       "fresh": "A new place — let's take a look around together.",
       "freshTopics": "We haven't been here yet. Your words already light up {{lit}} of {{total}} topics here.",
-      "openedByWords": "You opened this place early — by learning its words. Let's use them!",
       "explored": "We've been here — your best conversation was {{score}}%. One more to master it?",
       "exploredOther": "We've been here before — there's more to discover.",
       "mastered": "You've mastered this place — {{score}}% and most of its words. I'm proud of you!"
     },
-    "toOpen": "How to open it",
-    "toOpenText": "Reach HSK {{level}}, or really learn a few of these words:",
-    "learnThem": "Learn them in a One Sentence lesson",
+    "toOpen": "When it opens",
+    "toOpenText": "Opens at HSK {{level}}. You are at HSK {{current}} now.",
     "tapWords": "Tap a word to explore it.",
     "sceneStart": "Start the conversation",
     "sceneAgain": "Talk again",
@@ -1811,7 +1810,7 @@
     },
     "adaptNoEvidence": "No Learning Compass evidence yet — the city uses your HSK level as it is.",
     "howTitle": "How the city grows",
-    "how": "Places open with your HSK level — or earlier when you really know {{count}} of their words. Topics light up as their words become yours, and every completed conversation is recorded on the map and in your Passport.",
+    "how": "Each place opens when your HSK level reaches it — the same level your Dashboard and HSK path show. Inside an open place, topics light up as their words become yours, and every completed conversation is recorded on the map and in your Passport.",
     "openCount": "{{open}} of {{total}} places open",
     "place": {
       "home": {
@@ -2090,6 +2089,7 @@
       "expand": "Show all details",
       "collapse": "Show less"
     },
-    "legend": "Map key"
+    "legend": "Map key",
+    "toRoadmap": "Go to your HSK path"
   }
 }

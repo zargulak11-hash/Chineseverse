@@ -416,7 +416,33 @@ TOPICS.update({
 })
 
 # Keys this script once added that no longer name anything.
-REMOVED = ("world.district.travel",)
+REMOVED = ("world.district.travel", "world.companion.openedByWords", "world.learnThem")
+for _key in REMOVED:
+    S.pop(_key, None)
+
+# The HSK level is the world's only gate (services/world_map.py): knowing a
+# place's words no longer opens it early.
+S.update({
+    "world.companion.locked": L(
+        "This place opens at HSK {{level}}. Keep going on your HSK path — we'll come here together.",
+        "Это место откроется на HSK {{level}}. Продолжайте свой путь HSK — придём сюда вместе.",
+        "Ин ҷо дар HSK {{level}} кушода мешавад. Роҳи HSK-и худро идома диҳед — ин ҷо якҷоя меоем.",
+        "这个地方在HSK {{level}}开放。继续你的HSK之路——我们一起来这里。"),
+    "world.toOpen": L("When it opens", "Когда откроется", "Кай кушода мешавад", "何时开放"),
+    "world.toOpenText": L(
+        "Opens at HSK {{level}}. You are at HSK {{current}} now.",
+        "Откроется на HSK {{level}}. Сейчас у вас HSK {{current}}.",
+        "Дар HSK {{level}} кушода мешавад. Ҳоло шумо дар HSK {{current}} ҳастед.",
+        "HSK {{level}}开放。你现在是HSK {{current}}。"),
+    "apiErrors.placeLocked": L("This place opens at HSK {{level}}.", "Это место откроется на HSK {{level}}.",
+                               "Ин ҷо дар HSK {{level}} кушода мешавад.", "这个地方在HSK {{level}}开放。"),
+    "world.toRoadmap": L("Go to your HSK path", "К вашему пути HSK", "Ба роҳи HSK-и худ", "去我的HSK路线"),
+    "world.how": L(
+        "Each place opens when your HSK level reaches it — the same level your Dashboard and HSK path show. Inside an open place, topics light up as their words become yours, and every completed conversation is recorded on the map and in your Passport.",
+        "Каждое место открывается, когда ваш уровень HSK до него дорастает, — тот же уровень, что на главной и на пути HSK. В открытом месте темы оживают, когда слова становятся вашими, а каждый пройденный разговор отмечается на карте и в паспорте.",
+        "Ҳар ҷой вақте кушода мешавад, ки сатҳи HSK-и шумо ба он мерасад — ҳамон сатҳе, ки дар саҳифаи асосӣ ва роҳи HSK нишон дода мешавад. Дар ҷои кушода мавзӯъҳо бо азхудшавии калимаҳо равшан мешаванд ва ҳар сӯҳбати тамомшуда дар харита ва шиноснома сабт мешавад.",
+        "每个地方在你的HSK级别达到时开放——就是首页和HSK路线上显示的级别。在开放的地方，话题会随着词语成为你的而点亮，每次完成的对话都会记录在地图和护照上。"),
+})
 
 for key, (name, desc, enter) in PLACES.items():
     S[f"world.place.{key}.name"] = name

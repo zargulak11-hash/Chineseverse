@@ -43,6 +43,9 @@ export function localizeApiError(detail, status) {
     if (detail.startsWith("Trace not accepted")) return i18n.t("apiErrors.traceRejected");
     const mission = /^This mission opens at HSK (\d+)$/.exec(detail);
     if (mission) return i18n.t("apiErrors.missionLocked", { level: mission[1] });
+    // services/world_map.scene_gate: a place above the learner's HSK level.
+    const place = /^This place opens at HSK (\d+)$/.exec(detail);
+    if (place) return i18n.t("apiErrors.placeLocked", { level: place[1] });
     if (status === 404 && / not found$/i.test(detail)) return i18n.t("apiErrors.notFound");
     return detail;
   }
