@@ -1,62 +1,156 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
-import WordHelper from "../components/WordHelper.jsx";
-import { Empty, Loading } from "../components/ui.jsx";
+import ReadingHelp, { HELP_ACTIONS } from "../components/ReadingHelp.jsx";
+import { Bar, Empty, Loading } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
+import { BookStats } from "./StoryBook.jsx";
 
-// One story (/stories/:slug): read and listen, learn its words, then the
-// graded round (practice source "story": comprehension, a line heard and said
-// aloud, the story's new words as real cards). Support -- pinyin, translation,
-// audio speed -- follows the story's level (services/stories.py support()).
+// Reading one chapter (/stories/:slug/read/:n). The page is the Chinese
+// text: no translations laid over it. Help is the learner's choice --
+//   tap a word        -> its curriculum entry (and its sentence to explain)
+//   select any text   -> a small menu: Explain / Pinyin / Translate / Words / Grammar
+// Text stays selectable (words are spans, not buttons; a tap that ends a
+// drag-selection is ignored). The bookmark follows the sentence being read
+// and is saved on the server, so "Continue reading" returns here.
 
-const STATES = ["new", "review", "learning", "known"];
+const CJK = /[㐀-鿿]/;
+const KEEP = /[㐀-鿿　-〿＀-￯“”‘’…—·]/g;
+const SAVE_MS = 1500;
+
+function selectedChinese(sel) {
+  return (sel.toString().match(KEEP) || []).join("");
+}
 
 export default function StoryReader() {
   const { t } = useTranslation();
-  const { slug } = useParams();
-  const { data, error } = useApi(`/stories/${slug}`);
-  const [pinyin, setPinyin] = useState(null);
-  const [trAll, setTrAll] = useState(null);
-  const [opened, setOpened] = useState({});
-  const [word, setWord] = useState(null);
+  const { slug, n } = useParams();
+  const chapter = Number(n) || 1;
+  const navigate = useNavigate();
+  const { refresh } = useDashboard() || {};
+  const { data, error } = useApi(`/stories/${slug}/chapters/${chapter}`);
+  const [pinyin, setPinyin] = useState(false);
+  const [help, setHelp] = useState(null);
+  const [menu, setMenu] = useState(null); // {text, x, y}
   const [playing, setPlaying] = useState(-1);
+  const [finish, setFinish] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const textRef = useRef(null);
+  const sentRefs = useRef([]);
   const stopRef = useRef(false);
+  const saved = useRef({ chapter: null, position: null });
+  const pending = useRef(null);
 
   useEffect(() => {
     if (!data) return;
     setPinyin(data.support.pinyin === "on");
-    setTrAll(data.support.translation === "inline");
-  }, [data?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+    setHelp(null);
+    setFinish(null);
+    saved.current = { chapter, position: data.position };
+    // Resume at the bookmark.
+    if (data.position > 0) {
+      requestAnimationFrame(() => sentRefs.current[data.position]?.scrollIntoView({ block: "center" }));
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [data?.slug, data?.n]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- the bookmark: the sentence at the reading line, saved after a pause
+  const flush = useCallback(() => {
+    const pos = pending.current;
+    if (pos === null || (saved.current.chapter === chapter && saved.current.position === pos)) return;
+    saved.current = { chapter, position: pos };
+    api.put(`/stories/${slug}/progress`, { chapter, position: pos }).catch(() => {});
+  }, [slug, chapter]);
+
+  useEffect(() => {
+    if (!data) return undefined;
+    let frame = 0;
+    let timer = 0;
+    function onScroll() {
+      setMenu(null); // the menu is placed at the selection on screen
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const line = window.innerHeight * 0.35;
+        let best = 0;
+        sentRefs.current.forEach((el, i) => {
+          if (el && el.getBoundingClientRect().top <= line) best = i;
+        });
+        pending.current = best;
+        clearTimeout(timer);
+        timer = setTimeout(flush, SAVE_MS);
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      flush();
+    };
+  }, [data, flush]);
+
+  // --- selection -> the help menu
+  useEffect(() => {
+    let timer = 0;
+    function onSelect() {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const sel = window.getSelection();
+        const root = textRef.current;
+        if (!sel || sel.isCollapsed || !root || !sel.rangeCount) return setMenu(null);
+        const range = sel.getRangeAt(0);
+        if (!root.contains(range.commonAncestorContainer)) return setMenu(null);
+        const text = selectedChinese(sel);
+        if (!CJK.test(text)) return setMenu(null);
+        const r = range.getBoundingClientRect();
+        setMenu({ text: text.slice(0, 200), x: Math.min(Math.max(r.left + r.width / 2, 120), window.innerWidth - 120), y: r.bottom + 8 });
+      }, 250);
+    }
+    document.addEventListener("selectionchange", onSelect);
+    return () => {
+      document.removeEventListener("selectionchange", onSelect);
+      clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => () => {
+    stopRef.current = true;
+    window.speechSynthesis?.cancel();
+  }, []);
 
   if (error) {
     return (
       <Layout>
         <Empty>{error}</Empty>
         <div className="row" style={{ justifyContent: "center", marginTop: 12 }}>
-          <Link to="/stories" className="btn">{t("stories.back")}</Link>
-          <Link to="/journey" className="btn primary">{t("nav.journey")}</Link>
+          <Link to={`/stories/${slug}`} className="btn">{t("stories.reader.toBook")}</Link>
+          <Link to="/journey" className="btn primary">{t("stories.lockedCta")}</Link>
         </div>
       </Layout>
     );
   }
   if (!data) return <Layout><Loading /></Layout>;
+
+  const sentences = data.paragraphs.flat();
   const rate = data.support.rate;
   const say = (text, onEnd) => speakChinese(text, { profile: { rate, pitch: 1, volume: 1 }, onEnd, whole: true });
 
   function playFrom(i) {
-    if (i >= data.sentences.length || stopRef.current) {
+    if (i >= sentences.length || stopRef.current) {
       setPlaying(-1);
       return;
     }
     setPlaying(i);
-    say(data.sentences[i].zh, () => playFrom(i + 1));
+    sentRefs.current[i]?.scrollIntoView({ block: "center", behavior: "smooth" });
+    say(sentences[i].zh, () => playFrom(i + 1));
   }
-  function playAll() {
+  function toggleListen() {
     if (playing >= 0) {
       stopRef.current = true;
       window.speechSynthesis?.cancel();
@@ -64,122 +158,164 @@ export default function StoryReader() {
       return;
     }
     stopRef.current = false;
-    playFrom(0);
+    api.post(`/stories/${slug}/listen`, { chapter }).catch(() => {});
+    playFrom(Math.max(0, pending.current ?? 0));
   }
 
-  const translationMode = data.support.translation;
+  function openWord(tk, s) {
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed) return; // the tap ended a selection
+    setMenu(null);
+    setHelp({ mode: "word", wordId: tk.word_id, sentence: s.zh });
+    api.post(`/stories/${slug}/lookup`, { word_id: tk.word_id }).catch(() => {});
+  }
+  function explain(text, focus) {
+    setMenu(null);
+    window.getSelection()?.removeAllRanges();
+    setHelp({ mode: "text", text, focus, key: Date.now() });
+  }
+
+  async function finishChapter() {
+    setBusy(true);
+    try {
+      flush();
+      const r = await api.post(`/stories/${slug}/chapters/${chapter}/finish`);
+      refresh?.();
+      if (r.just_completed) {
+        setFinish(r);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (r.next_chapter) {
+        navigate(`/stories/${slug}/read/${r.next_chapter}`);
+      } else {
+        navigate(`/stories/${slug}`);
+      }
+    } catch {
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+  }
+
+  const last = data.n === data.total;
   return (
     <Layout>
-      <Link to="/stories" className="sub">← {t("stories.back")}</Link>
-      <header className="page-head" style={{ marginTop: 10 }}>
-        <div>
-          <div className="page-eyebrow"><Icon name="bookOpen" size={13} /> HSK {data.level} · {t("stories.eyebrow")}</div>
-          <h1 className="h1"><span aria-hidden="true">{data.icon}</span> {data.title}</h1>
-          <p className="sub"><span lang="zh-CN">{data.title_zh}</span> · {data.summary}</p>
-        </div>
-        <div className="kpi-row">
-          {STATES.filter((k) => data.counts[k] > 0).map((k) => (
-            <div className="kpi" key={k}>
-              <span className="kpi-value">{data.counts[k]}</span>
-              <span className="kpi-label">{t(`stories.state.${k}`)}</span>
+      <div className="reader-top">
+        <Link to={`/stories/${slug}`} className="btn ghost small"><Icon name="arrowLeft" size={13} /> {t("stories.reader.toBook")}</Link>
+        <span className="sub reader-where">
+          <span lang="zh-CN">《{data.book_title_zh}》</span> · {t("stories.reader.chapterOf", { n: data.n, total: data.total })}
+        </span>
+        <div className="reader-progress"><Bar value={finish?.book_completed ? 100 : data.percent} /></div>
+      </div>
+
+      {finish && (
+        <section className="card book-done book-done-celebrate" aria-live="polite">
+          <p className="page-eyebrow"><Icon name="award" size={13} /> {t("stories.done.title")}</p>
+          <h2 className="h2" lang="zh-CN">《{data.book_title_zh}》</h2>
+          <p className="sub">{t("stories.done.body", { title: data.book_title })}</p>
+          {finish.stats && <BookStats stats={finish.stats} />}
+          <div className="row">
+            {finish.next ? (
+              <Link to={`/stories/${finish.next.slug}`} className="btn primary">
+                {t("stories.done.next")}: <span lang="zh-CN">《{finish.next.title_zh}》</span> <Icon name="arrowRight" size={13} />
+              </Link>
+            ) : null}
+            <Link to="/stories" className="btn ghost">{t("stories.done.library")}</Link>
+          </div>
+        </section>
+      )}
+
+      <div className={`reader${help ? " has-help" : ""}`}>
+        <article className="card reader-page" aria-labelledby="chapter-title">
+          <header className="reader-head">
+            <p className="page-eyebrow">{t("stories.reader.chapterOf", { n: data.n, total: data.total })} · {data.title}</p>
+            <h1 className="h1 reader-title" id="chapter-title" lang="zh-CN">{data.title_zh}</h1>
+            <div className="row reader-tools">
+              <button type="button" className={`btn small${playing >= 0 ? " primary" : ""}`} onClick={toggleListen} aria-pressed={playing >= 0}>
+                <Icon name={playing >= 0 ? "stop" : "play"} size={13} /> {playing >= 0 ? t("stories.reader.stop") : t("stories.reader.listen")}
+              </button>
+              <button type="button" className={`btn small${pinyin ? "" : " ghost"}`} aria-pressed={pinyin} onClick={() => setPinyin((v) => !v)}>
+                {t("stories.reader.pinyin")}
+              </button>
             </div>
-          ))}
-        </div>
-      </header>
+            <p className="sub reader-hint"><Icon name="sparkles" size={13} /> {t("stories.reader.hint")}</p>
+          </header>
 
-      <ol className="tale-loop" aria-label={t("stories.eyebrow")}>
-        {["read", "words", "questions", "say"].map((k, i) => (
-          <li key={k} className={i === 0 ? "is-current" : ""}><span>{i + 1}</span> {t(`stories.loop.${k}`)}</li>
-        ))}
-      </ol>
+          <div ref={textRef} className={`reader-text${pinyin ? " with-pinyin" : ""}`} lang="zh-CN">
+            {data.paragraphs.map((para, pi) => (
+              <p key={pi} className="reader-para">
+                {para.map((s) => (
+                  <span key={s.i} ref={(el) => (sentRefs.current[s.i] = el)}
+                        className={`reader-sentence${playing === s.i ? " is-playing" : ""}`}>
+                    <span className="reader-zh">
+                      {s.tokens.map((tk, j) => tk.word_id ? (
+                        <span key={j} role="button" tabIndex={0}
+                              className={`tale-word is-${tk.state}${help?.wordId === tk.word_id ? " is-open" : ""}`}
+                              onClick={() => openWord(tk, s)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  openWord(tk, s);
+                                }
+                              }}>
+                          {tk.text}
+                        </span>
+                      ) : tk.name ? (
+                        <span key={j} className="reader-name" title={tk.name}>{tk.text}</span>
+                      ) : <span key={j}>{tk.text}</span>)}
+                    </span>
+                    {pinyin && <span className="reader-py" aria-hidden="true">{s.pinyin}</span>}
+                  </span>
+                ))}
+              </p>
+            ))}
+          </div>
 
-      <div className="ws">
-        <div className="ws-main">
-          <section className="card tale-reader">
-            <div className="tale-tools">
-              <button type="button" className="btn primary small" onClick={playAll} aria-pressed={playing >= 0}>
-                <Icon name={playing >= 0 ? "stop" : "play"} size={14} /> {playing >= 0 ? t("stories.stop") : t("stories.playAll")}
-              </button>
-              <button type="button" className={`btn small${pinyin ? "" : " ghost"}`} aria-pressed={!!pinyin} onClick={() => setPinyin((v) => !v)}>
-                {t("stories.pinyin")}
-              </button>
-              {translationMode !== "hidden" || trAll ? (
-                <button type="button" className={`btn small${trAll ? "" : " ghost"}`} aria-pressed={!!trAll} onClick={() => setTrAll((v) => !v)}>
-                  {t("stories.translation")}
-                </button>
+          <ul className="tale-legend sub" aria-label={t("stories.reader.legend")}>
+            {["new", "review", "learning", "known"].map((k) => (
+              <li key={k}><span className={`tale-word is-${k}`} aria-hidden="true">字</span> {t(`stories.state.${k}`)}</li>
+            ))}
+          </ul>
+
+          <footer className="reader-foot">
+            {data.n > 1 ? (
+              <Link to={`/stories/${slug}/read/${data.n - 1}`} className="btn ghost small">
+                <Icon name="arrowLeft" size={13} /> {t("stories.reader.prev")}
+              </Link>
+            ) : <span />}
+            <div className="row reader-foot-main">
+              {data.questions > 0 && (
+                <Link to={`/practice?source=story&story=${slug}&chapter=${data.n}`} className="btn small">
+                  {t("stories.book.check")}
+                </Link>
+              )}
+              {data.done && !last ? (
+                <Link to={`/stories/${slug}/read/${data.n + 1}`} className="btn primary">
+                  {t("stories.reader.next")} <Icon name="arrowRight" size={13} />
+                </Link>
               ) : (
-                <button type="button" className="btn small ghost" aria-pressed="false" onClick={() => setTrAll(true)}>
-                  {t("stories.translation")}
+                <button type="button" className="btn primary" onClick={finishChapter} disabled={busy}>
+                  <Icon name="check" size={14} /> {t(last ? "stories.reader.finishLast" : "stories.reader.finish")}
                 </button>
               )}
-              <span className="sub tale-support">{t(`stories.support.${translationMode === "inline" ? "on" : translationMode}`)}</span>
             </div>
-            <div className="tale-text" lang="zh-CN">
-              {data.sentences.map((s, i) => (
-                <div key={i} className={`tale-sentence${playing === i ? " is-playing" : ""}`}>
-                  <button type="button" className="icon-btn tale-say" onClick={() => say(s.zh)}
-                          aria-label={t("stories.playLine")} title={t("stories.playLine")}>
-                    <Icon name="ear" size={15} />
-                  </button>
-                  <div className="tale-line">
-                    <p className="tale-zh">
-                      {s.tokens.map((tk, j) => tk.word_id ? (
-                        <button key={j} type="button" className={`tale-word is-${tk.state}${word === tk.word_id ? " is-open" : ""}`}
-                                onClick={() => setWord(tk.word_id)} title={tk.meaning}>
-                          {tk.text}
-                        </button>
-                      ) : <span key={j}>{tk.text}</span>)}
-                    </p>
-                    {pinyin && <p className="tale-py">{s.pinyin}</p>}
-                    {s.tr && (trAll || opened[i]) && <p className="tale-tr" lang="">{s.tr}</p>}
-                    {s.tr && !trAll && !opened[i] && translationMode !== "hidden" && (
-                      <button type="button" className="tale-tr-btn" onClick={() => setOpened((o) => ({ ...o, [i]: true }))}>
-                        {t("stories.translate")}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <ul className="tale-legend sub" aria-label={t("stories.wordsTitle")}>
-              {STATES.map((k) => <li key={k}><span className={`tale-word is-${k}`} aria-hidden="true">字</span> {t(`stories.state.${k}`)}</li>)}
-            </ul>
-          </section>
+          </footer>
+        </article>
 
-          <section className="card tale-questions">
-            <h2 className="h2">{t("stories.questionsTitle")}</h2>
-            <p className="sub">{t("stories.questionsBody", { count: data.questions })}</p>
-            {data.record && <p className="sub">{t("stories.bestSoFar", { best: Math.round(data.record.best) })}</p>}
-            <Link to={`/practice?source=story&story=${data.slug}`} className="btn primary">
-              <Icon name="play" size={15} /> {data.record ? t("stories.again") : t("stories.startQuestions")}
-            </Link>
-          </section>
-        </div>
-
-        <aside className="ws-side">
-          {word && (
-            <div className="card side-card">
-              <WordHelper wordId={word} onClose={() => setWord(null)} />
-            </div>
-          )}
-          <div className="card side-card">
-            <p className="side-title">{t("stories.wordsTitle")}</p>
-            <p className="sub">{t("stories.wordsHint")}</p>
-            <ul className="tale-glossary">
-              {data.words.slice(0, 18).map((w) => (
-                <li key={w.id}>
-                  <button type="button" className="tale-gloss-row" onClick={() => setWord(w.id)}>
-                    <b lang="zh-CN">{w.text}</b>
-                    <span className="sub">{w.pinyin}</span>
-                    <span className="tale-gloss-meaning">{w.meaning}</span>
-                    <span className={`badge ${w.state === "known" ? "good" : w.state === "new" ? "accent" : ""}`}>{t(`stories.state.${w.state}`)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
+        <ReadingHelp key={help?.key || help?.wordId || "none"} slug={slug} chapter={chapter} help={help} rate={rate}
+                     onClose={() => setHelp(null)} onExplain={explain} />
       </div>
+
+      {menu && (
+        <div className="read-menu" role="toolbar" aria-label={t("stories.help.actions")}
+             style={{ left: menu.x, top: Math.min(menu.y, window.innerHeight - 64) }}>
+          {HELP_ACTIONS.map((a) => (
+            <button key={a} type="button" className="btn small" onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => explain(menu.text, a)}>
+              {t(`stories.help.${a}`)}
+            </button>
+          ))}
+        </div>
+      )}
     </Layout>
   );
 }

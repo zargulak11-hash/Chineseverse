@@ -1257,7 +1257,8 @@
       "stale_area": "你已经{{days}}天没练{{area}}了——{{name}}帮你记着进度。",
       "stale_area_never": "你开始学{{area}}了，但还没有在练习中练过。",
       "weak_skill": "你的{{skill}}目前最弱（{{value}}/100）——下一步可以重点提高。",
-      "passport_milestone": "你的中文护照新的一页：{{event}}"
+      "passport_milestone": "你的中文护照新的一页：{{event}}",
+      "reading_word": "{{name}}发现你读故事时常常查“{{word}}”——我们复习一下吧。"
     },
     "area": {
       "vocab": "词汇",
@@ -1277,7 +1278,8 @@
       "new_learner": "开始上课",
       "achievement": "查看成就",
       "mastered_recently": "我的词汇",
-      "passport_milestone": "打开我的护照"
+      "passport_milestone": "打开我的护照",
+      "reading_word": "去复习"
     }
   },
   "detective": {
@@ -1709,7 +1711,9 @@
       "first_voice": "第一次开口说中文",
       "first_duel_win": "第一次赢得对战",
       "achievement": "获得成就：{{title}}",
-      "first_story": "读完第一个中文故事"
+      "first_story": "读完第一个中文故事",
+      "level_book": "你的第一本 HSK {{level}} 书：《{{title}}》",
+      "books_read_other": "已经读完 {{count}} 本书"
     },
     "next": "下一步",
     "allGood": "一切顺利——保持节奏。",
@@ -2230,55 +2234,155 @@
   },
   "stories": {
     "eyebrow": "中文故事",
-    "title": "读中文故事",
-    "subtitle": "为每个 HSK 等级准备的真实故事。从你的水平开始：HSK 1 的故事短小、提示齐全，随着进步，故事会更长、更自然。",
-    "read": "已读故事",
-    "yourLevel": "你的级别",
-    "all": "全部级别",
-    "startHere": "从这里开始",
-    "beginnerHint": "刚开始学中文？从 HSK 1 开始——每句话都有拼音、翻译和音频。",
-    "length": "{{count}} 句 · {{chars}} 字",
+    "title": "读中文书",
+    "subtitle": "为每个 HSK 等级准备的中文书库。先读中文——需要帮助时，点一个词或选一句话。",
+    "kpi": {
+      "completed": "已读完",
+      "reading": "正在读",
+      "library": "书库藏书",
+      "level": "你的等级"
+    },
+    "continue": {
+      "title": "继续阅读",
+      "cta": "继续阅读"
+    },
+    "recommended": {
+      "title": "为你推荐",
+      "cta": "打开这本书"
+    },
+    "levels": "HSK 等级",
     "status": {
-      "new": "未读",
-      "started": "已开始",
-      "read": "已读 · 最高 {{best}}%",
-      "locked": "HSK {{level}} 开放"
+      "locked": "HSK {{level}} 开放",
+      "completed": "已读完"
     },
-    "lockedHow": "继续你的 HSK 之路即可解锁。",
-    "open": "阅读",
-    "empty": "这个级别还没有故事。",
-    "loop": {
-      "read": "读和听",
-      "words": "学词语",
-      "questions": "回答问题",
-      "say": "大声说"
+    "lockedHow": "当你在 HSK 之路上达到这个等级时，这些书就会开放。",
+    "lockedCta": "继续你的 HSK 之路",
+    "filter": {
+      "label": "筛选图书",
+      "all": "全部",
+      "new": "未开始",
+      "in_progress": "在读",
+      "completed": "已读完",
+      "topic": "主题",
+      "anyTopic": "全部主题",
+      "time": "阅读时间",
+      "time_any": "不限",
+      "time_short": "{{count}} 分钟以内",
+      "time_long": "{{count}} 分钟以上"
     },
-    "playAll": "播放故事",
-    "stop": "停止",
-    "playLine": "播放这句话",
-    "pinyin": "拼音",
-    "translation": "翻译",
-    "translate": "翻译",
-    "support": {
-      "on": "显示拼音和翻译来帮助你。",
-      "tap": "需要时点击句子下面的“翻译”。",
-      "hidden": "真实文本模式：先自己理解，翻译默认隐藏，需要时再打开。"
+    "empty": "这个等级还没有书——书库正在不断增加新书。",
+    "emptyFilter": "没有符合条件的书。",
+    "why": "阅读连贯的中文，能把零散的词变成真正的理解。每本书都是为相应等级用中文写的；翻译只是你需要时的帮助，而不是正文。",
+    "card": {
+      "chapters_other": "{{count}} 章",
+      "minutes_other": "约 {{count}} 分钟",
+      "newWords_other": "{{count}} 个生词",
+      "where": "第 {{chapter}} 章 / 共 {{total}} 章 · {{percent}}%"
     },
-    "wordsTitle": "这个故事里的词",
-    "wordsHint": "点击故事里的任何词，查看意思和汉字，并加入复习。",
+    "topic": {
+      "daily": "日常生活",
+      "family": "家庭",
+      "friends": "朋友",
+      "school": "校园",
+      "food": "美食",
+      "shopping": "购物",
+      "travel": "旅行",
+      "city": "城市",
+      "work": "工作",
+      "culture": "文化",
+      "nature": "自然",
+      "history": "历史",
+      "relationships": "情感",
+      "adventure": "冒险",
+      "mystery": "悬疑",
+      "humor": "幽默",
+      "society": "社会",
+      "science": "科学"
+    },
+    "difficulty": {
+      "easy": "较容易",
+      "medium": "中等",
+      "challenging": "有挑战"
+    },
+    "back": "书库",
+    "book": {
+      "start": "开始阅读",
+      "continue": "继续阅读",
+      "again": "再读一遍",
+      "chapters": "章节",
+      "minutes": "分钟",
+      "difficulty": "在本级中",
+      "check": "检查理解",
+      "words": "本书词语（{{count}}）",
+      "wordsHint": "点一个词，看它的意思和汉字，并加入复习。",
+      "sentences_other": "{{count}} 句"
+    },
     "state": {
-      "new": "新词",
+      "new": "生词",
       "review": "待复习",
       "learning": "学习中",
       "known": "已掌握"
     },
-    "questionsTitle": "检查你的理解",
-    "questionsBody": "{{count}} 道题，一句话先听出来再说出来，还有故事里的几个新词。",
-    "startQuestions": "开始答题",
-    "again": "再答一次",
-    "bestSoFar": "你目前的最好成绩：{{best}}%",
-    "back": "全部故事",
-    "why": "为什么读故事？连贯的中文能把零散的词变成真正的理解——每一轮练习也会补充你的复习。"
+    "done": {
+      "title": "读完了这本书！",
+      "body": "你用中文读完了整本书——下面是你一路上做的事。",
+      "next": "下一个故事",
+      "library": "回到书库"
+    },
+    "stats": {
+      "chapters": "读完的章节",
+      "chaptersValue": "{{count}} / {{total}}",
+      "words": "你认识的本书词语",
+      "wordsValue": "{{count}} / {{total}}",
+      "explained": "求助次数",
+      "lookedUp": "查过的词",
+      "listened": "听的次数",
+      "rounds": "理解练习"
+    },
+    "reader": {
+      "toBook": "回到本书",
+      "chapterOf": "第 {{n}} 章 / 共 {{total}} 章",
+      "listen": "听",
+      "stop": "停止",
+      "pinyin": "拼音",
+      "hint": "点一个词查看意思。选中一句话获得帮助。",
+      "legend": "词语标记",
+      "prev": "上一章",
+      "next": "下一章",
+      "finish": "这一章我读完了",
+      "finishLast": "读完这本书"
+    },
+    "help": {
+      "title": "阅读帮助",
+      "close": "关闭",
+      "actions": "选中文字的帮助",
+      "explain": "讲解",
+      "pinyin": "拼音",
+      "translate": "翻译",
+      "words": "词语",
+      "grammar": "语法",
+      "loading": "正在分析……",
+      "translation": "翻译",
+      "fromBook": "书中译文",
+      "fromAi": "AI",
+      "noTranslation": "现在没有译文——下面的词语会一个一个解释。",
+      "meaning": "意思",
+      "points": "要点",
+      "example": "例句",
+      "aiNote": "由 AI 根据 ChineseVerse 词表讲解，可能有错误。",
+      "aiOffline": "AI 讲解现在不可用。下面的内容都来自 ChineseVerse 课程。",
+      "aiLimit": "这一小时你请求了很多 AI 讲解。下面的课程帮助仍然可用。",
+      "wordList": "逐词",
+      "grammarApp": "文中的语法",
+      "listen": "听",
+      "askAi": "用 AI 讲解",
+      "save": "把生词加入复习",
+      "saved_other": "{{count}} 个词已加入复习",
+      "practice": "练习这一章",
+      "name": "名字",
+      "sentence": "所在的句子",
+      "explainSentence": "讲解这句话"
+    }
   },
   "intro": {
     "eyebrow": "这对你有什么帮助",

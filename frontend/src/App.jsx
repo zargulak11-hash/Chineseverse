@@ -52,6 +52,7 @@ import AdminHome from "./pages/AdminHome.jsx";
 import Journey from "./pages/Journey.jsx";
 import Foundation from "./pages/Foundation.jsx";
 import Stories from "./pages/Stories.jsx";
+import StoryBook from "./pages/StoryBook.jsx";
 import StoryReader from "./pages/StoryReader.jsx";
 
 function RequireAuth({ children }) {
@@ -200,6 +201,14 @@ export default function App() {
           />
           <Route
             path="/stories/:slug"
+            element={
+              <RequireAuth>
+                <StoryBook />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/stories/:slug/read/:n"
             element={
               <RequireAuth>
                 <StoryReader />

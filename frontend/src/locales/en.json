@@ -1276,7 +1276,8 @@
       "stale_area": "You haven't practised {{area}} for {{days}} days — {{name}} saved your place.",
       "stale_area_never": "You started {{area}} but haven't practised it in a round yet.",
       "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next.",
-      "passport_milestone": "A new page in your Chinese Passport: {{event}}"
+      "passport_milestone": "A new page in your Chinese Passport: {{event}}",
+      "reading_word": "{{name}} noticed you keep looking up {{word}} while reading — let's review it."
     },
     "area": {
       "vocab": "vocabulary",
@@ -1296,7 +1297,8 @@
       "new_learner": "Start a lesson",
       "achievement": "See achievements",
       "mastered_recently": "My vocabulary",
-      "passport_milestone": "Open my passport"
+      "passport_milestone": "Open my passport",
+      "reading_word": "Review it"
     }
   },
   "detective": {
@@ -1747,7 +1749,10 @@
       "first_voice": "First words spoken aloud",
       "first_duel_win": "First duel won",
       "achievement": "Achievement unlocked: {{title}}",
-      "first_story": "First Chinese story read"
+      "first_story": "First Chinese story read",
+      "level_book": "Your first HSK {{level}} book: 《{{title}}》",
+      "books_read_one": "You have read {{count}} book",
+      "books_read_other": "You have read {{count}} books"
     },
     "next": "Where to go next",
     "allGood": "Everything is on track — keep your rhythm.",
@@ -2275,55 +2280,160 @@
   },
   "stories": {
     "eyebrow": "Chinese Stories",
-    "title": "Read Chinese stories",
-    "subtitle": "Real stories for every HSK level. Start where you are: short, fully supported stories at HSK 1, longer and more natural ones as you grow.",
-    "read": "Stories read",
-    "yourLevel": "Your level",
-    "all": "All levels",
-    "startHere": "Start here",
-    "beginnerHint": "New to Chinese? Start with HSK 1 — every sentence has pinyin, a translation and audio.",
-    "length": "{{count}} sentences · {{chars}} characters",
+    "title": "Read Chinese books",
+    "subtitle": "A library of books written in Chinese for every HSK level. Read the Chinese first — tap a word or select a sentence whenever you need help.",
+    "kpi": {
+      "completed": "Books read",
+      "reading": "Reading now",
+      "library": "In the library",
+      "level": "Your level"
+    },
+    "continue": {
+      "title": "Continue reading",
+      "cta": "Continue reading"
+    },
+    "recommended": {
+      "title": "Recommended for you",
+      "cta": "Open the book"
+    },
+    "levels": "HSK levels",
     "status": {
-      "new": "Not read yet",
-      "started": "Started",
-      "read": "Read · best {{best}}%",
-      "locked": "Opens at HSK {{level}}"
+      "locked": "Available at HSK {{level}}",
+      "completed": "Read"
     },
-    "lockedHow": "Continue your HSK path to unlock it.",
-    "open": "Read",
-    "empty": "No stories at this level yet.",
-    "loop": {
-      "read": "Read & listen",
-      "words": "Learn the words",
-      "questions": "Answer questions",
-      "say": "Say it aloud"
+    "lockedHow": "These books open when you reach this level on your HSK journey.",
+    "lockedCta": "Continue your HSK journey",
+    "filter": {
+      "label": "Filter books",
+      "all": "All",
+      "new": "Not started",
+      "in_progress": "In progress",
+      "completed": "Read",
+      "topic": "Topic",
+      "anyTopic": "All topics",
+      "time": "Reading time",
+      "time_any": "Any length",
+      "time_short": "Up to {{count}} min",
+      "time_long": "Over {{count}} min"
     },
-    "playAll": "Play the story",
-    "stop": "Stop",
-    "playLine": "Play this sentence",
-    "pinyin": "Pinyin",
-    "translation": "Translation",
-    "translate": "Translate",
-    "support": {
-      "on": "Pinyin and translations are shown to help you.",
-      "tap": "Tap “Translate” under a sentence when you need it.",
-      "hidden": "Real-text mode: try to understand first; translations stay hidden until you switch them on."
+    "empty": "No books at this level yet — more are being added to the library.",
+    "emptyFilter": "No books match these filters.",
+    "why": "Reading connected Chinese turns separate words into real understanding. Every book is written in Chinese for its level; translations are help you ask for, not the text.",
+    "card": {
+      "chapters_one": "{{count}} chapter",
+      "chapters_other": "{{count}} chapters",
+      "minutes_one": "≈ {{count}} min",
+      "minutes_other": "≈ {{count}} min",
+      "newWords_one": "{{count}} new word",
+      "newWords_other": "{{count}} new words",
+      "where": "Chapter {{chapter}} of {{total}} · {{percent}}%"
     },
-    "wordsTitle": "Words in this story",
-    "wordsHint": "Tap any word in the story to see its meaning and characters, and add it to your review.",
+    "topic": {
+      "daily": "Daily life",
+      "family": "Family",
+      "friends": "Friends",
+      "school": "School",
+      "food": "Food",
+      "shopping": "Shopping",
+      "travel": "Travel",
+      "city": "City",
+      "work": "Work",
+      "culture": "Culture",
+      "nature": "Nature",
+      "history": "History",
+      "relationships": "Relationships",
+      "adventure": "Adventure",
+      "mystery": "Mystery",
+      "humor": "Humour",
+      "society": "Society",
+      "science": "Science"
+    },
+    "difficulty": {
+      "easy": "Easier",
+      "medium": "Medium",
+      "challenging": "Challenging"
+    },
+    "back": "Library",
+    "book": {
+      "start": "Start reading",
+      "continue": "Continue reading",
+      "again": "Read again",
+      "chapters": "Chapters",
+      "minutes": "Minutes",
+      "difficulty": "For its level",
+      "check": "Check your understanding",
+      "words": "Words in this book ({{count}})",
+      "wordsHint": "Tap a word for its meaning and characters, and to add it to your review.",
+      "sentences_one": "{{count}} sentence",
+      "sentences_other": "{{count}} sentences"
+    },
     "state": {
       "new": "New",
       "review": "Review",
       "learning": "Learning",
       "known": "Known"
     },
-    "questionsTitle": "Check your understanding",
-    "questionsBody": "{{count}} questions, one sentence to recognise by ear and then say aloud, and a few of the story's new words.",
-    "startQuestions": "Answer the questions",
-    "again": "Answer again",
-    "bestSoFar": "Your best so far: {{best}}%",
-    "back": "All stories",
-    "why": "Why stories? Reading connected Chinese turns separate words into real understanding — and every round feeds your review."
+    "done": {
+      "title": "Book completed!",
+      "body": "You read the whole book in Chinese — here is what you did along the way.",
+      "next": "Next story",
+      "library": "Back to the library"
+    },
+    "stats": {
+      "chapters": "Chapters read",
+      "chaptersValue": "{{count}} of {{total}}",
+      "words": "Words of this book you know",
+      "wordsValue": "{{count}} of {{total}}",
+      "explained": "Times you asked for help",
+      "lookedUp": "Words looked up",
+      "listened": "Times listened",
+      "rounds": "Comprehension rounds"
+    },
+    "reader": {
+      "toBook": "Book",
+      "chapterOf": "Chapter {{n}} of {{total}}",
+      "listen": "Listen",
+      "stop": "Stop",
+      "pinyin": "Pinyin",
+      "hint": "Tap a word to look it up. Select a sentence for help.",
+      "legend": "Word colours",
+      "prev": "Previous chapter",
+      "next": "Next chapter",
+      "finish": "I've read this chapter",
+      "finishLast": "Finish the book"
+    },
+    "help": {
+      "title": "Reading help",
+      "close": "Close",
+      "actions": "Help with the selected text",
+      "explain": "Explain",
+      "pinyin": "Pinyin",
+      "translate": "Translate",
+      "words": "Words",
+      "grammar": "Grammar",
+      "loading": "Looking at it…",
+      "translation": "Translation",
+      "fromBook": "from the book",
+      "fromAi": "AI",
+      "noTranslation": "No translation is available right now — the words below explain it piece by piece.",
+      "meaning": "What it means",
+      "points": "Notes",
+      "example": "Example",
+      "aiNote": "Explained by AI from the ChineseVerse word list — it can make mistakes.",
+      "aiOffline": "The AI explanation isn't available right now. Everything below comes from the ChineseVerse curriculum.",
+      "aiLimit": "You've asked for many AI explanations this hour. The curriculum help below still works.",
+      "wordList": "Word by word",
+      "grammarApp": "Grammar in this text",
+      "listen": "Listen",
+      "askAi": "Explain with AI",
+      "save": "Add new words to review",
+      "saved_one": "{{count}} word added to your review",
+      "saved_other": "{{count}} words added to your review",
+      "practice": "Practise this chapter",
+      "name": "name",
+      "sentence": "Its sentence",
+      "explainSentence": "Explain this sentence"
+    }
   },
   "intro": {
     "eyebrow": "How this helps you",

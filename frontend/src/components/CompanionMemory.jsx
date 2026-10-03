@@ -25,6 +25,7 @@ const LINKS = {
   new_learner: "/lessons",
   achievement: "/achievements",
   mastered_recently: "/vocabulary",
+  reading_word: "/review",
 };
 const DAY_KINDS = new Set(["welcome_back", "streak", "lesson_completed", "stale_area"]);
 const AREA_PATH = { vocab: "/vocabulary", hanzi: "/hanzi", grammar: "/grammar" };

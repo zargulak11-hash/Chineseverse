@@ -89,6 +89,7 @@ DYNAMIC = (
     + [k for k in __import__("add_world_i18n").S if not isinstance(__import__("add_world_i18n").S[k]["en"], dict)]
     + list(__import__("add_journey_i18n").S)
     + list(__import__("add_achievements_i18n").KEYS)
+    + list(__import__("add_library_i18n").KEYS)
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

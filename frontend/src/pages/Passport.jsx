@@ -21,6 +21,7 @@ const EVENT_ICON = {
   words_mastered: "type", chars_mastered: "pen", first_written: "pen", mistake_conquered: "check",
   review_recovery: "clock", comeback: "heart", scene_done: "mapPin", cases_solved: "search", sound_stage: "ear",
   first_internet: "eye", first_sentence: "sparkles", first_voice: "mic", first_duel_win: "swords", achievement: "trophy",
+  first_story: "bookOpen", books_read: "bookOpen", level_book: "bookOpen",
 };
 const CAP_ICON = { vocabulary: "type", characters: "pen", reading: "book", listening: "ear", grammar: "seal", speaking: "mic" };
 

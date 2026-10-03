@@ -37,6 +37,7 @@ export default function Practice({ forceSource }) {
   const version = params.get("version");
   // Chinese Stories slug (services/stories.py).
   const story = params.get("story");
+  const chapter = params.get("chapter") ? Number(params.get("chapter")) : null;
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -73,7 +74,10 @@ export default function Practice({ forceSource }) {
       body.env = env;
       if (stage) body.stage = stage;
     }
-    if (source === "story" && story) body.story = story;
+    if (source === "story" && story) {
+      body.story = story;
+      if (chapter) body.chapter = chapter;
+    }
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -84,7 +88,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, i18n]);
+  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, i18n]);
 
   useEffect(start, [start]);
 
@@ -204,7 +208,7 @@ export default function Practice({ forceSource }) {
               : source === "internet"
                 ? `/internet/${item || ""}`
                 : source === "story"
-                  ? `/stories/${story || ""}`
+                  ? `/stories/${story || ""}${chapter ? `/read/${chapter}` : ""}`
                   : source === "tones"
                     ? "/foundation"
                     : `/${source === "vocab" ? "vocabulary" : source}`;
