@@ -1,0 +1,279 @@
+"""The living world on /real-chinese: one map that grows with the learner.
+
+The places (services/world_places.py) are gateways into systems that
+already exist; this module works out what each place looks like FOR THIS
+LEARNER, from their stored records only -- nothing is unlocked, lit or
+completed unless the data says so:
+
+  open / locked   their HSK level (user_rank) reached the place's level, OR
+                  they already know OPEN_BY_WORDS of its theme words
+                  (UserVocabulary reviewing/mastered) -- learning the words
+                  of a place opens it
+  topics          a place's conversation topics light up as their words are
+                  really known (half of them; "learning" counts half)
+  explored        a completed round there (Real Chinese scene, Sound World
+                  place, Chinese Internet item), a World voice turn there,
+                  or the gateway's own activity (lessons, Hanzi, cases...)
+  mastered        the scene passed at >= MASTERED and most theme words known
+  current         where their most recent activity happened (home at first)
+  talks           the World voice conversations / cases stationed there,
+                  locked exactly as the voice endpoints lock them
+  greeting        the line its person says first, at the learner's tier,
+                  as real curriculum words they can inspect
+
+The Real Chinese scenes are gated by the same rule on the server
+(scene_gate), so the map and the practice engine always agree.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from sqlalchemy.orm import Session
+
+from app import models
+from app.services import sentence as sent
+from app.services import story_slots as ss
+from app.services.world_places import OPEN_BY_WORDS, PATHS, PLACE_BY_KEY, PLACE_BY_SCENE, PLACES
+
+MASTERED = 80.0
+KNOWN = ("reviewing", "mastered")
+
+
+def _word_rows(db: Session, words: set[str]) -> dict[str, models.VocabularyWord]:
+    levels = {lvl.id: lvl.level for lvl in db.query(models.HSKLevel).all()}
+    rows = db.query(models.VocabularyWord).filter(models.VocabularyWord.simplified.in_(words or [""])).all()
+    best: dict[str, models.VocabularyWord] = {}
+    for r in sorted(rows, key=lambda r: (levels.get(r.hsk_level_id, 99), r.id)):
+        best.setdefault(r.simplified, r)
+    return best
+
+
+def _statuses(db: Session, user: models.User, rows: dict[str, models.VocabularyWord]) -> dict[str, str]:
+    """word text -> the learner's status for it (any HSK row of that word
+    counts: knowing 茶 at HSK 1 is knowing 茶)."""
+    texts = list(rows)
+    recs = (db.query(models.VocabularyWord.simplified, models.UserVocabulary.status)
+            .join(models.UserVocabulary, models.UserVocabulary.word_id == models.VocabularyWord.id)
+            .filter(models.UserVocabulary.user_id == user.id, models.VocabularyWord.simplified.in_(texts or [""])).all())
+    rank = {"new": 0, "learning": 1, "reviewing": 2, "mastered": 3}
+    out: dict[str, str] = {}
+    for text, status in recs:
+        if rank.get(status, 0) > rank.get(out.get(text, "new"), 0):
+            out[text] = status
+    return out
+
+
+def _known(statuses: dict[str, str], words) -> int:
+    return sum(1 for w in words if statuses.get(w) in KNOWN)
+
+
+def place_open(place: dict, level: int, statuses: dict[str, str]) -> tuple[bool, str | None]:
+    if level >= place["min_level"]:
+        return True, "level"
+    if _known(statuses, place["theme"]) >= OPEN_BY_WORDS:
+        return True, "words"
+    return False, None
+
+
+def scene_gate(db: Session, user: models.User, scene_slug: str) -> None:
+    """Raise if the place holding this scene isn't open for the learner yet
+    (the same rule the map shows)."""
+    from app.services.gamification import user_rank
+    from app.services.real_life import SceneError
+
+    key = PLACE_BY_SCENE.get(scene_slug)
+    if key is None:
+        return
+    place = PLACE_BY_KEY[key]
+    level, _ = user_rank(db, user)
+    if level >= place["min_level"]:
+        return
+    statuses = _statuses(db, user, _word_rows(db, set(place["theme"])))
+    ok, _by = place_open(place, level, statuses)
+    if not ok:
+        raise SceneError(403, f"This place opens at HSK {place['min_level']} — or once you know "
+                              f"{OPEN_BY_WORDS} of its words")
+
+
+def _greeting(db: Session, place: dict, tier: str, locale: str) -> dict | None:
+    from app.services.real_life import scene_text
+    from app.services.real_life_content import SCENE_BY_SLUG
+
+    zh = py = role = None
+    if place["scene"]:
+        scene = SCENE_BY_SLUG[place["scene"]]
+        npc = scene["tiers"][tier][0]["npc"]
+        zh, py = npc["zh"], npc["py"]
+        role = {"zh": scene["npc"]["zh"], "role": scene_text(scene["npc"]["role"], locale)}
+    elif place["location"]:
+        d = (db.query(models.Dialogue).join(models.Scenario, models.Dialogue.scenario_id == models.Scenario.id)
+             .join(models.Location, models.Scenario.location_id == models.Location.id)
+             .filter(models.Location.slug == place["location"], models.Dialogue.speaker == "npc")
+             .order_by(models.Scenario.order_index, models.Dialogue.turn_index).first())
+        if d is not None:
+            zh, py = d.text, d.pinyin
+            npc = d.npc or db.query(models.NPC).join(models.Location).filter(models.Location.slug == place["location"]).first()
+            role = {"zh": npc.name if npc else "", "role": ""}
+    if not zh:
+        return None
+    tokens = sent.segment(db, zh)
+    m = ss.meanings(db, [t["word"].id for t in tokens if t["word"] is not None], locale)
+    return {"zh": zh, "py": py, "speaker": role,
+            "tokens": [{"text": t["text"], "word_id": t["word"].id, "meaning": m.get(t["word"].id, "")}
+                       if t["word"] is not None else {"text": t["text"]} for t in tokens]}
+
+
+def _talks(db: Session, user: models.User, place: dict, level: int, locale: str) -> list[dict]:
+    from app.services.gamification import location_status
+    from app.services.localization import load_translations, tr
+
+    if not place["location"]:
+        return []
+    loc = db.query(models.Location).filter_by(slug=place["location"]).first()
+    if loc is None:
+        return []
+    status = location_status(loc, level)
+    str_ = load_translations(db, "scenario", [str(s.id) for s in loc.scenarios], locale)
+    tried = {sid for (sid,) in db.query(models.VoiceAttempt.scenario_id).filter(
+        models.VoiceAttempt.user_id == user.id, models.VoiceAttempt.scenario_id.in_([s.id for s in loc.scenarios] or [0]))}
+    out = []
+    for s in sorted(loc.scenarios, key=lambda s: s.order_index):
+        out.append({"slug": s.slug, "case": bool(s.is_case), "title": tr(str_, s.id, "title", s.title),
+                    "locked": status != "unlocked", "min_level": loc.unlock_level, "voice": bool(s.requires_voice),
+                    "tried": s.id in tried})
+    return out
+
+
+def _gateway_activity(db: Session, user: models.User, sessions_by_source: dict) -> dict[str, bool]:
+    lessons = db.query(models.Progress.id).filter_by(user_id=user.id, status="completed").first() is not None
+    hanzi = db.query(models.UserHanzi.id).filter(models.UserHanzi.user_id == user.id,
+                                                 models.UserHanzi.status != "new").first() is not None
+    words = db.query(models.UserVocabulary.id).filter(models.UserVocabulary.user_id == user.id,
+                                                      models.UserVocabulary.status.in_(KNOWN)).first() is not None
+    return {
+        "/lessons": lessons or bool(sessions_by_source.get("sentence")) or bool(sessions_by_source.get("lesson")),
+        "/hanzi": hanzi, "/ecosystem": words,
+        "/internet": bool(sessions_by_source.get("internet")), "/detective": bool(sessions_by_source.get("detective")),
+        "/sound-world": bool(sessions_by_source.get("sound")), "/passport": False,
+    }
+
+
+def _place_of_session(s: models.PracticeSession) -> str | None:
+    ctx = (s.questions or [{}])[0].get("ctx") or {}
+    if s.source == "scene":
+        return PLACE_BY_SCENE.get(ctx.get("slug"))
+    if s.source == "sound":
+        return "sound_plaza"
+    if s.source == "internet":
+        return "internet_cafe"
+    if s.source == "detective":
+        return "detective"
+    if s.source in ("sentence", "lesson", "review", "vocab", "grammar"):
+        return "library"
+    if s.source == "hanzi":
+        return "calligraphy"
+    return None
+
+
+def world(db: Session, user: models.User, locale: str) -> dict:
+    from app.services import passport as pp
+    from app.services import real_life
+    from app.services.gamification import ensure_user_skills, user_rank
+    from app.services.internet_content import ITEM_BY_SLUG
+
+    ensure_user_skills(db, user)
+    level, _ = user_rank(db, user)
+    tier = sent.tier_for(level)
+    sessions = pp._sessions(db, user)
+    done = [s for s in sessions if s.completed_at is not None]
+    by_source: dict[str, list] = {}
+    for s in done:
+        by_source.setdefault(s.source, []).append(s)
+    scenes = pp._completed_by_ctx(sessions, "scene", "slug")
+    sound = pp._completed_by_ctx(sessions, "sound", "env")
+    net = pp._completed_by_ctx(sessions, "internet", "slug")
+    gateway = _gateway_activity(db, user, by_source)
+
+    words = {w for p in PLACES for w in p["theme"]} | {w for p in PLACES for t in p["topics"] for w in t["words"]}
+    rows = _word_rows(db, words)
+    statuses = _statuses(db, user, rows)
+    m = ss.meanings(db, [r.id for r in rows.values()], locale)
+
+    def card(w: str) -> dict:
+        r = rows.get(w)
+        return {"text": w, "id": r.id if r else None, "pinyin": r.pinyin if r else "", "meaning": m.get(r.id, "") if r else "",
+                "status": statuses.get(w, "new")}
+
+    out = []
+    for p in PLACES:
+        is_open, by = place_open(p, level, statuses)
+        known = _known(statuses, p["theme"])
+        topics = []
+        for t in p["topics"]:
+            score = sum(1.0 if statuses.get(w) in KNOWN else 0.5 if statuses.get(w) == "learning" else 0.0 for w in t["words"])
+            topics.append({"key": t["key"], "lit": score >= len(t["words"]) / 2, "sentence": t["sentence"],
+                           "words": [card(w) for w in t["words"]]})
+        scene_info = None
+        if p["scene"]:
+            rows_ = scenes.get(p["scene"], [])
+            best = max((s.score or 0 for s in rows_), default=0.0)
+            last = max(rows_, key=lambda s: s.completed_at) if rows_ else None
+            sc = real_life.SCENE_BY_SLUG[p["scene"]]
+            scene_info = {"slug": p["scene"], "title": real_life.scene_text(sc["title"], locale), "best": round(best, 1),
+                          "rounds": len(rows_), "last_at": last.completed_at.isoformat() if last else None,
+                          "exchanges": len(sc["tiers"][tier])}
+        talks = _talks(db, user, p, level, locale)
+        sound_rows = sound.get(p["sound"], []) if p["sound"] else []
+        internet = [{"slug": slug, "title": ITEM_BY_SLUG[slug]["title"], "icon": ITEM_BY_SLUG[slug]["icon"],
+                     "best": round(max((s.score or 0 for s in net.get(slug, [])), default=0.0), 1),
+                     "read": bool(net.get(slug))} for slug in p["internet"]]
+        explored = bool((scene_info and scene_info["rounds"]) or any(t["tried"] for t in talks) or sound_rows
+                        or any(i["read"] for i in internet) or (p["gateway"] and gateway.get(p["gateway"])))
+        mastered = bool(scene_info and scene_info["best"] >= MASTERED and known * 2 >= len(p["theme"]))
+        status = "locked" if not is_open else "mastered" if mastered else "explored" if explored else "open"
+        out.append({
+            "key": p["key"], "icon": p["icon"], "district": p["district"], "x": p["x"], "y": p["y"],
+            "status": status, "opened_by": by, "min_level": p["min_level"],
+            "theme": {"known": known, "total": len(p["theme"]), "words": [card(w) for w in p["theme"]]},
+            "to_open": [card(w) for w in p["theme"] if statuses.get(w) not in KNOWN][:OPEN_BY_WORDS] if not is_open else [],
+            "topics": topics, "scene": scene_info, "talks": talks,
+            "sound": {"env": p["sound"], "rounds": len(sound_rows),
+                      "best": round(max((s.score or 0 for s in sound_rows), default=0.0), 1)} if p["sound"] else None,
+            "internet": internet, "gateway": p["gateway"],
+            "greeting": _greeting(db, p, tier, locale) if is_open else None,
+        })
+
+    # Where the learner was last: their most recent completed round, else
+    # the last voice turn they took in a World conversation, else home.
+    current = "home"
+    latest = max(done, key=lambda s: s.completed_at, default=None)
+    voice = (db.query(models.VoiceAttempt).filter(models.VoiceAttempt.user_id == user.id,
+                                                  models.VoiceAttempt.scenario_id.isnot(None))
+             .order_by(models.VoiceAttempt.created_at.desc()).first())
+    if voice is not None and (latest is None or voice.created_at > latest.completed_at):
+        sc = db.get(models.Scenario, voice.scenario_id)
+        loc = sc.location.slug if sc and sc.location else None
+        current = next((p["key"] for p in PLACES if p["location"] == loc), current)
+    elif latest is not None:
+        current = _place_of_session(latest) or current
+
+    open_keys = {p["key"] for p in out if p["status"] != "locked"}
+    answers = pp._Answers(sessions)
+    caps = pp.capabilities(db, user, sessions, answers, pp._skills(user))
+    return {
+        "level": level, "tier": tier, "current": current,
+        "adaptation": real_life.dna_adaptation(user),
+        "places": out,
+        "paths": [{"from": a, "to": b, "open": a in open_keys and b in open_keys} for a, b in PATHS],
+        "passport": {
+            "explored": sum(1 for p in out if p["status"] in ("explored", "mastered")),
+            "open": len(open_keys), "total": len(out),
+            "scenes_done": sum(1 for p in out if p["scene"] and p["scene"]["best"] >= 70),
+            "scenes_total": sum(1 for p in out if p["scene"]),
+            "skills_shown": sum(1 for c in caps if c["band"] in ("developing", "strong")),
+            "skills_total": len(caps),
+        },
+        "open_by_words": OPEN_BY_WORDS,
+        "generated_at": datetime.utcnow().isoformat(),
+    }

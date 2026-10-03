@@ -727,11 +727,11 @@ def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, local
         n = q["npc"]
         # Audio first; the reading is only for a device with no Chinese
         # voice (the options are meanings, so it doesn't give them away).
-        prompt = {"speak": n["zh"], "pinyin": n["py"], "rate": rules.get("rate"), "turn": q.get("turn")}
+        prompt = {"speak": n["zh"], "pinyin": n["py"], "rate": q.get("rate") or rules.get("rate"), "turn": q.get("turn")}
     elif qtype == "scene_reply":
         n = q["npc"]
         prompt = {
-            "speak": n["zh"], "rate": rules.get("rate"), "turn": q.get("turn"),
+            "speak": n["zh"], "rate": q.get("rate") or rules.get("rate"), "turn": q.get("turn"),
             "text": n["zh"] if (rules.get("show_text") or answered) else None,
             "pinyin": n["py"] if (rules.get("show_pinyin") or answered) else None,
             # Beginners may peek at the meaning; others see it after answering.

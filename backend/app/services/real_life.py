@@ -122,6 +122,8 @@ def scene_list(db: Session, user: models.User, locale: str) -> dict:
 
     level, _ = user_rank(db, user)
     tier = sent.tier_for(level)
+    ad = dna_adaptation(user)
+    rules = _adapted(tier, ad)
     history = _history(db, user)
     scenes = []
     for s in SCENES:
@@ -131,18 +133,68 @@ def scene_list(db: Session, user: models.User, locale: str) -> dict:
             "description": scene_text(s["description"], locale),
             "npc": {"zh": s["npc"]["zh"], "role": scene_text(s["npc"]["role"], locale)},
             "exchanges": len(s["tiers"][tier]),
-            "new_words": len(new_words(db, user, s, tier, level, RULES[tier]["new_words"])),
+            "new_words": len(new_words(db, user, s, tier, level, rules["new_words"])),
             "completed": h["completed"], "best_score": h["best"],
             "last_completed_at": h["last_at"].isoformat() if h["last_at"] else None,
         })
-    return {"level": level, "tier": tier, "rules": _public_rules(tier), "scenes": scenes}
+    return {"level": level, "tier": tier, "rules": _public_rules(tier, ad), "scenes": scenes}
 
 
-def _public_rules(tier: str) -> dict:
-    r = RULES[tier]
+# Learning DNA moves a scene inside its tier. A skill counts as strong at
+# DNA_STRONG and weak below DNA_WEAK -- but only once the learner has real
+# DNA evidence at all (a brand-new learner's zeros mean "unknown", not
+# "weak"), so a new learner gets the tier exactly as written.
+DNA_STRONG, DNA_WEAK = 60.0, 25.0
+
+
+def dna_adaptation(user: models.User) -> dict:
+    sk = {s.skill.code: s.mastery or 0.0 for s in user.user_skills if s.skill}
+    evidence = any(v > 0 for v in sk.values())
+
+    def band(code: str, up: str, down: str) -> str:
+        v = sk.get(code, 0.0)
+        if v >= DNA_STRONG:
+            return up
+        if evidence and v < DNA_WEAK:
+            return down
+        return "standard"
+
     return {
-        "show_text": r["show_text"], "show_pinyin": r["show_pinyin"], "listening": len(r["listen"]),
+        "speech": band("listening", "faster", "slower"),
+        "words": band("vocabulary", "richer", "familiar"),
+        "grammar": band("grammar", "stretch", "controlled"),
+        "listening": round(sk.get("listening", 0.0), 1), "vocabulary": round(sk.get("vocabulary", 0.0), 1),
+        "grammar_value": round(sk.get("grammar", 0.0), 1), "evidence": evidence,
+    }
+
+
+def _adapted(tier: str, ad: dict) -> dict:
+    """The tier's rules, moved by Learning DNA (see dna_adaptation)."""
+    r = dict(RULES[tier])
+    r["listen"] = tuple(r["listen"])
+    if ad["speech"] == "faster":
+        r["rate"] = round(min(1.25, r["rate"] * 1.12), 2)
+        # One more line heard before it's read: the first exchange (in this
+        # order) that isn't a listening one yet -- every tier has >= 3.
+        extra = next(i for i in (1, 3, 0, 2) if i not in r["listen"])
+        r["listen"] = r["listen"] + (extra,)
+    elif ad["speech"] == "slower":
+        r["rate"] = round(max(0.65, r["rate"] * 0.85), 2)
+    if ad["words"] == "richer":
+        r["new_words"] += 1
+    elif ad["words"] == "familiar":
+        r["new_words"] = max(1, r["new_words"] - 1)
+    return r
+
+
+def _public_rules(tier: str, ad: dict | None = None) -> dict:
+    r = _adapted(tier, ad) if ad else RULES[tier]
+    exchanges = len(SCENES[0]["tiers"][tier])
+    return {
+        "show_text": r["show_text"], "show_pinyin": r["show_pinyin"],
+        "listening": sum(1 for i in r["listen"] if i < exchanges),
         "options": 4 if tier == "advanced" else 3, "new_words": r["new_words"], "rate": r["rate"],
+        "adaptation": {k: ad[k] for k in ("speech", "words", "grammar")} if ad else None,
     }
 
 
@@ -153,9 +205,13 @@ def scene_preview(db: Session, user: models.User, slug: str, locale: str) -> dic
     scene = SCENE_BY_SLUG.get(slug)
     if scene is None:
         raise SceneError(404, "Scene not found")
+    from app.services.world_map import scene_gate
+
+    scene_gate(db, user, slug)
     level, _ = user_rank(db, user)
     tier = sent.tier_for(level)
-    words = new_words(db, user, scene, tier, level, RULES[tier]["new_words"])
+    ad = dna_adaptation(user)
+    words = new_words(db, user, scene, tier, level, _adapted(tier, ad)["new_words"])
     levels = sent._level_map(db)
     trs = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
     grammar = [g for g in sent.match_grammar(db, tier_lines(scene, tier)) if levels.get(g.hsk_level_id, 1) <= level][:3]
@@ -165,7 +221,7 @@ def scene_preview(db: Session, user: models.User, slug: str, locale: str) -> dic
         "slug": slug, "icon": scene["icon"], "title": scene_text(scene["title"], locale),
         "description": scene_text(scene["description"], locale),
         "npc": {"zh": scene["npc"]["zh"], "role": scene_text(scene["npc"]["role"], locale)},
-        "level": level, "tier": tier, "rules": _public_rules(tier),
+        "level": level, "tier": tier, "rules": _public_rules(tier, ad),
         "exchanges": len(scene["tiers"][tier]),
         "new_words": [
             {"hanzi": w.simplified, "pinyin": w.pinyin, "level": levels.get(w.hsk_level_id),
@@ -186,8 +242,12 @@ def build_questions(db: Session, user: models.User, slug: str, level: int, rng: 
     scene = SCENE_BY_SLUG.get(slug)
     if scene is None:
         raise SceneError(404, "Scene not found")
+    from app.services.world_map import scene_gate
+
+    scene_gate(db, user, slug)
     tier = sent.tier_for(level)
-    rules = RULES[tier]
+    ad = dna_adaptation(user)
+    rules = _adapted(tier, ad)
     exchanges = scene["tiers"][tier]
     focus = _focus_rows(db, scene, tier)
     npc_pool = [e["npc"] for e in exchanges]
@@ -200,7 +260,7 @@ def build_questions(db: Session, user: models.User, slug: str, level: int, rng: 
     questions: list[dict] = []
     for i, ex in enumerate(exchanges):
         f = focus.get(ex["focus"])
-        base = {"scene": slug, "tier": tier, "turn": i, "focus_id": f.id if f else None}
+        base = {"scene": slug, "tier": tier, "turn": i, "focus_id": f.id if f else None, "rate": rules["rate"]}
         if i in rules["listen"]:
             others = [n for n in npc_pool if n["zh"] != ex["npc"]["zh"]]
             rng.shuffle(others)
@@ -231,8 +291,11 @@ def build_questions(db: Session, user: models.User, slug: str, level: int, rng: 
         if q:
             questions.append(q)
     levels = sent._level_map(db)
+    # Grammar DNA: a strong learner may meet the next level's pattern; a weak
+    # one gets one from an easier level (controlled, then reinforced).
+    g_cap = level + 1 if ad["grammar"] == "stretch" else max(1, level - 1) if ad["grammar"] == "controlled" else level
     for g in sent.match_grammar(db, tier_lines(scene, tier)):
-        if levels.get(g.hsk_level_id, 1) > level:
+        if levels.get(g.hsk_level_id, 1) > g_cap:
             continue
         line = next((e["reply"]["zh"] for e in exchanges if _uses(g, e["reply"]["zh"])),
                     next((e["npc"]["zh"] for e in exchanges if _uses(g, e["npc"]["zh"])), None))
@@ -244,7 +307,7 @@ def build_questions(db: Session, user: models.User, slug: str, level: int, rng: 
 
     questions[0]["ctx"] = {
         "kind": "scene", "slug": slug, "tier": tier, "icon": scene["icon"],
-        "rules": _public_rules(tier),
+        "rules": _public_rules(tier, ad),
     }
     return questions
 

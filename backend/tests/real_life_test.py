@@ -142,7 +142,7 @@ with TestClient(app) as client:
     print("[PASS] completing a scene logs activity and shows in the learner's scene history")
 
     # --- a wrong reply is a mistake on the focus word (Review brings it back)
-    s2 = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "hospital"})
+    s2 = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "scene", "scene": "convenience-store"})
     qs2, _ = stored(s2["id"])
     q = next(q for q in s2["questions"] if q["type"] == "scene_reply")
     wrong = next(o["id"] for o in q["options"] if o["id"] != qs2[q["index"]]["item_id"])
@@ -163,7 +163,8 @@ with TestClient(app) as client:
     a_replies = [q for q in a["questions"] if q["type"] == "scene_reply"]
     assert len(a_replies) == 5 and all(len(q["options"]) == 4 for q in a_replies)
     assert all(q["prompt"]["text"] is None and q["options"][0]["pinyin"] is None for q in a_replies)
-    assert sum(1 for q in a["questions"] if q["type"] == "scene_listen") == 2
+    # 2 listening checks at the advanced tier, +1 for a strong listener (DNA 80).
+    assert sum(1 for q in a["questions"] if q["type"] == "scene_listen") == 3
     beginner_lines = {q["prompt"]["text"] for q in replies}
     aq, _ = stored(a["id"])
     assert not beginner_lines & {q["npc"]["zh"] for q in aq if q.get("npc")}

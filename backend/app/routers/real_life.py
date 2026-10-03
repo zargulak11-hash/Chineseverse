@@ -24,6 +24,19 @@ def list_scenes(
     return svc.scene_list(db, user, locale)
 
 
+@router.get("/world")
+def living_world(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The map of /real-chinese for this learner: every place's state from
+    their own records (services/world_map.py). Read-only."""
+    from app.services import world_map
+
+    return world_map.world(db, user, locale)
+
+
 @router.get("/scenes/{slug}")
 def scene_detail(
     slug: str,
