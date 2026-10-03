@@ -144,6 +144,7 @@ from app.routers import (  # noqa: E402
     sentence,
     social,
     sound_world,
+    stories,
     users,
     vocab,
     voice,
@@ -188,9 +189,12 @@ for module in (
     sound_world,
     internet,
     passport,
+    stories,
     admin,
 ):
     app.include_router(module.router)
+# Same module, second prefix: /api/journey (the learner's next step).
+app.include_router(stories.journey_router)
 
 
 @app.get("/")

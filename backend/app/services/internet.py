@@ -393,14 +393,17 @@ def build_questions(db: Session, user: models.User, slug: str, version: str | No
 
 
 def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, list[dict]]:
+    """Also renders Chinese Stories questions (services/stories.py): the same
+    shapes, plus a story's slower audio and its translated question."""
     options = [{"id": i, "label": o["zh"], "pinyin": o["py"] or None} for i, o in enumerate(q["options"])]
-    if q["type"] == "net_listen":
-        return {"speak": q["speak"], "text": q["speak"] if answered else None,
+    if q["type"] in ("net_listen", "story_listen"):
+        return {"speak": q["speak"], "text": q["speak"] if answered else None, "rate": q.get("rate"),
                 "fallback": _pinyin(db, q["speak"])}, options
-    return {"text": q["q"], "pinyin": q.get("q_py"), "speak": q["q"]}, options
+    tr = (q.get("q_tr") or {}).get(locale) if locale != "zh" else None
+    return {"text": q["q"], "pinyin": q.get("q_py"), "speak": q["q"], "translation": tr}, options
 
 
 def card(db: Session, q: dict, locale: str) -> dict:
     o = q["options"][q["item_id"]]
-    text = q["speak"] if q["type"] == "net_listen" else o["zh"]
+    text = q["speak"] if q["type"] in ("net_listen", "story_listen") else o["zh"]
     return {"hanzi": text, "pinyin": _pinyin(db, text), "meaning": "", "gloss": ss.gloss(db, text, locale)}

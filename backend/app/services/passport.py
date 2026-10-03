@@ -359,6 +359,9 @@ def timeline(db: Session, user: models.User, sessions=None, locale: str = "en") 
         if good:
             add("sound_stage", good.completed_at, "/sound-world", stage=int(stage))
 
+    story = next((s for s in sessions if s.source == "story" and s.completed_at), None)
+    if story:
+        add("first_story", story.completed_at, "/stories")
     net = next((s for s in sessions if s.source == "internet" and s.completed_at), None)
     if net:
         add("first_internet", net.completed_at, "/internet")
