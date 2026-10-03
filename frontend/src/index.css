@@ -724,18 +724,27 @@ a.navlink.active::after {
   border-color: var(--bad);
 }
 
-/* ---------- Layout ---------- */
+/* ---------- Layout ----------
+   Every signed-in page is a .page inside .shell-main (a flex column next to
+   the sidebar). It must say width: 100%: with margin: 0 auto a flex item
+   doesn't stretch, so each page used to shrink to its own content and
+   float as a narrow column -- 39-61% of the space at 1920px, a different
+   width on every page (the old `.page:has(> .page-head)` patch only fixed
+   pages with a .page-head, and only where :has() is supported).
+   The cap is for very large monitors only; readable widths for text,
+   forms and practice cards are set by those components themselves. */
 .page {
-  max-width: min(1360px, 94vw);
+  width: 100%;
+  max-width: 2000px;
   margin: 0 auto;
-  padding: 36px 24px 90px;
+  padding: 32px clamp(20px, 2.4vw, 44px) 90px;
   /* Enter motion is now a staggered Anime.js reveal of this element's own
      direct children (see Layout.jsx's PageReveal) instead of a CSS keyframe
      on the whole page at once. */
 }
 
 .page.wide {
-  max-width: min(1600px, 96vw);
+  max-width: none;
 }
 
 .grid {
@@ -998,6 +1007,13 @@ select.input {
 .formcard {
   max-width: 420px !important;
   margin: 48px auto;
+}
+/* A form card that sits in a page's column (Settings) instead of alone in
+   the middle of an auth page: it fills the column like the cards beside it.
+   React can't set an inline !important, so this has to be a class. */
+.formcard.is-inline {
+  max-width: none !important;
+  margin: var(--space-4) 0 0;
 }
 
 .formerr {
@@ -4620,7 +4636,6 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
    content looked like a narrow block floating in empty space. Pages built
    on the workspace layout take the full available width (still capped by
    .page's max-width) instead. */
-.page:has(> .page-head) { width: 100%; }
 /* One shared composition so the main content never floats alone on an empty
    page: a context header band, then the main column beside a supporting
    side panel that drops below it on tablet/phone. Tokens only, so the ink

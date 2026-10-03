@@ -223,7 +223,7 @@ export default function Settings() {
             </button>
           </div>
 
-          <div className="card formcard" style={{ marginTop: 16, maxWidth: "none !important" }}>
+          <div className="card formcard is-inline">
             <h2 className="h2">{t("settings.learningProfile")}</h2>
             <div className="field">
               <label>{t("settings.nativeLanguage")}</label>
