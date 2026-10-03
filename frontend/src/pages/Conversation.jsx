@@ -16,7 +16,7 @@ export default function Conversation() {
   const backTo = place ? `/real-chinese?place=${place}` : "/real-chinese";
   const { t, i18n } = useTranslation();
   const { scenarioId } = useParams();
-  const { dashboard } = useDashboard() || {};
+  const { dashboard, refresh } = useDashboard() || {};
   const companion = dashboard?.animal;
   const [sc, setSc] = useState(null);
   const [turnIndex, setTurnIndex] = useState(0);
@@ -72,6 +72,7 @@ export default function Conversation() {
         response_time_ms: 1500,
       });
       setResult(res);
+      refresh?.(); // XP, streak, companion -- and maybe an achievement
     } catch (e) {
       setResult({ error: e.message });
     } finally {

@@ -7,6 +7,7 @@ from app.deps import get_current_user, get_locale, get_user_or_none
 from app.services import ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
+    check_achievements,
     progress_missions,
     progress_quests,
     record_mistake,
@@ -128,6 +129,7 @@ def solve_case(
         )
     log_activity(db, user, "case_solve")
     db.commit()
+    check_achievements(db, user)  # a solved case can complete a mission
 
     scenario_tr = load_translations(db, "scenario", [str(scenario.id)], locale)
     hint = tr(scenario_tr, scenario.id, "hint", case_data.get("hint", ""))

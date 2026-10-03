@@ -928,6 +928,10 @@ class UserAchievement(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     achievement_id = Column(Integer, ForeignKey("achievements.id"), nullable=False, index=True)
     unlocked_at = Column(DateTime, default=datetime.utcnow)
+    # When the learner was shown the "Achievement unlocked!" note (null = not
+    # yet). Stored, not kept in the browser, so it appears once per unlock
+    # across refreshes, devices and re-logins.
+    notified_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="user_achievements")
     achievement = relationship("Achievement", back_populates="user_links")

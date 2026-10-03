@@ -5,6 +5,7 @@ import { speakChinese } from "../zhSpeech.js";
 import CompanionFigure from "./CompanionFigure.jsx";
 import Icon from "./Icon.jsx";
 import { Loading } from "./ui.jsx";
+import { achievementTitle } from "../achievements.js";
 
 // The permanent companion remembering the learner's journey. Every memory
 // comes from GET /api/companion/memory (services/companion_memory.py), which
@@ -45,7 +46,7 @@ function useMemoryLine() {
       count: DAY_KINDS.has(m.kind) ? d.days ?? 0 : d.count ?? 0,
       days: d.days ?? 0,
       total: d.total ?? 0,
-      title: d.title || "",
+      title: achievementTitle(t, d.code, d.title || ""),
       word: d.item?.hanzi || "",
       a: d.a?.hanzi || "",
       b: d.b?.hanzi || "",

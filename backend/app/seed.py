@@ -6,7 +6,7 @@ from app import models
 from app.seed_data import ANIMALS, HSK_LEVELS, SKILLS
 from app.seed_learning import GRAMMAR, LESSONS, VOCAB
 from app.seed_pet_teacher import PET_TEACHER_CASES
-from app.seed_world import ACHIEVEMENTS, LOCATIONS, MISSIONS, NPCS, SCENARIOS
+from app.seed_world import LOCATIONS, MISSIONS, NPCS, SCENARIOS
 from app.services.curriculum import import_curriculum
 
 logger = logging.getLogger(__name__)
@@ -393,15 +393,9 @@ def seed_pet_teacher_cases(db: Session) -> None:
 
 
 def seed_achievements(db: Session) -> None:
-    for code, title, desc, icon, category, criteria in ACHIEVEMENTS:
-        if db.query(models.Achievement).filter_by(code=code).first():
-            continue
-        db.add(
-            models.Achievement(
-                code=code, title=title, description=desc,
-                icon=icon, category=category, criteria=criteria,
-            )
-        )
+    from app.services import achievements
+
+    achievements.seed(db)
 
 
 def seed_all(db: Session) -> None:

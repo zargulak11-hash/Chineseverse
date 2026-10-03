@@ -215,7 +215,8 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
         a = new_ach[0].achievement
         ach_tr = load_translations(db, "achievement", [str(a.id)], locale)
         out.append(_m("achievement", "celebrating",
-                      {"title": tr(ach_tr, a.id, "title", a.title), "icon": a.icon, "count": len(new_ach)},
+                      {"title": tr(ach_tr, a.id, "title", a.title), "icon": a.icon, "code": a.code,
+                       "count": len(new_ach)},
                       at=new_ach[0].unlocked_at))
 
     # --- lessons completed

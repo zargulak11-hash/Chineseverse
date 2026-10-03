@@ -2376,5 +2376,337 @@
       "when": "Once you know about 20 words — then the connections start to mean something.",
       "task": "Choose a character you already know and follow it to one word you haven't learned yet."
     }
+  },
+  "achievements": {
+    "items": {
+      "first_lesson": {
+        "title": "First Lesson",
+        "how": "Complete your first lesson.",
+        "done": "Completed your first lesson."
+      },
+      "first_word": {
+        "title": "First Word",
+        "how": "Learn your first Chinese word: answer it correctly in practice.",
+        "done": "Learned your first Chinese word."
+      },
+      "first_hanzi": {
+        "title": "First Character",
+        "how": "Learn your first Chinese character in Hanzi practice.",
+        "done": "Learned your first Chinese character."
+      },
+      "first_trace": {
+        "title": "First Strokes",
+        "how": "Trace a character stroke by stroke.",
+        "done": "Traced your first character stroke by stroke."
+      },
+      "first_tones": {
+        "title": "Four Tones",
+        "how": "Finish a round in Sounds & tones.",
+        "done": "Finished your first tones round."
+      },
+      "first_sentence": {
+        "title": "First Sentence",
+        "how": "Finish a lesson in One Sentence.",
+        "done": "Finished your first sentence lesson."
+      },
+      "first_listening": {
+        "title": "First Listen",
+        "how": "Understand a Chinese word or phrase by ear.",
+        "done": "Understood Chinese by ear for the first time."
+      },
+      "first_voice": {
+        "title": "First Spoken Conversation",
+        "how": "Say your first sentence out loud.",
+        "done": "Spoke Chinese out loud for the first time."
+      },
+      "first_story": {
+        "title": "First Story",
+        "how": "Read your first Chinese story.",
+        "done": "Completed your first Chinese story."
+      },
+      "first_review": {
+        "title": "First Review",
+        "how": "Finish a review round.",
+        "done": "Finished your first review round."
+      },
+      "first_real_chinese": {
+        "title": "Into Real Chinese",
+        "how": "Finish a scene in Real Chinese.",
+        "done": "Finished your first Real Chinese scene."
+      },
+      "case_solver": {
+        "title": "Case Solver",
+        "how": "Finish a case in Detective Mode.",
+        "done": "Finished your first Detective case."
+      },
+      "first_sound_world": {
+        "title": "Sound Explorer",
+        "how": "Finish a round in Sound World.",
+        "done": "Finished your first Sound World round."
+      },
+      "first_internet": {
+        "title": "Online in Chinese",
+        "how": "Read something in Chinese Internet and answer its questions.",
+        "done": "Finished your first Chinese Internet round."
+      },
+      "words_10": {
+        "title": "10 Words",
+        "how": "Learn 10 Chinese words.",
+        "done": "Learned 10 Chinese words."
+      },
+      "words_50": {
+        "title": "50 Words",
+        "how": "Learn 50 Chinese words.",
+        "done": "Learned 50 Chinese words."
+      },
+      "words_150": {
+        "title": "150 Words",
+        "how": "Learn 150 Chinese words.",
+        "done": "Learned 150 Chinese words."
+      },
+      "words_100": {
+        "title": "100 Words Mastered",
+        "how": "Master 100 words: keep answering them right in practice and review.",
+        "done": "Mastered 100 Chinese words."
+      },
+      "hanzi_25": {
+        "title": "25 Characters",
+        "how": "Learn 25 Chinese characters.",
+        "done": "Learned 25 Chinese characters."
+      },
+      "hanzi_100": {
+        "title": "100 Characters",
+        "how": "Learn 100 Chinese characters.",
+        "done": "Learned 100 Chinese characters."
+      },
+      "traces_10": {
+        "title": "Steady Hand",
+        "how": "Trace 10 characters stroke by stroke.",
+        "done": "Traced 10 characters stroke by stroke."
+      },
+      "listening_50": {
+        "title": "Good Ears",
+        "how": "Answer 50 listening questions correctly.",
+        "done": "Answered 50 listening questions correctly."
+      },
+      "listening_200": {
+        "title": "Sharp Ears",
+        "how": "Answer 200 listening questions correctly.",
+        "done": "Answered 200 listening questions correctly."
+      },
+      "speaking_10": {
+        "title": "Finding Your Voice",
+        "how": "Speak Chinese out loud 10 times.",
+        "done": "Spoke Chinese out loud 10 times."
+      },
+      "speaking_50": {
+        "title": "Confident Speaker",
+        "how": "Speak Chinese out loud 50 times.",
+        "done": "Spoke Chinese out loud 50 times."
+      },
+      "tone_master": {
+        "title": "Tone Master",
+        "how": "Speak at least 5 times and get your average tone score to 80%.",
+        "done": "Your spoken tones average 80% or more."
+      },
+      "restaurant_survivor": {
+        "title": "Restaurant Survivor",
+        "how": "Order noodles out loud in the noodle-shop conversation.",
+        "done": "Ordered noodles in Chinese."
+      },
+      "reading_50": {
+        "title": "Reader",
+        "how": "Answer 50 reading questions correctly.",
+        "done": "Answered 50 reading questions correctly."
+      },
+      "reading_200": {
+        "title": "Bookworm",
+        "how": "Answer 200 reading questions correctly.",
+        "done": "Answered 200 reading questions correctly."
+      },
+      "stories_3": {
+        "title": "Story Lover",
+        "how": "Read 3 different Chinese stories.",
+        "done": "Read 3 different Chinese stories."
+      },
+      "stories_10": {
+        "title": "Library Card",
+        "how": "Read 10 different Chinese stories.",
+        "done": "Read 10 different Chinese stories."
+      },
+      "detective_5": {
+        "title": "Master Detective",
+        "how": "Solve 5 Detective cases with the right answer.",
+        "done": "Solved 5 Detective cases."
+      },
+      "lessons_5": {
+        "title": "Five Lessons",
+        "how": "Complete 5 lessons.",
+        "done": "Completed 5 lessons."
+      },
+      "lessons_20": {
+        "title": "Twenty Lessons",
+        "how": "Complete 20 lessons.",
+        "done": "Completed 20 lessons."
+      },
+      "hsk1_exam": {
+        "title": "HSK 1 Passed",
+        "how": "Finish the HSK 1 lessons and pass the HSK 1 exam.",
+        "done": "Passed the HSK 1 exam."
+      },
+      "hsk2_mastery": {
+        "title": "HSK 2 Mastery",
+        "how": "Reach HSK 2 and 80% overall mastery.",
+        "done": "Reached HSK 2 with 80% overall mastery."
+      },
+      "hsk3_exam": {
+        "title": "HSK 3 Passed",
+        "how": "Finish the HSK 3 lessons and pass the HSK 3 exam.",
+        "done": "Passed the HSK 3 exam."
+      },
+      "hsk6_exam": {
+        "title": "HSK 6 Passed",
+        "how": "Finish the HSK 6 lessons and pass the HSK 6 exam.",
+        "done": "Passed the HSK 6 exam."
+      },
+      "reviews_10": {
+        "title": "Review Habit",
+        "how": "Finish 10 review rounds.",
+        "done": "Finished 10 review rounds."
+      },
+      "review_days_7": {
+        "title": "Never Forget",
+        "how": "Review on 7 different days.",
+        "done": "Reviewed on 7 different days."
+      },
+      "mistakes_10": {
+        "title": "Mistake Hunter",
+        "how": "Turn 10 of your mistakes into answers you get right.",
+        "done": "Fixed 10 of your mistakes for good."
+      },
+      "streak_3": {
+        "title": "3-Day Streak",
+        "how": "Learn 3 days in a row.",
+        "done": "Learned 3 days in a row."
+      },
+      "streak_7": {
+        "title": "7-Day Streak",
+        "how": "Learn 7 days in a row.",
+        "done": "Learned 7 days in a row."
+      },
+      "streak_30": {
+        "title": "30-Day Streak",
+        "how": "Learn 30 days in a row.",
+        "done": "Learned 30 days in a row."
+      },
+      "active_30": {
+        "title": "Thirty Days of Chinese",
+        "how": "Learn on 30 different days.",
+        "done": "Learned on 30 different days."
+      },
+      "xp_500": {
+        "title": "Rising Star",
+        "how": "Earn 500 XP by learning.",
+        "done": "Earned 500 XP."
+      },
+      "bond_3": {
+        "title": "Bonded Companion",
+        "how": "Reach bond level 3 with your companion.",
+        "done": "Reached bond level 3 with your companion."
+      },
+      "pet_teacher_5": {
+        "title": "Patient Teacher",
+        "how": "Teach your companion 5 grammar rules.",
+        "done": "Taught your companion 5 grammar rules."
+      },
+      "world_4": {
+        "title": "City Explorer",
+        "how": "Open 4 places on the World map by growing your HSK level.",
+        "done": "Opened 4 places on the World map."
+      },
+      "first_mission": {
+        "title": "First Mission",
+        "how": "Complete your first mission.",
+        "done": "Completed your first mission."
+      },
+      "duel_win": {
+        "title": "First Duel Victory",
+        "how": "Win a duel.",
+        "done": "Won your first duel."
+      }
+    },
+    "left": {
+      "words_one": "{{count}} more word to unlock this.",
+      "words_other": "{{count}} more words to unlock this.",
+      "chars_one": "{{count}} more character to unlock this.",
+      "chars_other": "{{count}} more characters to unlock this.",
+      "traces_one": "{{count}} more character to trace.",
+      "traces_other": "{{count}} more characters to trace.",
+      "lessons_one": "{{count}} more lesson to unlock this.",
+      "lessons_other": "{{count}} more lessons to unlock this.",
+      "rounds_one": "{{count}} more round to unlock this.",
+      "rounds_other": "{{count}} more rounds to unlock this.",
+      "answers_one": "{{count}} more correct answer to unlock this.",
+      "answers_other": "{{count}} more correct answers to unlock this.",
+      "turns_one": "{{count}} more time speaking out loud.",
+      "turns_other": "{{count}} more times speaking out loud.",
+      "stories_one": "{{count}} more story to unlock this.",
+      "stories_other": "{{count}} more stories to unlock this.",
+      "cases_one": "{{count}} more case to unlock this.",
+      "cases_other": "{{count}} more cases to unlock this.",
+      "days_one": "{{count}} more day to unlock this.",
+      "days_other": "{{count}} more days to unlock this.",
+      "mistakes_one": "{{count}} more mistake to fix.",
+      "mistakes_other": "{{count}} more mistakes to fix.",
+      "xp_one": "{{count}} more XP to unlock this.",
+      "xp_other": "{{count}} more XP to unlock this.",
+      "level_one": "{{count}} more bond level to go.",
+      "level_other": "{{count}} more bond levels to go.",
+      "rules_one": "{{count}} more rule to teach.",
+      "rules_other": "{{count}} more rules to teach.",
+      "places_one": "{{count}} more place to open.",
+      "places_other": "{{count}} more places to open."
+    },
+    "progress": "Progress",
+    "leftPercent": "Now {{value}}% · goal {{target}}%.",
+    "toast": {
+      "one": "Achievement unlocked!",
+      "view": "See achievements",
+      "close": "Close",
+      "many_one": "{{count}} achievement unlocked!",
+      "many_other": "{{count}} achievements unlocked!"
+    },
+    "page": {
+      "subtitle": "Every achievement comes from something you really did in Chinese.",
+      "close": "Almost there",
+      "closeHint": "You've already started these.",
+      "tryNext": "Try next",
+      "tryNextHint": "One real step each: these unlock the first time you do them.",
+      "achieved": "Achieved",
+      "toEarn": "Still to earn",
+      "go": "Go",
+      "done": "Done",
+      "all": "All",
+      "filter": "Show"
+    },
+    "dashboard": {
+      "title": "Next achievements",
+      "all": "All achievements"
+    },
+    "cat": {
+      "start": "First steps",
+      "places": "Special places",
+      "words": "Words",
+      "characters": "Characters",
+      "listening": "Listening",
+      "speaking": "Speaking",
+      "reading": "Reading",
+      "stories": "Stories",
+      "hsk": "Lessons & HSK",
+      "review": "Review",
+      "habit": "Habit",
+      "companion": "Companion",
+      "world": "World"
+    }
   }
 }

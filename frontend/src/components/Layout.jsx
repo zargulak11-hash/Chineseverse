@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import AchievementToast from "./AchievementToast.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Topbar from "./Topbar.jsx";
@@ -151,6 +152,7 @@ function Shell({ children }) {
         <Topbar user={user} dashboard={dashboard} onOpenMobileSidebar={() => setMobileOpen(true)} />
         {children}
       </div>
+      <AchievementToast />
     </div>
   );
 }

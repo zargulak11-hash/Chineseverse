@@ -249,20 +249,3 @@ MISSIONS = [
     ("case-streak", "case", "Repeat Detective", "Solve 2 Chinese Cases.",
      2, 120, 30, 2, None),
 ]
-
-ACHIEVEMENTS = [
-    ("first_voice", "First Spoken Conversation", "Complete your first voice turn.", "🎙️", "voice", {"type": "voice_count", "target": 1}),
-    ("tone_master", "Tone Master", "Reach 80 tone accuracy across voice attempts.", "🎵", "voice", {"type": "avg_tones", "target": 80}),
-    ("restaurant_survivor", "Restaurant Survivor", "Complete the ordering-noodles scenario.", "🍜", "world", {"type": "scenario", "target": "ordering-noodles"}),
-    ("case_solver", "Case Solver", "Solve your first Chinese case.", "🕵️", "world", {"type": "case_count", "target": 1}),
-    ("streak_7", "7-Day Streak", "Keep a 7-day learning streak.", "🔥", "habit", {"type": "streak", "target": 7}),
-    ("hsk2_mastery", "HSK 2 Mastery", "Reach 80% mastery on HSK 2 skills.", "🏮", "hsk", {"type": "hsk", "target": 2, "mastery": 80}),
-    ("duel_win", "First Duel Victory", "Win your first Duel.", "⚔️", "social", {"type": "duel_wins", "target": 1}),
-    ("words_100", "100 Words Mastered", "Master 100 vocabulary words.", "💯", "vocabulary", {"type": "vocab_mastered", "target": 100}),
-    ("bond_3", "Bonded Companion", "Reach bond level 3 with your animal.", "🪻", "animal", {"type": "bond_level", "target": 3}),
-    ("mistakes_10", "Mistake Hunter", "Master 10 recorded mistakes.", "🎯", "habit", {"type": "mistakes_mastered", "target": 10}),
-    ("world_4", "City Explorer", "Unlock 4 locations.", "🗺️", "world", {"type": "locations_unlocked", "target": 4}),
-    ("first_mission", "First Mission", "Complete your first mission.", "📜", "general", {"type": "mission_count", "target": 1}),
-    ("pet_teacher_5", "Patient Teacher", "Teach your companion 5 grammar rules.", "🧑‍🏫", "animal", {"type": "taught_count", "target": 5}),
-    ("xp_500", "Rising Star", "Earn 500 total XP from quests and missions.", "⭐", "general", {"type": "total_xp", "target": 500}),
-]

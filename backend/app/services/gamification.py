@@ -272,78 +272,12 @@ def progress_missions(
     return completed_now
 
 
-def _count(db: Session, user: models.User, criteria: dict):
-    ctype = criteria.get("type")
-    target = criteria.get("target")
-    if ctype == "voice_count":
-        return len(user.voice_attempts)
-    if ctype == "avg_tones":
-        attempts = list(user.voice_attempts)
-        if not attempts:
-            return 0
-        return sum(a.tones or 0 for a in attempts) / len(attempts)
-    if ctype == "scenario":
-        scenario = db.query(models.Scenario).filter_by(slug=target).first()
-        target_id = scenario.id if scenario else -1
-        return sum(1 for a in user.voice_attempts if a.scenario_id == target_id)
-    if ctype == "case_count":
-        scenario_ids = {
-            s.id for s in db.query(models.Scenario).filter(models.Scenario.is_case.is_(True)).all()
-        }
-        return sum(1 for a in user.voice_attempts if a.scenario_id in scenario_ids)
-    if ctype == "streak":
-        return (user.streak.current_streak if user.streak else 0)
-    if ctype == "hsk":
-        # criteria is {target: <hsk level>, mastery: <required overall %>} —
-        # this used to compare the unrelated "vocabulary" DNA skill (0-100,
-        # a per-skill duel/review stat) against target as if it were an HSK
-        # level, so e.g. "HSK 2 Mastery" (target=2, mastery=80) unlocked
-        # after a single vocab review nudged that skill above 2.0. The real
-        # HSK level + overall mastery already exist via user_rank (the same
-        # pair World's unlock logic uses), so reuse that instead.
-        current_level, overall = user_rank(db, user)
-        if overall < criteria.get("mastery", 0):
-            return 0
-        return current_level
-    if ctype == "duel_wins":
-        return sum(1 for p in user.participants if p.score and p.score > 0)
-    if ctype == "vocab_mastered":
-        return len([w for w in user.user_vocabulary if w.status == "mastered"])
-    if ctype == "bond_level":
-        return user.user_animal.bond_level if user.user_animal else 0
-    if ctype == "mistakes_mastered":
-        return len([m for m in user.learning_mistakes if m.mastered])
-    if ctype == "locations_unlocked":
-        return 1
-    if ctype == "mission_count":
-        return len([m for m in user.user_missions if m.status in ("completed", "active")])
-    if ctype == "taught_count":
-        return len(user.taught_facts)
-    if ctype == "total_xp":
-        return user.total_xp
-    return 0
-
-
 def check_achievements(db: Session, user: models.User) -> list[models.Achievement]:
-    unlocked = [ua.achievement for ua in user.user_achievements]
-    unlocked_codes = {a.code for a in unlocked}
-    newly = []
-    for ach in db.query(models.Achievement).all():
-        if ach.code in unlocked_codes or not ach.criteria:
-            continue
-        target = ach.criteria.get("target", 1)
-        value = _count(db, user, ach.criteria)
-        if isinstance(target, str):
-            # Target is a slug/label; _count already filtered for it.
-            achieved = value >= 1
-        else:
-            achieved = value >= int(target)
-        if achieved:
-            db.add(models.UserAchievement(user_id=user.id, achievement_id=ach.id))
-            newly.append(ach)
-    if newly:
-        db.commit()
-    return newly
+    """Unlock what the learner's records now earn (services/achievements.py
+    owns the rules). Kept here because every learning router calls it."""
+    from app.services import achievements
+
+    return achievements.check(db, user)
 
 
 def add_bond_points(user: models.User, points: int = 1) -> None:

@@ -5,6 +5,7 @@ import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
+import { useDashboard } from "../context/DashboardContext.jsx";
 
 export default function CaseSolve() {
   const { t, i18n } = useTranslation();
@@ -15,6 +16,7 @@ export default function CaseSolve() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const { refresh } = useDashboard() || {};
 
   useEffect(() => {
     api.get(`/world/scenarios/${scenarioId}`).then(setSc).catch((e) => setError(e.message));
@@ -32,6 +34,7 @@ export default function CaseSolve() {
     try {
       const r = await api.post(`/world/scenarios/${sc.slug}/solve`, { conclusion: conclusion.trim() });
       setResult(r);
+      refresh?.(); // a solved case can complete a mission (and its achievement)
     } catch (e) {
       setResult({ error: e.message });
     } finally {

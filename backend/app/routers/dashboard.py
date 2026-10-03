@@ -10,6 +10,7 @@ from app.deps import get_current_user, get_locale
 from app.routers.animals import _localize_animal
 from app.routers.missions import _localize_mission
 from app.routers.quests import _localize_quest
+from app.services import achievements as achievements_svc
 from app.services.dna import compute_dna
 from app.services.gamification import (
     check_achievements,
@@ -41,6 +42,7 @@ def dashboard(
     db.refresh(user)
 
     check_achievements(db, user)
+    ach_entries = achievements_svc.overview(db, user)
     dna = compute_dna(user)
     current, mastery = user_rank(db, user)
 
@@ -78,8 +80,6 @@ def dashboard(
     mission_tr = load_translations(db, "mission", [str(next_mission.id)] if next_mission else [], locale)
     location_tr = load_translations(db, "location", [str(next_location.id)] if next_location else [], locale)
     quest_tr = load_translations(db, "quest_template", [q.quest_type for q in quests], locale)
-    ach_ids = [str(ua.achievement.id) for ua in user.user_achievements]
-    ach_tr = load_translations(db, "achievement", ach_ids, locale)
 
     next_location_out = None
     if next_location:
@@ -87,11 +87,10 @@ def dashboard(
         next_location_out.name = tr(location_tr, next_location.id, "name", next_location_out.name)
         next_location_out.description = tr(location_tr, next_location.id, "description", next_location_out.description)
 
-    def localize_achievement(ach: models.Achievement) -> schemas.AchievementResponse:
-        item = schemas.AchievementResponse.model_validate(ach)
-        item.title = tr(ach_tr, ach.id, "title", item.title)
-        item.description = tr(ach_tr, ach.id, "description", item.description)
-        return item
+    earned = [e for e in ach_entries if e["link"] is not None]
+    unseen = [e for e in earned if e["link"].notified_at is None]
+    ach_out = achievements_svc.responses(db, earned + unseen + achievements_svc.closest(ach_entries), locale)
+    n_earned, n_unseen = len(earned), len(unseen)
 
     due = review_counts(db, user)
     day_start = datetime.combine(datetime.utcnow().date(), time.min)
@@ -142,6 +141,8 @@ def dashboard(
         ),
         next_location=next_location_out,
         quests_today=[_localize_quest(q, quest_tr) for q in quests],
-        achievements=[localize_achievement(ua.achievement) for ua in user.user_achievements],
+        achievements=ach_out[:n_earned],
+        new_achievements=ach_out[n_earned:n_earned + n_unseen],
+        next_achievements=ach_out[n_earned + n_unseen:],
         review_due=due["total"] + due["mistakes"],
     )

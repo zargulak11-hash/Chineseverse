@@ -5,6 +5,7 @@ import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { achievementTitle } from "../achievements.js";
 
 // Chinese Passport (GET /api/passport): what this learner can actually DO in
 // Chinese, each capability with the evidence behind it (graded answers,
@@ -116,7 +117,7 @@ function eventText(t, e) {
     ...d,
     count: d.count ?? d.items ?? d.times ?? d.days,
     score: d.score != null ? Math.round(d.score) : "",
-    title: d.title || "",
+    title: achievementTitle(t, d.code, d.title || ""),
   });
 }
 

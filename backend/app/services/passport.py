@@ -383,7 +383,7 @@ def timeline(db: Session, user: models.User, sessions=None, locale: str = "en") 
     atr = load_translations(db, "achievement", [str(a.achievement_id) for a in achs], locale)
     for a in achs:
         add("achievement", a.unlocked_at, "/achievements", title=tr(atr, a.achievement_id, "title", a.achievement.title),
-            icon=a.achievement.icon)
+            icon=a.achievement.icon, code=a.achievement.code)
 
     ev.sort(key=lambda e: e["at"])
     return ev

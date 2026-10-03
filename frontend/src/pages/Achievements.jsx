@@ -1,6 +1,16 @@
 import { animate, stagger } from "animejs";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import {
+  achievementDone,
+  achievementHow,
+  achievementIcon,
+  achievementTitle,
+  progressText,
+  ratio,
+  remainingText,
+} from "../achievements.js";
 import { prefersReducedMotion } from "../anime.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -8,13 +18,52 @@ import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 
-const CAT_ICON = {
-  voice: "mic",
-  social: "swords",
-  progress: "trending",
-  case_skill: "search",
-  default: "award",
-};
+// Category order on the page and in the filter (the backend's categories).
+const CATEGORIES = ["start", "places", "words", "characters", "listening", "speaking", "reading", "stories",
+  "hsk", "review", "habit", "companion", "world"];
+
+function AchCard({ a, fmtDate }) {
+  const { t } = useTranslation();
+  const title = achievementTitle(t, a.code, a.title);
+  if (a.unlocked) {
+    return (
+      <div className="card ach-card is-earned">
+        <div className="seal-stamp"><Icon name={achievementIcon(a)} size={19} /></div>
+        <b className="ach-title">{title}</b>
+        <p className="ach-text">{achievementDone(t, a)}</p>
+        <div className="ach-foot">
+          <span className="badge good"><Icon name="check" size={13} /> {t("achievements.page.done")}</span>
+          {a.unlocked_at && <span className="ach-date">{fmtDate(a.unlocked_at)}</span>}
+        </div>
+      </div>
+    );
+  }
+  const left = remainingText(t, a);
+  return (
+    <div className="card ach-card">
+      <div className="seal-stamp locked"><Icon name={achievementIcon(a)} size={19} /></div>
+      <b className="ach-title">{title}</b>
+      <p className="ach-text">{achievementHow(t, a)}</p>
+      {a.target > 1 && (
+        <div className="metric">
+          <div className="metric-head">
+            <span>{t("achievements.progress")}</span>
+            <b>{progressText(a)}</b>
+          </div>
+          <Bar value={ratio(a) * 100} alt={a.progress === 0} />
+        </div>
+      )}
+      {left && <p className="ach-left">{left}</p>}
+      {a.to && (
+        <div className="ach-foot">
+          <Link to={a.to} className="btn small">
+            {t("achievements.page.go")} <Icon name="arrowRight" size={13} />
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Achievements() {
   const { t, i18n } = useTranslation();
@@ -24,73 +73,69 @@ export default function Achievements() {
   const { dashboard } = useDashboard() || {};
   const badges = data || [];
   const rootRef = useRef(null);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root || badges.length === 0) return;
+    if (!root || badges.length === 0) return undefined;
     const targets = Array.from(root.querySelectorAll(".ach-grid > .card"));
     if (prefersReducedMotion()) {
       targets.forEach((el) => {
         el.style.opacity = 1;
       });
-      return;
+      return undefined;
     }
-    animate(targets, {
+    const anim = animate(targets, {
       opacity: [0, 1],
-      translateY: [26, 0],
-      scale: [0.88, 1],
-      duration: 640,
-      delay: stagger(50),
-      ease: "outElastic(1, .7)",
+      translateY: [16, 0],
+      duration: 480,
+      delay: stagger(35),
+      ease: "outQuad",
     });
+    return () => anim.revert();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [badges.length]);
+  }, [badges.length, filter]);
+
+  const groups = useMemo(() => {
+    const unlocked = badges.filter((b) => b.unlocked);
+    const locked = badges.filter((b) => !b.unlocked);
+    // 1. What am I close to? Started multi-step ones, nearest first.
+    const close = locked
+      .filter((b) => b.target > 1 && b.progress > 0)
+      .sort((a, b) => ratio(b) - ratio(a) || a.order - b.order)
+      .slice(0, 4);
+    // 2. What can I try next? One real step each, beginner-first order.
+    const next = locked
+      .filter((b) => b.target === 1 && b.progress === 0)
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 4);
+    const featured = new Set([...close, ...next].map((b) => b.id));
+    const rest = locked.filter((b) => !featured.has(b.id)).sort((a, b) => a.order - b.order);
+    return { unlocked, locked, close, next, rest };
+  }, [badges]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading /></Layout>;
 
-  const unlocked = badges.filter((b) => b.unlocked);
-  const locked = badges.filter((b) => !b.unlocked);
+  const { unlocked, close, next, rest } = groups;
   const completion = badges.length ? (unlocked.length / badges.length) * 100 : 0;
   const fmtDate = (iso) => new Date(iso).toLocaleDateString(i18n.language);
-  const categoryLabel = (c) =>
-    t(`pages.achievements.category.${c}`, { defaultValue: c || t("pages.achievements.hidden") });
+  const catLabel = (c) => t(`achievements.cat.${c}`, { defaultValue: c });
+  const shown = (list) => (filter === "all" ? list : list.filter((b) => b.category === filter));
+  const present = CATEGORIES.filter((c) => badges.some((b) => b.category === c));
 
   const recent = [...unlocked]
     .filter((b) => b.unlocked_at)
     .sort((a, b) => new Date(b.unlocked_at) - new Date(a.unlocked_at))
     .slice(0, 5);
 
-  const byCategory = Object.values(
-    badges.reduce((acc, b) => {
-      const key = b.category || "general";
-      acc[key] = acc[key] || { key, total: 0, done: 0 };
-      acc[key].total += 1;
-      if (b.unlocked) acc[key].done += 1;
-      return acc;
-    }, {})
-  ).sort((a, b) => b.total - a.total);
+  const byCategory = present.map((key) => {
+    const all = badges.filter((b) => b.category === key);
+    return { key, total: all.length, done: all.filter((b) => b.unlocked).length };
+  });
 
-  const badgeCard = (b) => (
-    <div key={b.id} className={`card hover${b.unlocked ? " burst" : ""}`}
-      style={
-        b.unlocked
-          ? { borderColor: "var(--accent-border)", boxShadow: "var(--ring-accent)" }
-          : { opacity: 0.6 }
-      }>
-      <div className={`seal-stamp${b.unlocked ? "" : " locked"}`}>
-        <Icon name={b.unlocked ? (CAT_ICON[b.category] || CAT_ICON.default) : "lock"} size={19} />
-      </div>
-      <b style={{ display: "block", marginTop: 10 }}>{b.title}</b>
-      <p className="sub" style={{ fontSize: 12, marginTop: 4 }}>{b.description}</p>
-      <span className={`badge ${b.unlocked ? "good" : ""}`}>
-        {b.unlocked ? t("pages.achievements.unlocked") : categoryLabel(b.category)}
-      </span>
-      {b.unlocked_at && (
-        <p className="muted" style={{ fontSize: 11, marginTop: 8 }}>{fmtDate(b.unlocked_at)}</p>
-      )}
-    </div>
-  );
+  const earnedShown = shown(unlocked).sort((a, b) => new Date(b.unlocked_at) - new Date(a.unlocked_at));
+  const restShown = shown(rest);
 
   return (
     <Layout>
@@ -100,7 +145,8 @@ export default function Achievements() {
             <Icon name="award" size={13} /> {t("pages.achievements.earned", { unlocked: unlocked.length, total: badges.length })}
           </div>
           <h1 className="h1">{t("pages.achievements.title")}</h1>
-          <div className="hbar" style={{ marginTop: 10, maxWidth: 520 }}>
+          <p className="sub">{t("achievements.page.subtitle")}</p>
+          <div className="hbar" style={{ marginTop: 12, maxWidth: 520 }}>
             <Bar value={completion} />
             <span style={{ fontWeight: 800 }}>{completion.toFixed(0)}%</span>
           </div>
@@ -128,17 +174,49 @@ export default function Achievements() {
       <div className="ws">
         <div className="ws-main" ref={rootRef} data-self-animate="true">
           {badges.length === 0 && <Empty>{t("pages.achievements.noneYet")}</Empty>}
-          {unlocked.length > 0 && (
-            <>
-              <h2 className="h2 section-title">{t("pages.achievements.unlocked")} · {unlocked.length}</h2>
-              <div className="ach-grid">{unlocked.map(badgeCard)}</div>
-            </>
+
+          {close.length > 0 && (
+            <section>
+              <h2 className="h2 section-title">{t("achievements.page.close")}</h2>
+              <p className="sub ach-section-sub">{t("achievements.page.closeHint")}</p>
+              <div className="ach-grid">{close.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
+            </section>
           )}
-          {locked.length > 0 && (
-            <>
-              <h2 className="h2 section-title">{t("pages.achievements.inProgress")} · {locked.length}</h2>
-              <div className="ach-grid">{locked.map(badgeCard)}</div>
-            </>
+
+          {next.length > 0 && (
+            <section>
+              <h2 className="h2 section-title">{t("achievements.page.tryNext")}</h2>
+              <p className="sub ach-section-sub">{t("achievements.page.tryNextHint")}</p>
+              <div className="ach-grid">{next.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
+            </section>
+          )}
+
+          {badges.length > 0 && (
+            <div className="row ach-filter" role="group" aria-label={t("achievements.page.filter")}>
+              {["all", ...present].map((c) => (
+                <button key={c} type="button" aria-pressed={filter === c}
+                  className={`btn small ${filter === c ? "primary" : "ghost"}`} onClick={() => setFilter(c)}>
+                  {c === "all" ? t("achievements.page.all") : catLabel(c)}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {earnedShown.length > 0 && (
+            <section>
+              <h2 className="h2 section-title">{t("achievements.page.achieved")} · {earnedShown.length}</h2>
+              <div className="ach-grid">{earnedShown.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
+            </section>
+          )}
+          {unlocked.length === 0 && badges.length > 0 && filter === "all" && (
+            <p className="sub">{t("pages.achievements.noneYet")}</p>
+          )}
+
+          {restShown.length > 0 && (
+            <section>
+              <h2 className="h2 section-title">{t("achievements.page.toEarn")} · {restShown.length}</h2>
+              <div className="ach-grid">{restShown.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
+            </section>
           )}
         </div>
 
@@ -152,11 +230,11 @@ export default function Achievements() {
                 {recent.map((b) => (
                   <div key={b.id} className="ach-recent-row">
                     <div className="seal-stamp">
-                      <Icon name={CAT_ICON[b.category] || CAT_ICON.default} size={15} />
+                      <Icon name={achievementIcon(b)} size={15} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <b style={{ display: "block", fontSize: 14 }}>{b.title}</b>
-                      <span className="muted" style={{ fontSize: 12 }}>{fmtDate(b.unlocked_at)}</span>
+                      <b className="ach-title" style={{ display: "block" }}>{achievementTitle(t, b.code, b.title)}</b>
+                      <span className="ach-date">{fmtDate(b.unlocked_at)}</span>
                     </div>
                   </div>
                 ))}
@@ -170,7 +248,7 @@ export default function Achievements() {
               {byCategory.map((c) => (
                 <div key={c.key} className="metric">
                   <div className="metric-head">
-                    <span>{categoryLabel(c.key)}</span>
+                    <span>{catLabel(c.key)}</span>
                     <b>{c.done}/{c.total}</b>
                   </div>
                   <Bar value={(c.done / c.total) * 100} alt={c.done === 0} />

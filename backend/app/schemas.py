@@ -680,6 +680,14 @@ class AchievementResponse(BaseModel):
     category: str
     unlocked: bool = False
     unlocked_at: Optional[datetime] = None
+    # Real progress toward the condition (services/achievements.py): a count
+    # of the learner's stored records (or a percentage when unit="percent"),
+    # capped at target. Unlocked achievements report progress == target.
+    progress: int = 0
+    target: int = 1
+    unit: str = ""
+    to: Optional[str] = None  # where in the app to work on it
+    order: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -755,6 +763,11 @@ class DashboardResponse(BaseModel):
     next_location: Optional[LocationResponse] = None
     quests_today: list[QuestResponse] = []
     achievements: list[AchievementResponse] = []
+    # Unlocked but not yet announced to the learner (the "Achievement
+    # unlocked!" note; POST /achievements/seen marks them) and the locked
+    # ones closest to done.
+    new_achievements: list[AchievementResponse] = []
+    next_achievements: list[AchievementResponse] = []
     # Items due by the spaced-repetition schedule plus unresolved mistakes --
     # what /review would serve right now (see services.practice.review_counts).
     review_due: int = 0

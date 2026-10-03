@@ -14,6 +14,7 @@ from app import models
 from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import hsk_exam as svc
+from app.services.gamification import check_achievements
 
 router = APIRouter(prefix="/api/exams", tags=["exams"])
 
@@ -86,7 +87,9 @@ def answer(
 
 @router.post("/attempts/{attempt_id}/submit")
 def submit(attempt_id: int, user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return _run(svc.submit, db, _owned(db, attempt_id, user))
+    result = _run(svc.submit, db, _owned(db, attempt_id, user))
+    check_achievements(db, user)  # a passed exam is an HSK milestone
+    return result
 
 
 @router.post("/attempts/{attempt_id}/heartbeat")

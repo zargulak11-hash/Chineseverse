@@ -5145,6 +5145,59 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 .ach-recent { display: flex; flex-direction: column; gap: 10px; }
 .ach-recent-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ach-recent-row .seal-stamp { width: 34px; height: 34px; flex-shrink: 0; }
+/* One achievement: earned ones carry the accent edge (never border: 0);
+   locked ones say how to unlock, with the real progress when it's a count. */
+.ach-card { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.ach-card.is-earned { border-color: var(--accent-border); }
+.ach-card .seal-stamp { width: 40px; height: 40px; margin-bottom: var(--space-1); }
+.ach-title { font-weight: 800; overflow-wrap: anywhere; }
+.ach-text { margin: 0; font-size: var(--text-xs); color: var(--text-dim); overflow-wrap: anywhere; }
+.ach-left { margin: 0; font-size: var(--text-xs); font-weight: 700; color: var(--text); }
+.ach-date { font-size: var(--text-2xs); color: var(--text-faint); }
+.ach-foot {
+  margin-top: auto; padding-top: var(--space-1);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap;
+}
+.ach-section-sub { margin: 0 0 var(--space-3); }
+.ach-filter { flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.ws-main > section { min-width: 0; }
+
+/* Dashboard: the locked achievements closest to done. */
+.ach-next { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.ach-next-row {
+  display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0;
+  padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface-2); color: inherit;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.ach-next-row:hover { border-color: var(--border-strong); background: var(--surface-3); }
+.ach-next-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ach-next-row .seal-stamp { width: 34px; height: 34px; flex-shrink: 0; }
+.ach-next-text { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
+.ach-next-row .muted { font-size: var(--text-xs); font-weight: 700; white-space: nowrap; }
+
+/* "Achievement unlocked!" -- a corner note (toast layer), never a modal. */
+.ach-toast {
+  position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 110;
+  width: min(360px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  display: flex; align-items: flex-start; gap: var(--space-3);
+  border-color: var(--accent-border); box-shadow: var(--shadow-lg);
+  animation: fadeInUp var(--dur-slow) var(--ease-out) both;
+}
+.ach-toast .seal-stamp { width: 38px; height: 38px; flex-shrink: 0; }
+.ach-toast-body { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; min-width: 0; }
+.ach-toast-kicker {
+  font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent-strong);
+}
+.ach-toast-link { font-size: var(--text-xs); font-weight: 700; color: var(--accent-strong); display: inline-flex; align-items: center; gap: var(--space-1); }
+.ach-toast-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ach-toast .icon-btn { margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 0; }
+.ach-toast .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .ach-toast { right: var(--space-3); left: var(--space-3); bottom: var(--space-3); width: auto; }
+}
 
 /* Assistant: a full-height chat workspace. */
 /* Tall enough to feel like a workspace, short enough that the input bar

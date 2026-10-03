@@ -12,6 +12,7 @@ import { NextStepHero } from "../components/NextStep.jsx";
 import { Bar, Badge, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { achievementHow, achievementIcon, achievementTitle, progressText } from "../achievements.js";
 
 // Elastic, staggered card entrance for a grid/list of small elements — used
 // by the quick-action cards, the stat grid and the today's-quests rows.
@@ -263,6 +264,28 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {d.next_achievements?.length > 0 && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="row spread" style={{ margin: 0, flexWrap: "wrap" }}>
+            <h2 className="h2">{t("achievements.dashboard.title")}</h2>
+            <Link to="/achievements" className="btn small ghost">{t("achievements.dashboard.all")}</Link>
+          </div>
+          <div className="ach-next">
+            {d.next_achievements.map((a) => (
+              <Link key={a.id} to={a.to || "/achievements"} className="ach-next-row">
+                <span className="seal-stamp locked"><Icon name={achievementIcon(a)} size={15} /></span>
+                <span className="ach-next-text">
+                  <b className="ach-title">{achievementTitle(t, a.code, a.title)}</b>
+                  <span className="ach-text">{achievementHow(t, a)}</span>
+                  {a.target > 1 && <Bar value={a.progress} max={a.target} />}
+                </span>
+                {a.target > 1 && <span className="muted">{progressText(a)}</span>}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bento" style={{ marginTop: 16 }}>
         <div className="card bento-3">
