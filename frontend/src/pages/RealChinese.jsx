@@ -271,7 +271,7 @@ function PlacePanel({ p, animal, onClose }) {
                         <span className="badge">HSK {tk.min_level}</span>
                       </span>
                     ) : (
-                      <Link to={`/real-chinese/${tk.case ? "case" : "talk"}/${tk.slug}`} className="lw-talk">
+                      <Link to={`/real-chinese/${tk.case ? "case" : "talk"}/${tk.slug}?place=${p.key}`} className="lw-talk">
                         <Icon name={tk.case ? "search" : "mic"} size={13} /> {tk.title}
                         {tk.tried && <span className="badge good">{t("world.talked")}</span>}
                       </Link>

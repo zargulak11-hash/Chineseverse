@@ -543,13 +543,6 @@ class ScenarioResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class LocationDetailResponse(LocationResponse):
-    npcs: list[NPCBrief] = []
-    scenarios: list[ScenarioResponse] = []
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 # --------------------------------------------------------------------------- Missions
 class MissionResponse(BaseModel):
     id: int
@@ -562,7 +555,7 @@ class MissionResponse(BaseModel):
     reward_coins: int
     target_count: int
     scenario_id: Optional[int]
-    # Where the mission is done: /conversation/<slug> or /cases/<slug>.
+    # Where the mission is done: /real-chinese/talk/<slug> or /real-chinese/case/<slug>.
     scenario_slug: Optional[str] = None
     scenario_type: Optional[str] = None
 
@@ -840,4 +833,4 @@ class AdminUserListResponse(BaseModel):
 
 
 class AdminDashboardResponse(BaseModel):
-    total_users: int
+    total_users: int

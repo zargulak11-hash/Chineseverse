@@ -164,15 +164,13 @@ with TestClient(app) as client:
     # ---------------------------------------------- reads never pick a main companion
     nid, nh = register(client, "integritynocompanion")
     expect(client, "get", "/api/dashboard", 200, headers=nh)
-    with SessionLocal() as db:
-        loc = db.query(models.Location).order_by(models.Location.id).first()
-    expect(client, "get", f"/api/world/locations/{loc.slug}", 200, headers=nh)
+    expect(client, "get", "/api/real-life/world", 200, headers=nh)
     dash = expect(client, "get", "/api/dashboard", 200, headers=nh)
     assert dash["animal"] is None, dash["animal"]
     with SessionLocal() as db:
         u = db.get(models.User, nid)
         assert u.animal_id is None and u.user_animal is None
-    print("[PASS] loading the dashboard or a location no longer makes the panda the learner's companion")
+    print("[PASS] loading the dashboard or the world map no longer makes the panda the learner's companion")
 
     # ---------------------------------------------- first-load race on skill rows
     # Two first requests for a new account (dashboard + the page's own) both

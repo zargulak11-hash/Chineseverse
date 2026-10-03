@@ -5,7 +5,7 @@ import { api } from "../api.js";
 // Every page used to repeat the same GET -> useState(null) -> useEffect ->
 // setError(e.message) boilerplate. This is that pattern, written once.
 // `path` is itself a dependency, so passing a template string like
-// `/world/locations/${slug}` correctly refetches when `slug` changes.
+// `/real-life/scenes/${slug}` correctly refetches when `slug` changes.
 //
 // i18n.language is also a dependency: api.js sends the current language as
 // X-Locale on every request so the backend can localize DB-driven content

@@ -133,4 +133,10 @@ with TestClient(app) as client:
     assert not any(q["type"] == "scene_listen" for q in newbie["questions"])
     print("[PASS] strong listening -> faster speech and an extra listening check; new learners get the tier as written")
 
+    # The old World map is gone; its talks and cases live on inside this one.
+    expect(client, "get", "/api/world/locations", 404, headers=h)
+    expect(client, "get", "/api/world/locations/restaurant", 404, headers=h)
+    expect(client, "get", "/api/world/scenarios/ordering-noodles", 200, headers=h)
+    print("[PASS] the old World map endpoints are removed; scenario talks still load")
+
     print("ALL WORLD MAP TESTS PASSED")

@@ -34,10 +34,7 @@ with TestClient(app) as client:
     check("skills (9)", r.status_code == 200 and len(r.json()) == 9)
 
     r = client.get("/api/world/locations")
-    check("locations (9)", r.status_code == 200 and len(r.json()) == 9)
-
-    r = client.get("/api/world/locations/restaurant")
-    check("location detail w/ scenarios", r.status_code == 200 and len(r.json()["scenarios"]) >= 2)
+    check("old World map endpoint removed", r.status_code == 404)
 
     r = client.get("/api/world/scenarios/ordering-noodles")
     check("scenario detail dialogues", r.status_code == 200 and len(r.json()["dialogues"]) == 4)

@@ -55,8 +55,15 @@ function useCardStagger(deps) {
 // most — so it gets the large "featured" slot; the other three are a
 // smaller, deliberately hand-placed stack next to it (each a few degrees
 // off-square, straightening on hover) instead of four identical boxes.
+// Old World location slugs (the dashboard's "next location") -> places of
+// the living world on /real-chinese.
+const LOCATION_PLACE = {
+  home: "home", "city-street": "street", restaurant: "restaurant", shop: "shop", university: "university",
+  hospital: "hospital", "train-station": "train_station", hotel: "hotel", airport: "airport",
+};
+
 const QUICK_ACTIONS = [
-  { to: "/world", labelKey: "dashboard.exploreWorld", icon: "world", gradient: "linear-gradient(135deg, #1f5b7a, #4fc3f7)", featured: true },
+  { to: "/real-chinese", labelKey: "nav.realChinese", icon: "mapPin", gradient: "linear-gradient(135deg, #1f5b7a, #4fc3f7)", featured: true },
   { to: "/dna", labelKey: "dashboard.viewDna", icon: "dna", gradient: "linear-gradient(135deg, #2f7a4c, #4cc26b)" },
   { to: "/duels", labelKey: "dashboard.startDuel", icon: "swords", gradient: "linear-gradient(135deg, #b1501c, #ff8a3d)" },
   { to: "/missions", labelKey: "dashboard.pickMission", icon: "flag", gradient: "linear-gradient(135deg, var(--accent-soft), var(--accent-strong))" },
@@ -200,7 +207,6 @@ export default function Dashboard() {
           <h2 className="h2">{t("companionMemory.title", { name: d.animal?.name || t("companionReact.fallbackName") })}</h2>
           <div className="row" style={{ gap: 8, margin: 0, flexWrap: "wrap" }}>
             <Link to="/passport" className="btn small primary"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
-            <Link to="/real-chinese" className="btn small"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</Link>
             <Link to="/sentence" className="btn small ghost"><Icon name="sparkles" size={13} /> {t("nav.sentence")}</Link>
           </div>
         </div>
@@ -257,7 +263,7 @@ export default function Dashboard() {
         <div className="card bento-3">
           <h2 className="h2">{t("dashboard.nextLocation")}</h2>
           {d.next_location ? (
-            <Link to={`/world/${d.next_location.slug}`}>
+            <Link to={`/real-chinese?place=${LOCATION_PLACE[d.next_location.slug] || ""}`}>
               <button className="btn primary">
                 {d.next_location.icon} {d.next_location.name}
               </button>

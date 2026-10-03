@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { api, clearSession, getSavedUser, getToken } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
 import { initButtonFX } from "./buttonFx.js";
@@ -20,8 +20,6 @@ import LessonDetail from "./pages/LessonDetail.jsx";
 import Vocabulary from "./pages/Vocabulary.jsx";
 import Grammar from "./pages/Grammar.jsx";
 import Hanzi from "./pages/Hanzi.jsx";
-import WorldMap from "./pages/WorldMap.jsx";
-import LocationDetail from "./pages/LocationDetail.jsx";
 import Conversation from "./pages/Conversation.jsx";
 import CaseSolve from "./pages/CaseSolve.jsx";
 import Quests from "./pages/Quests.jsx";
@@ -70,6 +68,14 @@ function RequireAdmin({ children }) {
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
   if (!user.is_admin) return <Navigate to="/dashboard" replace />;
   return children;
+}
+
+// The old World map (/world) is now the living world on /real-chinese, and its
+// talks and cases moved under it. Bookmarks and shared links to the old
+// addresses still land in the right place.
+function MovedTo({ base }) {
+  const { scenarioId } = useParams();
+  return <Navigate to={scenarioId ? `${base}/${scenarioId}` : base} replace />;
 }
 
 function NavLink({ to, children }) {
@@ -309,23 +315,7 @@ export default function App() {
             }
           />
           <Route
-            path="/world"
-            element={
-              <RequireAuth>
-                <WorldMap />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/world/:slug"
-            element={
-              <RequireAuth>
-                <LocationDetail />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/conversation/:scenarioId"
+            path="/real-chinese/talk/:scenarioId"
             element={
               <RequireAuth>
                 <Conversation />
@@ -333,7 +323,7 @@ export default function App() {
             }
           />
           <Route
-            path="/cases/:scenarioId"
+            path="/real-chinese/case/:scenarioId"
             element={
               <RequireAuth>
                 <CaseSolve />
@@ -501,6 +491,9 @@ export default function App() {
             }
           />
         </Route>
+        <Route path="/world/*" element={<MovedTo base="/real-chinese" />} />
+        <Route path="/conversation/:scenarioId" element={<MovedTo base="/real-chinese/talk" />} />
+        <Route path="/cases/:scenarioId" element={<MovedTo base="/real-chinese/case" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </ErrorBoundary>

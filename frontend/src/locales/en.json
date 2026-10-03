@@ -30,7 +30,6 @@
     "groupMain": "Main",
     "groupLearning": "Learning",
     "home": "Home",
-    "world": "World",
     "dna": "DNA",
     "duels": "Duels",
     "progress": "Progress",
@@ -145,7 +144,6 @@
     "dayStreak": "Day streak",
     "coins": "Coins",
     "level": "Level",
-    "exploreWorld": "Explore the World",
     "viewDna": "View your DNA",
     "startDuel": "Start a Duel",
     "pickMission": "Pick a Mission",
@@ -588,17 +586,6 @@
       "lockedTitle": "This lesson is locked",
       "lockedText": "Complete the previous lesson first — your lesson path shows what to study next.",
       "backToPath": "Back to your lesson path"
-    },
-    "locationDetail": {
-      "entering": "Entering…",
-      "worldMap": "World map",
-      "almostThere": "Almost there — keep training to unlock this place.",
-      "stillLocked": "This place is still locked. Keep leveling up to reach it.",
-      "peopleHere": "People here",
-      "conversations": "Conversations",
-      "solveCase": "Solve case",
-      "talk": "Talk",
-      "usesVoice": "This conversation uses voice."
     },
     "conversation": {
       "entering": "Entering conversation…",

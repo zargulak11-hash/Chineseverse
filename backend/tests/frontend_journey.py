@@ -91,14 +91,14 @@ from quest_helpers import vocab_round  # noqa: E402
 vocab_round(call, H)
 print("  OK self-graded review is refused; a graded vocabulary round plays")
 
-print("\n== World (locations + scenario detail) ==")
-locs = call("GET", "/api/world/locations", headers=H)
-assert len(locs) == 9
-assert all("position_x" in l and "position_y" in l for l in locs), "map needs real coordinates for every location"
-assert any(l["status"] in ("locked", "next") for l in locs), "a brand-new user should have some locations still locked"
-rest = call("GET", "/api/world/locations/restaurant", headers=H)
-assert rest["scenarios"], "restaurant should have scenarios"
-print(f"  OK {len(locs)} locations (all with map coordinates), restaurant has {len(rest['scenarios'])} conversations")
+print("\n== Living world (GET /api/real-life/world) ==")
+world = call("GET", "/api/real-life/world", headers=H)
+assert len(world["places"]) == 19 and world["paths"], "the map needs every place and the roads between them"
+assert all("x" in p and "y" in p for p in world["places"]), "map needs real coordinates for every place"
+assert any(p["status"] == "locked" for p in world["places"]), "a brand-new user should have some places still locked"
+rest = next(p for p in world["places"] if p["key"] == "restaurant")
+assert rest["talks"], "restaurant should have conversations"
+print(f"  OK {len(world['places'])} places (all with map coordinates), restaurant has {len(rest['talks'])} conversations")
 
 print("\n== Missions (GET /api/missions, auto-progress, no manual /progress call) ==")
 missions = call("GET", "/api/missions", headers=H)

@@ -126,7 +126,7 @@ export default function LessonDetail() {
         ) : (
           <p className="sub">{t("pages.lessonDetail.noPractice")}</p>
         )}
-        <Link to="/world">
+        <Link to="/real-chinese">
           <button className="btn ghost">{t("pages.lessonDetail.tryInWorld")}</button>
         </Link>
       </div>

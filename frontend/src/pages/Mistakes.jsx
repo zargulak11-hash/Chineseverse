@@ -18,10 +18,10 @@ const PRACTICE_ROUTE = {
   grammar: "/review",
 };
 
-// World cases log grammar mistakes against the scenario slug (ascii-kebab),
-// which only the world can re-test; grammar-point mistakes go to Review.
+// Cases log grammar mistakes against the scenario slug (ascii-kebab), which
+// only the living world can re-test; grammar-point mistakes go to Review.
 function practiceRoute(m) {
-  if (m.mistake_type === "grammar" && /^[a-z0-9-]+$/.test(m.reference)) return "/world";
+  if (m.mistake_type === "grammar" && /^[a-z0-9-]+$/.test(m.reference)) return `/real-chinese/case/${m.reference}`;
   return PRACTICE_ROUTE[m.mistake_type] || "/review";
 }
 

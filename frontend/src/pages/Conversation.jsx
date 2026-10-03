@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -10,6 +10,10 @@ import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 
 export default function Conversation() {
+  // Back to the place on the living-world map this talk was opened from.
+  const [search] = useSearchParams();
+  const place = search.get("place");
+  const backTo = place ? `/real-chinese?place=${place}` : "/real-chinese";
   const { t, i18n } = useTranslation();
   const { scenarioId } = useParams();
   const { dashboard } = useDashboard() || {};
@@ -89,7 +93,7 @@ export default function Conversation() {
 
   return (
     <Layout>
-      <Link to="/world" className="sub">
+      <Link to={backTo} className="sub">
         ← {sc.scenario_type === "case" ? t("pages.conversation.leaveCase") : t("pages.conversation.leaveConversation")}
       </Link>
       <div className="row spread" style={{ marginTop: 10 }}>
@@ -107,7 +111,7 @@ export default function Conversation() {
         <div className="card center" style={{ marginTop: 20 }}>
           <div style={{ fontSize: 40 }}>🎉</div>
           <p>{t("pages.conversation.completed")}</p>
-          <Link to={`/world/${sc.slug}`}>
+          <Link to={backTo}>
             <button className="btn primary">{t("pages.conversation.backToWorld")}</button>
           </Link>
         </div>

@@ -29,9 +29,9 @@ const KIND_PATH = {
 
 function missionPath(mission) {
   if (mission.scenario_slug) {
-    return mission.scenario_type === "case" ? `/cases/${mission.scenario_slug}` : `/conversation/${mission.scenario_slug}`;
+    return `/real-chinese/${mission.scenario_type === "case" ? "case" : "talk"}/${mission.scenario_slug}`;
   }
-  return KIND_PATH[mission.kind] || "/world";
+  return KIND_PATH[mission.kind] || "/real-chinese";
 }
 
 export default function Missions() {

@@ -9,7 +9,6 @@ import UserAvatar from "./UserAvatar.jsx";
 
 const NAV_INDEX = [
   ["/dashboard", "nav.home", "home"],
-  ["/world", "nav.world", "world"],
   ["/real-chinese", "nav.realChinese", "mapPin"],
   ["/sound-world", "nav.soundWorld", "ear"],
   ["/detective", "nav.detective", "search"],
@@ -34,32 +33,37 @@ const NAV_INDEX = [
   ["/assistant", "nav.assistant", "chat"],
 ];
 
+// The places of the living world (backend services/world_places.py).
+const WORLD_PLACES = [
+  "home", "library", "calligraphy", "word_garden", "street", "restaurant", "shop", "shopping_district",
+  "internet_cafe", "detective", "sound_plaza", "passport_office", "university", "hospital", "office",
+  "train_station", "hotel", "old_town", "airport",
+];
+
 const DATE_LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 
 // A real search over the app's own content, not a decorative box: it
 // matches page names instantly, and matches lesson/location titles once
 // those lists have loaded (fetched lazily, on first focus, from the same
-// endpoints Lessons.jsx / WorldMap.jsx already use — no fake results).
+// endpoint Lessons.jsx already uses — no fake results) and the places of
+// the living world on /real-chinese (names from i18n, no request needed).
 function useGlobalSearch(t, lang) {
   const [query, setQuery] = useState("");
   const [lessons, setLessons] = useState(null);
-  const [locations, setLocations] = useState(null);
   const loadedRef = useRef(false);
 
-  // Lesson titles and location names are localized by the API; the top bar
-  // now persists across pages, so reload them after a language switch
-  // instead of searching the previous language's names.
+  // Lesson titles are localized by the API; the top bar persists across
+  // pages, so reload them after a language switch instead of searching the
+  // previous language's names.
   useEffect(() => {
     loadedRef.current = false;
     setLessons(null);
-    setLocations(null);
   }, [lang]);
 
   function ensureLoaded() {
     if (loadedRef.current) return;
     loadedRef.current = true;
     api.get("/lessons").then(setLessons).catch(() => setLessons([]));
-    api.get("/world/locations").then(setLocations).catch(() => setLocations([]));
   }
 
   const results = useMemo(() => {
@@ -75,13 +79,14 @@ function useGlobalSearch(t, lang) {
         out.push({ to: `/lessons/${l.id}`, label: l.title, icon: "book", kind: `HSK ${l.hsk_level || 1}` });
       }
     }
-    for (const loc of locations || []) {
-      if (loc.name?.toLowerCase().includes(q)) {
-        out.push({ to: `/world/${loc.slug}`, label: loc.name, icon: "mapPin", kind: "Location" });
+    for (const key of WORLD_PLACES) {
+      const label = t(`world.place.${key}.name`);
+      if (label.toLowerCase().includes(q)) {
+        out.push({ to: `/real-chinese?place=${key}`, label, icon: "mapPin", kind: t("nav.realChinese") });
       }
     }
     return out.slice(0, 8);
-  }, [query, lessons, locations, t]);
+  }, [query, lessons, t]);
 
   return { query, setQuery, results, ensureLoaded };
 }

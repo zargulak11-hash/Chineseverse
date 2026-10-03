@@ -1115,100 +1115,8 @@ select.input {
   transition: transform var(--dur-base) var(--ease-out);
 }
 
-/* ---------- World map (real SVG canvas, driven by Location.position_x/y) ---------- */
-.worldmap-wrap {
-  position: relative;
-  width: min(880px, 100%);
-  aspect-ratio: 1 / 1;
-  margin: 0 auto;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
-  animation: fadeInUp var(--dur-base) var(--ease-out) both;
-}
-
-.worldmap-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.wm-node {
-  cursor: pointer;
-}
-
-/* Scale the children, not the <g> itself — the <g> already carries a
-   positional transform (translate to the location's x/y); a CSS transform
-   on the same element would replace that positioning outright instead of
-   combining with it.
-   transform-box: fill-box is required: in SVG, transform-origin is measured
-   against the whole viewBox by default, so "center" meant (50, 50) of the
-   map, not the dot. Hovering a node then scaled it around a point far away
-   and threw it ~7.5 units off its position -- out from under the cursor,
-   which ended :hover, snapped it back, hovered again... a rapid shake (and
-   the tooltip flickered with it). fill-box makes "center" the dot itself. */
-.wm-node .wm-dot,
-.wm-node .wm-icon {
-  transition: transform var(--dur-fast) ease, filter var(--dur-fast) ease;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.wm-node:hover .wm-dot,
-.wm-node:hover .wm-icon {
-  transform: scale(1.15);
-  filter: brightness(1.2);
-}
-
-.wm-node.locked .wm-icon {
-  opacity: 0.55;
-}
-
-.wm-node .wm-label {
-  fill: var(--text-dim);
-  font-weight: 700;
-  paint-order: stroke;
-  stroke: var(--bg);
-  stroke-width: 0.6px;
-}
-
-.wm-pulse {
-  animation: wmPulse 2.4s ease-in-out infinite;
-  /* Same reason as above: without fill-box the ring pulsed around the map's
-     center and swung back and forth across the "next" location. */
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-@keyframes wmPulse {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.15);
-  }
-}
-
-.wm-tooltip {
-  position: absolute;
-  transform: translate(-50%, calc(-100% - 14px));
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  width: 200px;
-  box-shadow: var(--shadow-md);
-  pointer-events: none;
-  z-index: 5;
-  animation: fadeInUp 0.15s var(--ease-out) both;
-}
-
 /* ---------- Живой китайский: the living world map (RealChinese.jsx) ----------
-   One SVG canvas (viewBox 100 x 62). Every colour is a theme token, so the
+   One SVG canvas (viewBox 100 x 70). Every colour is a theme token, so the
    deep-navy night city of the ink theme becomes a parchment map in paper.
    Hover/focus scale only the node's inner <g class="lw-node-body">, with
    transform-box: fill-box -- the outer <g> carries the position, and a CSS
@@ -1231,6 +1139,7 @@ select.input {
 .lw-road.is-open { stroke: var(--accent); stroke-dasharray: 1.4 1.2; opacity: 0.55; animation: lwFlow 12s linear infinite; }
 .lw-road.is-walked { stroke: var(--good); stroke-dasharray: none; opacity: 0.75; stroke-width: 0.55; animation: none; }
 @keyframes lwFlow { to { stroke-dashoffset: -26; } }
+@keyframes lwPulse { 0%, 100% { opacity: 0.3; transform: scale(0.9); } 50% { opacity: 0.85; transform: scale(1.15); } }
 .lw-node { cursor: pointer; }
 .lw-node-body {
   transition: transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
@@ -1266,7 +1175,7 @@ select.input {
   fill: none;
   stroke: var(--accent);
   stroke-width: 0.35;
-  animation: wmPulse 2.4s ease-in-out infinite;
+  animation: lwPulse 2.4s ease-in-out infinite;
   transform-box: fill-box;
   transform-origin: center;
 }

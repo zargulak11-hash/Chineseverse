@@ -18,7 +18,6 @@ const GROUPS = [
     labelKey: "nav.groupMain",
     links: [
       ["/dashboard", "nav.home", "home"],
-      ["/world", "nav.world", "world"],
       ["/real-chinese", "nav.realChinese", "mapPin"],
       ["/sound-world", "nav.soundWorld", "ear"],
       ["/detective", "nav.detective", "search"],

@@ -7,32 +7,19 @@ from app.deps import get_current_user, get_locale, get_user_or_none
 from app.services import ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
-    ensure_user_skills,
-    location_status,
     progress_missions,
     progress_quests,
     record_mistake,
     reinforce_mistake,
     scenario_is_unlocked,
-    user_rank,
 )
 from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/world", tags=["world"])
 
-_computed_status = location_status
-
-
-def _localize_npc(npc: models.NPC, translations: dict) -> schemas.NPCBrief:
-    out = schemas.NPCBrief.model_validate(npc)
-    key = str(npc.id)
-    # `name` stays as-authored (a Chinese-flavored character name like 奶奶,
-    # not a UI string) -- role/title/description are the English framing
-    # around that character and do follow the selected locale.
-    out.role = tr(translations, key, "role", out.role)
-    out.title = tr(translations, key, "title", out.title)
-    out.description = tr(translations, key, "description", out.description)
-    return out
+# The old World map endpoints (/locations, /locations/{slug}) are gone: the
+# living world on /real-chinese reads GET /api/real-life/world. The voice
+# talks and detective cases below still live here and are opened from it.
 
 
 def _localize_scenario(
@@ -58,73 +45,6 @@ def _localize_scenario(
         serialized.append(item)
     out.dialogues = serialized
     return out
-
-
-@router.get("/locations", response_model=list[schemas.LocationResponse])
-def list_locations(
-    user: models.User | None = Depends(get_user_or_none),
-    db: Session = Depends(get_db),
-    locale: str = Depends(get_locale),
-):
-    if user:
-        ensure_user_skills(db, user)
-        current, _ = user_rank(db, user)
-    else:
-        current = 1
-    locations = db.query(models.Location).order_by(models.Location.unlock_level).all()
-    translations = load_translations(db, "location", [str(l.id) for l in locations], locale)
-    out = []
-    for loc in locations:
-        item = schemas.LocationResponse.model_validate(loc)
-        item.status = _computed_status(loc, current)
-        item.name = tr(translations, loc.id, "name", item.name)
-        item.description = tr(translations, loc.id, "description", item.description)
-        out.append(item)
-    return out
-
-
-@router.get("/locations/{slug}", response_model=schemas.LocationDetailResponse)
-def location_detail(
-    slug: str,
-    user: models.User | None = Depends(get_user_or_none),
-    db: Session = Depends(get_db),
-    locale: str = Depends(get_locale),
-):
-    loc = db.query(models.Location).filter_by(slug=slug).first()
-    if loc is None:
-        raise HTTPException(status_code=404, detail="Location not found")
-    current = 1
-    if user:
-        current, _ = user_rank(db, user)
-
-    status = _computed_status(loc, current)
-    detail = schemas.LocationDetailResponse.model_validate(loc)
-    detail.status = status
-    # Locked/next locations are visible on the map (so the player can see
-    # what's coming) but their people and conversations aren't playable yet
-    # — matching the unlock status shown, not just a cosmetic badge.
-    if status == "unlocked":
-        loc_tr = load_translations(db, "location", [str(loc.id)], locale)
-        detail.name = tr(loc_tr, loc.id, "name", detail.name)
-        detail.description = tr(loc_tr, loc.id, "description", detail.description)
-
-        npc_ids = [str(n.id) for n in loc.npcs]
-        scenario_ids = [str(s.id) for s in loc.scenarios]
-        dialogue_ids = [str(d.id) for s in loc.scenarios for d in s.dialogues]
-        choice_ids = [str(c.id) for s in loc.scenarios for d in s.dialogues for c in d.choices]
-        npc_tr = load_translations(db, "npc", npc_ids, locale)
-        scenario_tr = load_translations(db, "scenario", scenario_ids, locale)
-        dialogue_tr = load_translations(db, "dialogue", dialogue_ids, locale)
-        choice_tr = load_translations(db, "dialogue_choice", choice_ids, locale)
-
-        detail.npcs = [_localize_npc(n, npc_tr) for n in loc.npcs]
-        detail.scenarios = [
-            _localize_scenario(s, scenario_tr, npc_tr, dialogue_tr, choice_tr) for s in loc.scenarios
-        ]
-    else:
-        detail.npcs = []
-        detail.scenarios = []
-    return detail
 
 
 def _scenarios_translations(db: Session, scenarios: list[models.Scenario], locale: str):
