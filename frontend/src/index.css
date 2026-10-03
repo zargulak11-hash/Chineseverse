@@ -731,11 +731,13 @@ a.navlink.active::after {
    float as a narrow column -- 39-61% of the space at 1920px, a different
    width on every page (the old `.page:has(> .page-head)` patch only fixed
    pages with a .page-head, and only where :has() is supported).
-   The cap is for very large monitors only; readable widths for text,
-   forms and practice cards are set by those components themselves. */
+   There is no width cap on the page itself: on an ultrawide monitor or a
+   zoomed-out browser a cap left exactly the "small column between empty
+   sides" this rule exists to prevent. Readable measure is kept where it
+   matters -- paragraphs, forms, exercise cards -- not on the page. */
 .page {
   width: 100%;
-  max-width: 2000px;
+  max-width: none;
   margin: 0 auto;
   padding: 32px clamp(20px, 2.4vw, 44px) 90px;
   /* Enter motion is now a staggered Anime.js reveal of this element's own
@@ -745,6 +747,14 @@ a.navlink.active::after {
 
 .page.wide {
   max-width: none;
+}
+
+/* Readable measure where it matters: a page's introductory paragraphs keep
+   ~90 characters a line however wide the page is. */
+.page-head .sub,
+.page > .sub,
+.page > p {
+  max-width: 90ch;
 }
 
 .grid {
@@ -762,9 +772,12 @@ a.navlink.active::after {
   }
 }
 
+/* auto-fit, not auto-fill: three cards share the row instead of sitting
+   beside empty tracks; a lone card stays card-sized (max-width). */
 .grid.cards {
-  grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
 }
+.grid.cards > * { max-width: 560px; }
 
 /* Cards animate in as they're inserted (route change or data finishing a
    load) and stagger by position so a grid feels alive instead of popping
@@ -3324,11 +3337,14 @@ table.data td {
    a folded ticket-stub corner; DNA/Duels/Missions form a smaller stack next
    to it, each a few degrees off-square like hand-placed cards, straightening
    on hover. */
+/* The tilted cards' edges move by width x sin(angle), so on a wide screen a
+   fixed gap let neighbours collide (the Duel card hid "Learning Compass" at
+   2560px). The row gap grows with the screen to keep the fan apart. */
 .quick-actions {
   display: grid;
   grid-template-columns: 1.3fr 1fr;
   grid-template-rows: repeat(3, auto);
-  gap: var(--space-3) var(--space-4);
+  gap: clamp(var(--space-3), 2.2vw, 80px) var(--space-4);
   margin-top: 22px;
 }
 
