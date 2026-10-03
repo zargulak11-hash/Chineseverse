@@ -1193,6 +1193,31 @@ select.input {
 .lw-river path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .lw-river-bank { stroke: var(--border); stroke-width: 9; opacity: 0.7; }
 .lw-river-water { stroke: color-mix(in srgb, var(--good) 26%, var(--surface-2)); stroke-width: 7.4; }
+/* The city around the places (components/CityScenery.jsx): trees and
+   bamboo, houses, city blocks, old-quarter roofs, ponds, plazas, bridges,
+   red lanterns and the districts' names. Decoration only, all from tokens,
+   never in the way of the pointer. */
+.lw-scenery { pointer-events: none; }
+.lw-tree { fill: color-mix(in srgb, var(--good) 45%, var(--surface-2)); opacity: 0.75; }
+.lw-bamboo line { stroke: color-mix(in srgb, var(--good) 60%, var(--surface-2)); stroke-width: 0.35; stroke-linecap: round; }
+.lw-house rect, .lw-house path { fill: var(--surface-3); stroke: var(--border-strong); stroke-width: 0.18; }
+.lw-house path { fill: var(--accent-dim); }
+.lw-block { fill: var(--surface-3); stroke: var(--border); stroke-width: 0.18; opacity: 0.9; }
+.lw-roof rect { fill: var(--surface-3); stroke: var(--border); stroke-width: 0.15; }
+.lw-roof path { fill: color-mix(in srgb, var(--bad) 55%, var(--surface-3)); }
+.lw-pond { fill: color-mix(in srgb, var(--good) 26%, var(--surface-2)); stroke: var(--border); stroke-width: 0.25; }
+.lw-plaza { fill: var(--accent-dim); fill-opacity: 0.35; stroke: var(--accent-border); stroke-width: 0.2; stroke-dasharray: 0.7 0.7; }
+.lw-bridge rect { fill: var(--surface-3); stroke: var(--border-strong); stroke-width: 0.25; }
+.lw-bridge line { stroke: var(--accent-border); stroke-width: 0.35; stroke-dasharray: 0.6 0.5; }
+.lw-lantern ellipse { fill: var(--bad); }
+.lw-lantern-glow { fill: var(--bad); opacity: 0.18; }
+.lw-district-name {
+  fill: var(--text-faint);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
 .lw-river-shine { stroke: var(--surface-1); stroke-width: 0.5; stroke-dasharray: 4 7; opacity: 0.55; animation: lwFlow 18s linear infinite; }
 .lw-road { fill: none; stroke: var(--border-strong); stroke-width: 0.45; stroke-linecap: round; stroke-dasharray: 0.4 1.1; opacity: 0.7; }
 .lw-road.is-open { stroke: var(--accent); stroke-dasharray: 1.4 1.2; opacity: 0.55; animation: lwFlow 12s linear infinite; }

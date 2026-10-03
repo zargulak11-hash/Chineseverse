@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import CompanionFigure from "../components/CompanionFigure.jsx";
+import { CityBridges, CityGround, CityLanterns, buildScenery } from "../components/CityScenery.jsx";
 import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -524,6 +525,7 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
   const y0 = v.cy - vh / 2;
   const pxPerUnit = size.w ? size.w / vw : 0;
   const byKey = useMemo(() => Object.fromEntries(data.places.map((p) => [p.key, p])), [data]);
+  const scenery = useMemo(() => buildScenery(data, (d) => t(`world.district.${d}`)), [data, t]);
 
   const anim = useRef(0);
   const flyTo = (target) => {
@@ -700,6 +702,8 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
               <path d={smoothPath(data.map.river)} className="lw-river-shine" />
             </g>
           )}
+          <CityGround sc={scenery} />
+          <CityBridges sc={scenery} />
           {data.paths.map((r) => {
             const a = byKey[r.from];
             const b = byKey[r.to];
@@ -707,6 +711,7 @@ function CityMap({ data, W, H, order, names, selected, animal, onPick, narrow })
             const walked = ["explored", "mastered"].includes(a.status) && ["explored", "mastered"].includes(b.status);
             return <path key={`${r.from}-${r.to}`} d={road(a, b)} className={`lw-road${r.open ? " is-open" : ""}${walked ? " is-walked" : ""}`} />;
           })}
+          <CityLanterns sc={scenery} />
           {data.places.map((p) => (
             <PlaceNode
               key={p.key}
