@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import random
 import time
 from datetime import datetime
@@ -207,28 +208,41 @@ def above_level_cap(book: dict) -> int | None:
     return None
 
 
+def ambiguous(db: Session, book: dict, text: str) -> list[str]:
+    """Places where the reader's forward longest-match split and a backward
+    longest-match split disagree -- where the learner may be shown the
+    wrong word (去世|界 in 去世界各地, 学会|计 in 学会计, 不知|道). An
+    author's warning, not an error: the line is usually rephrased."""
+    names = book.get("names") or {}
+    for name in sorted(names, key=len, reverse=True):
+        text = text.replace(name, "·")  # names are never split
+    known = sent.vocab_rows(db, text)
+    found = []
+    for run in re.findall(r"[㐀-鿿]+", text):
+        fwd = [t["text"] for t in sent.segment(db, run, known)]
+        bwd, i = [], len(run)
+        while i > 0:
+            for size in range(min(sent._SEGMENT_MAX, i), 0, -1):
+                piece = run[i - size:i]
+                if size == 1 or piece in known:
+                    bwd.append(piece)
+                    i -= size
+                    break
+        bwd.reverse()
+        if fwd != bwd:
+            found.append(f"{'|'.join(fwd)}  ~  {'|'.join(bwd)}")
+    return found
+
+
 def vocabulary_report(db: Session, book: dict) -> dict:
     """The curriculum check of one book (scripts/check_books.py and the tests)."""
     prof = profile(db, book)
     loose = {t for ch in prof["chapters"] for row in ch for t, wid, kind in row if kind == "char"}
     unknown = sorted(loose - set(sent.hanzi_rows(db, loose)))
     cap = above_level_cap(book)
-    # Likely mis-splits by the longest-match segmenter: a word above the
-    # book's level whose last character, joined to what follows, makes a
-    # word at the level (不知|道 for 不知道, 要点|菜 for 要点菜). The reader
-    # would show the learner the wrong word; the author should rephrase.
-    levels = sent._level_map(db)
-    vocab = {w.simplified: levels.get(w.hsk_level_id, 9) for w in db.query(models.VocabularyWord)}
-    suspicious = set()
-    for ch in prof["chapters"]:
-        for row in ch:
-            for (t, wid, _k), (nxt, _w2, _k2) in zip(row, row[1:]):
-                if wid and len(t) >= 2 and vocab.get(t, 9) > book["level"] and book["level"] < 7:
-                    joined = t[-1] + nxt[:1]
-                    if vocab.get(joined, 99) <= book["level"]:
-                        suspicious.add(f"{t}|{nxt} ({joined})")
+    suspicious = sorted({s for ch in book["chapters"] for x in ch["sentences"] for s in ambiguous(db, book, x["zh"])})
     return {"above": prof["above"], "cap": cap, "unknown_chars": unknown, "avg_len": prof["avg_len"],
-            "suspicious": sorted(suspicious),
+            "suspicious": suspicious,
             "difficulty": difficulty(db, book), "minutes": prof["minutes"],
             # Advanced (7-9) literature may use a few characters beyond the
             # 3,000 of the curriculum; they are read without curriculum pinyin.

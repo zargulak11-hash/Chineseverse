@@ -46,8 +46,8 @@ def main() -> int:
                   f"above={len(r['above'])}/{cap}")
             if r["above"] and (not r["ok"] or wanted):
                 print("      above level:", " ".join(r["above"]))
-            if r["suspicious"]:
-                print("      check segmentation:", "  ".join(r["suspicious"]))
+            for line in r["suspicious"]:
+                print("      reader split ~ backward split:", line)
             if r["unknown_chars"]:
                 print("      not in the curriculum:", "".join(r["unknown_chars"]))
     print("books per level:", dict(sorted(per_level.items())), "total:", sum(per_level.values()))
