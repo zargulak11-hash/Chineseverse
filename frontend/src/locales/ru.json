@@ -56,7 +56,8 @@
     "soundWorld": "Мир звуков",
     "ecosystem": "Экосистема слов",
     "internet": "Китайский интернет",
-    "passport": "Китайский паспорт"
+    "passport": "Китайский паспорт",
+    "toLanding": "ChineseVerse — главная страница"
   },
   "topbar": {
     "hello": "你好, {{name}}",

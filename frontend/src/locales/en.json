@@ -56,7 +56,8 @@
     "soundWorld": "Sound World",
     "ecosystem": "Word Ecosystem",
     "internet": "Chinese Internet",
-    "passport": "Chinese Passport"
+    "passport": "Chinese Passport",
+    "toLanding": "ChineseVerse — main page"
   },
   "topbar": {
     "hello": "你好, {{name}}",

@@ -1,7 +1,7 @@
 import { animate } from "animejs";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import BrandLogo from "./BrandLogo.jsx";
 import Icon from "./Icon.jsx";
@@ -142,10 +142,12 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
       {mobileOpen && <div className="sidebar-backdrop" onClick={onCloseMobile} />}
       <aside className={`sidebar${collapsed ? " collapsed" : ""}${mobileOpen ? " mobile-open" : ""}`}>
         <div className="sidebar-head">
-          <span className="brand sidebar-brand">
+          {/* The logo always leads to the landing page (/) -- signed in or
+              not; the Dashboard is "Home" in the list below. */}
+          <Link to="/" className="brand sidebar-brand" aria-label={t("nav.toLanding")} onClick={onCloseMobile}>
             <BrandLogo className="brand-logo--sidebar" />
             <BrandLogo variant="mark" className="brand-logo--sidebar-mark" />
-          </span>
+          </Link>
           <button
             type="button"
             className="sidebar-collapse-btn"

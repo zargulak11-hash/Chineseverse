@@ -56,7 +56,8 @@
     "soundWorld": "声音世界",
     "ecosystem": "词汇生态",
     "internet": "中文网络",
-    "passport": "中文护照"
+    "passport": "中文护照",
+    "toLanding": "ChineseVerse——首页"
   },
   "topbar": {
     "hello": "你好, {{name}}",

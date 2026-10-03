@@ -33,9 +33,10 @@ export default function Landing() {
     <>
       <div className="appbar-wrap">
         <header className="appbar">
-          <span className="brand">
+          <Link to="/" className="brand" aria-label={t("nav.toLanding")}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
             <BrandLogo className="brand-logo--bar" />
-          </span>
+          </Link>
           <span className="spacer" />
           <button
             type="button"

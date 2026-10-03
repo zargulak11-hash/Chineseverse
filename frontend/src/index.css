@@ -363,6 +363,8 @@ a {
   color: var(--text);
   font-family: var(--font-display);
 }
+a.brand { text-decoration: none; border-radius: var(--radius-sm); }
+a.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* ---------- Brand logo ----------
    The real ChineseVerse logo (frontend/photo/*.png, imported by
