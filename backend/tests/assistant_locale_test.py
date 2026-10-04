@@ -26,6 +26,11 @@ from app.config import settings  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services import ai_client  # noqa: E402
+from app.routers import assistant as _assistant_router  # noqa: E402
+
+# This test sends hundreds of turns from one account; the hourly cap is
+# covered by assistant_stream_test.
+_assistant_router.CHATS_PER_HOUR = 100_000
 from app.services.dna import bump_skill  # noqa: E402
 from app.services.gamification import ensure_user_skills  # noqa: E402
 

@@ -41,6 +41,8 @@ const EXACT = {
   "You've asked for many new explanations this hour — try again a bit later": "aiLimit",
   "Write the sentence in Chinese characters": "writeChinese",
   "This grammar point has no example to practice at this level": "grammarNoExample",
+  // routers/assistant.py
+  "You've sent a lot of messages this hour — take a short break and try again": "chatLimit",
 };
 
 // routers/assistant.py: "<file name>: <problem>" -- the name stays, the

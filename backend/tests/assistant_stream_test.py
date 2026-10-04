@@ -204,6 +204,25 @@ def main():
         finally:
             restore(orig)
         print("[PASS] page context comes from the database; a 'selection' not in the chapter is never put in the prompt")
+
+        # A request can't smuggle many files through old turns, and a
+        # runaway client is stopped by the hourly cap.
+        att = {"name": "a.png", "mime": "image/png", "data": b64(PNG)}
+        many = {"messages": [{"role": "user", "content": f"q{i}", "attachments": [att, att]} for i in range(2)]}
+        r = client.post("/api/assistant/chat/stream", headers=h, json=many)
+        assert r.status_code == 422, r.status_code
+        h2 = register(client, "stream_limit")
+        old_cap = assistant_router.CHATS_PER_HOUR
+        assistant_router.CHATS_PER_HOUR = 3
+        try:
+            codes = [client.post("/api/assistant/chat/stream", headers=h2, json=ask("hi")).status_code for _ in range(4)]
+            assert codes == [200, 200, 200, 429], codes
+            assert client.post("/api/assistant/chat", headers=h2, json=ask("hi")).status_code == 429
+            h3 = register(client, "stream_other")
+            assert client.post("/api/assistant/chat/stream", headers=h3, json=ask("hi")).status_code == 200  # per learner
+        finally:
+            assistant_router.CHATS_PER_HOUR = old_cap
+        print("[PASS] more than 3 files per request is refused; the hourly cap stops a runaway client, per learner")
     print("ALL ASSISTANT STREAM TESTS PASSED")
 
 

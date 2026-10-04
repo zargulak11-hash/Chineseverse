@@ -1203,7 +1203,8 @@
     "fileRead": "{{name}}：无法读取文件。",
     "fileInvalid": "{{name}}：文件内容与类型不符。",
     "fileType": "{{name}}：不支持这种文件类型。",
-    "fileUtf8": "{{name}}：文本文件必须是 UTF-8 编码。"
+    "fileUtf8": "{{name}}：文本文件必须是 UTF-8 编码。",
+    "chatLimit": "这一小时发的消息太多了，休息一下再试吧。"
   },
   "realLife": {
     "title": "生活中的中文",
