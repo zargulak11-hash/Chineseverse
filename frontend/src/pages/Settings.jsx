@@ -34,7 +34,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({ native_language: "", goal_text: "", daily_goal_minutes: 20, bio: "" });
+  const [form, setForm] = useState({ native_language: "", goal_text: "", daily_goal_minutes: 10, bio: "" });
   const [username, setUsername] = useState(user?.username || "");
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [ok, setOk] = useState("");
@@ -49,7 +49,8 @@ export default function Settings() {
         setForm({
           native_language: me.profile.native_language || "",
           goal_text: me.profile.goal_text || "",
-          daily_goal_minutes: me.profile.daily_goal_minutes || 20,
+          // 10 is the model default; 20 here silently changed the goal on save.
+          daily_goal_minutes: me.profile.daily_goal_minutes ?? 10,
           bio: me.profile.bio || "",
         });
         setAvatarUrl(me.profile.avatar_url || null);

@@ -40,6 +40,7 @@ def list_grammar(
     # examples are the real Chinese being taught and stay Chinese in every locale.
     translations = load_translations(db, "grammar_topic", [str(t.id) for t in topics], locale)
     user_map = {r.topic_id: r for r in user.user_grammar}
+    lesson_names = gl.names(db, topics, locale)
     now = datetime.utcnow()
     out = []
     for topic in topics:
@@ -52,6 +53,7 @@ def list_grammar(
         item.status = rec.status if rec else "new"
         item.mastery = rec.mastery if rec else 0.0
         item.due_for_review = bool(rec and rec.next_review_at and rec.next_review_at <= now)
+        item.name = lesson_names.get(topic.id)
         out.append(item)
     out.sort(key=lambda t: (not t.due_for_review, t.hsk_level_id, t.id))
     return out

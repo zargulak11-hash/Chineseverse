@@ -65,8 +65,17 @@ export default function Grammar() {
             <div className="row spread" style={{ alignItems: "flex-start", gap: 8 }}>
               <div style={{ minWidth: 0 }}>
                 {topic.category && <span className="ilb" style={{ marginBottom: 4 }}>{topic.category}</span>}
-                <div className="gt-card-title" lang="zh-CN">{topic.title}</div>
-                {topic.pattern && topic.pattern !== topic.title && <div className="sub" lang="zh-CN">{topic.pattern}</div>}
+                {topic.name ? (
+                  <>
+                    <div className="gt-card-title">{topic.name}</div>
+                    <div className="sub" lang="zh-CN">{topic.title}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="gt-card-title" lang="zh-CN">{topic.title}</div>
+                    {topic.pattern && topic.pattern !== topic.title && <div className="sub" lang="zh-CN">{topic.pattern}</div>}
+                  </>
+                )}
               </div>
               {topic.due_for_review && <span className="badge accent">{t("pages.vocabulary.due")}</span>}
             </div>

@@ -237,6 +237,27 @@ def cached_lesson(db: Session, topic: models.GrammarTopic, locale: str) -> dict 
     return hit.payload if hit else None
 
 
+def names(db: Session, topics: list[models.GrammarTopic], locale: str) -> dict[int, str]:
+    """Each topic's lesson name in `locale`, where a lesson exists -- the
+    authored ones, then cached AI lessons in one query. Syllabus titles
+    (动补式离合词...) have no RU/TG translation, so this is how the list can
+    say what a point is in the learner's language."""
+    out: dict[int, str] = {}
+    keys = {}
+    for t in topics:
+        data = authored().get(t.title)
+        if data is not None:
+            out[t.id] = _loc(data["name"], locale)
+        else:
+            keys[_ai_key(t, locale)] = t.id
+    if keys:
+        for key, payload in db.query(models.AIExplanation.key, models.AIExplanation.payload).filter(
+                models.AIExplanation.key.in_(list(keys))):
+            if isinstance(payload, dict) and payload.get("name"):
+                out[keys[key]] = payload["name"]
+    return out
+
+
 def lesson_for(db: Session, topic: models.GrammarTopic, locale: str) -> tuple[dict | None, str | None]:
     """(lesson in `locale`, source) -- source "authored" or "ai", or
     (None, None) when neither exists yet."""

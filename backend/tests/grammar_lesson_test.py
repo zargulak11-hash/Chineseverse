@@ -210,6 +210,15 @@ def test_api(client):
     assert en["lesson"] is None, "a lesson is cached per language"
     print("[PASS] an AI lesson is validated, cached once per topic+language, and served to the next learner without a call")
 
+    lst = {t["id"]: t for t in expect(client, "get", "/api/grammar", 200, headers={**h, "X-Locale": "ru"},
+                                       params={"hsk_level": 1})}
+    assert lst[adj]["name"].startswith("Прилагательное"), lst[adj]
+    lst4 = {t["id"]: t for t in expect(client, "get", "/api/grammar", 200, headers={**h, "X-Locale": "ru"},
+                                        params={"hsk_level": 4})}
+    assert lst4[other]["name"] == "借用量词", lst4[other]  # the cached AI lesson's name
+    assert sum(1 for t in lst4.values() if t["name"]) == 1, "no name is invented for topics without a lesson"
+    print("[PASS] the grammar list carries each lesson's localized name where a lesson exists, and none otherwise")
+
     r = expect(client, "post", f"/api/grammar/{adj}/check", 200, headers=h, json={"answer": "我是很高兴。"})
     assert r["verdict"] == "incorrect" and r["issues"] == ["shi_adj"], r
     r = expect(client, "post", f"/api/grammar/{adj}/check", 200, headers=h, json={"answer": "天气很好。"})

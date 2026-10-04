@@ -408,6 +408,9 @@ class GrammarTopicWithStatus(GrammarTopicResponse):
     status: Optional[str] = None
     mastery: Optional[float] = None
     due_for_review: bool = False
+    # The lesson's name in the learner's language, when an authored or an
+    # already generated lesson exists (services/grammar_lesson.py).
+    name: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- Hanzi
