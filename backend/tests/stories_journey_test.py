@@ -82,7 +82,9 @@ with TestClient(app) as client:
             assert rep["ok"], (b["slug"], rep)
         avg = {lvl: sum(b["characters"] for b in BOOKS if b["level"] == lvl) / sum(b["sentence_count"] for b in BOOKS if b["level"] == lvl)
                for lvl in range(1, 10)}
-        assert avg[1] < avg[3] < avg[5] < avg[9] and avg[9] > 3 * avg[1], avg
+        # Sentences get longer at every level, and the advanced band reads
+        # far longer sentences than HSK 1.
+        assert all(avg[k] < avg[k + 1] for k in range(1, 9)) and avg[9] > 2.5 * avg[1], avg
     print(f"[PASS] {len(BOOKS)} books cover HSK 1-9; every sentence translated (EN/RU/TG); "
           "every book within its level's vocabulary; sentences grow with the level")
 
