@@ -55,6 +55,9 @@ with TestClient(app) as client:
     # --- Genuinely invalid token: real verifier call, no mocking -----------
     r = client.post("/api/auth/google", json={"credential": "not-a-real-jwt-at-all"})
     assert r.status_code == 401, r.text
+    # The verifier's own wording stays in the server log; the learner gets a
+    # stable sentence the frontend maps to a translated message.
+    assert r.json()["detail"] == "Google sign-in could not be verified", r.text
     print("[PASS] garbage credential rejected with 401 (real verification path)")
 
     # --- New user is created from valid claims ------------------------------

@@ -1096,7 +1096,8 @@
     "switchToInk": "Switch to Ink (dark)",
     "toggleTheme": "Switch light/dark theme",
     "googleNotConfigured": "Google Sign-In isn't set up for this site yet.",
-    "googleLoading": "Loading Google Sign-In…"
+    "googleLoading": "Loading Google Sign-In…",
+    "googleUnavailable": "Google Sign-In couldn't load. Check your connection or disable content blockers, then reload the page."
   },
   "apiErrors": {
     "invalidLogin": "Invalid username or password.",
@@ -1105,6 +1106,8 @@
     "deactivated": "This account has been deactivated.",
     "googleOtherAccount": "This email is linked to a different Google account.",
     "googleNoEmail": "This Google account has no verified email.",
+    "googleInvalid": "Google sign-in couldn't be verified. Please try again.",
+    "googleUnreachable": "We couldn't reach Google to confirm your sign-in. Please try again in a moment.",
     "sessionExpired": "Your session has ended. Please sign in again.",
     "locationLocked": "This location isn't unlocked yet.",
     "lessonLocked": "This lesson is locked. Complete the previous lesson first.",

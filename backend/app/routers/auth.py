@@ -1,3 +1,4 @@
+import logging
 import re
 import secrets
 
@@ -15,6 +16,7 @@ from app.database import get_db
 from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 def _find_by_email(db: Session, email: str) -> models.User | None:
@@ -139,13 +141,22 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
             payload.credential, google_requests.Request(), settings.google_client_id
         )
     except ValueError as exc:
-        # Covers a malformed, expired, tampered, or wrong-audience token.
-        raise HTTPException(status_code=401, detail=f"Invalid Google credential: {exc}") from exc
+        # Covers a malformed, expired, tampered, or wrong-audience token. The
+        # verifier's own text ("Token expired, 1759… < 1760…", "Wrong
+        # recipient, payload audience != requested audience") used to be the
+        # detail, so learners saw library internals; it goes to the log --
+        # where a client-ID mismatch between frontend and backend is
+        # diagnosed -- and the learner gets one stable sentence.
+        logger.warning("Google credential rejected: %s", exc)
+        raise HTTPException(
+            status_code=401, detail="Google sign-in could not be verified"
+        ) from exc
     except google_exceptions.GoogleAuthError as exc:
         # Covers transport/network failures reaching Google's cert endpoint —
         # not the token's fault, so it isn't a 401.
+        logger.warning("Could not reach Google to verify a credential: %s", exc)
         raise HTTPException(
-            status_code=503, detail=f"Could not reach Google to verify the credential: {exc}"
+            status_code=503, detail="Could not reach Google to verify the sign-in"
         ) from exc
 
     email = claims.get("email")

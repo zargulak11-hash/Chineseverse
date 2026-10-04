@@ -13,6 +13,8 @@ const EXACT = {
   "This account has been deactivated": "deactivated",
   "This email is linked to a different Google account": "googleOtherAccount",
   "Google account has no verified email": "googleNoEmail",
+  "Google sign-in could not be verified": "googleInvalid",
+  "Could not reach Google to verify the sign-in": "googleUnreachable",
   "Not authenticated": "sessionExpired",
   "Invalid or expired token": "sessionExpired",
   "This location isn't unlocked yet": "locationLocked",

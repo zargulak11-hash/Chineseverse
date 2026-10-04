@@ -13,6 +13,20 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
   const { t } = useTranslation();
   const divRef = useRef(null);
   const [ready, setReady] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
+  // Login/Register pass a fresh afterAuth on every render (each keystroke in
+  // their forms). With those as effect deps, google.accounts.id.initialize()
+  // ran again on every render -- Google documents it as call-once, and a
+  // re-initialized client can deliver one sign-in to its callback twice.
+  // Holding the handlers in refs lets the effect run once per mount while
+  // still calling the latest ones.
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  onSuccessRef.current = onSuccess;
+  onErrorRef.current = onError;
+  // One exchange at a time: a duplicate callback for the same click would
+  // otherwise race a second POST /auth/google against the first.
+  const inFlight = useRef(false);
 
   useEffect(() => {
     if (!CLIENT_ID) return;
@@ -25,11 +39,15 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
       window.google.accounts.id.initialize({
         client_id: CLIENT_ID,
         callback: async (response) => {
+          if (inFlight.current) return;
+          inFlight.current = true;
           try {
             const user = await loginWithGoogle(response.credential);
-            onSuccess?.(user);
+            onSuccessRef.current?.(user);
           } catch (err) {
-            onError?.(err.message);
+            onErrorRef.current?.(err.message);
+          } finally {
+            inFlight.current = false;
           }
         },
       });
@@ -52,7 +70,12 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
           init();
         }
       }, 200);
-      timeout = setTimeout(() => clearInterval(poll), 8000);
+      // The GSI script never arrived (offline, or blocked by a content
+      // blocker): say so rather than leaving "Loading…" up forever.
+      timeout = setTimeout(() => {
+        clearInterval(poll);
+        if (!cancelled && !window.google?.accounts?.id) setUnavailable(true);
+      }, 8000);
     }
 
     return () => {
@@ -60,7 +83,7 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
       clearInterval(poll);
       clearTimeout(timeout);
     };
-  }, [onSuccess, onError]);
+  }, []);
 
   if (!CLIENT_ID) {
     return (
@@ -73,7 +96,11 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
   return (
     <div className="center" style={{ display: "flex", justifyContent: "center" }}>
       <div ref={divRef} />
-      {!ready && <p className="sub" style={{ fontSize: "var(--text-xs)" }}>{t("ui.googleLoading")}</p>}
+      {!ready && (
+        <p className="sub" style={{ fontSize: "var(--text-xs)" }}>
+          {t(unavailable ? "ui.googleUnavailable" : "ui.googleLoading")}
+        </p>
+      )}
     </div>
   );
 }
