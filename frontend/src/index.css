@@ -1227,6 +1227,41 @@ select.input {
 .is-current > .next-dot { border-color: var(--accent); color: var(--accent-strong); }
 .is-done > .next-dot { border-color: var(--good); background: var(--good-dim); color: var(--good); }
 .next-dot-label { min-width: 0; line-height: 1.3; overflow-wrap: anywhere; }
+/* Today's plan (NextStep.jsx TodayPlan) */
+.today-plan { margin-bottom: var(--space-4); }
+.today-head { margin: 0 0 var(--space-3); flex-wrap: wrap; gap: var(--space-2); }
+.today-head .h2 { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
+.today-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.today-task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.today-task:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+.today-task:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.today-task.is-done { opacity: 0.75; }
+.today-dot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-border);
+}
+.is-done .today-dot { border-color: var(--good); background: var(--good-dim); color: var(--good); }
+.today-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.today-text .sub { font-size: var(--text-xs); }
+.today-summary { margin: var(--space-3) 0 0; font-size: var(--text-xs); }
 .next-bar {
   display: flex;
   align-items: center;

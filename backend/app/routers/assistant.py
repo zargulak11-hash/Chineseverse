@@ -129,7 +129,33 @@ def _learner_context(db: Session, user: models.User, locale: str) -> dict:
         context["pending_exam_level"] = state.exam_level
     if state.exams_passed:
         context["exams_passed"] = sorted(state.exams_passed)
+    context["today"] = _today_line(db, user, locale)
     return context
+
+
+def _today_line(db: Session, user: models.User, locale: str) -> str:
+    """Today's plan (services/journey.py) in one line for the model, so "what
+    should I do / review today?" is answered from the same real plan the
+    dashboard shows."""
+    from app.services import journey as journey_svc
+
+    today = journey_svc.journey(db, user, locale)["today"]
+    parts = []
+    for task in today["tasks"]:
+        nxt = task.get("next") or {}
+        label = {
+            "review": f"review the {task.get('count', 0)} item(s) due",
+            "learn": (f"lesson \"{nxt.get('title')}\"" if nxt.get("kind") == "lesson"
+                      else f"HSK {nxt.get('level')} final exam" if nxt.get("kind") == "exam"
+                      else f"foundation step '{nxt.get('key')}'" if nxt.get("kind") == "foundation"
+                      else "read a story at their level"),
+            "weak": f"practise their weakest skill, {task.get('skill')} ({task.get('mastery')}%)",
+            "read": "read a story at their level",
+        }.get(task["key"], task["key"])
+        parts.append(f"{label} [{'done today' if task['done'] else 'not done yet'}]")
+    parts.append(f"today so far: {today['rounds']} practice round(s), {today['words']} word(s) practised, "
+                 f"{today['minutes']} of {today['goal_minutes']} goal minutes")
+    return "; ".join(parts)
 
 
 def _page_context(db: Session, user: models.User, page: PageContext | None, locale: str) -> str | None:

@@ -2886,5 +2886,19 @@
     "askAssistant": "问问助手",
     "sourceAuthored": "本课由 ChineseVerse 团队编写。",
     "sourceAi": "本讲解由 AI 生成；中文例句经过常见错误检查，拼音来自词典。"
+  },
+  "today": {
+    "title": "今天",
+    "progress": "已完成 {{done}}/{{total}}",
+    "allDone": "今天计划的都完成了——再学就是额外收获。",
+    "review_one": "复习到期的 {{count}} 项",
+    "review_other": "复习到期的 {{count}} 项",
+    "reviewWhy": "在快要忘记时复习，词语才记得牢。",
+    "weak": "练习{{skill}}",
+    "weakWhy": "这是你目前最薄弱的技能（{{mastery}}%）。",
+    "read": "读一个适合你水平的故事",
+    "readWhy": "真实的阅读把词语和语法联系在一起。",
+    "doneToday": "今天已完成",
+    "summary": "今天：练习 {{rounds}} 轮 · 练习词语 {{words}} 个 · {{minutes}}/{{goal}} 分钟"
   }
 }

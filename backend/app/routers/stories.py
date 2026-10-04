@@ -131,7 +131,8 @@ def explain(
 
 
 @journey_router.get("")
-def my_journey(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Where the learner is, the one thing to do next, and the road ahead --
-    all from their own records."""
-    return journey_svc.journey(db, user)
+def my_journey(user: models.User = Depends(get_current_user), db: Session = Depends(get_db),
+               locale: str = Depends(get_locale)):
+    """Where the learner is, the one thing to do next, today's plan and the
+    road ahead -- all from their own records."""
+    return journey_svc.journey(db, user, locale)

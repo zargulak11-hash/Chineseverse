@@ -82,7 +82,7 @@ export default function Companion() {
           <h2 className="h2">{t("pages.companion.yourRhythm")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
             <Stat label={t("pages.companion.streak")} value={`${dashboard.streak.current_streak}d`} tone="var(--accent)" />
-            <Stat label={t("pages.profile.dailyGoal")} value={`${dashboard.daily_goal.minutes ?? 20}m`} tone="var(--accent2)" />
+            <Stat label={t("pages.profile.dailyGoal")} value={`${dashboard.daily_goal.daily_goal_minutes}m`} tone="var(--accent2)" />
             <Stat label="HSK" value={dashboard.hsk_level} />
           </div>
           <p className="sub" style={{ marginTop: 12 }}>✨ {animal.special_ability}</p>

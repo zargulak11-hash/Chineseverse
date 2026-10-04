@@ -60,6 +60,55 @@ export function NextStepHero({ journey }) {
   );
 }
 
+// Today's plan (journey.today, services/journey.py): a few real tasks with
+// why each is suggested, ticked off only by what the learner did today.
+// `skills` maps a Compass skill code to its localized name.
+export function TodayPlan({ today, next, skills = {} }) {
+  const { t } = useTranslation();
+  if (!today?.tasks?.length) return null;
+  // A new learner's plan is just the hero's one next step: don't repeat it.
+  if (today.tasks.length === 1 && today.tasks[0].key === "learn" && today.rounds === 0) return null;
+  const done = today.tasks.length - today.left;
+  const title = (task) => {
+    if (task.key === "review") return t("today.review", { count: task.count });
+    if (task.key === "learn") return nextTitle(t, task.next || next);
+    if (task.key === "weak") return t("today.weak", { skill: skills[task.skill] || task.skill });
+    return t("today.read");
+  };
+  const why = (task) => {
+    if (task.key === "review") return t("today.reviewWhy");
+    if (task.key === "learn") return nextWhy(t, task.next || next);
+    if (task.key === "weak") return t("today.weakWhy", { mastery: task.mastery });
+    return t("today.readWhy");
+  };
+  return (
+    <section className="card today-plan" aria-labelledby="today-title">
+      <div className="row spread today-head">
+        <h2 className="h2" id="today-title"><Icon name="clock" size={17} /> {t("today.title")}</h2>
+        <span className={`badge${today.left === 0 ? " good" : ""}`}>{t("today.progress", { done, total: today.tasks.length })}</span>
+      </div>
+      {today.left === 0 && <p className="sub">{t("today.allDone")}</p>}
+      <ul className="today-list">
+        {today.tasks.map((task) => (
+          <li key={task.key}>
+            <Link to={task.to} className={`today-task${task.done ? " is-done" : ""}`}>
+              <span className="today-dot" aria-hidden="true">{task.done ? <Icon name="check" size={13} /> : null}</span>
+              <span className="today-text">
+                <b>{title(task)}</b>
+                <span className="sub">{task.done ? t("today.doneToday") : why(task)}</span>
+              </span>
+              <Icon name="chevronRight" size={15} />
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="sub today-summary">
+        {t("today.summary", { rounds: today.rounds, words: today.words, minutes: today.minutes, goal: today.goal_minutes })}
+      </p>
+    </section>
+  );
+}
+
 // A compact "Next: ..." line for the end of an activity.
 export default function NextStepBar() {
   const { t } = useTranslation();

@@ -107,7 +107,85 @@ def _step_done(key: str, ev: dict) -> bool:
     return False
 
 
-def journey(db: Session, user: models.User) -> dict:
+# A Learning Compass skill -> where it is practised, and which practice
+# source (or special record) counts as having practised it today.
+SKILL_PRACTICE = {
+    "vocabulary": ("/practice?source=vocab&level={level}", "vocab"),
+    "reaction_speed": ("/practice?source=vocab&level={level}", "vocab"),
+    "grammar": ("/practice?source=grammar&level={level}", "grammar"),
+    "writing": ("/practice?source=hanzi&level={level}", "hanzi"),
+    "tones": ("/foundation", "tones"),
+    "listening": ("/sound-world", "sound"),
+    "speaking": ("/real-chinese", "voice"),
+    "reading": ("/stories", "story"),
+    "memory": ("/review", "review"),
+}
+# The practice source that does each kind of "next step".
+NEXT_SOURCE = {"tones": "tones", "characters": "hanzi", "first_lesson": "lesson", "sentence": "sentence",
+               "listen": "sound", "speak": "voice", "story": "story", "review": "review",
+               "lesson": "lesson", "stories": "story", "exam": "exam"}
+
+
+def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool) -> dict:
+    """Today's plan: at most four real tasks, each with why it is suggested,
+    ticked off only by what the learner really did today (UTC day, the same
+    day the dashboard's minutes use). A brand-new learner gets the one next
+    step and nothing else -- never a list of chores they can't start yet.
+
+    Nothing is ever marked done for them, and "done today" counts are read
+    from today's records (completed rounds, voice turns, reading), never
+    estimated."""
+    from datetime import datetime, time as dtime
+
+    from sqlalchemy import func
+
+    start = datetime.combine(datetime.utcnow().date(), dtime.min)
+    rounds = (db.query(models.PracticeSession)
+              .filter(models.PracticeSession.user_id == user.id, models.PracticeSession.completed_at >= start).all())
+    did = {s.source for s in rounds}
+    if db.query(models.VoiceAttempt.id).filter(models.VoiceAttempt.user_id == user.id,
+                                              models.VoiceAttempt.created_at >= start).first():
+        did.add("voice")
+    if db.query(models.StoryProgress.id).filter(models.StoryProgress.user_id == user.id,
+                                               models.StoryProgress.updated_at >= start).first():
+        did.add("story")
+    if db.query(models.HSKExamAttempt.id).filter(models.HSKExamAttempt.user_id == user.id,
+                                                models.HSKExamAttempt.finished_at >= start).first():
+        did.add("exam")
+
+    tasks: list[dict] = []
+    if due > 0 or "review" in did:
+        # A review round finished today counts; what is still due is shown.
+        tasks.append({"key": "review", "to": "/review", "count": due, "done": "review" in did})
+    if nxt.get("kind") != "review":
+        tasks.append({"key": "learn", "to": nxt["to"], "next": nxt,
+                      "done": NEXT_SOURCE.get(nxt.get("key"), "") in did})
+    practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
+    weakest = min(practised, key=lambda s: s.mastery) if practised else None
+    if weakest is not None and weakest.mastery < 70 and weakest.skill.code in SKILL_PRACTICE:
+        route, source = SKILL_PRACTICE[weakest.skill.code]
+        if not any(t["to"] == route.format(level=level) for t in tasks):
+            tasks.append({"key": "weak", "skill": weakest.skill.code, "mastery": round(weakest.mastery),
+                          "to": route.format(level=level), "done": source in did})
+    if foundation_complete and not any(t["to"] == "/stories" for t in tasks):
+        tasks.append({"key": "read", "to": "/stories", "done": "story" in did})
+    tasks = tasks[:4]
+
+    minutes = (db.query(func.coalesce(func.sum(models.ActivityEvent.minutes), 0.0))
+               .filter(models.ActivityEvent.user_id == user.id, models.ActivityEvent.created_at >= start).scalar())
+    words = (db.query(models.UserVocabulary.id)
+             .filter(models.UserVocabulary.user_id == user.id, models.UserVocabulary.last_reviewed_at >= start).count())
+    return {
+        "tasks": tasks,
+        "left": sum(1 for t in tasks if not t["done"]),
+        "rounds": len(rounds),
+        "words": words,
+        "minutes": round(minutes or 0),
+        "goal_minutes": user.profile.daily_goal_minutes if user.profile else 10,
+    }
+
+
+def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     from app.services import lesson_path, practice
     from app.services.gamification import ensure_user_skills, user_rank
 
@@ -132,7 +210,12 @@ def journey(db: Session, user: models.User) -> dict:
                   "complete": all(s["status"] in ("done", "past") for s in steps), "past": past}
 
     # The one next action.
-    due = sum(practice.review_counts(db, user).values())
+    # total + mistakes, exactly as the dashboard counts them. This used to sum
+    # every value of review_counts -- which holds the per-type counts AND
+    # their "total" -- so each due item counted twice: "Review 16" for 8, and
+    # review jumped ahead of new lessons at half the intended backlog.
+    counts = practice.review_counts(db, user)
+    due = counts["total"] + counts["mistakes"]
     if current is not None:
         nxt = {"kind": "foundation", "key": current, "to": next(s["to"] for s in steps if s["key"] == current)}
     elif due >= REVIEW_FIRST_AT:
@@ -140,8 +223,13 @@ def journey(db: Session, user: models.User) -> dict:
     elif state.exam_level is not None:
         nxt = {"kind": "exam", "key": "exam", "to": f"/exam/{state.exam_level}", "level": state.exam_level}
     elif state.current is not None:
-        nxt = {"kind": "lesson", "key": "lesson", "to": f"/lessons/{state.current.lesson.id}",
-               "lesson_id": state.current.lesson.id, "title": state.current.lesson.title, "level": state.current.level}
+        from app.services.localization import load_translations, tr
+
+        cur = state.current.lesson
+        # In the learner's language (this used to send the English title).
+        title = tr(load_translations(db, "lesson", [str(cur.id)], locale), cur.id, "title", cur.title)
+        nxt = {"kind": "lesson", "key": "lesson", "to": f"/lessons/{cur.id}",
+               "lesson_id": cur.id, "title": title, "level": state.current.level}
     else:
         nxt = {"kind": "stories", "key": "stories", "to": "/stories"}
 
@@ -173,4 +261,5 @@ def journey(db: Session, user: models.User) -> dict:
         "level": level, "stage": "foundation" if (not foundation["complete"] and not past) else STAGE_OF[level],
         "foundation": foundation, "next": nxt, "levels": levels, "features": features,
         "due_reviews": due, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
+        "today": today(db, user, level, nxt, due, foundation["complete"] or past),
     }

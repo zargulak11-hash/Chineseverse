@@ -8,7 +8,7 @@ import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
-import { NextStepHero } from "../components/NextStep.jsx";
+import { NextStepHero, TodayPlan } from "../components/NextStep.jsx";
 import { Bar, Badge, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
@@ -97,12 +97,17 @@ export default function Dashboard() {
   return (
     <Layout>
       <NextStepHero journey={journey} />
+      <TodayPlan
+        today={journey?.today}
+        next={journey?.next}
+        skills={Object.fromEntries((d.dna?.skills || []).map((s) => [s.code, s.name]))}
+      />
       <div className="hero-banner" style={{ position: "relative" }}>
         <InkBrush variant="hero" />
         <span className="kicker">{t("landing.kicker")}</span>
         <h1>你好, {d.user.username}</h1>
         <p className="sub">
-          HSK {d.hsk_level} · {d.mastery.toFixed(0)}{t("dashboard.overallMastery")} · {t("dashboard.goal", { minutes: d.daily_goal.minutes ?? 20 })}
+          HSK {d.hsk_level} · {d.mastery.toFixed(0)}{t("dashboard.overallMastery")} · {t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}
         </p>
         <div className="hero-stats-row">
           <div className="hero-stat-pill">
