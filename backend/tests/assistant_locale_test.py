@@ -219,7 +219,10 @@ with TestClient(app) as client:
 
         prompt = captured[-1]["messages"][0]["content"]
         assert "ONLY help" not in prompt and "decline" not in prompt, prompt
-        assert "Do not refuse them" in prompt
+        # Focused on Chinese learning, but greetings are welcome and nothing
+        # is refused rudely; no pretend web search or live data.
+        assert "Do not refuse rudely" in prompt and "small talk are welcome" in prompt
+        assert "no internet access, no web search" in prompt
         assert "never invent" in prompt and "read-only" in prompt
         assert "current HSK level on the lesson path: 1" in prompt, prompt
         assert "final exam" not in prompt, prompt  # HSK 1 lessons aren't done yet
@@ -393,7 +396,8 @@ try:
     assert "always reply in Tajik" in system_text and "current HSK level on the lesson path" in system_text
     # Visible answer budget + headroom for the model's hidden thinking, and
     # no model-specific thinking flags (gemini-3.x rejects some of them).
-    assert body["generationConfig"]["maxOutputTokens"] == 700 + ai_client.THINKING_HEADROOM
+    # 1500: room for a full grammar explanation (meaning, structure, examples, mistakes).
+    assert body["generationConfig"]["maxOutputTokens"] == 1500 + ai_client.THINKING_HEADROOM
     assert "thinkingConfig" not in body["generationConfig"]
     assert "responseMimeType" not in body["generationConfig"]
     print("[PASS] assistant endpoint sends a real Gemini generateContent request (URL, header auth, roles, context, locale)")

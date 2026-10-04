@@ -37,6 +37,60 @@ export function canSpeakChinese() {
   return !voices.length || !!pickChineseVoice();
 }
 
+const VOICE_LANG = { en: "en", ru: "ru", tg: "tg", zh: "zh" };
+
+function voiceFor(locale) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const prefix = VOICE_LANG[locale] || "en";
+  return window.speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
+}
+
+/** Whether this device has a voice for the interface language `locale`. */
+export function canSpeakLocale(locale) {
+  return locale === "zh" ? canSpeakChinese() : !!voiceFor(locale);
+}
+
+/**
+ * Reads a mixed answer aloud (the assistant's replies): runs of Chinese with
+ * the Chinese voice, everything else with a voice for the interface
+ * language `locale`. Without such a voice (Tajik often has none) only the
+ * Chinese is read -- never Tajik through a Russian voice. Markdown marks are
+ * not read out. Calls onEnd once when everything has been spoken, or at once
+ * when there was nothing to say.
+ */
+export function speakText(text, locale, { onEnd } = {}) {
+  if (!text || typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
+  const clean = text.replace(/\*\*|^\s*[*#-]+\s*/gm, "").replace(/[*_`#]/g, "");
+  const runs = clean.match(/[㐀-鿿，。！？、；：“”‘’（）《》·…—]+|[^㐀-鿿]+/g) || [];
+  const localVoice = locale === "zh" ? null : voiceFor(locale);
+  const zhVoice = pickChineseVoice();
+  const queue = [];
+  for (const run of runs) {
+    const isZh = /[㐀-鿿]/.test(run);
+    if (!isZh && (!localVoice || !/[\p{L}\p{N}]/u.test(run))) continue;
+    const utter = new SpeechSynthesisUtterance(run.trim());
+    utter.lang = isZh ? "zh-CN" : localVoice.lang;
+    utter.voice = isZh ? zhVoice || null : localVoice;
+    queue.push(utter);
+  }
+  window.speechSynthesis.cancel();
+  if (!queue.length) {
+    onEnd?.();
+    return;
+  }
+  const last = queue[queue.length - 1];
+  last.onend = () => onEnd?.();
+  last.onerror = () => onEnd?.();
+  queue.forEach((u) => window.speechSynthesis.speak(u));
+}
+
+export function stopSpeaking() {
+  if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
 /**
  * Speaks `text` aloud in Mandarin Chinese. `options.profile` (optional)
  * carries {rate, pitch, volume} for a per-character voice (e.g. the Daily

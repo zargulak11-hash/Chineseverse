@@ -88,6 +88,45 @@ async function upload(method, path, file) {
   return data;
 }
 
+// POST a JSON body and read a newline-delimited JSON response as it
+// arrives, calling onEvent(event) per line (the assistant's streamed reply).
+// `signal` (an AbortController's) stops it: fetch rejects with an AbortError,
+// which the caller treats as "stopped", not as a failure.
+async function stream(path, body, { signal, onEvent }) {
+  const headers = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (i18n.language) headers["X-Locale"] = i18n.language;
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers, body: JSON.stringify(body), signal });
+  if (!res.ok) {
+    let data = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null;
+    }
+    if (res.status === 401) clearSession();
+    const err = new Error(localizeApiError(data && data.detail, res.status));
+    err.status = res.status;
+    throw err;
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (line) onEvent(JSON.parse(line));
+    }
+  }
+  if (buffer.trim()) onEvent(JSON.parse(buffer));
+}
+
 export const api = {
   get: (path) => request("GET", path),
   post: (path, body) => request("POST", path, body),
@@ -97,6 +136,7 @@ export const api = {
   // multipart/form-data upload — deliberately not funneled through
   // request() above, which always JSON-encodes the body.
   upload: (path, file) => upload("POST", path, file),
+  stream: (path, body, options) => stream(path, body, options),
 };
 
 export async function register(payload) {

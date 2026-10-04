@@ -1,4 +1,9 @@
-from fastapi import APIRouter, Depends
+import base64
+import binascii
+import json
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -13,14 +18,47 @@ from app.services.practice import review_counts
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
+# Attachments the model can read itself (Gemini inline data), by MIME type,
+# with the leading bytes a real file of that type starts with -- the
+# declared type alone is never trusted.
+_MAGIC = {
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/webp": (b"RIFF",),
+    "image/gif": (b"GIF87a", b"GIF89a"),
+    "application/pdf": (b"%PDF-",),
+}
+_TEXT_TYPES = ("text/plain", "text/markdown", "text/csv")
+MAX_FILE_BYTES = 6 * 1024 * 1024     # one decoded attachment
+MAX_TOTAL_BYTES = 9 * 1024 * 1024    # all attachments of one request
+MAX_TEXT_CHARS = 20_000              # a text file is inlined into the prompt
+
+
+class Attachment(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    mime: str = Field(max_length=60)
+    data: str = Field(max_length=13_000_000)  # base64
+
 
 class ChatMessage(BaseModel):
     role: str = Field(pattern="^(user|assistant)$")
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=1, max_length=12000)
+    attachments: list[Attachment] = Field(default_factory=list, max_length=3)
+
+
+class PageContext(BaseModel):
+    """What the learner is looking at -- ids and the selected text only;
+    everything else is read from the database here."""
+    grammar_id: int | None = None
+    lesson_id: int | None = None
+    story: str | None = Field(default=None, max_length=60)
+    chapter: int | None = Field(default=None, ge=1, le=200)
+    text: str | None = Field(default=None, max_length=300)
 
 
 class AssistantRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=20)
+    context: PageContext | None = None
 
 
 class AssistantResponse(BaseModel):
@@ -30,13 +68,7 @@ class AssistantResponse(BaseModel):
     source: str = "ai"
 
 
-@router.post("/chat", response_model=AssistantResponse)
-def chat(
-    payload: AssistantRequest,
-    user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    locale: str = Depends(get_locale),
-):
+def _learner_context(db: Session, user: models.User, locale: str) -> dict:
     ensure_user_skills(db, user)
     level, mastery = user_rank(db, user)
     skills = sorted((s for s in user.user_skills if s.skill), key=lambda s: s.mastery)
@@ -97,7 +129,133 @@ def chat(
         context["pending_exam_level"] = state.exam_level
     if state.exams_passed:
         context["exams_passed"] = sorted(state.exams_passed)
-    reply, source = ai_client.assistant_reply(
-        [m.model_dump() for m in payload.messages], context, locale
-    )
+    return context
+
+
+def _page_context(db: Session, user: models.User, page: PageContext | None, locale: str) -> str | None:
+    """A few lines about the screen the learner asked from, built from the
+    database (the client sends ids; only a story selection is text, and it
+    must really be in that chapter)."""
+    if page is None:
+        return None
+    lines = []
+    if page.grammar_id:
+        g = db.get(models.GrammarTopic, page.grammar_id)
+        if g:
+            g_tr = load_translations(db, "grammar_topic", [str(g.id)], locale)
+            examples = [ln.strip() for ln in (g.examples or "").splitlines() if ln.strip()][:4]
+            rec = db.query(models.UserGrammar).filter_by(user_id=user.id, topic_id=g.id).first()
+            lines.append(f"- grammar point open on screen: {g.title} ({tr(g_tr, g.id, 'title', g.title)}); "
+                         f"pattern: {g.pattern or '-'}; syllabus examples: {' | '.join(examples) or '-'}; "
+                         f"learner's mastery of it: {round(rec.mastery) if rec else 0}%")
+    if page.lesson_id:
+        lesson = db.get(models.Lesson, page.lesson_id)
+        if lesson:
+            l_tr = load_translations(db, "lesson", [str(lesson.id)], locale)
+            lines.append(f"- lesson open on screen: \"{tr(l_tr, lesson.id, 'title', lesson.title)}\"")
+    if page.story:
+        from app.services import books
+
+        book = books.get(page.story)
+        if book:
+            lines.append(f"- story being read: \"{book['title'].get('zh') or page.story}\""
+                         + (f", chapter {page.chapter}" if page.chapter else ""))
+            text = "".join((page.text or "").split())
+            if text and page.chapter and 1 <= page.chapter <= len(book["chapters"]):
+                chapter_text = "".join(s["zh"] for s in book["chapters"][page.chapter - 1]["sentences"])
+                if text in chapter_text:
+                    lines.append(f"- sentence the learner selected: {text}")
+    return "\n".join(lines) or None
+
+
+def _validated(messages: list[ChatMessage]) -> list[dict]:
+    """Messages for the model. Images/PDFs are checked (size, real type by
+    their first bytes) and passed as inline data; text files are decoded
+    and inlined. Only the most recent message's attachments are sent --
+    earlier turns keep a note of what was attached instead of the bytes."""
+    out = []
+    total = 0
+    last_with_files = max((i for i, m in enumerate(messages) if m.attachments), default=-1)
+    for i, m in enumerate(messages):
+        item = {"role": m.role, "content": m.content}
+        if m.attachments and i != last_with_files:
+            item["content"] += "\n[attached earlier: " + ", ".join(a.name for a in m.attachments) + "]"
+        elif m.attachments:
+            files, texts = [], []
+            for a in m.attachments:
+                try:
+                    raw = base64.b64decode(a.data, validate=True)
+                except (binascii.Error, ValueError):
+                    raise HTTPException(status_code=422, detail=f"{a.name}: the file could not be read") from None
+                total += len(raw)
+                if len(raw) > MAX_FILE_BYTES or total > MAX_TOTAL_BYTES:
+                    raise HTTPException(status_code=413, detail=f"{a.name}: the file is too large (max 6 MB)")
+                if a.mime in _MAGIC:
+                    if not raw.startswith(_MAGIC[a.mime]) or (a.mime == "image/webp" and raw[8:12] != b"WEBP"):
+                        raise HTTPException(status_code=422, detail=f"{a.name}: the file is not a valid {a.mime}")
+                    files.append({"mime": a.mime, "data": base64.b64encode(raw).decode("ascii")})
+                elif a.mime in _TEXT_TYPES:
+                    try:
+                        body = raw.decode("utf-8")
+                    except UnicodeDecodeError:
+                        raise HTTPException(status_code=422, detail=f"{a.name}: text files must be UTF-8") from None
+                    texts.append(f"[file {a.name}]\n{body[:MAX_TEXT_CHARS]}")
+                else:
+                    raise HTTPException(status_code=415, detail=f"{a.name}: this file type isn't supported")
+            if texts:
+                item["content"] += "\n\n" + "\n\n".join(texts)
+            if files:
+                item["attachments"] = files
+        out.append(item)
+    return out
+
+
+@router.post("/chat", response_model=AssistantResponse)
+def chat(
+    payload: AssistantRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    context = _learner_context(db, user, locale)
+    context["page"] = _page_context(db, user, payload.context, locale)
+    messages = _validated(payload.messages)
+    if any(m.get("attachments") for m in messages) and ai_client._active_provider() != "gemini":
+        return AssistantResponse(reply=ai_client.ASSISTANT_NO_VISION.get(locale, ai_client.ASSISTANT_NO_VISION["en"]),
+                                 source="offline")
+    reply, source = ai_client.assistant_reply(messages, context, locale)
     return AssistantResponse(reply=reply, source=source)
+
+
+@router.post("/chat/stream")
+def chat_stream(
+    payload: AssistantRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The same assistant, streamed as newline-delimited JSON events
+    (ai_client.assistant_stream) so the reply appears as it is written and
+    the learner can stop it. Stopping closes the connection; the server then
+    stops reading from the model, which cancels the request there too."""
+    context = _learner_context(db, user, locale)
+    context["page"] = _page_context(db, user, payload.context, locale)
+    messages = _validated(payload.messages)
+    # Everything the stream needs is read now: the request's DB session is
+    # not used while the reply streams.
+    events = ai_client.assistant_stream(messages, context, locale)
+
+    def ndjson():
+        try:
+            for event in events:
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        finally:
+            events.close()
+
+    return StreamingResponse(
+        ndjson(),
+        media_type="application/x-ndjson",
+        # Proxies (the container's nginx and any in front of it) must pass
+        # chunks through instead of buffering the whole answer.
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
+    )

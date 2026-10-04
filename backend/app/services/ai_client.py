@@ -301,6 +301,17 @@ _MODEL_COOLDOWN_S = {404: 6 * 3600, 429: 15 * 60}
 _cooling_until: dict[str, float] = {}
 
 
+def _parts(m: dict) -> list[dict]:
+    """A message's Gemini parts: its text, then any attachments the router
+    already validated ({"mime": ..., "data": base64} for images/PDFs that
+    the model reads itself; plain text files arrive already inlined)."""
+    parts: list[dict] = []
+    for a in m.get("attachments") or []:
+        parts.append({"inline_data": {"mime_type": a["mime"], "data": a["data"]}})
+    parts.append({"text": m["content"]})
+    return parts
+
+
 def _gemini_payload(
     messages: List[dict],
     max_tokens: int,
@@ -312,7 +323,7 @@ def _gemini_payload(
     become systemInstruction, assistant turns become role "model"."""
     system = "\n\n".join(m["content"] for m in messages if m.get("role") == "system")
     contents = [
-        {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]}
+        {"role": "model" if m["role"] == "assistant" else "user", "parts": _parts(m)}
         for m in messages
         if m.get("role") in ("user", "assistant")
     ]
@@ -397,6 +408,75 @@ def _gemini_chat(
             last_exc = exc
             logger.warning("Gemini %s timed out", model)
             queue.pop(0)
+        except httpx.HTTPError as exc:
+            logger.warning("Gemini unreachable: %s", type(exc).__name__)
+            raise
+    assert last_exc is not None
+    raise last_exc
+
+
+def _sse_text(line: str) -> str:
+    """The visible text of one `data: {...}` line of a streamGenerateContent
+    (alt=sse) response; thought parts and empty chunks give ""."""
+    if not line.startswith("data:"):
+        return ""
+    try:
+        data = json.loads(line[5:].strip())
+        parts = data["candidates"][0].get("content", {}).get("parts") or []
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+        return ""
+    return "".join(p.get("text", "") for p in parts if not p.get("thought"))
+
+
+def _gemini_stream(messages: List[dict], max_tokens: int = 1500, temperature: float = 0.7):
+    """Stream one reply as text chunks (a generator).
+
+    The same model fallback as _gemini_chat, but only BEFORE the first
+    chunk: once text has reached the learner, switching models would splice
+    two answers together, so a later failure raises instead. Closing the
+    generator (the learner pressed Stop, or the browser went away) closes
+    the HTTP stream, which cancels the request at Gemini too."""
+    payload = _gemini_payload(messages, max_tokens, temperature, False)
+    base = settings.gemini_base_url.rstrip("/")
+    models = list(dict.fromkeys([settings.gemini_model, *settings.gemini_fallback_models]))
+    now = time.monotonic()
+    queue = [m for m in models if _cooling_until.get(m, 0) <= now] or models
+    last_exc: Exception | None = None
+    for model in queue:
+        started = False
+        try:
+            with httpx.stream(
+                "POST", f"{base}/models/{model}:streamGenerateContent",
+                params={"alt": "sse"},
+                headers={"x-goog-api-key": settings.gemini_api_key or ""},
+                json=payload,
+                timeout=httpx.Timeout(60, connect=10),
+            ) as resp:
+                if resp.status_code >= 400:
+                    resp.read()
+                    resp.raise_for_status()
+                _cooling_until.pop(model, None)
+                for line in resp.iter_lines():
+                    text = _sse_text(line)
+                    if text:
+                        started = True
+                        yield text
+            if not started:
+                raise ValueError("Gemini stream returned no text")
+            return
+        except httpx.HTTPStatusError as exc:
+            last_exc = exc
+            status = exc.response.status_code
+            logger.warning("Gemini %s stream returned HTTP %s", model, status)
+            if status in _MODEL_COOLDOWN_S:
+                _cooling_until[model] = time.monotonic() + _MODEL_COOLDOWN_S[status]
+            if status not in _NEXT_MODEL:
+                raise
+        except (httpx.TimeoutException, ValueError) as exc:
+            last_exc = exc
+            logger.warning("Gemini %s stream failed: %s", model, type(exc).__name__)
+            if started:
+                raise
         except httpx.HTTPError as exc:
             logger.warning("Gemini unreachable: %s", type(exc).__name__)
             raise
@@ -765,28 +845,43 @@ ASSISTANT_SYSTEM_TEMPLATE = (
     "Missions, Quests, Pet Teacher mode, streaks, XP and coins).\n\n"
     "The nine-skill profile is called {compass} in the app (it used to be "
     "called \"DNA\"); always use that name.\n\n"
-    "How to behave:\n"
-    "- Be a helpful, friendly, conversational assistant. Answer the question "
-    "the learner actually asked.\n"
-    "- You are especially strong at Chinese: grammar, vocabulary, Hanzi, "
-    "pronunciation and tones, HSK preparation, study plans and Chinese "
-    "culture. Give concrete examples with characters and pinyin when useful.\n"
-    "- General questions (travel, science, everyday topics, small talk) are "
-    "fine: answer them naturally. Do not refuse them, do not say you only "
-    "help with ChineseVerse, and do not force every topic back to studying. "
-    "A light, optional Chinese tie-in is welcome only when it fits.\n"
-    "- Use the learner data below when it is relevant (their progress, what "
-    "to practice next, how to prepare for HSK). It is the ONLY data you have "
+    "Your role: a patient, expert Chinese teacher and the learner's guide to "
+    "ChineseVerse.\n"
+    "- Chinese questions (grammar, words, characters, pronunciation and tones, "
+    "reading, HSK, study plans, culture) are your core job: answer them fully "
+    "and correctly. For a grammar or usage question, teach it: meaning -> "
+    "structure -> an example with pinyin -> a word-by-word breakdown -> why it "
+    "works -> a common mistake (wrong vs right) -> one or two more examples -> "
+    "a tiny practice question. Skip steps that don't help a simple question; "
+    "never pad. Adapt to the learner's level below: plain words and short "
+    "sentences for HSK 1-2, more nuance and terminology for higher levels.\n"
+    "- Be correct about Mandarin: adjectives are predicates on their own (我很高兴。 "
+    "is right and needs no 是); 是 links nouns; 有 is negated with 没. If you "
+    "are not sure about something, say so rather than guess.\n"
+    "- Questions about ChineseVerse itself or the learner's progress: answer "
+    "from the learner data and page context below. It is the ONLY data you have "
     "about them: never invent scores, streaks, mastered words, completed "
-    "lessons, Learning Compass numbers or achievements. If something is not "
-    "listed, say you don't have that information.\n"
+    "lessons, Learning Compass numbers or achievements; if something isn't "
+    "listed, say you don't have it. Only mention app features named in this "
+    "prompt.\n"
+    "- You have no internet access, no web search and no live data (weather, "
+    "news, prices, schedules): never claim to have looked anything up, and "
+    "never pretend ChineseVerse has a feature it doesn't. For such requests say "
+    "so briefly and offer something useful in Chinese instead (for example the "
+    "words to ask about the weather in Chinese).\n"
+    "- Unrelated topics: greetings and small talk are welcome. For other "
+    "unrelated questions give at most a short, careful answer, note kindly that "
+    "you are focused on Chinese learning, and offer a Chinese angle. Do not "
+    "refuse rudely.\n"
+    "- Images and files the learner attaches are part of the question: read "
+    "them carefully (a textbook page, a sign, handwriting) and say exactly "
+    "what you see; if something is unreadable, say so.\n"
     "- You are read-only: you cannot change progress, XP, streaks, mastery or "
     "lessons, and must never claim you did. Progress only changes when the "
     "learner practises in the app.\n"
-    "- Keep answers focused: usually a short paragraph or a few bullet points; "
-    "go longer only when the learner asks for depth. Formatting: only short "
-    "paragraphs, '* ' bullet lines and **bold** (the chat renders just "
-    "these); no tables, headings or code blocks.\n\n"
+    "- Formatting: short paragraphs, '* ' bullet lines, **bold** and lines "
+    "starting with '### ' as section titles (the chat renders just these); no "
+    "tables or code blocks. Put pinyin in parentheses after Chinese.\n\n"
     "Learner data (from the ChineseVerse database):\n{learner}\n\n"
     "LANGUAGE: always reply in {language} -- the language this learner selected "
     "in the app -- even if they write to you in another language. Chinese "
@@ -910,6 +1005,11 @@ def _learner_block(context: dict) -> str:
     if context.get("completed_lessons") is not None:
         lines.append(f"- lessons completed: {context['completed_lessons']}")
     lines.append(f"- main companion: {context.get('companion') or 'none chosen yet'}")
+    if context.get("today"):
+        lines.append("- today's plan in the app: " + context["today"])
+    if context.get("page"):
+        lines.append("\nWhat the learner has open right now (answer about this when they say \"this\"):\n"
+                     + context["page"])
     return "\n".join(lines)
 
 
@@ -1103,16 +1203,10 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
     both the model and the offline fallback answer in it."""
     if _active_provider() == "gemini" and messages:
         try:
-            system = ASSISTANT_SYSTEM_TEMPLATE.format(
-                learner=_learner_block(context),
-                language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
-                language_detail=ASSISTANT_LANGUAGE_DETAIL.get(locale, ""),
-                compass=ASSISTANT_COMPASS_NAME.get(locale, ASSISTANT_COMPASS_NAME["en"]),
-            )
             reply = _gemini_chat(
-                [{"role": "system", "content": system}] + messages,
-                max_tokens=700,
-                temperature=0.7,
+                [{"role": "system", "content": _assistant_system(context, locale)}] + messages,
+                max_tokens=1500,
+                temperature=0.6,
             )
             if locale == "tg":
                 reply = _tg_clean_mixed_script(reply)
@@ -1188,6 +1282,58 @@ def judge_sentence(answer: str, expected: str, task: str, locale: str = "en",
     if not isinstance(data, dict) or data.get("category") not in JUDGE_CATEGORIES:
         return None
     return {"category": data["category"], "feedback": _clean_feedback(data.get("feedback"), locale)}
+
+
+ASSISTANT_NO_VISION = {
+    "en": "I can't look at images or files right now — that needs the AI, which is unavailable. Type the text you want explained and I'll help as far as I can.",
+    "ru": "Сейчас я не могу посмотреть изображение или файл — для этого нужен ИИ, а он недоступен. Напиши текст, который нужно объяснить, и я помогу, чем смогу.",
+    "tg": "Ҳоло ман тасвир ё файлро дида наметавонам — барои ин зеҳни сунъӣ лозим аст, ки дастнорас аст. Матнеро, ки шарҳ додан лозим аст, нависед, ман то ҳадди имкон кӯмак мекунам.",
+    "zh": "现在我看不了图片或文件——这需要 AI，而 AI 暂时无法使用。把要解释的文字打出来，我尽量帮你。",
+}
+
+
+def _assistant_system(context: dict, locale: str) -> str:
+    return ASSISTANT_SYSTEM_TEMPLATE.format(
+        learner=_learner_block(context),
+        language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
+        language_detail=ASSISTANT_LANGUAGE_DETAIL.get(locale, ""),
+        compass=ASSISTANT_COMPASS_NAME.get(locale, ASSISTANT_COMPASS_NAME["en"]),
+    )
+
+
+def assistant_stream(messages: List[dict], context: dict, locale: str = "en"):
+    """The assistant's reply as a stream of events (a generator of dicts):
+    {"type": "meta", "source": "ai"|"offline"}, then {"type": "delta",
+    "text"} chunks, then {"type": "done"} -- or {"type": "error"} if the
+    model fails after it already started (the text so far stays with the
+    learner). Before the first chunk every failure degrades to the offline
+    helper, exactly like assistant_reply."""
+    has_files = any(m.get("attachments") for m in messages)
+    if _active_provider() == "gemini" and messages:
+        stream = _gemini_stream([{"role": "system", "content": _assistant_system(context, locale)}] + messages,
+                                max_tokens=1500, temperature=0.6)
+        started = False
+        try:
+            for chunk in stream:
+                if not started:
+                    started = True
+                    yield {"type": "meta", "source": "ai"}
+                yield {"type": "delta", "text": _tg_clean_mixed_script(chunk) if locale == "tg" else chunk}
+            yield {"type": "done"}
+            return
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
+            if started:
+                logger.warning("Assistant stream broke off: %s", type(exc).__name__)
+                yield {"type": "error", "detail": "The answer was interrupted — you can ask again."}
+                return
+        finally:
+            stream.close()
+    yield {"type": "meta", "source": "offline"}
+    if has_files:
+        yield {"type": "delta", "text": ASSISTANT_NO_VISION.get(locale, ASSISTANT_NO_VISION["en"])}
+    else:
+        yield {"type": "delta", "text": _offline_assistant_reply(messages, context, locale)}
+    yield {"type": "done"}
 
 
 def evaluate_pet_teacher_explanation(

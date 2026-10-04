@@ -5481,6 +5481,60 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 @media (max-width: 760px) {
   .assistant-panel.ws-chat { height: calc(100vh - 220px); min-height: 380px; }
 }
+/* Streaming chat: input row with attach / mic / stop, the tray above it for
+   context and attachments, and per-reply tools. */
+.ws-chat .assistant-input-row { align-items: flex-end; flex-wrap: wrap; position: relative; }
+.assistant-input-row textarea.input { flex: 1 1 200px; min-width: 0; resize: none; max-height: 160px; field-sizing: content; }
+.assistant-input-row .micbtn { width: 44px; height: 44px; }
+.assistant-input-row .btn { min-height: 44px; }
+.assistant-attach { width: 44px; height: 44px; }
+.assistant-mic-lang { width: auto; min-width: 5.5em; flex: 0 0 auto; padding: var(--space-2); font-size: var(--text-xs); min-height: 44px; }
+.mic-wrap { display: inline-flex; align-items: center; gap: var(--space-2); }
+.mic-status { font-size: var(--text-xs); color: var(--text-dim); }
+.mic-status.bad { color: var(--bad); }
+.assistant-input-row .mic-status {
+  position: absolute;
+  right: var(--space-5);
+  bottom: calc(100% + var(--space-1));
+  max-width: min(320px, 80%);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
+  z-index: 5;
+}
+.assistant-tray { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-2) var(--space-5) 0; }
+.assistant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: var(--text-xs);
+}
+.assistant-chip img { width: 28px; height: 28px; object-fit: cover; border-radius: var(--radius-sm); }
+.assistant-chip b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.assistant-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.assistant-chip .icon-btn { width: 28px; height: 28px; }
+.assistant-thumbs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+.assistant-thumbs img { max-width: 180px; max-height: 140px; border-radius: var(--radius-sm); object-fit: cover; }
+.assistant-file-note { display: block; font-size: var(--text-xs); opacity: 0.85; margin-bottom: var(--space-1); }
+.assistant-status { display: block; margin-top: var(--space-2); font-size: var(--text-xs); color: var(--text-dim); white-space: normal; }
+.assistant-status.bad { color: var(--bad); }
+.assistant-tools { display: flex; gap: var(--space-1); margin-top: var(--space-2); white-space: normal; }
+.assistant-tools .icon-btn { width: 32px; height: 32px; }
+.assistant-h { display: inline-block; margin-top: var(--space-1); }
+.assistant-how { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-dim); }
+@media (max-width: 640px) {
+  .ws-chat .assistant-input-row { padding: var(--space-3); gap: var(--space-2); }
+  .assistant-input-row textarea.input { flex-basis: 100%; order: -1; }
+  .assistant-tray { padding: var(--space-2) var(--space-3) 0; }
+}
 
 /* ---------------------------------------------------------------------------
    Companion figure (components/CompanionFigure.jsx): the learner's permanent
