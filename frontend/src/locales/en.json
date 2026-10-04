@@ -1024,7 +1024,12 @@
       "words_milestone": "{{name}} is celebrating — this round took you past {{milestone}} mastered words!",
       "detective_start": "{{name}} grabs the magnifying glass — let's crack this case in Chinese!",
       "sound_start": "{{name}} is all ears — listen to the people around you.",
-      "internet_start": "{{name}} is curious — let's see what people are writing online."
+      "internet_start": "{{name}} is curious — let's see what people are writing online.",
+      "taught": "{{name}} just learned a new rule from you — teaching it is the best way to keep it.",
+      "taught_again": "{{name}} remembers this one. Thanks for the reminder!",
+      "teach_why": "{{name}} sees the sentence is right now — and wants to know why.",
+      "teach_close": "{{name}} thinks you're very close. Look at the sentence once more.",
+      "teach_retry": "{{name}} is still puzzled too — let's work it out together."
     }
   },
   "wordType": {

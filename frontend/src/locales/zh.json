@@ -1023,7 +1023,12 @@
       "words_milestone": "{{name}}在庆祝——这一轮让你掌握的词超过了{{milestone}}个！",
       "detective_start": "{{name}}拿起了放大镜——我们用中文破案吧！",
       "sound_start": "{{name}}竖起了耳朵——仔细听听周围的人在说什么。",
-      "internet_start": "{{name}}很好奇——我们看看网上大家在说什么。"
+      "internet_start": "{{name}}很好奇——我们看看网上大家在说什么。",
+      "taught": "{{name}}刚从你这儿学会了一条新规则——教别人是记住它的最好办法。",
+      "taught_again": "{{name}}记得这个，谢谢你的提醒！",
+      "teach_why": "{{name}}看到句子已经改对了——想知道为什么。",
+      "teach_close": "{{name}}觉得你已经很接近了，再看一遍句子吧。",
+      "teach_retry": "{{name}}也还没想明白——我们一起想一想。"
     }
   },
   "wordType": {

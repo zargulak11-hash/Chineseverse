@@ -203,6 +203,27 @@ def test_pet_teacher(client):
         assert db.query(models.UserTaughtFact).filter_by(user_id=uid, case_id=cid).count() == 1
     print("[PASS] the case is recorded as taught exactly once")
 
+    # The companion reacts to the real outcome, as the permanent companion,
+    # and is never disappointed in the learner.
+    uid2, h2 = register(client, "pt_reactions")
+    with SessionLocal() as db:
+        bird = db.query(models.Animal).filter_by(slug="bird").one()
+        bird_id = bird.id
+    expect(client, "post", "/api/me/animal", 200, headers=h2, json={"animal_id": bird_id})
+    seq = [
+        ({"correction": "我是很高兴。", "explanation": "x"}, "teach_retry"),
+        ({"correction": "我很高心。", "explanation": "x"}, "teach_close"),
+        ({"correction": "我很高兴。", "explanation": "我很高兴"}, "teach_why"),
+        ({"correction": "我很高兴。", "explanation": "adjective is the verb, no 是"}, "taught"),
+        ({"correction": "我很高兴。", "explanation": "adjective is the verb, no 是"}, "taught_again"),
+    ]
+    for body, cause in seq:
+        r = expect(client, "post", url, 200, headers=h2, json=body)["reaction"]
+        assert r["cause"] == cause and r["event"] == "pet_teach", (cause, r)
+        assert r["mood"] in ("celebrating", "happy", "encouraging"), r
+        assert r["companion"]["slug"] == "bird", r["companion"]
+    print("[PASS] the permanent companion reacts to each real outcome (retry, close, why, taught, taught again), never shaming")
+
 
 def main():
     test_rules()

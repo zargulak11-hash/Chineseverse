@@ -122,6 +122,12 @@ _ZH = {
     "good_trace": "写得很好！",
     "shaky_trace": "再写一次，会更好。",
     "writing_mastered": "这个字你会写了！",
+    # Pet Teacher: the learner teaches the companion
+    "taught": "谢谢你！我学会了！",
+    "taught_again": "我记住了，谢谢你！",
+    "teach_why": "改对了！可是为什么呢？",
+    "teach_close": "差一点儿！我们再看看。",
+    "teach_retry": "没关系，我们一起再想想。",
 }
 
 
@@ -408,3 +414,19 @@ def self_check_reaction(
         user, mood, "self_check", cause, item_type,
         focus=focus, skill=skill if cause == "skill_up" else None, milestone=milestone,
     )
+
+
+def teach_reaction(user: models.User, *, outcome: str, first_time: bool) -> dict:
+    """The companion's reaction to being taught in Pet Teacher, from the
+    graded outcome (routers/pet_teacher.py): delighted to learn a new rule,
+    curious when the fix is right but the "why" is missing, and never
+    disappointed in the learner when the fix isn't right yet."""
+    if outcome == "success":
+        mood, cause = ("celebrating", "taught") if first_time else ("happy", "taught_again")
+    elif outcome == "fixed_needs_explanation":
+        mood, cause = "encouraging", "teach_why"
+    elif outcome == "close":
+        mood, cause = "encouraging", "teach_close"
+    else:
+        mood, cause = "encouraging", "teach_retry"
+    return _base(user, mood, "pet_teach", cause, "grammar", milestone="taught" if cause == "taught" else None)

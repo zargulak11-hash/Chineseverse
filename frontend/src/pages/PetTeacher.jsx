@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import CompanionReaction from "../components/CompanionReaction.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
@@ -156,6 +157,9 @@ export default function PetTeacher() {
                   : result.feedback && <p>{result.feedback}</p>}
               </div>
             </div>
+            {result.reaction && animal && (
+              <CompanionReaction animal={animal} reaction={result.reaction} context="grammar" compact size={56} focusMode="none" />
+            )}
             {(result.issues || []).map((code) => (
               <p key={code} className="pt-issue">{t(`grammarCheck.issue.${code}`)}</p>
             ))}

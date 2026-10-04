@@ -481,6 +481,7 @@ class PetTeacherResultResponse(BaseModel):
     taught_count: int
     grammar_topic_id: Optional[int] = None
     grammar_topic_title: Optional[str] = None
+    reaction: Optional[dict] = None  # services/companion_reaction.teach_reaction
 
 
 # --------------------------------------------------------------------------- World

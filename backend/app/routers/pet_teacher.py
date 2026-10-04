@@ -15,6 +15,7 @@ from app.services.gamification import (
     reinforce_mistake,
     user_rank,
 )
+from app.services import companion_reaction as cr
 from app.services import sentence_check
 from app.services.localization import load_translations, tr
 
@@ -155,6 +156,7 @@ def answer_lesson(
     else:
         outcome = "incorrect"
 
+    first_time = False
     if success:
         already = (
             db.query(models.UserTaughtFact)
@@ -162,6 +164,7 @@ def answer_lesson(
             .first()
         )
         if already is None:
+            first_time = True
             db.add(models.UserTaughtFact(user_id=user.id, case_id=case.id))
             # Only a newly taught fact earns bond points and moves "teach"
             # missions: re-submitting a case already solved (its answer is
@@ -217,6 +220,8 @@ def answer_lesson(
         taught_count=taught_count,
         grammar_topic_id=topic.id if topic else None,
         grammar_topic_title=tr(topic_tr, topic.id, "title", topic.title) if topic else None,
+        # The permanent companion reacts to the real outcome.
+        reaction=cr.teach_reaction(user, outcome=outcome, first_time=first_time),
     )
 
 
