@@ -38,6 +38,8 @@ export default function Practice({ forceSource }) {
   // Chinese Stories slug (services/stories.py).
   const story = params.get("story");
   const chapter = params.get("chapter") ? Number(params.get("chapter")) : null;
+  // A grammar page's "Practice this point": the round opens with that topic.
+  const topicId = params.get("topic") ? Number(params.get("topic")) : null;
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -78,6 +80,7 @@ export default function Practice({ forceSource }) {
       body.story = story;
       if (chapter) body.chapter = chapter;
     }
+    if (source === "grammar" && topicId) body.topic_id = topicId;
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -88,7 +91,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, i18n]);
+  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, topicId, i18n]);
 
   useEffect(start, [start]);
 

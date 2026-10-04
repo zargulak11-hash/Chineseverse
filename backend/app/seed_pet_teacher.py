@@ -10,7 +10,7 @@ Format: (hsk_level, grammar_topic_title_or_None, wrong_sentence,
 """
 
 PET_TEACHER_CASES = [
-    (1, "是 — to be", "我是很高兴。", "我很高兴。",
+    (1, "主谓句2：形容词谓语句", "我是很高兴。", "我很高兴。",
      "是 is not needed before an adjective — the adjective itself acts as the verb.",
      ["adjective", "形容词", "不需要是", "no 是 before adjective", "adjective is the verb"],
      "Adjectives in Chinese don't need a linking verb like English 'to be'.", 1),
@@ -30,7 +30,7 @@ PET_TEACHER_CASES = [
      "A number needs a measure word (个) before the noun — you can't put a number directly on a noun.",
      ["measure word", "量词", "个", "number plus noun", "need a measure word"],
      "三 + 个 + 苹果, not 三 + 苹果.", 5),
-    (1, "有 — to have / there is", "我有忙。", "我很忙。",
+    (1, "主谓句2：形容词谓语句", "我有忙。", "我很忙。",
      "有 means 'to have / there is' for nouns, not for adjectives like busy — use 很 + adjective instead.",
      ["有 is for nouns", "adjective doesn't need 有", "很忙", "not have busy", "很 plus adjective"],
      "Busy (忙) is an adjective, so it takes 很, not 有.", 6),

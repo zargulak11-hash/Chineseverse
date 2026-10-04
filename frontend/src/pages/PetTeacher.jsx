@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Icon from "../components/Icon.jsx";
@@ -22,6 +23,7 @@ export default function PetTeacher() {
   if (!lesson) return <Layout><Loading>{t("pages.petTeacher.thinking")}</Loading></Layout>;
 
   const animal = dashboard?.animal;
+  const tone = !result || result.error ? "" : result.success ? "good" : result.correct_fix || result.outcome === "close" ? "accent" : "bad";
 
   async function submit() {
     if (!correction.trim() || !explanation.trim() || busy) return;
@@ -45,6 +47,13 @@ export default function PetTeacher() {
     setResult(null);
   }
 
+  // The correction was right; only the explanation needs another go, so
+  // the learner keeps their sentence instead of retyping it.
+  function explainAgain() {
+    setExplanation("");
+    setResult(null);
+  }
+
   function next() {
     retry();
     reload();
@@ -61,7 +70,7 @@ export default function PetTeacher() {
         </div>
         <div className="kpi-row">
           <div className="kpi">
-            <span className="kpi-value">{result?.taught_count ?? "—"}</span>
+            <span className="kpi-value">{result?.taught_count ?? lesson.taught_count ?? 0}</span>
             <span className="kpi-label">{t("pages.petTeacher.rulesTaught")}</span>
           </div>
         </div>
@@ -73,13 +82,18 @@ export default function PetTeacher() {
         <div className="bubble npc">
           <span className="speaker" style={{ display: "flex", alignItems: "center", gap: 5 }}>
             {animal ? (
-              <AnimalAvatar slug={animal.slug} accentColor={animal.accent_color} size={16} />
+              <AnimalAvatar
+                slug={animal.slug}
+                accentColor={animal.accent_color}
+                size={16}
+                state={!result || result.error ? "idle" : result.success ? "celebrating" : result.correct_fix ? "happy" : "encouraging"}
+              />
             ) : (
               "🐾"
             )}{" "}
             {animal?.name || t("pages.petTeacher.yourCompanion")}
           </span>
-          {lesson.wrong_sentence}
+          <span lang="zh">{lesson.wrong_sentence}</span>
           {lesson.hint && !result && <span className="english">{t("pages.conversation.hint")}: {lesson.hint}</span>}
         </div>
 
@@ -124,38 +138,60 @@ export default function PetTeacher() {
           </div>
         )}
 
-        {result &&
-          (result.error ? (
-            <div className="bubble reaction">⚠️ {result.error}</div>
-          ) : (
-            <>
-              <div className="bubble me">
-                {correction}
-                <span className="english">{explanation}</span>
+        {result && result.error && <div className="bubble reaction" role="alert">⚠️ {result.error}</div>}
+        {result && !result.error && (
+          <div aria-live="polite" className="pt-result">
+            <div className="bubble me">
+              {correction}
+              <span className="english">{explanation}</span>
+            </div>
+            <div className={`pt-verdict ${tone}`}>
+              <Icon name={result.correct_fix ? "check" : "x"} size={15} />
+              <div style={{ minWidth: 0 }}>
+                <b>{t(`pages.petTeacher.outcome.${result.outcome}`)}</b>
+                {/* One hint, not two: a repeated sentence gets the "say why"
+                    hint; otherwise the grader's own feedback. */}
+                {result.outcome === "fixed_needs_explanation"
+                  ? <p>{result.restated ? t("pages.petTeacher.restated") : result.feedback || t("pages.petTeacher.explainMore")}</p>
+                  : result.feedback && <p>{result.feedback}</p>}
               </div>
-              <div
-                className="bubble reaction"
-                style={
-                  !result.success
-                    ? { borderColor: "var(--bad)", color: "var(--bad)", background: "var(--bad-dim)" }
-                    : undefined
-                }
-              >
-                <Icon name={result.success ? "check" : "x"} size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
-                {result.feedback}
-              </div>
-              {!result.success && (
-                <p className="sub center">
-                  {t("pages.petTeacher.correctSentence")}: <b>{result.correct_sentence}</b>
-                </p>
+            </div>
+            {(result.issues || []).map((code) => (
+              <p key={code} className="pt-issue">{t(`grammarCheck.issue.${code}`)}</p>
+            ))}
+            {result.show_correct_sentence && (
+              <p className="sub center">
+                {t("pages.petTeacher.correctSentence")}: <b lang="zh">{result.correct_sentence}</b>
+              </p>
+            )}
+            {!result.correct_fix && result.mistake_summary && (
+              <p className="sub center">{t("pages.petTeacher.theRule")}: {result.mistake_summary}</p>
+            )}
+            {result.unlocked?.length > 0 && (
+              <p className="sub center">{t("pages.petTeacher.unlocked")}: {result.unlocked.join(", ")}</p>
+            )}
+            <div className="row" style={{ justifyContent: "center", flexWrap: "wrap" }}>
+              {result.success ? (
+                <button type="button" className="btn primary" onClick={next}>{t("pages.petTeacher.teachAnother")}</button>
+              ) : result.correct_fix ? (
+                <>
+                  <button type="button" className="btn primary" onClick={explainAgain}>{t("pages.petTeacher.explainAgain")}</button>
+                  <button type="button" className="btn ghost" onClick={next}>{t("pages.petTeacher.skipCase")}</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="btn primary" onClick={retry}>{t("pages.petTeacher.tryAgain")}</button>
+                  <button type="button" className="btn ghost" onClick={next}>{t("pages.petTeacher.skipCase")}</button>
+                </>
               )}
-              <div className="row center" style={{ justifyContent: "center" }}>
-                <button className="btn primary" onClick={result.success ? next : retry}>
-                  {result.success ? t("pages.petTeacher.teachAnother") : t("pages.petTeacher.tryAgain")}
-                </button>
-              </div>
-            </>
-          ))}
+              {result.grammar_topic_id && (
+                <Link className="btn ghost" to={`/grammar/${result.grammar_topic_id}`}>
+                  <Icon name="book" size={15} /> {t("grammarCheck.openGrammar", { title: result.grammar_topic_title })}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div></div>
       </div>
       <aside className="ws-side">

@@ -438,7 +438,19 @@
       "howTitle": "怎么玩",
       "how1": "你的伙伴说一句带有一个真实错误的句子。",
       "how2": "把句子改写正确。",
-      "how3": "用自己的话解释规则——教会别人，自己才记得牢。"
+      "how3": "用自己的话解释规则——教会别人，自己才记得牢。",
+      "outcome": {
+        "success": "你改对了，也说清楚了原因。",
+        "fixed_needs_explanation": "你的改正是对的！",
+        "close": "差一点就对了",
+        "incorrect": "还不太对"
+      },
+      "explainMore": "现在用自己的话解释一下规则——原来的句子为什么错了？",
+      "restated": "你又写了一遍句子。现在说说它为什么是对的——比如原来的句子哪里错了，用的是哪条规则。",
+      "theRule": "规则",
+      "explainAgain": "再解释一次",
+      "skipCase": "下一个例子",
+      "unlocked": "已解锁"
     },
     "world": {
       "title": "中文世界",
@@ -658,7 +670,8 @@
       "stillLearning": "还在学",
       "showExamples": "显示例句",
       "hideExamples": "隐藏例句",
-      "empty": "此级别暂无语法点。"
+      "empty": "此级别暂无语法点。",
+      "open": "打开课程"
     },
     "hanzi": {
       "title": "汉字",
@@ -2754,5 +2767,75 @@
       "companion": "伙伴",
       "world": "世界"
     }
+  },
+  "grammarCheck": {
+    "verdict": {
+      "correct": "正确",
+      "acceptable": "正确——另一种好说法",
+      "close": "差一点——有一个小错误",
+      "incorrect": "还不对",
+      "unchecked": "未检查"
+    },
+    "issue": {
+      "shi_adj": "形容词前面不用“是”。汉语里形容词本身就可以作谓语：我很高兴。，不说 我是很高兴。",
+      "you_adj": "“有”表示拥有，后面跟名词。形容词前面用“很”：我很忙。",
+      "hen_noun": "“很”修饰形容词，不修饰名词。说一个人的身份要用“是”：我是学生。",
+      "missing_shi": "两个名词之间需要“是”：我是学生。",
+      "bu_you": "“有”的否定用“没”，不用“不”：我没有钱。",
+      "missing_measure": "数词和名词之间需要量词：三个苹果，不说 三苹果。",
+      "dou_order": "“都”放在动词前面：他们都是学生。",
+      "ma_question_word": "疑问词（什么、谁、哪儿……）已经构成问句，不要再加“吗”。",
+      "le_habitual": "“了”表示一次完成的动作，经常性的动作（每天……）一般不用“了”。"
+    },
+    "openGrammar": "打开语法页面：{{title}}"
+  },
+  "grammarPage": {
+    "back": "全部语法",
+    "mastery": "掌握度",
+    "practiced": "练习次数",
+    "preparing": "正在准备这个语法点的完整讲解……",
+    "noLesson": "这个语法点暂时还没有完整讲解。下面的大纲例句（带拼音和逐词解释）和练习都可以使用。",
+    "structure": "句子结构",
+    "whenToUse": "什么时候用",
+    "whenNot": "什么时候不用",
+    "explanation": "讲解",
+    "deeper": "深入了解",
+    "examples": "例句",
+    "negative": "否定形式",
+    "questions": "疑问形式",
+    "mistakes": "常见错误",
+    "dialogue": "对话",
+    "listenDialogue": "听对话",
+    "similar": "相似语法",
+    "syllabus": "HSK 大纲例句",
+    "tryIt": "试一试",
+    "words": "词语",
+    "hideWords": "收起词语",
+    "listen": "听",
+    "again": "再试一次",
+    "check": "检查",
+    "checking": "检查中……",
+    "expected": "参考答案",
+    "writePlaceholder": "用汉语写……",
+    "ownSentence": "用“{{pattern}}”写一个句子",
+    "uncheckedNote": "没有发现常见错误。完整检查自由造句需要 AI，现在暂时无法使用。",
+    "patternMissing": "这个句子好像还没有用到这个语法点。",
+    "yourProgress": "你的进度",
+    "notPracticed": "还没有练习",
+    "practicedTimes_one": "已练习 {{count}} 次",
+    "practicedTimes_other": "已练习 {{count}} 次",
+    "practice": "练习这个语法点",
+    "practiceNote": "掌握度只会在评分练习后变化，阅读本页不会改变它。",
+    "vocabulary": "本课词语",
+    "wordStatus": {
+      "learning": "学习中",
+      "reviewing": "复习中",
+      "mastered": "已掌握"
+    },
+    "related": "相关语法",
+    "more": "继续学习",
+    "askAssistant": "问问助手",
+    "sourceAuthored": "本课由 ChineseVerse 团队编写。",
+    "sourceAi": "本讲解由 AI 生成；中文例句经过常见错误检查，拼音来自词典。"
   }
 }

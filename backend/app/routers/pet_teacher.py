@@ -15,13 +15,30 @@ from app.services.gamification import (
     reinforce_mistake,
     user_rank,
 )
+from app.services import sentence_check
 from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/pet-teacher", tags=["pet-teacher"])
 
+# The cases' explanation keywords are English and Chinese. Offline (no model
+# to read the explanation) a learner writing in Russian or Tajik could never
+# match them, so the common grammar terms carry their RU/TG equivalents.
+_KEYWORD_SYNONYMS = {
+    "adjective": ("прилагательн", "сифат"),
+    "measure word": ("счётн", "счетн", "классификатор", "калимаи ҳисоб", "ҳисобӣ"),
+    "word order": ("порядок слов", "тартиби калима"),
+    "question word": ("вопросительн", "калимаи саволӣ"),
+    "habitual": ("привычк", "регулярн", "каждый день", "одат", "ҳар рӯз"),
+    "before verb": ("перед глагол", "пеш аз феъл"),
+    "cause then result": ("причин", "сабаб"),
+}
 
-def _normalize(text: str) -> str:
-    return "".join((text or "").split()).lower()
+
+def _keywords(keywords: list[str] | None) -> list[str]:
+    out = list(keywords or [])
+    for k in keywords or []:
+        out.extend(_KEYWORD_SYNONYMS.get(k.lower(), ()))
+    return out
 
 
 @router.get("/lesson", response_model=schemas.PetTeacherCaseResponse)
@@ -67,6 +84,7 @@ def get_lesson(
 
     item = schemas.PetTeacherCaseResponse.model_validate(case)
     item.already_taught = case.id in taught_ids
+    item.taught_count = len(taught_ids)
     case_tr = load_translations(db, "pet_teacher_case", [str(case.id)], locale)
     item.hint = tr(case_tr, case.id, "hint", item.hint)
     return item
@@ -99,12 +117,43 @@ def answer_lesson(
     if case_level is not None and case_level.level > allowed:
         raise HTTPException(status_code=403, detail="This case is above your current HSK level")
 
-    correct_fix = _normalize(payload.correction) == _normalize(case.correct_sentence)
+    case_tr = load_translations(db, "pet_teacher_case", [str(case.id)], locale)
+    mistake_summary = tr(case_tr, case.id, "mistake_summary", case.mistake_summary)
+
+    # The correction is graded by meaning and grammar, not as one exact
+    # string (see services/sentence_check.py for the bug this replaces).
+    check = sentence_check.check(payload.correction, case.correct_sentence, wrong=case.wrong_sentence)
+    judge_feedback = ""
+    if not check["final"]:
+        judged = ai_client.judge_sentence(
+            payload.correction, case.correct_sentence,
+            f"Correct the grammar mistake in: {case.wrong_sentence}", locale, wrong=case.wrong_sentence,
+        )
+        if judged:
+            check["source"] = "ai"
+            check["category"] = judged["category"]
+            check["verdict"] = {"correct": "correct", "alternative": "acceptable",
+                                "typo": "close"}.get(judged["category"], "incorrect")
+            judge_feedback = judged["feedback"]
+    correct_fix = check["verdict"] in ("correct", "acceptable")
     verdict = ai_client.evaluate_pet_teacher_explanation(
-        case.mistake_summary or "", payload.explanation, case.explanation_keywords or []
+        mistake_summary or "", payload.explanation, _keywords(case.explanation_keywords),
+        wrong_sentence=case.wrong_sentence, correct_sentence=case.correct_sentence,
+        correction=payload.correction, correction_ok=correct_fix, locale=locale,
     )
     understood = verdict["understood"]
     success = correct_fix and understood
+    if success:
+        outcome = "success"
+    elif correct_fix:
+        # The sentence is right; only the "why" is missing. This used to be
+        # shown as a red failure with the learner's own sentence offered as
+        # the "correct" one.
+        outcome = "fixed_needs_explanation"
+    elif check["verdict"] == "close":
+        outcome = "close"
+    else:
+        outcome = "incorrect"
 
     if success:
         already = (
@@ -131,7 +180,9 @@ def answer_lesson(
     newly = check_achievements(db, user)
 
     ui_tr = load_translations(db, "ui_string", ["pet_teacher"], locale)
-    feedback = verdict["feedback"]
+    # Feedback on the explanation only once the sentence itself is right;
+    # for a wrong sentence the model's words about the sentence come first.
+    feedback = verdict["feedback"] if correct_fix else (judge_feedback or "")
     if not feedback:
         if success:
             feedback = tr(ui_tr, "pet_teacher", "success",
@@ -142,19 +193,39 @@ def answer_lesson(
         else:
             feedback = tr(ui_tr, "pet_teacher", "needs_more_explanation",
                            "The correction is right, but explain the rule a bit more so it really sticks.")
-    if newly:
-        unlocked_label = tr(ui_tr, "pet_teacher", "unlocked", "Unlocked")
-        feedback += f" {unlocked_label}: {', '.join(a.title for a in newly)}"
+    unlocked = [a.title for a in newly]
 
-    case_tr = load_translations(db, "pet_teacher_case", [str(case.id)], locale)
-    mistake_summary = tr(case_tr, case.id, "mistake_summary", case.mistake_summary)
+    topic = _topic_for(db, case, check["issues"])
+    topic_tr = load_translations(db, "grammar_topic", [str(topic.id)], locale) if topic else {}
 
     return schemas.PetTeacherResultResponse(
         correct_fix=correct_fix,
         understood=understood,
         success=success,
+        outcome=outcome,
+        correction_verdict=check["verdict"],
+        correction_category=check["category"],
+        issues=[i["code"] for i in check["issues"] if i["severity"] == "error"] if not correct_fix else [],
+        restated=verdict.get("restated", False),
+        # The model sentence is shown only when the learner's isn't right --
+        # never their own sentence back to them as "the correct one".
         correct_sentence=case.correct_sentence,
+        show_correct_sentence=not correct_fix,
         mistake_summary=mistake_summary,
         feedback=feedback,
+        unlocked=unlocked,
         taught_count=taught_count,
+        grammar_topic_id=topic.id if topic else None,
+        grammar_topic_title=tr(topic_tr, topic.id, "title", topic.title) if topic else None,
     )
+
+
+def _topic_for(db: Session, case: models.PetTeacherCase, issues: list[dict]) -> models.GrammarTopic | None:
+    """The grammar page that explains this case: the topic of the error the
+    learner's sentence still has, else the case's own topic."""
+    for issue in issues:
+        if issue.get("topic"):
+            row = db.query(models.GrammarTopic).filter_by(title=issue["topic"]).order_by(models.GrammarTopic.id).first()
+            if row:
+                return row
+    return db.get(models.GrammarTopic, case.grammar_topic_id) if case.grammar_topic_id else None

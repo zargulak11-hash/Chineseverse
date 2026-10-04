@@ -451,6 +451,7 @@ class PetTeacherCaseResponse(BaseModel):
     hint: Optional[str] = None
     hsk_level: Optional[int] = None
     already_taught: bool = False
+    taught_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -464,10 +465,22 @@ class PetTeacherResultResponse(BaseModel):
     correct_fix: bool
     understood: bool
     success: bool
+    # success | fixed_needs_explanation | close | incorrect -- the page shows
+    # a right correction as right even when the explanation needs more.
+    outcome: str = "incorrect"
+    # services/sentence_check.py verdict/category for the correction alone
+    correction_verdict: str = "incorrect"
+    correction_category: str = "different"
+    issues: list[str] = []          # known-error codes still in the correction
+    restated: bool = False          # the "explanation" only repeated the sentence
     correct_sentence: str
+    show_correct_sentence: bool = True
     mistake_summary: Optional[str] = None
     feedback: str
+    unlocked: list[str] = []
     taught_count: int
+    grammar_topic_id: Optional[int] = None
+    grammar_topic_title: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- World

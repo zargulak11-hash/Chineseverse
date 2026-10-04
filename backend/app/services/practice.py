@@ -160,8 +160,9 @@ def _grammar_example(topic: models.GrammarTopic) -> str | None:
     """First Chinese example sentence of a grammar point (not its title, a
     sub-heading or a cross-reference note -- a question built on those would
     show a label instead of Chinese to read)."""
-    for line in (topic.examples or "").splitlines():
-        line = line.strip()
+    for raw in (topic.examples or "").splitlines():
+        # "我是学生。 / 他是老师。" holds two examples; a question shows one.
+        line = re.split(r"\s*/\s*", raw.strip())[0].strip()
         if (len(_CJK.findall(line)) >= 2 and line != topic.title and len(line) <= 80
                 and not _SYLLABUS_NOTE.search(line)):
             return line
@@ -378,7 +379,7 @@ def build_session(
     scene: str | None = None, sentence: str | None = None,
     case: str | None = None, env: str | None = None, stage: int | None = None,
     item: str | None = None, version: str | None = None, story: str | None = None,
-    chapter: int | None = None,
+    chapter: int | None = None, topic_id: int | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -393,7 +394,15 @@ def build_session(
             raise PracticeError(422, "hsk_level (1-9) is required for this source")
         rows = [r for r in _level_rows(db, source, hsk_level) if _usable(source, r)]
         recs = _records(db, user, source, [r.id for r in rows])
-        picked = [(source, r) for r in _prioritize(rows, recs, size, now)]
+        ordered = _prioritize(rows, recs, len(rows), now)
+        if source == "grammar" and topic_id is not None:
+            # Opened from a grammar page: that point first, the level's usual
+            # priority after it (other points also make the answer options).
+            first = [r for r in ordered if r.id == topic_id]
+            if not first:
+                raise PracticeError(404, "This grammar point has no example to practice at this level")
+            ordered = first + [r for r in ordered if r.id != topic_id]
+        picked = [(source, r) for r in ordered[:size]]
     elif source == "lesson":
         lesson = db.get(models.Lesson, lesson_id) if lesson_id else None
         if lesson is None:

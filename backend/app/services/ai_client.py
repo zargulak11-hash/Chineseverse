@@ -638,6 +638,62 @@ def explain_reading(text: str, locale: str, level: int, glossary: List[dict],
     return out
 
 
+def grammar_lesson(title: str, pattern: str, examples: List[str], locale: str, level: int) -> Optional[dict]:
+    """A full textbook-style lesson on one syllabus grammar point, in the
+    learner's language, as JSON in the same shape as the authored lessons
+    (seed_content/grammar/*.json). Returns the raw dict for
+    grammar_lesson.validate_ai_lesson to clean, or None with no model.
+
+    Pinyin is deliberately not asked for: the app computes it from the
+    curriculum, so a model can't put a wrong reading on a page."""
+    language = EXPLAIN_LANGUAGE.get(locale)
+    if language is None or _active_provider() != "gemini":
+        return None
+    depth = next(d for top, d in _EXPLAIN_DEPTH if level <= top)
+    tr_rule = ('"tr": null' if locale == "zh" else f'"tr": a natural {language} translation')
+    system = (
+        "You are an experienced Mandarin teacher writing one page of a digital grammar textbook. "
+        f"Write every explanation in {language}; all Chinese is Simplified Chinese. {depth} "
+        f"{_GRAMMAR_FACTS} "
+        "Every Chinese sentence you write must be natural, correct Mandarin that a native teacher would use; "
+        "keep example sentences short (under 25 characters) and use common words. Never mention HSK levels, "
+        "textbooks or sources. Reply as JSON with exactly these keys:\n"
+        '"name": a short friendly name of the grammar point;\n'
+        '"summary": one or two sentences: what it means and does;\n'
+        '"structure": 1-3 items {"formula": the sentence structure with the slots named in the explanation '
+        'language, e.g. "Subject + 很 + Adjective", "zh": one example sentence};\n'
+        '"when_to_use": 2-4 short points; "when_not": 1-3 short points (when NOT to use it, typical confusion);\n'
+        '"explanation": 2-4 short paragraphs for a learner, plain language;\n'
+        '"deeper": 0-2 short paragraphs of nuance for stronger learners (may be empty);\n'
+        f'"examples": 5-6 items {{"zh", {tr_rule}, "note": a few words on what to notice or null}};\n'
+        f'"negative": 0-2 items {{"zh", "tr"}} showing the negative form when it exists;\n'
+        f'"questions": 0-2 items {{"zh", "tr"}} showing the question form when it exists;\n'
+        '"mistakes": 2-3 typical learner mistakes {"wrong": incorrect Chinese, "right": the corrected Chinese, '
+        '"why": short reason};\n'
+        '"similar": 0-3 {"pattern": a similar pattern, "difference": how it differs};\n'
+        f'"dialogue": 2-4 lines {{"speaker": "A" or "B", "zh", "tr"}} of a short real-life exchange using the point;\n'
+        '"register": one sentence on formal vs spoken use, or null;\n'
+        '"vocabulary": 3-8 key Chinese words the examples use;\n'
+        '"exercises": 2-3 items, either {"type": "choose", "prompt": instruction, "options": 2-4 Chinese '
+        'sentences, "answer": index of the ONLY correct one, "why": short reason} or {"type": "write", '
+        '"prompt": what to write (e.g. a sentence to translate), "answer": the Chinese answer}.'
+    )
+    user = f"Grammar point: {title}\nPattern: {pattern or '-'}"
+    if examples:
+        user += "\nSyllabus examples:\n" + "\n".join(examples[:8])
+    try:
+        raw = _gemini_chat(
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            max_tokens=3500, temperature=0.3, json_mode=True,
+        )
+        data = json.loads(raw)
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+        return None
+    if locale == "tg" and isinstance(data, dict):
+        data = json.loads(_tg_clean_mixed_script(json.dumps(data, ensure_ascii=False)))
+    return data if isinstance(data, dict) else None
+
+
 def evaluation_fallback(prompt: str, transcript: str, expected_keywords: Optional[List[str]] = None) -> dict:
     """Graceful degradation when the live AI call fails mid-flight."""
     return _offline_evaluate(prompt, transcript, expected_keywords or [])
@@ -1068,33 +1124,132 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
     return _offline_assistant_reply(messages, context, locale), "offline"
 
 
+# Facts every Chinese grader is reminded of. The old Pet Teacher prompt gave
+# the model only the rule; with no sentence in front of it, it answered a
+# correct 我很高兴。 with a lecture about why 是 "is needed" -- the opposite
+# of the rule. Stating the core facts and the verdict the rules already
+# reached keeps a model from contradicting them.
+_GRAMMAR_FACTS = (
+    "Facts about Mandarin you must respect: adjectives are predicates on their own, so "
+    "我很高兴。 我很累。 她很漂亮。 天气很好。 are correct and need no 是; 很 before an "
+    "adjective predicate is normal and often only marks it as a statement. 是 links a subject to "
+    "a NOUN (我是学生。). Punctuation differences and a missing final 。 are never errors. "
+    "Never call a correct sentence wrong."
+)
+JUDGE_CATEGORIES = ("correct", "alternative", "unnatural", "typo", "grammar", "vocabulary", "different")
+
+
+def _language_rule(locale: str) -> str:
+    name = ASSISTANT_LANGUAGE_NAMES.get(locale, "English")
+    return f"Write all feedback in {name}.{ASSISTANT_LANGUAGE_DETAIL.get(locale, '')} Chinese examples stay in Chinese."
+
+
+def _clean_feedback(text, locale: str, limit: int = 400) -> str:
+    if not isinstance(text, str):
+        return ""
+    text = text.strip()
+    if locale == "tg":
+        text = _tg_clean_mixed_script(text)
+    return text[:limit]
+
+
+def judge_sentence(answer: str, expected: str, task: str, locale: str = "en",
+                   wrong: str = "") -> Optional[dict]:
+    """A model's verdict on a free-form Chinese answer that the deterministic
+    rules (services/sentence_check.py) could neither accept nor reject --
+    e.g. 我很开心。 for an expected 我很高兴。. Returns {category, feedback}
+    with category in JUDGE_CATEGORIES, or None when no model answers (the
+    caller then keeps the rules' own verdict; nothing is guessed)."""
+    if _active_provider() != "gemini" or not answer:
+        return None
+    system = (
+        "You grade one Chinese sentence written by a language learner. "
+        f"{_GRAMMAR_FACTS} "
+        "Judge whether the learner's sentence does the task correctly. A different wording that is "
+        "grammatical, natural and means the same is an acceptable ALTERNATIVE, not an error. "
+        "Reply as JSON: {\"category\": one of " + ", ".join(f'"{c}"' for c in JUDGE_CATEGORIES)
+        + ", \"feedback\": one or two short, kind sentences for the learner}. Categories: correct = "
+        "same as the expected answer; alternative = different but correct; unnatural = grammatical but "
+        "not how people say it; typo = one wrong character, the intent is clear; grammar = a grammar "
+        "error; vocabulary = a wrong word; different = does not do the task. "
+        + _language_rule(locale)
+    )
+    user = f"Task: {task}\nExpected answer: {expected}\n"
+    if wrong:
+        user += f"Sentence the learner had to correct: {wrong}\n"
+    user += f"Learner's sentence: {answer}"
+    try:
+        data = json.loads(_gemini_chat(
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            max_tokens=250, temperature=0.1, json_mode=True,
+        ))
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
+        return None
+    if not isinstance(data, dict) or data.get("category") not in JUDGE_CATEGORIES:
+        return None
+    return {"category": data["category"], "feedback": _clean_feedback(data.get("feedback"), locale)}
+
+
 def evaluate_pet_teacher_explanation(
     mistake_summary: str,
     explanation: str,
     keywords: List[str],
+    *,
+    wrong_sentence: str = "",
+    correct_sentence: str = "",
+    correction: str = "",
+    correction_ok: bool = True,
+    locale: str = "en",
 ) -> dict:
     """Judge whether the learner's explanation of a grammar rule shows real
-    understanding, not just a lucky correction. Offline mode falls back to
-    checking whether the explanation touches one of the rule's keywords."""
-    provider = _active_provider()
-    if provider == "gemini" and explanation:
+    understanding, not just a lucky correction.
+
+    The model now sees the whole case -- the companion's wrong sentence, the
+    right one, the learner's own correction and whether the rules already
+    accepted it -- and answers in the learner's language. Before, it got
+    only the rule, wrote its feedback in Chinese whatever the UI language,
+    and could lecture a learner about a correction that was right.
+
+    Offline mode checks whether the explanation touches one of the rule's
+    keywords; an "explanation" that is only the sentence again is not one."""
+    from app.services.sentence_check import normalize
+
+    restated = bool(explanation) and normalize(explanation) in {
+        normalize(correction), normalize(correct_sentence)}
+    if restated:
+        return {"understood": False, "feedback": "", "restated": True}
+    if _active_provider() == "gemini" and explanation:
+        system = (
+            "You are a kind Chinese grammar teacher. A learner corrected a sentence and now explains, in "
+            "their own words and in any language, WHY the correction is right. Decide whether the "
+            "explanation shows they understand the rule. Do not demand perfect wording or terminology: a "
+            "short explanation that states the rule is enough. "
+            f"{_GRAMMAR_FACTS} "
+            + ("The learner's correction is RIGHT; never say or imply that it is wrong. "
+               if correction_ok else "")
+            + 'Reply as JSON: {"understood": true or false, "feedback": one or two short sentences: '
+            "if understood, confirm what they got right; if not, say what the explanation is missing "
+            "and give a hint toward the rule -- without simply giving the whole answer away}. "
+            + _language_rule(locale)
+        )
+        user = (
+            f"Wrong sentence: {wrong_sentence}\nCorrect sentence: {correct_sentence}\n"
+            f"Learner's correction: {correction}\nThe rule: {mistake_summary}\n"
+            f"Words a good explanation often uses: {', '.join(keywords)}\n"
+            f"Learner's explanation: {explanation}"
+        )
         try:
-            system = (
-                "你是中文语法老师。学习者需要解释一个语法规则为什么正确。"
-                "判断他们的解释是否体现真正理解（不要求完美措辞）。"
-                '返回JSON: {"understood": true 或 false, "feedback": "一句简短反馈"}。'
-            )
-            user = f"规则：{mistake_summary}\n关键词：{keywords}\n学习者的解释：{explanation}"
-            text = _gemini_chat(
+            data = json.loads(_gemini_chat(
                 [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                json_mode=True,
-            )
-            data = json.loads(text)
-            return {
-                "understood": bool(data.get("understood")),
-                "feedback": str(data.get("feedback") or ""),
-            }
-        except (KeyError, ValueError, httpx.HTTPError):
+                max_tokens=300, temperature=0.2, json_mode=True,
+            ))
+            if isinstance(data, dict) and isinstance(data.get("understood"), bool):
+                return {
+                    "understood": data["understood"],
+                    "feedback": _clean_feedback(data.get("feedback"), locale),
+                    "restated": False,
+                }
+        except (KeyError, IndexError, TypeError, ValueError, httpx.HTTPError):
             pass
     understood = _contain(explanation, *keywords)
-    return {"understood": understood, "feedback": ""}
+    return {"understood": understood, "feedback": "", "restated": False}

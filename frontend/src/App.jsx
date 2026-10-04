@@ -19,6 +19,7 @@ import Lessons from "./pages/Lessons.jsx";
 import LessonDetail from "./pages/LessonDetail.jsx";
 import Vocabulary from "./pages/Vocabulary.jsx";
 import Grammar from "./pages/Grammar.jsx";
+import GrammarTopic from "./pages/GrammarTopic.jsx";
 import Hanzi from "./pages/Hanzi.jsx";
 import Conversation from "./pages/Conversation.jsx";
 import CaseSolve from "./pages/CaseSolve.jsx";
@@ -348,6 +349,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Grammar />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/grammar/:topicId"
+            element={
+              <RequireAuth>
+                <GrammarTopic />
               </RequireAuth>
             }
           />

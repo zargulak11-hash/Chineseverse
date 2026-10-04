@@ -1,11 +1,13 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
+from app.services import grammar_lesson as gl
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.gamification import ensure_user_skills
@@ -53,3 +55,53 @@ def list_grammar(
         out.append(item)
     out.sort(key=lambda t: (not t.due_for_review, t.hsk_level_id, t.id))
     return out
+
+
+class CheckPayload(BaseModel):
+    answer: str = Field(min_length=1, max_length=120)
+    # Index into the lesson's exercises (a "write" one); None = the learner's
+    # own sentence with this pattern.
+    exercise: int | None = Field(default=None, ge=0, le=20)
+
+
+def _run(fn, *args):
+    try:
+        return fn(*args)
+    except gl.GrammarError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+
+
+@router.get("/{topic_id}")
+def grammar_page(
+    topic_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The full learning page of one grammar point (services/grammar_lesson.py)."""
+    return _run(gl.page, db, user, topic_id, locale)
+
+
+@router.post("/{topic_id}/lesson")
+def generate_lesson(
+    topic_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Ask for the AI lesson of a point that has no authored one yet. Cached
+    per topic and language, so every later learner gets it without a call."""
+    return _run(gl.generate, db, user, topic_id, locale)
+
+
+@router.post("/{topic_id}/check")
+def check_sentence(
+    topic_id: int,
+    payload: CheckPayload,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Check a "try it" sentence. Feedback only -- mastery changes only
+    through server-graded practice rounds."""
+    return _run(gl.check_answer, db, user, topic_id, payload.answer, payload.exercise, locale)

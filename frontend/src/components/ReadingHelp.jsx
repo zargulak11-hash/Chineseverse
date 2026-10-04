@@ -127,7 +127,7 @@ function TextHelp({ slug, chapter, text, focus, onListen }) {
           <h3 className="help-h">{t("stories.help.grammarApp")}</h3>
           <ul className="help-points">
             {data.grammar.map((g, i) => (
-              <li key={i}><b>{g.title}</b>{g.pattern ? <span className="sub"> · {g.pattern}</span> : null}{g.level ? <span className="badge" style={{ marginLeft: 6 }}>HSK {g.level}</span> : null}
+              <li key={i}>{g.id ? <Link to={`/grammar/${g.id}`}><b>{g.title}</b></Link> : <b>{g.title}</b>}{g.pattern ? <span className="sub"> · {g.pattern}</span> : null}{g.level ? <span className="badge" style={{ marginLeft: 6 }}>HSK {g.level}</span> : null}
                 {g.explanation && <p className="sub">{g.explanation}</p>}
               </li>
             ))}

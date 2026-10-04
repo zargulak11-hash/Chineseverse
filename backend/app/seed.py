@@ -392,6 +392,29 @@ def seed_pet_teacher_cases(db: Session) -> None:
         )
 
 
+# Cases first seeded against a topic that doesn't explain them: 我是很高兴。
+# and 我有忙。 are both about adjective predicates (形容词谓语句 -- the
+# adjective is the verb, with 很, no 是 or 有), not about 是 or 有 themselves.
+# Moved only while the row still points at the old topic, so a topic an
+# admin chose since is kept.
+PET_TEACHER_TOPIC_FIXES = (
+    ("我是很高兴。", "是 — to be", "主谓句2：形容词谓语句"),
+    ("我有忙。", "有 — to have / there is", "主谓句2：形容词谓语句"),
+)
+
+
+def fix_pet_teacher_topics(db: Session) -> None:
+    db.flush()
+    for wrong_sentence, old_title, new_title in PET_TEACHER_TOPIC_FIXES:
+        case = db.query(models.PetTeacherCase).filter_by(wrong_sentence=wrong_sentence).first()
+        old = db.query(models.GrammarTopic).filter_by(title=old_title).order_by(models.GrammarTopic.id).first()
+        new = db.query(models.GrammarTopic).filter_by(title=new_title).order_by(models.GrammarTopic.id).first()
+        # None: a fresh database seeds the cases before the curriculum
+        # import creates the syllabus topic, so the link is filled in here.
+        if case and new and (case.grammar_topic_id is None or (old and case.grammar_topic_id == old.id)):
+            case.grammar_topic_id = new.id
+
+
 def seed_achievements(db: Session) -> None:
     from app.services import achievements
 
@@ -415,5 +438,8 @@ def seed_all(db: Session) -> None:
     seed_achievements(db)
     # Last: its translations resolve natural keys against everything above.
     import_curriculum(db)
+    # After the curriculum import: the syllabus topic it points to is
+    # imported there on a fresh database.
+    fix_pet_teacher_topics(db)
     db.commit()
     logger.info("Database seeded.")

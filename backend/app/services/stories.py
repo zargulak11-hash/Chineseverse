@@ -702,7 +702,7 @@ def explain(db: Session, user: models.User, slug: str, n: int, text: str, focus:
                               "meaning": tr(hanzi_tr, h.id, "meaning", h.meaning) if h else "", "level": None})
     grammar_rows = sent.match_grammar(db, text)
     grammar_tr = load_translations(db, "grammar_topic", [str(g.id) for g in grammar_rows], locale)
-    grammar = [{"title": tr(grammar_tr, g.id, "title", g.title), "pattern": g.pattern,
+    grammar = [{"id": g.id, "title": tr(grammar_tr, g.id, "title", g.title), "pattern": g.pattern,
                 "explanation": tr(grammar_tr, g.id, "explanation", g.explanation),
                 "level": levels.get(g.hsk_level_id)} for g in grammar_rows]
 
