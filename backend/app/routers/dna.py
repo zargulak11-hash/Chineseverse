@@ -50,5 +50,9 @@ def my_dna(
         # recomputed here off user_skills directly so the name can be
         # localized instead of taking compute_dna's already-English names.
         strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
-        weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30],
+        # A skill nobody has practised yet is untested, not weak: a new learner
+        # used to see all nine listed under "needs work" (the assistant
+        # already applied this rule).
+        weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30]
+        if any(s.mastery > 0 for s in user.user_skills) else [],
     )

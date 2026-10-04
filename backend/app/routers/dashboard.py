@@ -119,7 +119,11 @@ def dashboard(
                 )
                 for code, value in dna["skills"].items()
             ],
-            weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30],
+            # A skill nobody has practised yet is untested, not weak: a new learner
+            # used to see all nine listed under "needs work" (the assistant
+            # already applied this rule).
+            weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30]
+            if any(s.mastery > 0 for s in user.user_skills) else [],
             strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
         ),
         streak=schemas.StreakResponse(**streak_snapshot(user.streak)),
