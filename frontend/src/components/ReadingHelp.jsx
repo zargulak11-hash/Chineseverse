@@ -152,6 +152,15 @@ function TextHelp({ slug, chapter, text, focus, onListen }) {
         <Link to={`/practice?source=story&story=${slug}&chapter=${chapter}`} className="btn small ghost">
           {t("stories.help.practice")}
         </Link>
+        {/* Follow-up questions about this exact sentence: the assistant is
+            told the story and the selection (the server checks it is really
+            in this chapter). */}
+        <Link
+          to={`/assistant?story=${encodeURIComponent(slug)}&chapter=${chapter}&text=${encodeURIComponent(data.text)}`}
+          className="btn small ghost"
+        >
+          <Icon name="chat" size={13} /> {t("stories.help.askAssistant")}
+        </Link>
       </div>
       {saved !== null && <p className="sub" role="status">{t("stories.help.saved", { count: saved })}</p>}
     </div>

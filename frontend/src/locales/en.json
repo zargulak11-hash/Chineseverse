@@ -1197,7 +1197,16 @@
     "server": "Something went wrong on the server. Please try again in a moment.",
     "requestFailed": "The request failed ({{status}}). Please try again.",
     "placeLocked": "This place opens at HSK {{level}}.",
-    "storyLocked": "This story opens at HSK {{level}}."
+    "storyLocked": "This story opens at HSK {{level}}.",
+    "lessonUnavailable": "A full explanation isn't available right now — the examples below still work.",
+    "aiLimit": "You've asked for many new explanations this hour — try again a bit later.",
+    "writeChinese": "Write the sentence in Chinese characters.",
+    "grammarNoExample": "This grammar point has no example to practise at this level yet.",
+    "fileTooLarge": "{{name}}: the file is too large (max 6 MB).",
+    "fileRead": "{{name}}: the file could not be read.",
+    "fileInvalid": "{{name}}: the file's contents don't match its type.",
+    "fileType": "{{name}}: this file type isn't supported.",
+    "fileUtf8": "{{name}}: text files must be UTF-8."
   },
   "realLife": {
     "title": "Real-life Chinese",
@@ -2497,7 +2506,8 @@
       "practice": "Practise this chapter",
       "name": "name",
       "sentence": "Its sentence",
-      "explainSentence": "Explain this sentence"
+      "explainSentence": "Explain this sentence",
+      "askAssistant": "Ask the assistant"
     }
   },
   "intro": {

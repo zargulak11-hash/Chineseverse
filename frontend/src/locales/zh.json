@@ -1194,7 +1194,16 @@
     "server": "服务器出了点问题，请稍后再试。",
     "requestFailed": "请求失败（{{status}}），请重试。",
     "placeLocked": "这个地方在HSK {{level}}开放。",
-    "storyLocked": "这个故事在 HSK {{level}} 开放。"
+    "storyLocked": "这个故事在 HSK {{level}} 开放。",
+    "lessonUnavailable": "暂时无法提供完整讲解——下面的例句仍然可以使用。",
+    "aiLimit": "这一小时内请求的新讲解太多了，请稍后再试。",
+    "writeChinese": "请用汉字写句子。",
+    "grammarNoExample": "这个语法点在这个级别还没有可练习的例句。",
+    "fileTooLarge": "{{name}}：文件太大（最大 6 MB）。",
+    "fileRead": "{{name}}：无法读取文件。",
+    "fileInvalid": "{{name}}：文件内容与类型不符。",
+    "fileType": "{{name}}：不支持这种文件类型。",
+    "fileUtf8": "{{name}}：文本文件必须是 UTF-8 编码。"
   },
   "realLife": {
     "title": "生活中的中文",
@@ -2446,7 +2455,8 @@
       "practice": "练习这一章",
       "name": "名字",
       "sentence": "所在的句子",
-      "explainSentence": "讲解这句话"
+      "explainSentence": "讲解这句话",
+      "askAssistant": "问问助手"
     }
   },
   "intro": {

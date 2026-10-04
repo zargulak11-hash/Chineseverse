@@ -208,7 +208,7 @@ export default function Assistant() {
           if (ev.type === "meta") update((m) => ({ ...m, source: ev.source }));
           else if (ev.type === "delta") update((m) => ({ ...m, content: m.content + ev.text }));
           else if (ev.type === "done") update((m) => ({ ...m, status: "done" }));
-          else if (ev.type === "error") update((m) => ({ ...m, status: "error", error: ev.detail }));
+          else if (ev.type === "error") update((m) => ({ ...m, status: "error" }));
         },
       });
       update((m) => (m.status === "streaming" ? { ...m, status: "done" } : m));
@@ -365,7 +365,7 @@ export default function Assistant() {
                           </span>
                         )}
                         {m.status === "stopped" && <span className="assistant-status">{t("pages.assistant.stopped")}</span>}
-                        {m.status === "error" && <span className="assistant-status bad">{m.error || t("pages.assistant.interrupted")}</span>}
+                        {m.status === "error" && <span className="assistant-status bad">{t("pages.assistant.interrupted")}</span>}
                         {m.source === "offline" && m.status === "done" && <span className="assistant-status">{t("pages.assistant.offlineNote")}</span>}
                         {m.content && m.status !== "streaming" && ttsOk && (
                           <span className="assistant-tools">

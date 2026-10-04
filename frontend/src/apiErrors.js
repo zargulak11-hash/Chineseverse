@@ -36,13 +36,32 @@ const EXACT = {
   "No stroke data available for this character": "noStrokeData",
   "This tracing attempt was already used": "traceUsed",
   "This tracing attempt has expired": "traceExpired",
+  // services/grammar_lesson.py
+  "A full explanation isn't available right now — the examples below still work": "lessonUnavailable",
+  "You've asked for many new explanations this hour — try again a bit later": "aiLimit",
+  "Write the sentence in Chinese characters": "writeChinese",
+  "This grammar point has no example to practice at this level": "grammarNoExample",
 };
+
+// routers/assistant.py: "<file name>: <problem>" -- the name stays, the
+// problem is translated.
+const FILE_ERRORS = [
+  [": the file is too large", "fileTooLarge"],
+  [": the file could not be read", "fileRead"],
+  [": the file is not a valid", "fileInvalid"],
+  [": this file type isn't supported", "fileType"],
+  [": text files must be UTF-8", "fileUtf8"],
+];
 
 export function localizeApiError(detail, status) {
   if (typeof detail === "string") {
     const key = EXACT[detail];
     if (key) return i18n.t(`apiErrors.${key}`);
     if (detail.startsWith("Trace not accepted")) return i18n.t("apiErrors.traceRejected");
+    for (const [marker, fileKey] of FILE_ERRORS) {
+      const at = detail.indexOf(marker);
+      if (at > 0) return i18n.t(`apiErrors.${fileKey}`, { name: detail.slice(0, at) });
+    }
     const mission = /^This mission opens at HSK (\d+)$/.exec(detail);
     if (mission) return i18n.t("apiErrors.missionLocked", { level: mission[1] });
     // services/world_map.scene_gate: a place above the learner's HSK level.
