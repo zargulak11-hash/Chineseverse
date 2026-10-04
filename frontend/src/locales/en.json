@@ -56,7 +56,7 @@
     "soundWorld": "Sound World",
     "ecosystem": "Word Ecosystem",
     "internet": "Chinese Internet",
-    "passport": "Chinese Passport",
+    "passport": "My Chinese Journey",
     "toLanding": "ChineseVerse — main page",
     "journey": "Your journey",
     "stories": "Stories"
@@ -1356,7 +1356,7 @@
       "stale_area": "You haven't practised {{area}} for {{days}} days — {{name}} saved your place.",
       "stale_area_never": "You started {{area}} but haven't practised it in a round yet.",
       "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next.",
-      "passport_milestone": "A new page in your Chinese Passport: {{event}}",
+      "passport_milestone": "A new page in My Chinese Journey: {{event}}",
       "reading_word": "{{name}} noticed you keep looking up {{word}} while reading — let's review it."
     },
     "area": {
@@ -1377,7 +1377,7 @@
       "new_learner": "Start a lesson",
       "achievement": "See achievements",
       "mastered_recently": "My vocabulary",
-      "passport_milestone": "Open my passport",
+      "passport_milestone": "Open My Chinese Journey",
       "reading_word": "Review it"
     }
   },
@@ -1666,7 +1666,7 @@
     }
   },
   "passport": {
-    "title": "Chinese Passport",
+    "title": "My Chinese Journey",
     "subtitle": "What {{name}} can really do in Chinese — every line backed by your own practice since {{date}}.",
     "level": "Level",
     "wordsKnown": "Words known",
@@ -1849,9 +1849,9 @@
     "weakChars": "Characters that trip you up",
     "missedTimes_one": "missed {{count}}×",
     "missedTimes_other": "missed {{count}}×",
-    "howTitle": "How the passport works",
+    "howTitle": "How My Chinese Journey works",
     "how": "Every ability is judged from your graded answers and records, never from points. With fewer than {{min}} answers, it says so instead of guessing.",
-    "fromDna": "See the evidence in your Chinese Passport",
+    "fromDna": "See the evidence in My Chinese Journey",
     "totals_one": "So far: {{answers}} graded answers in {{count}} round.",
     "totals_other": "So far: {{answers}} graded answers in {{count}} rounds."
   },
@@ -1860,7 +1860,7 @@
     "subtitle": "Every place is a real way to use Chinese. Places open, light up and fill with people as you learn — the city grows because you do.",
     "loading": "Walking into the city…",
     "mapLabel": "Map of your Chinese city",
-    "passportLink": "Open your Chinese Passport",
+    "passportLink": "Open My Chinese Journey",
     "explored": "Places explored",
     "scenesDone": "Scenes completed",
     "skillsShown": "Skills shown",
@@ -1930,7 +1930,7 @@
     },
     "adaptNoEvidence": "No Learning Compass evidence yet — the city uses your HSK level as it is.",
     "howTitle": "How the city grows",
-    "how": "Each place opens when your HSK level reaches it — the same level your Dashboard and HSK path show. Inside an open place, topics light up as their words become yours, and every completed conversation is recorded on the map and in your Passport.",
+    "how": "Each place opens when your HSK level reaches it — the same level your Dashboard and HSK path show. Inside an open place, topics light up as their words become yours, and every completed conversation is recorded on the map and in My Chinese Journey.",
     "openCount": "{{open}} of {{total}} places open",
     "place": {
       "home": {
@@ -1985,8 +1985,8 @@
       },
       "passport_office": {
         "name": "Passport office",
-        "desc": "Your Chinese Passport: what you can really do, with the evidence and your story.",
-        "enter": "Open my Passport"
+        "desc": "My Chinese Journey: what you can really do, with the evidence and your story.",
+        "enter": "Open My Chinese Journey"
       },
       "university": {
         "name": "University",
@@ -2538,7 +2538,7 @@
       "task": "Open the first case, read every clue, and pick the answer the clues point to."
     },
     "passport": {
-      "what": "Your Chinese passport: a record of what you can really do — places used, cases solved, words and characters mastered.",
+      "what": "My Chinese Journey: a record of what you can really do — places used, cases solved, words and characters mastered.",
       "why": "Every stamp is earned by your own practice, so you can see real progress — and show it to others.",
       "when": "Any time you want to see how far you've come. It fills up as you study — nothing to do here first.",
       "task": "Finish any round — a lesson, the tones or a story — and come back to see your first stamp."

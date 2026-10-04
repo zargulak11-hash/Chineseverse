@@ -64,7 +64,7 @@ ZH = {
     "reviews_done": "复习做得很好，记忆更牢了！",
     "stale_area": "好久没练{area}了，我们去看看吧。",
     "weak_skill": "我们一起加强这个能力吧。",
-    "passport_milestone": "你的中文护照上又多了一页！",
+    "passport_milestone": "你的中文之旅又翻开了新的一页！",
     "reading_word": "你读故事时常常查“{w}”，我们复习一下吧！",
 }
 _AREA_ZH = {"vocab": "词汇", "hanzi": "汉字", "grammar": "语法"}
