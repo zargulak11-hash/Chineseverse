@@ -1192,7 +1192,7 @@ def speak(db: Session, user: models.User, session: models.PracticeSession, index
     browser sends), graded by the same voice pipeline as World turns and
     stored as a real VoiceAttempt, so speaking feeds the speaking/tones DNA,
     the speaking quest and the voice achievements. Capped per question."""
-    from app.services import voice_eval
+    from app.services import ai_budget, ai_client, voice_eval
     from app.services.dna import apply_voice_to_skills
 
     if not 0 <= index < len(session.questions):
@@ -1208,7 +1208,8 @@ def speak(db: Session, user: models.User, session: models.PracticeSession, index
         raise PracticeError(409, "You've already practised saying this one")
 
     ensure_user_skills(db, user)
-    result = voice_eval.grade_turn(None, spoken_text, expected_keywords=say.get("keywords") or [say["zh"]])
+    with ai_client.offline_unless(ai_budget.spend(user.id)):
+        result = voice_eval.grade_turn(None, spoken_text, expected_keywords=say.get("keywords") or [say["zh"]])
     attempt = models.VoiceAttempt(
         user_id=user.id, prompt_text=say["zh"], spoken_text=spoken_text, transcript=result["transcript"],
         pronunciation=result["pronunciation"], tones=result["tones"], fluency=result["fluency"],

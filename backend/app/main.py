@@ -54,6 +54,13 @@ def _run_migrations() -> None:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    if settings.jwt_secret == "change-me-in-production":
+        # Anyone who knows this public placeholder can sign a token for any
+        # account. Not fatal (a fresh local checkout runs with it), but a
+        # server must set JWT_SECRET in backend/.env.
+        logging.getLogger("app").error(
+            "JWT_SECRET is the placeholder from config.py -- set a real secret in backend/.env"
+        )
     _run_migrations()
     logging.getLogger("app").info("Database migrations applied.")
     with SessionLocal() as db:

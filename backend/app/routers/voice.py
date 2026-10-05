@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
-from app.services import voice_eval
+from app.services import ai_budget, ai_client, voice_eval
 from app.services.activity import log_activity
 from app.services.dna import apply_voice_to_skills
 from app.services.ai_client import chat_reply, voice_companion_feedback_zh
@@ -122,7 +122,8 @@ def submit_attempt(
 
     # Without a dialogue there is no server-side answer key: the turn is graded
     # as free speech, never against keywords the client chose.
-    result = voice_eval.grade_turn(dialogue, payload.spoken_text, expected_keywords=None)
+    with ai_client.offline_unless(ai_budget.spend(user.id)):
+        result = voice_eval.grade_turn(dialogue, payload.spoken_text, expected_keywords=None)
     if dialogue is not None:
         payload.prompt_text = dialogue.prompt
 
@@ -210,7 +211,11 @@ def submit_companion_chat(
         raise HTTPException(status_code=404, detail="Animal not found")
     personality_row = animal.personality_row
 
-    result = voice_eval.grade_turn(None, payload.spoken_text, expected_keywords=None)
+    # One turn (its grading and the companion's reply) spends one call of the
+    # learner's AI budget; past it both run offline (services/ai_budget.py).
+    ai_allowed = ai_budget.spend(user.id)
+    with ai_client.offline_unless(ai_allowed):
+        result = voice_eval.grade_turn(None, payload.spoken_text, expected_keywords=None)
     # Daily Voice Companion is Chinese-immersion only: the shared voice_eval
     # pipeline's `feedback` string (used as-is by /attempt and /evaluate for
     # the main companion / World voice system, which this must not change)
@@ -248,13 +253,14 @@ def submit_companion_chat(
     hsk_level, _ = user_rank(db, user)
     level_hint = "beginner" if hsk_level <= 2 else "intermediate" if hsk_level <= 4 else "advanced"
 
-    reply = chat_reply(
-        [t.model_dump() for t in payload.history] + [{"role": "user", "content": payload.spoken_text}],
-        animal_slug=animal.slug,
-        user_name=user.username,
-        energy=personality_row.energy if personality_row else None,
-        level_hint=level_hint,
-    )
+    with ai_client.offline_unless(ai_allowed):
+        reply = chat_reply(
+            [t.model_dump() for t in payload.history] + [{"role": "user", "content": payload.spoken_text}],
+            animal_slug=animal.slug,
+            user_name=user.username,
+            energy=personality_row.energy if personality_row else None,
+            level_hint=level_hint,
+        )
 
     db.commit()
     db.refresh(attempt)
@@ -289,10 +295,11 @@ def evaluate_turn(
     dialogue = None
     if payload.dialogue_id:
         dialogue = db.get(models.Dialogue, payload.dialogue_id)
-    result = voice_eval.grade_turn(
-        dialogue, payload.spoken_text,
-        expected_keywords=payload.expected_keywords or None,
-    )
+    with ai_client.offline_unless(ai_budget.spend(user.id)):
+        result = voice_eval.grade_turn(
+            dialogue, payload.spoken_text,
+            expected_keywords=payload.expected_keywords or None,
+        )
     return ReactionResponse(
         reaction=result["reaction"] or "很好！",
         evaluation={

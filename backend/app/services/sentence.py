@@ -214,7 +214,7 @@ def tier_for(level: int) -> str:
 
 
 def analyze(db: Session, user: models.User, text: str, locale: str, *, translate: bool = True) -> dict:
-    from app.services import ai_client
+    from app.services import ai_budget, ai_client
     from app.services.gamification import user_rank
 
     text = validate(db, text)
@@ -297,7 +297,10 @@ def analyze(db: Session, user: models.User, text: str, locale: str, *, translate
             key = "mastered" if t["status"] == "mastered" else "new" if t["status"] == "new" else "learning"
             counts[key] += 1
 
-    translation = ai_client.translate_sentence(text, locale) if translate else None
+    translation = None
+    if translate:
+        with ai_client.offline_unless(ai_budget.spend(user.id)):
+            translation = ai_client.translate_sentence(text, locale)
     return {
         "text": text,
         "pinyin": " ".join(p for p in pinyin_parts if p),

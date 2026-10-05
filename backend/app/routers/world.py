@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale, get_user_or_none
-from app.services import ai_client
+from app.services import ai_budget, ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
     check_achievements,
@@ -109,12 +109,13 @@ def solve_case(
         raise HTTPException(status_code=403, detail="This location isn't unlocked yet")
     case_data = scenario.case_data or {}
     solution_kws = case_data.get("solution_kws", [])
-    verdict = ai_client.evaluate_case_solution(
-        scenario.description or scenario.title,
-        payload.conclusion or "",
-        solution_kws,
-        case_data.get("hint", ""),
-    )
+    with ai_client.offline_unless(ai_budget.spend(user.id)):
+        verdict = ai_client.evaluate_case_solution(
+            scenario.description or scenario.title,
+            payload.conclusion or "",
+            solution_kws,
+            case_data.get("hint", ""),
+        )
     solved = verdict["solved"]
     progress_quests(db, user, "case")
     if solved:

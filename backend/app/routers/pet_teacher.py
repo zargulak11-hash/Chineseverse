@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
-from app.services import ai_client
+from app.services import ai_budget, ai_client
 from app.services.activity import log_activity
 from app.services.gamification import (
     add_bond_points,
@@ -125,23 +125,26 @@ def answer_lesson(
     # string (see services/sentence_check.py for the bug this replaces).
     check = sentence_check.check(payload.correction, case.correct_sentence, wrong=case.wrong_sentence)
     judge_feedback = ""
-    if not check["final"]:
-        judged = ai_client.judge_sentence(
-            payload.correction, case.correct_sentence,
-            f"Correct the grammar mistake in: {case.wrong_sentence}", locale, wrong=case.wrong_sentence,
+    # Both model calls of one answer spend from the learner's AI budget;
+    # past it they are graded offline (services/ai_budget.py).
+    with ai_client.offline_unless(ai_budget.spend(user.id)):
+        if not check["final"]:
+            judged = ai_client.judge_sentence(
+                payload.correction, case.correct_sentence,
+                f"Correct the grammar mistake in: {case.wrong_sentence}", locale, wrong=case.wrong_sentence,
+            )
+            if judged:
+                check["source"] = "ai"
+                check["category"] = judged["category"]
+                check["verdict"] = {"correct": "correct", "alternative": "acceptable",
+                                    "typo": "close"}.get(judged["category"], "incorrect")
+                judge_feedback = judged["feedback"]
+        correct_fix = check["verdict"] in ("correct", "acceptable")
+        verdict = ai_client.evaluate_pet_teacher_explanation(
+            mistake_summary or "", payload.explanation, _keywords(case.explanation_keywords),
+            wrong_sentence=case.wrong_sentence, correct_sentence=case.correct_sentence,
+            correction=payload.correction, correction_ok=correct_fix, locale=locale,
         )
-        if judged:
-            check["source"] = "ai"
-            check["category"] = judged["category"]
-            check["verdict"] = {"correct": "correct", "alternative": "acceptable",
-                                "typo": "close"}.get(judged["category"], "incorrect")
-            judge_feedback = judged["feedback"]
-    correct_fix = check["verdict"] in ("correct", "acceptable")
-    verdict = ai_client.evaluate_pet_teacher_explanation(
-        mistake_summary or "", payload.explanation, _keywords(case.explanation_keywords),
-        wrong_sentence=case.wrong_sentence, correct_sentence=case.correct_sentence,
-        correction=payload.correction, correction_ok=correct_fix, locale=locale,
-    )
     understood = verdict["understood"]
     success = correct_fix and understood
     if success:

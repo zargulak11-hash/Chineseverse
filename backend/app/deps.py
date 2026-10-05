@@ -95,4 +95,10 @@ def get_user_or_none(
     user_id = decode_access_token(credentials.credentials)
     if user_id is None:
         return None
-    return db.get(models.User, user_id)
+    user = db.get(models.User, user_id)
+    # A deactivated account is anonymous here too, as get_current_user
+    # refuses it: its still-unexpired token must not keep an admin's view
+    # of lesson bodies or a learner's unlocks.
+    if user is None or not user.is_active:
+        return None
+    return user

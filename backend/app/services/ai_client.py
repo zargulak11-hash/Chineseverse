@@ -14,6 +14,8 @@ any external API key.
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import json
 import logging
 import re
@@ -40,6 +42,22 @@ def _contain(text: str, *keywords: str) -> bool:
     return any(_normalize(k) and _normalize(k) in text for k in keywords)
 
 
+# True inside offline_unless(False): the learner this request serves has
+# used up their hourly AI budget (services/ai_budget.py), so this call takes
+# the same deterministic offline path as a server without a key.
+_forced_offline: contextvars.ContextVar[bool] = contextvars.ContextVar("ai_forced_offline", default=False)
+
+
+@contextlib.contextmanager
+def offline_unless(allowed: bool):
+    """Run the block offline when `allowed` is False; otherwise unchanged."""
+    token = _forced_offline.set(not allowed)
+    try:
+        yield
+    finally:
+        _forced_offline.reset(token)
+
+
 def _active_provider() -> str:
     """"gemini" when a Gemini key is configured, otherwise "offline".
 
@@ -47,7 +65,7 @@ def _active_provider() -> str:
     left in an old .env) resolves the same way as "auto", so the app never
     tries to reach OpenAI.
     """
-    if (settings.ai_provider or "auto").lower() == "offline":
+    if _forced_offline.get() or (settings.ai_provider or "auto").lower() == "offline":
         return "offline"
     return "gemini" if settings.gemini_api_key else "offline"
 

@@ -21,6 +21,19 @@ AVATAR_CONTENT_TYPES = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "
 MAX_AVATAR_BYTES = 3 * 1024 * 1024
 
 
+def _is_image(data: bytes, content_type: str) -> bool:
+    """The declared type is the client's word; the leading bytes have to
+    agree before anything is written to disk and served back to everyone
+    as that user's photo (same rule as the assistant's attachments)."""
+    if content_type == "image/png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    if content_type == "image/jpeg":
+        return data.startswith(b"\xff\xd8\xff")
+    if content_type == "image/webp":
+        return data.startswith(b"RIFF") and data[8:12] == b"WEBP"
+    return False
+
+
 def _delete_existing_avatar(avatar_url: str | None) -> None:
     path = file_for(avatar_url)
     if path is not None:
@@ -153,6 +166,8 @@ async def upload_avatar(
     data = await file.read()
     if len(data) > MAX_AVATAR_BYTES:
         raise HTTPException(status_code=413, detail="Image must be 3 MB or smaller")
+    if not _is_image(data, file.content_type):
+        raise HTTPException(status_code=415, detail="Only JPG, PNG or WEBP images are allowed")
 
     profile = user.profile
     if profile is None:

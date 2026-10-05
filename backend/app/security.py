@@ -59,5 +59,7 @@ def decode_access_token(token: str) -> int | None:
             token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
         )
         return int(payload.get("sub"))
-    except jwt.PyJWTError:
+    # A validly signed token without a numeric "sub" is still not a session:
+    # a 401, not an unhandled TypeError (500).
+    except (jwt.PyJWTError, TypeError, ValueError):
         return None
