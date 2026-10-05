@@ -5,7 +5,9 @@ by the token's user, never by an id in the request, and a book above the
 learner's HSK level is refused (403) by all of them. Reads (library, book,
 chapter) write nothing; progress is written only by a reading action."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -47,11 +49,19 @@ def _run(fn, *args):
 
 @router.get("")
 def list_stories(
+    level: int | None = Query(None, ge=1, le=9),
+    topic: str | None = Query(None, max_length=20),
+    status: Literal["new", "in_progress", "completed", "locked"] | None = None,
+    length: Literal["short", "long"] | None = None,
+    q: str | None = Query(None, max_length=60),
+    offset: int = Query(0, ge=0, le=5000),
+    limit: int | None = Query(None, ge=1, le=60),
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
-    return svc.library(db, user, locale)
+    return svc.library(db, user, locale, hsk=level, topic=topic, status=status, length=length,
+                       q=q, offset=offset, limit=limit)
 
 
 @router.get("/{slug}")

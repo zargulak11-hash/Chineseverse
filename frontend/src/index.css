@@ -1447,6 +1447,8 @@ select.input {
 .book-select { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); font-weight: 700; color: var(--text-dim); }
 .book-select .input { width: auto; padding: 6px 10px; font-size: var(--text-sm); }
 .book-library-note { margin-top: var(--space-5); }
+.book-search .input { min-width: 0; width: min(260px, 60vw); }
+.book-more { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); margin-top: var(--space-5); }
 
 .book-head-main { display: flex; align-items: flex-start; gap: var(--space-5); min-width: 0; }
 .book-head-main .h1 { margin: 0; }

@@ -361,7 +361,25 @@ def _card(db: Session, book: dict, level: int, known: dict[int, str], p, r, loca
     }
 
 
-def library(db: Session, user: models.User, locale: str) -> dict:
+STATUSES = ("new", "in_progress", "completed", "locked")
+# A "short" read is one that fits a ten-minute sitting (the length filter).
+SHORT_MINUTES = 10
+
+
+def _matches(card: dict, q: str) -> bool:
+    q = q.casefold()
+    return any(q in (card[k] or "").casefold() for k in ("title", "title_zh", "summary", "slug"))
+
+
+def library(db: Session, user: models.User, locale: str, *, hsk: int | None = None,
+            topic: str | None = None, status: str | None = None, length: str | None = None,
+            q: str | None = None, offset: int = 0, limit: int | None = None) -> dict:
+    """The library for one learner. With no filters, every card is returned
+    (the shape older clients rely on). With filters, `books` is one page of
+    the matching cards and `total` counts all of them, so a level with a
+    hundred books never ships a hundred cards at once; the summary fields
+    (levels, counts, library_size, featured) always describe the whole
+    library."""
     from app.services.gamification import user_rank
 
     level, _ = user_rank(db, user)
@@ -384,11 +402,34 @@ def library(db: Session, user: models.User, locale: str) -> dict:
         s = per_level.setdefault(c["level"], {"level": c["level"], "books": 0, "completed": 0, "locked": c["status"] == "locked"})
         s["books"] += 1
         s["completed"] += c["status"] == "completed"
+    view = cards
+    if hsk:
+        view = [c for c in view if c["level"] == hsk]
+    # Topics on offer are the ones of the chosen level, before the other
+    # filters narrow it, so picking a topic never makes the others vanish.
+    topics = sorted({c["topic"] for c in view})
+    if topic:
+        view = [c for c in view if c["topic"] == topic]
+    if status in STATUSES:
+        view = [c for c in view if c["status"] == status]
+    if length in ("short", "long"):
+        view = [c for c in view if (c["minutes"] <= SHORT_MINUTES) == (length == "short")]
+    if q and q.strip():
+        view = [c for c in view if _matches(c, q.strip())]
+    total = len(view)
+    if limit is not None:
+        view = view[offset:offset + limit]
+    by_slug = {c["slug"]: c for c in cards}
     return {
-        "level": level, "books": cards, "recommended": recommended, "continue": cont,
+        "level": level, "books": view, "total": total, "offset": offset if limit is not None else 0,
+        "limit": limit, "library_size": len(cards),
+        "recommended": recommended, "continue": cont,
+        # The continue / recommended cards themselves: the page of `books`
+        # may not include them once the library is filtered or paged.
+        "featured": {s: by_slug[s] for s in (cont, recommended) if s in by_slug},
         "levels": [per_level.get(lvl, {"level": lvl, "books": 0, "completed": 0, "locked": min(lvl, 7) > level})
                    for lvl in range(1, 10)],
-        "topics": sorted({c["topic"] for c in cards}),
+        "topics": topics,
         "counts": {k: sum(1 for c in cards if c["status"] == k) for k in ("completed", "in_progress")},
     }
 

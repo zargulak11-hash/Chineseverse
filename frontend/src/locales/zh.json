@@ -2354,6 +2354,9 @@
     },
     "empty": "这个等级还没有书——书库正在不断增加新书。",
     "emptyFilter": "没有符合条件的书。",
+    "search": { "label": "搜索", "placeholder": "书名或主题" },
+    "shown": "已显示 {{shown}} / {{total}} 本书",
+    "more_one": "再显示 {{count}} 本", "more_other": "再显示 {{count}} 本",
     "why": "阅读连贯的中文，能把零散的词变成真正的理解。每本书都是为相应等级用中文写的；翻译只是你需要时的帮助，而不是正文。",
     "card": {
       "chapters_other": "{{count}} 章",

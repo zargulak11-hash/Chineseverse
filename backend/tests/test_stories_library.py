@@ -93,6 +93,48 @@ def test_a_new_reader_sees_hsk1_open_and_reading_writes_nothing(client, reader):
     assert rows(uid) == (0, 0), "opening the library, a book or a chapter writes nothing"
 
 
+def test_the_library_filters_and_pages_on_the_server_without_changing_the_unfiltered_shape(client, reader):
+    _, h = reader
+    whole = expect(client, "get", "/api/stories", 200, headers=h)
+    # Unfiltered: every card, as before, with the whole-library summary.
+    assert len(whole["books"]) == whole["total"] == whole["library_size"] == len(books.all_books())
+    assert whole["limit"] is None and BOOK in whole["featured"] and whole["featured"][BOOK]["slug"] == BOOK
+
+    hsk1 = [b for b in books.all_books() if b["level"] == 1]
+    page1 = expect(client, "get", "/api/stories?level=1&limit=6", 200, headers=h)
+    page2 = expect(client, "get", "/api/stories?level=1&limit=6&offset=6", 200, headers=h)
+    assert page1["total"] == page2["total"] == len(hsk1) and len(page1["books"]) == 6
+    first, second = [c["slug"] for c in page1["books"]], [c["slug"] for c in page2["books"]]
+    assert not set(first) & set(second), "pages don't overlap"
+    assert first == [c["slug"] for c in whole["books"] if c["level"] == 1][:6], "paging keeps the library order"
+    # The summary still describes the whole library, and the recommended
+    # card travels with the response even when it isn't on this page.
+    assert page2["library_size"] == whole["library_size"] and page2["counts"] == whole["counts"]
+    assert page2["featured"].get(BOOK, {}).get("slug") == BOOK
+    assert page1["topics"] == sorted({b["topic"] for b in hsk1})
+
+    topic = hsk1[0]["topic"]
+    by_topic = expect(client, "get", f"/api/stories?level=1&topic={topic}", 200, headers=h)
+    assert by_topic["books"] and all(c["topic"] == topic and c["level"] == 1 for c in by_topic["books"])
+    assert by_topic["topics"] == page1["topics"], "choosing a topic keeps the others on offer"
+    locked = expect(client, "get", "/api/stories?status=locked&limit=60", 200, headers=h)
+    assert locked["total"] == sum(1 for b in books.all_books() if b["level"] > 1)
+    assert all(c["status"] == "locked" for c in locked["books"])
+    short = expect(client, "get", "/api/stories?level=1&length=short", 200, headers=h)
+    assert all(c["minutes"] <= svc.SHORT_MINUTES for c in short["books"])
+
+    # Search matches the Chinese title, the translated title or the summary.
+    zh = expect(client, "get", "/api/stories?q=" + books.get(BOOK)["title"]["zh"], 200, headers=h)
+    assert BOOK in [c["slug"] for c in zh["books"]]
+    en = expect(client, "get", "/api/stories?q=" + books.get(BOOK)["title"]["en"].upper(), 200, headers=h)
+    assert BOOK in [c["slug"] for c in en["books"]], "search ignores case"
+    none = expect(client, "get", "/api/stories?q=zzzz-no-such-book", 200, headers=h)
+    assert none["books"] == [] and none["total"] == 0
+
+    for bad in ("level=0", "level=10", "limit=0", "limit=61", "offset=-1", "status=done", "length=medium", "q=" + "x" * 61):
+        expect(client, "get", f"/api/stories?{bad}", 422, headers=h)
+
+
 def test_a_chapter_is_chinese_with_curriculum_pinyin_names_and_marked_words(client, reader, chapter1):
     _, h = reader
     ch1, sents = chapter1

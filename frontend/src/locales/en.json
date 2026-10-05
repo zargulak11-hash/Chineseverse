@@ -2400,6 +2400,9 @@
     },
     "empty": "No books at this level yet — more are being added to the library.",
     "emptyFilter": "No books match these filters.",
+    "search": { "label": "Search", "placeholder": "Title or topic" },
+    "shown": "Showing {{shown}} of {{total}} books",
+    "more_one": "Show {{count}} more", "more_other": "Show {{count}} more",
     "why": "Reading connected Chinese turns separate words into real understanding. Every book is written in Chinese for its level; translations are help you ask for, not the text.",
     "card": {
       "chapters_one": "{{count}} chapter",

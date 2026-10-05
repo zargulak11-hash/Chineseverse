@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
 import BookCover from "../components/BookCover.jsx";
@@ -19,6 +19,9 @@ const TIMES = ["any", "short", "long"];
 const SHORT_MIN = 10;
 // Topic and time filters appear once a level has enough books to need them.
 const FILTERS_FROM = 5;
+// Filtering and paging happen on the server (GET /stories?level=&...), so a
+// level with many books ships one page of cards at a time.
+const PAGE = 12;
 
 function BookCard({ b }) {
   const { t } = useTranslation();
@@ -88,33 +91,60 @@ function Feature({ b, kind }) {
 
 export default function Stories() {
   const { t } = useTranslation();
-  const { data, error } = useApi("/stories");
   const [params, setParams] = useSearchParams();
+  const [pages, setPages] = useState(1);
+  // The learner's level is only known after the first answer; until the URL
+  // names a level, the first request asks for the learner's own (no level).
+  const [ownLevel, setOwnLevel] = useState(null);
 
-  const level = Number(params.get("level")) || (data ? Math.min(data.level, 9) : 1);
+  const level = Number(params.get("level")) || ownLevel || 1;
   const status = STATUSES.includes(params.get("status")) ? params.get("status") : "all";
   const topic = params.get("topic") || "all";
   const time = TIMES.includes(params.get("time")) ? params.get("time") : "any";
+  const q = params.get("q") || "";
+  const [draft, setDraft] = useState(q);
 
-  const atLevel = useMemo(() => (data ? data.books.filter((b) => b.level === level) : []), [data, level]);
-  if (error) return <Layout><Empty>{error}</Empty></Layout>;
-  if (!data) return <Layout><Loading /></Layout>;
+  // Until a level is known, a one-card request learns the learner's level.
+  const ready = Boolean(params.get("level") || ownLevel);
+  const query = new URLSearchParams({ limit: ready ? String(PAGE * pages) : "1" });
+  if (ready) query.set("level", String(level));
+  if (status !== "all") query.set("status", status);
+  if (topic !== "all") query.set("topic", topic);
+  if (time !== "any") query.set("length", time);
+  if (q) query.set("q", q);
+  const { data, error } = useApi(`/stories?${query}`);
+
+  useEffect(() => {
+    if (data && !ownLevel) setOwnLevel(Math.min(data.level, 9));
+  }, [data, ownLevel]);
+  // A new filter starts again from the first page.
+  useEffect(() => setPages(1), [level, status, topic, time, q]);
 
   const set = (patch) => {
-    const next = { level: String(level), status, topic, time, ...patch };
+    const next = { level: String(level), status, topic, time, q, ...patch };
     const clean = Object.fromEntries(Object.entries(next).filter(([k, v]) => !(
-      (k === "status" && v === "all") || (k === "topic" && v === "all") || (k === "time" && v === "any"))));
+      (k === "status" && v === "all") || (k === "topic" && v === "all") || (k === "time" && v === "any") || (k === "q" && !v))));
     setParams(clean, { replace: true });
   };
-  const byId = Object.fromEntries(data.books.map((b) => [b.slug, b]));
-  const cont = data.continue ? byId[data.continue] : null;
-  const rec = !cont && data.recommended ? byId[data.recommended] : null;
-  const topics = [...new Set(atLevel.map((b) => b.topic))].sort();
-  const many = atLevel.length >= FILTERS_FROM;
-  const shown = atLevel.filter((b) => (status === "all" || b.status === status)
-    && (topic === "all" || b.topic === topic)
-    && (time === "any" || (time === "short" ? b.minutes <= SHORT_MIN : b.minutes > SHORT_MIN)));
+  // Search waits for the learner to pause typing instead of asking per key.
+  useEffect(() => {
+    const clean = draft.trim();
+    if (clean === q) return undefined;
+    const id = setTimeout(() => set({ q: clean }), 350);
+    return () => clearTimeout(id);
+  }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!data || !ready || data.limit === 1) return <Layout><Loading /></Layout>;
+
+  const featured = data.featured || {};
+  const cont = data.continue ? featured[data.continue] : null;
+  const rec = !cont && data.recommended ? featured[data.recommended] : null;
+  const topics = data.topics;
   const lv = data.levels.find((x) => x.level === level) || { locked: true, books: 0 };
+  const many = lv.books >= FILTERS_FROM;
+  const shown = data.books;
+  const total = data.total ?? shown.length;
 
   return (
     <Layout>
@@ -134,7 +164,7 @@ export default function Stories() {
             <span className="kpi-label">{t("stories.kpi.reading")}</span>
           </div>
           <div className="kpi">
-            <span className="kpi-value">{data.books.length}</span>
+            <span className="kpi-value">{data.library_size ?? data.books.length}</span>
             <span className="kpi-label">{t("stories.kpi.library")}</span>
           </div>
           <div className="kpi">
@@ -167,7 +197,7 @@ export default function Stories() {
         </div>
       ) : null}
 
-      {atLevel.length > 0 && (
+      {lv.books > 0 && (
         <div className="book-filters" role="group" aria-label={t("stories.filter.label")}>
           <div className="row book-filter-row">
             {STATUSES.map((s) => (
@@ -177,6 +207,11 @@ export default function Stories() {
           </div>
           {many && (
             <div className="row book-filter-row">
+              <label className="book-select book-search">
+                <span>{t("stories.search.label")}</span>
+                <input className="input" type="search" value={draft} maxLength={60}
+                       placeholder={t("stories.search.placeholder")} onChange={(e) => setDraft(e.target.value)} />
+              </label>
               <label className="book-select">
                 <span>{t("stories.filter.topic")}</span>
                 <select className="input" value={topic} onChange={(e) => set({ topic: e.target.value })}>
@@ -196,9 +231,19 @@ export default function Stories() {
       )}
 
       {shown.length === 0 ? (
-        <Empty>{atLevel.length ? t("stories.emptyFilter") : t("stories.empty")}</Empty>
+        <Empty>{lv.books ? t("stories.emptyFilter") : t("stories.empty")}</Empty>
       ) : (
-        <div className="book-grid">{shown.map((b) => <BookCard key={b.slug} b={b} />)}</div>
+        <>
+          <div className="book-grid">{shown.map((b) => <BookCard key={b.slug} b={b} />)}</div>
+          <div className="book-more">
+            <p className="sub" aria-live="polite">{t("stories.shown", { shown: shown.length, total })}</p>
+            {shown.length < total && (
+              <button type="button" className="btn" onClick={() => setPages((n) => n + 1)}>
+                {t("stories.more", { count: Math.min(PAGE, total - shown.length) })}
+              </button>
+            )}
+          </div>
+        </>
       )}
       <p className="sub book-library-note">{t("stories.why")}</p>
     </Layout>
