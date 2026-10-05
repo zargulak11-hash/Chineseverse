@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
-import { api, getToken } from "../api.js";
-import i18n from "../i18n.js";
+import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
@@ -16,21 +15,10 @@ import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 // reports what it can see; the server also ends any attempt that is opened
 // again, so a report that never arrived does not leave a way back in.
 
-// Report an integrity violation. keepalive lets the request outlive the
-// page (reload, close, navigation); sendBeacon cannot carry the auth header.
+// Report an integrity violation; api.beacon's request outlives the page
+// (reload, close, navigation).
 function reportViolation(attemptId, reason) {
-  return fetch(`/api/exams/attempts/${attemptId}/violation`, {
-    method: "POST",
-    keepalive: true,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-      "X-Locale": i18n.language || "en",
-    },
-    body: JSON.stringify({ reason }),
-  })
-    .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null);
+  return api.beacon(`/exams/attempts/${attemptId}/violation`, { reason });
 }
 
 // While the exam is visible and focused the page tells the server it is

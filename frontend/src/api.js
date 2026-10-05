@@ -30,15 +30,21 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
-async function request(method, path, body) {
-  const options = { method, headers: {} };
+// The session token and the UI language, on every request. X-Locale lets
+// the backend localize DB-driven content (lessons, vocab meanings,
+// missions, ...) the same way the UI chrome already follows i18n.language
+// — one header, every request, no per-call plumbing. "en" is the
+// fallback default anyway, so it's harmless to always send it.
+function sessionHeaders(extra = {}) {
+  const headers = { ...extra };
   const token = getToken();
-  if (token) options.headers["Authorization"] = `Bearer ${token}`;
-  // Lets the backend localize DB-driven content (lessons, vocab meanings,
-  // missions, ...) the same way the UI chrome already follows i18n.language
-  // — one header, every request, no per-call plumbing. "en" is the
-  // fallback default anyway, so it's harmless to always send it.
-  if (i18n.language) options.headers["X-Locale"] = i18n.language;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (i18n.language) headers["X-Locale"] = i18n.language;
+  return headers;
+}
+
+async function request(method, path, body) {
+  const options = { method, headers: sessionHeaders() };
   if (body !== undefined) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
@@ -69,12 +75,7 @@ async function request(method, path, body) {
 async function upload(method, path, file) {
   const form = new FormData();
   form.append("file", file);
-  const token = getToken();
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: form,
-  });
+  const res = await fetch(`${API_BASE}${path}`, { method, headers: sessionHeaders(), body: form });
   let data = null;
   try {
     data = await res.json();
@@ -83,6 +84,7 @@ async function upload(method, path, file) {
   }
   if (!res.ok) {
     const detail = data && data.detail;
+    if (res.status === 401) clearSession();
     throw new Error(localizeApiError(detail, res.status));
   }
   return data;
@@ -93,10 +95,7 @@ async function upload(method, path, file) {
 // `signal` (an AbortController's) stops it: fetch rejects with an AbortError,
 // which the caller treats as "stopped", not as a failure.
 async function stream(path, body, { signal, onEvent }) {
-  const headers = { "Content-Type": "application/json" };
-  const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  if (i18n.language) headers["X-Locale"] = i18n.language;
+  const headers = sessionHeaders({ "Content-Type": "application/json" });
   const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers, body: JSON.stringify(body), signal });
   if (!res.ok) {
     let data = null;
@@ -127,6 +126,21 @@ async function stream(path, body, { signal, onEvent }) {
   if (buffer.trim()) onEvent(JSON.parse(buffer));
 }
 
+// A POST that outlives the page (reload, close, navigation): keepalive
+// instead of sendBeacon, which cannot carry the auth header. Never throws;
+// resolves to the JSON body, or null when the request failed or the page
+// was already gone. Used for the exam's integrity reports.
+function beacon(path, body) {
+  return fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    keepalive: true,
+    headers: sessionHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(body),
+  })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+}
+
 export const api = {
   get: (path) => request("GET", path),
   post: (path, body) => request("POST", path, body),
@@ -137,6 +151,7 @@ export const api = {
   // request() above, which always JSON-encodes the body.
   upload: (path, file) => upload("POST", path, file),
   stream: (path, body, options) => stream(path, body, options),
+  beacon: (path, body) => beacon(path, body),
 };
 
 export async function register(payload) {

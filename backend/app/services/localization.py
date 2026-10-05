@@ -2,7 +2,7 @@
 
 One generic table (`ContentTranslation`) instead of a locale column per
 content table or a duplicate table per language — see the model's own
-docstring in models.py. English is never stored here; it's always the
+comment in app/models/localization.py. English is never stored here; it's always the
 content table's own column, used as the fallback when a translation row
 doesn't exist for the requested locale (or the locale is "en").
 """

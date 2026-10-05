@@ -14,7 +14,8 @@ backend/                 FastAPI app (Python 3.12 in Docker; local .venv at repo
   app/main.py            lifespan: alembic upgrade head -> seed_all(db); registers every router
   app/config.py          pydantic-settings Settings (reads backend/.env)
   app/database.py        engine, SessionLocal (autoflush=False!), Base, get_db
-  app/models.py          all SQLAlchemy models (one file)
+  app/models/            SQLAlchemy models, one module per area (users, learning, practice, ...),
+                         all re-exported by app/models/__init__.py (`from app import models`)
   app/schemas.py         all Pydantic request/response models (one file)
   app/deps.py            get_current_user, require_admin, get_user_or_none, get_locale (X-Locale)
   app/security.py        PBKDF2 password hashing, JWT (PyJWT, HS256, sub = user id)
@@ -100,7 +101,8 @@ The core learning loop is: HSK level → lesson → vocabulary, Hanzi and gramma
 - Every schema change needs a new file in `backend/alembic/versions/`:
   - use a new revision id, with `down_revision` set to the current head;
   - give it a docstring explaining why the change is needed;
-  - update the model in `app/models.py` to match.
+  - update the model in the matching `app/models/<area>.py` to match (a new model is also
+    re-exported from `app/models/__init__.py`).
 - Migrations run automatically at startup. Never edit an old migration that has already been applied.
 - Data migrations and seeds must be insert-only and idempotent. Never overwrite rows an admin may have edited. Never touch user progress tables (`user_vocabulary`, `user_hanzi`, `user_grammar`, `progress`, `practice_sessions`, `learning_mistakes`, `user_skills`, `activity_events`, ...).
 - **Content changes** must reach every database, not just the one in front of you:
