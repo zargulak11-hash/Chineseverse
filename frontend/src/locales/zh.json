@@ -687,6 +687,7 @@
       "noStatements": "暂无记录的陈述。",
       "yourVerdict": "你的裁定",
       "verdictPrompt": "谁该负责，为什么？请用中文写出你的答案。",
+      "verdictPlaceholder": "例如：小王忘了锁门",
       "checking": "检查中…",
       "submitVerdict": "提交裁定",
       "caseSolved": "案件已破解",

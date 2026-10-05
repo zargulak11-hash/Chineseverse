@@ -92,7 +92,7 @@ export default function CaseSolve() {
           rows={3}
           value={conclusion}
           onChange={(e) => setConclusion(e.target.value)}
-          placeholder="e.g. 小王忘了锁门"
+          placeholder={t("pages.caseSolve.verdictPlaceholder")}
         />
         <button className="btn primary" style={{ marginTop: 12 }} onClick={solve} disabled={sent || !conclusion.trim()}>
           {sent ? t("pages.caseSolve.checking") : t("pages.caseSolve.submitVerdict")}

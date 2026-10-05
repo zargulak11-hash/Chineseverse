@@ -688,6 +688,7 @@
       "noStatements": "No statements recorded.",
       "yourVerdict": "Your verdict",
       "verdictPrompt": "Who is responsible, and why? Write your answer in Chinese.",
+      "verdictPlaceholder": "e.g. 小王忘了锁门",
       "checking": "Checking…",
       "submitVerdict": "Submit verdict",
       "caseSolved": "CASE SOLVED",

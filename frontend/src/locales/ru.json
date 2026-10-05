@@ -690,6 +690,7 @@
       "noStatements": "Показания не записаны.",
       "yourVerdict": "Ваш вердикт",
       "verdictPrompt": "Кто виноват и почему? Напишите ответ на китайском.",
+      "verdictPlaceholder": "например: 小王忘了锁门",
       "checking": "Проверка…",
       "submitVerdict": "Отправить вердикт",
       "caseSolved": "ДЕЛО РАСКРЫТО",

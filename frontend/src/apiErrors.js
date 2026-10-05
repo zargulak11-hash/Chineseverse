@@ -16,6 +16,7 @@ const EXACT = {
   "This email is linked to a different Google account": "googleOtherAccount",
   "Google account has no verified email": "googleNoEmail",
   "Google sign-in could not be verified": "googleInvalid",
+  "Google credential has no account id": "googleInvalid",
   "Could not reach Google to verify the sign-in": "googleUnreachable",
   "Not authenticated": "sessionExpired",
   "Invalid or expired token": "sessionExpired",
@@ -34,6 +35,7 @@ const EXACT = {
   "This question was already answered": "alreadyAnswered",
   "Answer at least one question before finishing": "answerOne",
   "The placement test is part of onboarding, which is already complete": "placementDone",
+  "Placement attempt already finished": "placementDone", // a double submit
   "Lessons are completed by passing their practice round": "lessonByPractice",
   "No stroke data available for this character": "noStrokeData",
   "This tracing attempt was already used": "traceUsed",
