@@ -387,3 +387,42 @@ def test_winner_rule_is_symmetric():
     assert duel_svc.decide(x, y) == (x, "score") and duel_svc.decide(y, x) == (x, "score")
     y.correct_count = 6
     assert duel_svc.decide(x, y) == (y, "correct") and duel_svc.decide(y, x) == (y, "correct")
+
+
+def accepted_duel(client, players, **body):
+    (a_id, A), (b_id, B) = players(2)
+    d = expect(client, "post", "/api/duels", 201, headers=A, json={"opponent_id": b_id, **body})
+    expect(client, "post", f"/api/duels/{d['id']}/accept", 200, headers=B)
+    return d["id"], (a_id, A), (b_id, B)
+
+
+def test_answering_before_starting_ones_own_clock_is_refused(client, clock, players):
+    did, (_, A), _ = accepted_duel(client, players)
+    body = expect(client, "post", f"/api/duels/{did}/answer", 409, headers=A, json={"index": 0, "choice_id": right(did, 0)})
+    assert body["code"] == "not_started"
+
+
+def test_identical_play_is_a_draw_for_both_players(client, clock, players):
+    did, (a_id, A), (b_id, B) = accepted_duel(client, players, hsk_level=1)
+    expect(client, "post", f"/api/duels/{did}/start", 200, headers=A)
+    expect(client, "post", f"/api/duels/{did}/start", 200, headers=B)
+    for i in range(len(stored_questions(did))):
+        clock.advance(2)
+        for h in (A, B):  # same answers, same moments
+            expect(client, "post", f"/api/duels/{did}/answer", 200, headers=h, json={"index": i, "choice_id": right(did, i)})
+    for h in (A, B):
+        d = expect(client, "get", f"/api/duels/{did}", 200, headers=h)
+        assert d["status"] == "completed" and d["result"] == {"outcome": "draw", "winner_id": None, "decided_by": "draw"}, d
+    with SessionLocal() as db:
+        assert db.get(models.Duel, did).winner_id is None
+
+
+def test_a_grammar_duel_asks_real_grammar_points_with_one_example_each(client, clock, players):
+    did, (_, A), _ = accepted_duel(client, players, hsk_level=2, focus="grammar")
+    qs = stored_questions(did)
+    assert qs and all(q["item_type"] == "grammar" and q["type"] == "example_to_point" for q in qs)
+    with SessionLocal() as db:
+        level2 = db.query(models.HSKLevel).filter_by(level=2).one().id
+        assert all(db.get(models.GrammarTopic, q["item_id"]).hsk_level_id == level2 for q in qs)
+    first = expect(client, "post", f"/api/duels/{did}/start", 200, headers=A)["current"]
+    assert first["prompt"] and " / " not in str(first["prompt"])

@@ -227,12 +227,18 @@ def test_the_same_word_missed_again_and_again(client, learner):
     lesson_id = current_lesson_id(client, oh)
     lw = start_round(client, oh, source="lesson", lesson_id=lesson_id)
     target = stored_questions(lw["id"])[0]["item_id"]
-    causes = []
+    causes, used = [], set()
     for _ in range(3):
         sess = start_round(client, oh, source="lesson", lesson_id=lesson_id)
         st = stored_questions(sess["id"])
         idx = next(i for i, q in enumerate(st) if q["item_id"] == target and q["item_type"] == "vocab")
-        r = answer(client, oh, sess["id"], idx, wrong_choice(sess["questions"][idx], st[idx]))
+        # A different wrong word each time: picking the same one twice is a
+        # different, real event (a "confused pair"), which options shuffled
+        # per round used to trigger here by chance.
+        fresh = [o for o in st[idx]["option_ids"] if o != target and o not in used]
+        assert fresh, "the round offers a wrong option not chosen before"
+        used.add(fresh[0])
+        r = answer(client, oh, sess["id"], idx, fresh[0])
         causes.append((r["reaction"]["mood"], r["reaction"]["cause"]))
     assert causes == [("encouraging", "miss"), ("serious", "repeat_item"), ("frustrated", "tricky_item")], causes
     assert "再练习" in cr.zh_line("repeat_item", "vocab")
