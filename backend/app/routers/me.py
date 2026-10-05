@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app import models, schemas
@@ -141,9 +142,12 @@ def update_account(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # Case-insensitive, as registration checks: "Alice" next to "alice" is
+    # two accounts people can't tell apart (and one login-throttle bucket,
+    # which keys on the case-folded name).
     conflict = (
         db.query(models.User)
-        .filter(models.User.username == payload.username, models.User.id != user.id)
+        .filter(func.lower(models.User.username) == payload.username.lower(), models.User.id != user.id)
         .first()
     )
     if conflict is not None:
