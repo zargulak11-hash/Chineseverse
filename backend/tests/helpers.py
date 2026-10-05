@@ -1,6 +1,15 @@
 """HTTP helpers shared by the API tests (previously copied into every
 standalone script)."""
 
+import itertools
+
+_serial = itertools.count(1)
+
+
+def unique_name(prefix="learner"):
+    """A username no other test in the module has used."""
+    return f"{prefix}_{next(_serial)}"
+
 
 def expect_response(client, method, url, expected, **kwargs):
     """Make a request and assert its status; returns the response."""

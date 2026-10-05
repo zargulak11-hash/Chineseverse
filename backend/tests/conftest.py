@@ -112,9 +112,14 @@ def module_db(template_db, request) -> str:
     path = _TMP / f"{request.module.__name__.rsplit('.', 1)[-1]}.db"
     shutil.copyfile(template_db, path)
     url = sqlite_url(path)
+    saved = config.settings.model_dump()
     bind_database(url)
     reset_process_state()
-    return url
+    yield url
+    # A module that switches settings (fake SMTP, a Google client id, an
+    # AI provider) must not hand them to the next module.
+    for name, value in saved.items():
+        setattr(config.settings, name, value)
 
 
 @pytest.fixture(scope="module")
@@ -124,13 +129,29 @@ def client(module_db):
     database.engine.dispose()
 
 
+def alembic_config():
+    """Alembic config for whatever database the app is bound to (env.py
+    reads settings.database_url, so bind first)."""
+    from alembic.config import Config
+
+    cfg = Config(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    return cfg
+
+
 @pytest.fixture
-def empty_db_url() -> str:
-    """A URL for a database file that doesn't exist yet (migration tests)."""
+def legacy_db():
+    """An empty database for building an old schema by hand: the app is
+    bound to it and an Alembic config for it is returned with its URL."""
     fd, name = tempfile.mkstemp(suffix=".db", dir=_TMP)
     os.close(fd)
     os.remove(name)
-    return sqlite_url(Path(name))
+    url = sqlite_url(Path(name))
+    saved = config.settings.database_url
+    bind_database(url)
+    yield url, alembic_config()
+    database.engine.dispose()
+    config.settings.database_url = saved
 
 
 @pytest.fixture(autouse=True)
