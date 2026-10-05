@@ -1,12 +1,125 @@
-name: Deploy
+name: CI and Deploy
 
+# Every push and pull request runs the checks; a push to main deploys only
+# after all of them pass. Deploying used to be the only job, so a broken
+# change reached production untested.
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
+# Never run two deploys of main at once; checks on other refs may overlap.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
 jobs:
+  backend-tests:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # the version in backend/Dockerfile
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      # The suite builds its own throwaway SQLite databases and forces SMTP
+      # and Gemini off (tests/conftest.py); it needs no secrets.
+      - name: Run pytest
+        run: python -m pytest -q
+
+  postgres-migrations:
+    name: Migrations and boot on PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine # the image in docker-compose.yml
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chineseverse_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d chineseverse_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      # A throwaway database inside this job only.
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/chineseverse_ci
+      AI_PROVIDER: offline
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Upgrade an empty database to head
+        run: python -m alembic upgrade head
+      - name: Re-apply the newest migration (downgrade one, upgrade again)
+        run: |
+          python -m alembic downgrade -1
+          python -m alembic upgrade head
+      # The app's own startup (migrations + idempotent seed) on PostgreSQL,
+      # the engine production runs; the pytest job covers SQLite.
+      - name: Boot the API and read seeded content
+        run: |
+          python - <<'EOF'
+          from fastapi.testclient import TestClient
+          from app.main import app
+
+          with TestClient(app) as client:
+              assert client.get("/health").json() == {"status": "ok"}
+              levels = client.get("/api/hsk/levels").json()
+              assert len(levels) == 7, levels
+              assert len(client.get("/api/animals").json()) == 20
+          print("API booted on PostgreSQL with the seeded curriculum")
+          EOF
+
+  frontend-build:
+    name: Frontend build and i18n keys
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20" # the version in frontend/Dockerfile
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Every locale has every key
+        run: python3 scripts/check_i18n_keys.py
+
   deploy:
+    name: Deploy to production
+    needs: [backend-tests, postgres-migrations, frontend-build]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server

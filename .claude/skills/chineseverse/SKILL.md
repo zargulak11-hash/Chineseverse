@@ -26,7 +26,7 @@ backend/                 FastAPI app (Python 3.12 in Docker; local .venv at repo
   app/seed_content/curriculum.json.gz   committed curriculum snapshot (natural keys)
   alembic/versions/      migrations; alembic/seed_data/ holds the Hanzi dataset
   scripts/               one-off/maintenance scripts (export_curriculum_snapshot.py, ...)
-  tests/                 standalone test scripts (no pytest)
+  tests/                 pytest suite (conftest.py: isolated SQLite per module)
 frontend/                React 18 + Vite 5, react-router-dom 6, i18next, animejs, framer-motion, hanzi-writer
   src/api.js             the only HTTP client (fetch, Bearer token, X-Locale header)
   src/App.jsx            routes, RequireAuth / RequireAdmin, AuthContext provider, /me revalidation on boot
@@ -39,7 +39,7 @@ frontend/                React 18 + Vite 5, react-router-dom 6, i18next, animejs
   src/index.css          all styles; theme tokens (--accent, --good, --bad, --surface-2, ...)
   nginx.conf             serves the SPA, proxies /api/ and /static/ to backend:8000
 docker-compose.yml       postgres:16 + backend + frontend (local Docker)
-.github/workflows/deploy.yml   push to main -> SSH -> ~/deploy_chineseverse.sh on the server
+.github/workflows/deploy.yml   tests + Postgres migrations + frontend build; then (main only) SSH deploy
 ```
 
 Production is https://chineseverse.qobus.tj/ and has real users.
@@ -148,18 +148,19 @@ The core learning loop is: HSK level → lesson → vocabulary, Hanzi and gramma
 
 ## 7. Testing and verification
 
-Backend tests are standalone scripts with no pytest. Each one sets `DATABASE_URL` to a temporary SQLite database before importing `app.main`, then drives it with `TestClient`, and prints `[PASS] …` or `ALL … PASSED`. Run them from `backend/` with the repo's venv:
+Backend tests use pytest (`backend/tests/test_*.py`, config in `backend/pytest.ini`, dev dependencies in `backend/requirements-dev.txt`). `tests/conftest.py` builds one migrated and seeded SQLite template per run and gives every test module its own copy (`client` fixture), forces SMTP and Gemini off whatever `backend/.env` says, and resets in-process limits between modules. Shared helpers live in `tests/helpers.py` (`expect`, `register`, `unique_name`, `bearer`). Run from `backend/` with the repo's venv:
 
 ```
-..\.venv\Scripts\python.exe tests\smoke_test.py              # CRUD + 401/403/ownership
-..\.venv\Scripts\python.exe tests\google_auth_test.py        # identity chain + admin allowlist
-..\.venv\Scripts\python.exe tests\practice_test.py           # graded practice/review/lessons/DNA
-..\.venv\Scripts\python.exe tests\curriculum_parity_test.py  # fresh DB gets full curriculum
-..\.venv\Scripts\python.exe tests\admin_dashboard_test.py
-$env:PYTHONPATH="."; ..\.venv\Scripts\python.exe tests\phase2_boot_test.py
+..\.venv\Scripts\python.exe -m pytest -q                              # everything (~9 min)
+..\.venv\Scripts\python.exe -m pytest -q tests\test_auth_login.py     # one module
+..\.venv\Scripts\python.exe -m pytest -q -k "duel or exam"            # by name
+..\.venv\Scripts\python.exe -m pytest -q -m migration                 # migration tests only
 ```
 
-- `tests/admin_users_test.py` needs a live API on `http://127.0.0.1:8001` running against a throwaway SQLite database (`DATABASE_URL=sqlite:///...`). Never run it against the development or production database.
+- Each test registers its own learners (`unique_name`) instead of depending on earlier tests. Patch with pytest's `monkeypatch`, never by assigning module attributes, so nothing leaks into later modules.
+- Migration tests use the `legacy_db` fixture (an empty database the app is bound to, plus an Alembic config) and are marked `migration`.
+- CI (`.github/workflows/deploy.yml`) runs pytest, migrations + app boot on PostgreSQL 16 and the frontend build/i18n check on every push and PR; deploy runs only after all three pass on `main`.
+- `tests/frontend_journey.py` is a manual probe of a running stack through the Vite proxy, not part of the suite.
 - On this Windows machine, anything that imports psycopg (the real Postgres) must run from PowerShell. From Git Bash, libpq fails to load. SQLite-based tests work from either shell.
 - **Frontend:** `cd frontend && npm run build` must pass. Also run `python scripts/check_i18n_keys.py`. There is no frontend test runner and no ESLint, so check for identifiers you removed or no longer use.
 - Add or extend a test script for each new backend behaviour, especially anything involving authorization, grading or data integrity.
@@ -184,7 +185,7 @@ $env:PYTHONPATH="."; ..\.venv\Scripts\python.exe tests\phase2_boot_test.py
 3. If the feature adds a user-owned table, add a migration and a model, plus user-deletion cascade handling.
 4. Add authorization, validation, and a clear `detail` on every error path.
 5. Build the frontend page with loading, empty and error states; a mobile layout; strings in all four locales; and dashboard `refresh()` where needed.
-6. Add or extend tests. Run the relevant backend tests, `npm run build` and the i18n check.
+6. Add or extend pytest tests. Run the relevant backend tests, `npm run build` and the i18n check.
 7. Commit and push (section 11).
 
 ## 10. Avoiding unnecessary changes
