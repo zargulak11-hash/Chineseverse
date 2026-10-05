@@ -11,7 +11,7 @@ HSK level → Lesson → Vocabulary / Hanzi / Grammar → Practice → Result
           → Companion reaction → Progress + Learning Compass → Review → …
 ```
 
-- **Curriculum**: 11,334 vocabulary items, 3,000 Hanzi with stroke data, 600 grammar points, 111 lessons, with ru/tg/zh translations. HSK 7–9 is one shared advanced pool, as in the official standard.
+- **Curriculum**: 11,334 vocabulary items, 3,000 Hanzi with stroke data, about 600 grammar points and 111 lessons. All lessons are translated into Russian, Tajik and Chinese, and the meanings of every word the lessons teach (about 1,100) into Russian and Tajik; other meanings are shown in English. HSK 7–9 is one shared advanced pool, as in the official standard.
 - **Lessons and the lesson path**: one current lesson at a time; a lesson is completed only by a practice round scoring at least 70%, and each HSK level ends with a final exam that opens the next level.
 - **Practice and review**: the server builds every round, stores the answer key and grades each answer; the client only sends the option it chose. Spaced repetition schedules review; mistakes from practice, duels, voice and Hanzi tracing come back in Review.
 - **Character writing**: strokes are traced over real stroke data and checked on the server.
@@ -95,15 +95,21 @@ The curated curriculum ships as `backend/app/seed_content/curriculum.json.gz`, k
 
 ## Tests
 
-The backend has a pytest suite (`backend/tests/`, ~450 tests). Each test module runs against its own throwaway SQLite database copied from one migrated and seeded template, with SMTP and Gemini switched off whatever `backend/.env` says — no test touches a real database, mail server or AI provider.
+**Backend** — a pytest suite in `backend/tests/` (about 570 tests). Each test module runs against its own throwaway SQLite database copied from one migrated and seeded template, with SMTP and Gemini switched off whatever `backend/.env` says — no test touches a real database, mail server or AI provider. Tests cover authentication and security (login throttling, tokens, ownership, admin boundaries), the learning loop (practice grading, spaced repetition, lessons, exams, review), every major feature, data integrity (deleting a learner with foreign keys enforced), migrations against older schemas, and that every AI feature degrades to its offline result when the provider fails.
 
 ```bash
 cd backend
 python -m pytest -q                          # everything
+python -m pytest -q --cov                    # with branch coverage of app/
 python -m pytest -q tests/test_auth_login.py # one area
 python -m pytest -q -m migration             # migrations against older schemas
+```
 
-cd ../frontend
+**Frontend** — Vitest unit tests for the shared client logic (`src/api.js`, `src/apiErrors.js`): session and locale headers, signing out on an expired session, translated server errors in all four languages.
+
+```bash
+cd frontend
+npm test
 npm run build
 python scripts/check_i18n_keys.py            # every used translation key exists in en/ru/tg/zh
 ```
@@ -112,9 +118,9 @@ python scripts/check_i18n_keys.py            # every used translation key exists
 
 `.github/workflows/deploy.yml` runs on every push and pull request:
 
-1. **Backend tests** — the pytest suite on Python 3.12.
+1. **Backend tests** — the pytest suite on Python 3.12 with branch coverage; the job fails below 85%.
 2. **PostgreSQL migrations** — a fresh PostgreSQL 16 database is migrated to head, the newest migration is re-applied, and the API boots on it and serves seeded content.
-3. **Frontend build** — `npm ci`, `vite build` and the i18n key check on Node 20.
+3. **Frontend** — `npm ci`, the Vitest unit tests, `vite build` and the i18n key check on Node 20.
 
 Only when all three pass does a push to `main` deploy: the workflow connects to the server over SSH and runs its deploy script, which rebuilds the Docker stack (nginx serves the SPA and proxies `/api` and `/static` to the API).
 

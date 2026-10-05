@@ -1,0 +1,9 @@
+# Coverage of the application code (python -m pytest --cov). Branch
+# coverage, so an untested else/except counts as a gap too.
+[run]
+source = app
+branch = true
+
+[report]
+show_missing = true
+skip_covered = true

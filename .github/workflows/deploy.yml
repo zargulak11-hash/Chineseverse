@@ -35,9 +35,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
       # The suite builds its own throwaway SQLite databases and forces SMTP
-      # and Gemini off (tests/conftest.py); it needs no secrets.
-      - name: Run pytest
-        run: python -m pytest -q
+      # and Gemini off (tests/conftest.py); it needs no secrets. Branch
+      # coverage below 85% (about 90% today) fails the job, so a large
+      # untested change can't slip in.
+      - name: Run pytest with coverage
+        run: python -m pytest -q --cov --cov-report=term --cov-report=xml --cov-fail-under=85
+      - name: Keep the coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+          if-no-files-found: ignore
 
   postgres-migrations:
     name: Migrations and boot on PostgreSQL
@@ -111,6 +120,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      - name: Unit tests (vitest)
+        run: npm test
       - name: Build
         run: npm run build
       - name: Every locale has every key
