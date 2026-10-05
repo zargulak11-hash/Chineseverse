@@ -1,8 +1,11 @@
-from fastapi import Depends, HTTPException, Header, status
+import ipaddress
+
+from fastapi import Depends, HTTPException, Header, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app import models
+from app.config import settings
 from app.database import get_db
 from app.security import decode_access_token
 from app.services.localization import SUPPORTED_LOCALES, base_locale
@@ -18,6 +21,33 @@ def get_locale(x_locale: str | None = Header(default=None)) -> str:
     English column" -- routers never need to special-case "en" themselves."""
     loc = base_locale(x_locale)  # "ru-RU" from a browser-detected language counts as "ru"
     return loc if loc in SUPPORTED_LOCALES else "en"
+
+
+def get_client_ip(request: Request) -> str | None:
+    """The learner's address as the last trusted proxy saw it.
+
+    Behind nginx the TCP peer is always the proxy, so the real address is
+    in X-Forwarded-For -- but its leftmost entries are whatever the client
+    chose to send. Each trusted proxy appends the address it received the
+    request from, so the client is exactly `trusted_proxy_hops` entries in
+    from the right of [forwarded..., peer]; anything further left is
+    ignored. A chain shorter than that (a proxy that doesn't append) falls
+    back to its leftmost entry, all of which came from trusted hops. None
+    when nothing parses as an IP address."""
+    hops = max(0, settings.trusted_proxy_hops)
+    chain: list[str] = []
+    if hops:
+        for header in request.headers.getlist("x-forwarded-for"):
+            chain.extend(part.strip() for part in header.split(",") if part.strip())
+    if request.client and request.client.host:
+        chain.append(request.client.host)
+    if not chain:
+        return None
+    candidate = chain[-(hops + 1)] if len(chain) > hops else chain[0]
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
 
 
 def get_current_user(

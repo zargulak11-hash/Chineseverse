@@ -13,7 +13,14 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.config import settings
 from app.database import get_db
-from app.security import create_access_token, hash_password, verify_password
+from app.deps import get_client_ip
+from app.security import (
+    burn_password_check,
+    create_access_token,
+    hash_password,
+    verify_password,
+)
+from app.services import login_throttle
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -109,16 +116,33 @@ def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=schemas.TokenResponse)
-def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
+def login(
+    payload: schemas.LoginRequest,
+    db: Session = Depends(get_db),
+    ip: str | None = Depends(get_client_ip),
+):
+    # Checked before the password: while locked, even the right password is
+    # refused, or the lock would just slow a guessing script down.
+    wait = login_throttle.retry_after(payload.username, ip)
+    if wait:
+        raise HTTPException(
+            status_code=429,
+            detail=login_throttle.LOCKED_DETAIL,
+            headers={"Retry-After": str(wait)},
+        )
     user = (
         db.query(models.User)
         .filter(models.User.username == payload.username)
         .first()
     )
+    if user is None:
+        burn_password_check(payload.password)
     if user is None or not verify_password(payload.password, user.password_hash):
+        login_throttle.record_failure(payload.username, ip)
         raise HTTPException(status_code=401, detail="Invalid username or password")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="This account has been deactivated")
+    login_throttle.record_success(payload.username, ip)
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)
 

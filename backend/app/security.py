@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -26,9 +27,20 @@ def verify_password(password: str, stored: str) -> bool:
             bytes.fromhex(salt),
             int(iterations),
         ).hex()
-        return digest == expected
+        # Constant-time: `==` stops at the first differing character.
+        return hmac.compare_digest(digest, expected)
     except (ValueError, AttributeError):
         return False
+
+
+# Verified against when a login names no existing account, so an unknown
+# username costs the same PBKDF2 work as a wrong password -- otherwise the
+# response time alone says which usernames exist.
+_DUMMY_HASH = hash_password(os.urandom(16).hex())
+
+
+def burn_password_check(password: str) -> None:
+    verify_password(password, _DUMMY_HASH)
 
 
 def create_access_token(user_id: int) -> str:

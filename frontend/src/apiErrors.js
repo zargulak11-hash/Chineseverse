@@ -7,6 +7,8 @@ import i18n from "./i18n.js";
 // here; anything unmapped (admin tools, rare internals) keeps the server text.
 const EXACT = {
   "Invalid username or password": "invalidLogin",
+  // services/login_throttle.py (429 after repeated failed sign-ins)
+  "Too many sign-in attempts. Please wait a few minutes and try again.": "loginLocked",
   "username already registered": "usernameTaken",
   "username already taken": "usernameTaken",
   "email already registered": "emailTaken",

@@ -1209,7 +1209,8 @@
     "fileInvalid": "{{name}}：文件内容与类型不符。",
     "fileType": "{{name}}：不支持这种文件类型。",
     "fileUtf8": "{{name}}：文本文件必须是 UTF-8 编码。",
-    "chatLimit": "这一小时发的消息太多了，休息一下再试吧。"
+    "chatLimit": "这一小时发的消息太多了，休息一下再试吧。",
+    "loginLocked": "登录尝试次数过多，请稍等几分钟后再试。"
   },
   "realLife": {
     "title": "生活中的中文",

@@ -1212,7 +1212,8 @@
     "fileInvalid": "{{name}}: the file's contents don't match its type.",
     "fileType": "{{name}}: this file type isn't supported.",
     "fileUtf8": "{{name}}: text files must be UTF-8.",
-    "chatLimit": "You've sent a lot of messages this hour — take a short break and try again."
+    "chatLimit": "You've sent a lot of messages this hour — take a short break and try again.",
+    "loginLocked": "Too many sign-in attempts. Please wait a few minutes and try again."
   },
   "realLife": {
     "title": "Real-life Chinese",

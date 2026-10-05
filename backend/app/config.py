@@ -13,6 +13,14 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
+    # How many reverse proxies stand between the learner and this API, each
+    # appending to X-Forwarded-For (deps.get_client_ip reads the address
+    # that many hops from the right, so a client-written header can't pick
+    # it). 0 = uvicorn is reached directly (local dev). The compose stack's
+    # frontend nginx is 1; a host nginx in front of that, which also appends
+    # X-Forwarded-For, makes 2. Too high a value lets a client choose its
+    # own address; too low only makes login throttling coarser.
+    trusted_proxy_hops: int = 0
 
     # Google Sign-In (Google Identity Services ID-token flow).
     # Only the client ID is required to verify tokens; the secret is reserved

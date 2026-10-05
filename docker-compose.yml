@@ -31,6 +31,11 @@ services:
       # written for connecting to localhost outside Docker) — inside the
       # compose network, Postgres is reachable at the "postgres" service.
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-linguaverse}
+      # Requests reach the API through the frontend container's nginx (1
+      # hop). Behind a host reverse proxy that also appends X-Forwarded-For
+      # (production), set TRUSTED_PROXY_HOPS=2 in the root .env so login
+      # throttling sees each learner's own address. See app/config.py.
+      TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS:-1}
     depends_on:
       postgres:
         condition: service_healthy
