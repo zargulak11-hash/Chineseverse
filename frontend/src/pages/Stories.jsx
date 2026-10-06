@@ -6,6 +6,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { PAGE, libraryPath } from "../storiesQuery.js";
 
 // Chinese Stories (/stories): the reading library, HSK 1 to 9. Everything
 // on a card comes from the server (services/stories.py): chapters, an
@@ -19,9 +20,8 @@ const TIMES = ["any", "short", "long"];
 const SHORT_MIN = 10;
 // Topic and time filters appear once a level has enough books to need them.
 const FILTERS_FROM = 5;
-// Filtering and paging happen on the server (GET /stories?level=&...), so a
-// level with many books ships one page of cards at a time.
-const PAGE = 12;
+// Filtering and paging happen on the server (storiesQuery.js), so a level
+// with many books ships one page of cards at a time.
 
 function BookCard({ b }) {
   const { t } = useTranslation();
@@ -106,13 +106,7 @@ export default function Stories() {
 
   // Until a level is known, a one-card request learns the learner's level.
   const ready = Boolean(params.get("level") || ownLevel);
-  const query = new URLSearchParams({ limit: ready ? String(PAGE * pages) : "1" });
-  if (ready) query.set("level", String(level));
-  if (status !== "all") query.set("status", status);
-  if (topic !== "all") query.set("topic", topic);
-  if (time !== "any") query.set("length", time);
-  if (q) query.set("q", q);
-  const { data, error } = useApi(`/stories?${query}`);
+  const { data, error } = useApi(libraryPath({ ready, level, pages, status, topic, time, q }));
 
   useEffect(() => {
     if (data && !ownLevel) setOwnLevel(Math.min(data.level, 9));
