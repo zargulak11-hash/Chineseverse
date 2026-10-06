@@ -1404,6 +1404,8 @@
         "title": "Where did it go?",
         "desc": "Follow a day of places and times to find where it was left."
       },
+      "who_late": {"zh": "谁迟到了？", "title": "Who was late?", "desc": "Everyone says when they arrived. Read the times against the meeting — who came after it started?"},
+      "who_has": {"zh": "东西现在在谁那儿？", "title": "Who has it now?", "desc": "A thing passes from hand to hand. Put the hand-overs back in time order to find who holds it."},
       "who_lies": {
         "zh": "谁在说谎？",
         "title": "Who is lying?",
@@ -1421,6 +1423,8 @@
       "evidence_other": "{{count}} words from your mistakes come back as evidence",
       "noEvidence": "No open mistakes to bring back as evidence"
     },
+    "files": {"title": "Written case files", "sub": "Hand-written mysteries for each HSK level: a real story, suspects, evidence and a timeline. Study the file, then solve it.", "levels": "Case file levels", "empty": "No case files at this level yet.", "locked": "Opens at HSK {{level}}", "suspects_one": "{{count}} suspect", "suspects_other": "{{count}} suspects", "clues_one": "{{count}} clue question", "clues_other": "{{count}} clue questions"},
+    "file": {"eyebrow": "Case file · HSK {{level}}", "brief": "The case", "suspects": "Suspects", "clues": "Clue questions", "statement": "Statement", "evidence": "Evidence", "timeline": "Timeline", "verdict": "Verdict", "culprit": "Solved", "verdictLocked": "Solve the case to open the verdict and the explanation.", "question": "The question", "start": "Start the investigation", "again": "Investigate again", "how": "Read every statement against the evidence and the timeline. The round asks about the clues first, then who did it — in Chinese.", "showTr": "Show translations", "hideTr": "Hide translations", "back": "All cases"},
     "caseFile": "Case file",
     "heard": "heard",
     "mode": {
@@ -1442,6 +1446,7 @@
       "when_me": "What time did the owner get to the {{place}}?",
       "where_say": "Where does the {{who}} say they were at {{time}}?",
       "where_seen": "Where was the {{who}} really seen at {{time}}?",
+      "when_gave": "When did the {{who}} hand it on?",
       "deduce": "Solve the case — answer the question in Chinese:"
     }
   },

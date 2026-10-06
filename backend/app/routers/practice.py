@@ -25,7 +25,7 @@ class SessionCreate(BaseModel):
     sentence: str | None = Field(default=None, max_length=80)
     # source "detective": the case structure; source "sound": the place and
     # the speed stage (refused unless the learner has unlocked it).
-    case: str | None = Field(default=None, max_length=30)
+    case: str | None = Field(default=None, max_length=50)  # a structure, or "file:<case slug>"
     env: str | None = Field(default=None, max_length=30)
     stage: int | None = Field(default=None, ge=1, le=4)
     # source "internet": the content item and (optionally) which version.

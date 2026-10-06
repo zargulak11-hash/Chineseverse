@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
@@ -9,16 +10,51 @@ import { useApi } from "../hooks/useApi.js";
 // Detective Mode case files (services/detective.py). Each case is built
 // for this learner when it starts and played as a server-graded round
 // (/practice?source=detective&case=...); this page shows the case types,
-// how this learner's cases will be built, and their real record.
+// how this learner's cases will be built, and their real record. Below them
+// are the hand-written case files (services/case_files.py), one HSK level
+// at a time; each opens as a dossier (/detective/file/:slug).
+function FileCard({ f }) {
+  const { t } = useTranslation();
+  const body = (
+    <>
+      <div className="row spread" style={{ margin: 0 }}>
+        <span className="scene-icon" aria-hidden="true">{f.icon}</span>
+        {f.locked ? (
+          <span className="badge"><Icon name="lock" size={11} /> {t("detective.files.locked", { level: f.gate })}</span>
+        ) : f.played > 0 && (
+          <span className={`badge ${f.solved ? "good" : ""}`}>{t("detective.record", { solved: f.solved, played: f.played })}</span>
+        )}
+      </div>
+      <h3 className="h2" style={{ marginTop: 12 }}><span lang="zh-CN">{f.title_zh}</span></h3>
+      <p className="sub" style={{ marginTop: 4 }}><b>{f.title}</b></p>
+      <p className="sub">{f.summary}</p>
+      <p className="sub book-card-meta">
+        <span>{t("detective.files.suspects", { count: f.suspects })}</span>
+        <span>{t("detective.files.clues", { count: f.clues })}</span>
+      </p>
+    </>
+  );
+  return f.locked
+    ? <div className="card scene-card is-locked">{body}</div>
+    : <Link to={`/detective/file/${f.slug}`} className="card hover scene-card">{body}</Link>;
+}
+
 export default function Detective() {
   const { t } = useTranslation();
   const { data, error } = useApi("/detective/cases");
+  const [picked, setPicked] = useState(null);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading /></Layout>;
 
   const p = data.profile;
-  const solved = data.cases.reduce((n, c) => n + c.solved, 0);
+  const files = data.files || [];
+  const solved = data.cases.reduce((n, c) => n + c.solved, 0) + files.reduce((n, f) => n + f.solved, 0);
+  // Open levels that have cases; the learner's own level first.
+  const withCases = (data.file_levels || []).filter((x) => x.cases > 0);
+  const own = [...withCases].reverse().find((x) => !x.locked)?.level ?? withCases[0]?.level;
+  const level = picked ?? own;
+  const shown = files.filter((f) => f.level === level);
   return (
     <Layout>
       <header className="page-head">
@@ -65,6 +101,25 @@ export default function Detective() {
               </Link>
             ))}
           </div>
+
+          <h2 className="h2 section-title" style={{ marginTop: 24 }}>{t("detective.files.title")}</h2>
+          <p className="sub" style={{ marginBottom: 16 }}>{t("detective.files.sub")}</p>
+          {withCases.length > 0 && (
+            <nav className="row case-file-levels" aria-label={t("detective.files.levels")}>
+              {withCases.map((x) => (
+                <button key={x.level} type="button" aria-pressed={level === x.level} onClick={() => setPicked(x.level)}
+                        className={`btn small ${level === x.level ? "primary" : "ghost"}`}>
+                  {x.locked && <Icon name="lock" size={11} />} HSK {x.level}
+                  <span className="book-level-count">{x.cases}</span>
+                </button>
+              ))}
+            </nav>
+          )}
+          {shown.length === 0 ? (
+            <Empty>{t("detective.files.empty")}</Empty>
+          ) : (
+            <div className="grid cards">{shown.map((f) => <FileCard key={f.slug} f={f} />)}</div>
+          )}
         </div>
         <aside className="ws-side">
           <div className="card side-card">

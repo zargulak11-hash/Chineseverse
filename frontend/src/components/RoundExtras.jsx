@@ -159,7 +159,7 @@ export function SpeakLine({ sessionId, index, text, onSpoken }) {
 
 // Side-panel summary of what this round is about.
 export function RoundContextCard({ context }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!context) return null;
   if (context.kind === "scene") {
     return (
@@ -184,12 +184,13 @@ export function RoundContextCard({ context }) {
         <p className="side-title">{t("nav.detective")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
           <span className="scene-icon" aria-hidden="true">{context.icon}</span>
-          <b>{t(`detective.case.${context.case}.title`)}</b>
+          {/* A case file carries its own title; a generated case is named by its structure. */}
+          <b>{context.file ? (context.titles?.[i18n.language] || context.titles?.en) : t(`detective.case.${context.case}.title`)}</b>
         </div>
         <span className="badge accent" style={{ marginTop: 12 }}>{t(`realLife.tier.${context.tier}`)}</span>
         <ul className="scene-rules">
           <li>{t("detective.profile.suspects", { count: p.suspects })}</li>
-          <li>{t("detective.profile.listen", { pct: Math.round((p.listen_share || 0) * 100) })}</li>
+          {!context.file && <li>{t("detective.profile.listen", { pct: Math.round((p.listen_share || 0) * 100) })}</li>}
           {p.evidence_notes > 0 && <li>{t("detective.profile.evidence", { count: p.evidence_notes })}</li>}
         </ul>
       </div>

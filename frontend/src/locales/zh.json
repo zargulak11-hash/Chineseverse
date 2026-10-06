@@ -1385,6 +1385,8 @@
         "title": "东西去哪儿了？",
         "desc": "按时间顺序追踪一天去过的地方，找出东西落在哪儿了。"
       },
+      "who_late": {"zh": "谁迟到了？", "title": "谁迟到了？", "desc": "每个人都说了自己到的时间。和开会时间比一比——谁来晚了？"},
+      "who_has": {"zh": "东西现在在谁那儿？", "title": "东西在谁那儿？", "desc": "东西从一个人手里到另一个人手里。按时间排好，就知道现在在谁那儿。"},
       "who_lies": {
         "zh": "谁在说谎？",
         "title": "谁在说谎？",
@@ -1400,6 +1402,8 @@
       "evidence_other": "{{count}}个你答错过的词会作为证据出现",
       "noEvidence": "目前没有需要作为证据复习的错题"
     },
+    "files": {"title": "案件档案", "sub": "为每个 HSK 等级写的推理故事：真实的情节、嫌疑人、证据和时间线。先看档案，再来破案。", "levels": "案件等级", "empty": "这个等级还没有案件。", "locked": "HSK {{level}} 开放", "suspects_one": "{{count}} 个嫌疑人", "suspects_other": "{{count}} 个嫌疑人", "clues_one": "{{count}} 道线索题", "clues_other": "{{count}} 道线索题"},
+    "file": {"eyebrow": "案件档案 · HSK {{level}}", "brief": "案情", "suspects": "嫌疑人", "clues": "线索题", "statement": "口供", "evidence": "证据", "timeline": "时间线", "verdict": "结论", "culprit": "已破案", "verdictLocked": "破案以后才能看到结论和解释。", "question": "问题", "start": "开始调查", "again": "再调查一次", "how": "把每个人的口供和证据、时间线对一对。先回答线索题，最后用中文说出是谁做的。", "showTr": "显示翻译", "hideTr": "隐藏翻译", "back": "所有案件"},
     "caseFile": "案件档案",
     "heard": "听到的",
     "mode": {
@@ -1421,6 +1425,7 @@
       "when_me": "失主几点到的{{place}}？",
       "where_say": "{{who}}说自己{{time}}在哪儿？",
       "where_seen": "{{time}}的时候，有人在哪儿看见了{{who}}？",
+      "when_gave": "{{who}}是什么时候把东西交出去的？",
       "deduce": "破案——回答这个中文问题："
     }
   },

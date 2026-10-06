@@ -36,6 +36,7 @@ import Practice from "./pages/Practice.jsx";
 import RealChinese, { RealChineseScene } from "./pages/RealChinese.jsx";
 import SentenceLesson from "./pages/SentenceLesson.jsx";
 import Detective from "./pages/Detective.jsx";
+import DetectiveFile from "./pages/DetectiveFile.jsx";
 import SoundWorld from "./pages/SoundWorld.jsx";
 import CharacterDNA from "./pages/CharacterDNA.jsx";
 import Ecosystem from "./pages/Ecosystem.jsx";
@@ -245,6 +246,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <Detective />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/detective/file/:slug"
+            element={
+              <RequireAuth>
+                <DetectiveFile />
               </RequireAuth>
             }
           />

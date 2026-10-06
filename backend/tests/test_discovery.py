@@ -128,8 +128,8 @@ def test_detective_cases_build_with_hidden_listening_clues(client):
     uid, h = register(client)
     cases = expect(client, "get", "/api/detective/cases", 200, headers=h)
     assert cases["profile"]["tier"] == "beginner" and cases["profile"]["suspects"] == 3
-    assert [c["key"] for c in cases["cases"]] == ["who_took", "where_lost", "who_lies"]
-    for key in ("who_took", "where_lost", "who_lies"):
+    assert [c["key"] for c in cases["cases"]] == ["who_took", "where_lost", "who_lies", "who_late", "who_has"]
+    for key in ("who_took", "where_lost", "who_lies", "who_late", "who_has"):
         d = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "detective", "case": key})
         assert d["context"]["kind"] == "case" and d["context"]["title"]["zh"], d["context"]
         clues = [q for q in d["questions"] if q["type"] == "case_clue"]
@@ -148,7 +148,7 @@ def test_detective_cases_build_with_hidden_listening_clues(client):
                 cyr = [bool(re.search("[а-яА-Я]", o["label"])) for o in q["options"]]
                 assert all(cyr) or not any(cyr), [o["label"] for o in q["options"]]  # one language per question
 
-    # three reusable case structures build; listening clues hidden until answered
+    # five reusable case structures build; listening clues hidden until answered
 
 
 def test_detective_misses_are_explained_reviewed_and_return_as_evidence(client):

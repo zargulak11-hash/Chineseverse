@@ -135,8 +135,49 @@ WHO_LIES = {
     ),
 }
 
-STRUCTURES = {"who_took": WHO_TOOK, "where_lost": WHERE_LOST, "who_lies": WHO_LIES}
-ICONS = {"who_took": "🕵️", "where_lost": "🔎", "who_lies": "🎭"}
+# Who was late: everyone says when they arrived; the deduction is reading
+# the times against the meeting time.
+WHO_LATE = {
+    "title": ("谁迟到了？", "shéi chídào le?"),
+    "intro": F(
+        beginner=("今天{when}，我们在{place}见面。", "jīntiān {when}, wǒmen zài {place} jiànmiàn."),
+        intermediate=("今天{when}要在{place}开会，大家都说会准时到。",
+                      "jīntiān {when} yào zài {place} kāihuì, dàjiā dōu shuō huì zhǔnshí dào."),
+        advanced=("今天的会{when}在{place}开始，可是有一个人迟到了，经理很不高兴。",
+                  "jīntiān de huì {when} zài {place} kāishǐ, kěshì yǒu yí ge rén chídào le, jīnglǐ hěn bù gāoxìng."),
+    ),
+    "arrive": F(
+        beginner=("{who}{when}到了{place}。", "{who} {when} dào le {place}."),
+        intermediate=("{who}说：“我{when}就到{place}了。”", "{who} shuō: “wǒ {when} jiù dào {place} le.”"),
+        advanced=("门口的记录显示，{who}是{when}走进{place}的。",
+                  "ménkǒu de jìlù xiǎnshì, {who} shì {when} zǒu jìn {place} de."),
+    ),
+}
+
+# Who has it now: a thing passed from hand to hand; the clues come shuffled,
+# so the deduction is putting the hand-overs back in time order.
+WHO_HAS = {
+    "title": ("{obj}现在在谁那儿？", "{obj} xiànzài zài shéi nàr?"),
+    "intro": F(
+        beginner=("今天，我的{obj}给了好几个人。", "jīntiān, wǒ de {obj} gěi le hǎo jǐ ge rén."),
+        intermediate=("今天我的{obj}在好几个人手里待过，现在不知道在谁那儿。",
+                      "jīntiān wǒ de {obj} zài hǎo jǐ ge rén shǒu li dāi guo, xiànzài bù zhīdào zài shéi nàr."),
+        advanced=("一上午，我的{obj}被借来借去，到了中午，谁也说不清它在哪儿。",
+                  "yí shàngwǔ, wǒ de {obj} bèi jiè lái jiè qù, dào le zhōngwǔ, shéi yě shuō bu qīng tā zài nǎr."),
+    ),
+    "pass": F(
+        beginner=("{when}，{who}把{obj}给了{who2}。", "{when}, {who} bǎ {obj} gěi le {who2}."),
+        intermediate=("{who}说：“{when}的时候，我把{obj}给了{who2}。”",
+                      "{who} shuō: “{when} de shíhou, wǒ bǎ {obj} gěi le {who2}.”"),
+        advanced=("{when}左右，{who}把{obj}交给了{who2}，然后就离开了。",
+                  "{when} zuǒyòu, {who} bǎ {obj} jiāo gěi le {who2}, ránhòu jiù líkāi le."),
+    ),
+}
+
+STRUCTURES = {"who_took": WHO_TOOK, "where_lost": WHERE_LOST, "who_lies": WHO_LIES,
+              "who_late": WHO_LATE, "who_has": WHO_HAS}
+ICONS = {"who_took": "🕵️", "where_lost": "🔎", "who_lies": "🎭", "who_late": "⏰", "who_has": "🎁"}
+FILE_PREFIX = "file:"
 
 
 # --------------------------------------------------------------------------- profile
@@ -243,6 +284,8 @@ def build_questions(db: Session, user: models.User, case: str, level: int, rng: 
     from app.services import practice
     from app.services import sentence as sent
 
+    if case.startswith(FILE_PREFIX):
+        return build_file_questions(db, user, case[len(FILE_PREFIX):], level, rng)
     if case not in STRUCTURES:
         raise CaseError(404, "Case not found")
     prof = profile(db, user)
@@ -302,6 +345,42 @@ def build_questions(db: Session, user: models.User, case: str, level: int, rng: 
         suspects = visit
         answer_idx = visit.index(used_place)
         final_title = fill(("我的{obj}可能在哪儿？", "wǒ de {obj} kěnéng zài nǎr?"), obj=word_slot(obj))
+    elif case == "who_late":
+        people = [p for p in slots.pick("person", n + 2) if p.simplified not in NOT_SUSPECTS][:n]
+        place = places[0]
+        step = {"beginner": 60, "intermediate": 30, "advanced": 15}[tier]
+        meet_at = rng.randint(10, 15) * 60 + (0 if tier == "beginner" else rng.choice((0, 30)))
+        late = rng.choice(people)
+        # Everyone else is early by a different whole number of steps; the
+        # late one arrives one to three steps after the meeting began.
+        early = rng.sample(range(1, len(people) + 2), len(people) - 1)
+        arrivals = {}
+        for p in people:
+            m = meet_at + step * rng.randint(1, 3 if tier != "beginner" else 1) if p is late else meet_at - step * early.pop()
+            arrivals[p.id] = clock(m // 60, m % 60)
+        meet = clock(meet_at // 60, meet_at % 60)
+        title = fill(S["title"])
+        intro = fill(S["intro"][tier], when=meet, place=word_slot(place))
+        others = [meet] + list(arrivals.values())
+        for p in people:
+            clue = fill(S["arrive"][tier], who=word_slot(p), when=arrivals[p.id], place=word_slot(place))
+            clues.append((clue, "when", {"who": p, "answer": arrivals[p.id], "others": others, "place": place}))
+        rng.shuffle(clues)
+        suspects, answer_idx = people, people.index(late)
+        final_title = title
+    elif case == "who_has":
+        people = [p for p in slots.pick("person", n + 2) if p.simplified not in NOT_SUSPECTS][:n]
+        times = _times(rng, tier, len(people) - 1)
+        title = fill(S["title"], obj=word_slot(obj))
+        intro = fill(S["intro"][tier], obj=word_slot(obj))
+        for i in range(len(people) - 1):
+            clue = fill(S["pass"][tier], who=word_slot(people[i]), who2=word_slot(people[i + 1]),
+                        when=times[i], obj=word_slot(obj))
+            clues.append((clue, "when_gave", {"who": people[i], "answer": times[i],
+                                              "others": times + _times(rng, tier, 2, 7)}))
+        rng.shuffle(clues)
+        suspects, answer_idx = people, len(people) - 1
+        final_title = title
     else:  # who_lies
         people = [p for p in slots.pick("person", n + 2) if p.simplified not in NOT_SUSPECTS][:n]
         crime_place, others = places[0], places[1:]
@@ -326,7 +405,7 @@ def build_questions(db: Session, user: models.User, case: str, level: int, rng: 
         ask = {"kind": kind, "who": data["who"].id if data.get("who") is not None else None,
                "time": data["time"]["label"] if data.get("time") else None,
                "place": data["place"].id if data.get("place") is not None else None}
-        if kind == "when":
+        if kind.startswith("when"):
             q = _when_q(clue, mode, data["answer"], data["others"], ask,
                         data["who"].id if data.get("who") is not None else data["place"].id, rng)
         else:
@@ -371,6 +450,138 @@ def build_questions(db: Session, user: models.User, case: str, level: int, rng: 
     return questions
 
 
+# --------------------------------------------------------------------------- case files
+
+def _file_gate(case: dict) -> int:
+    return min(case["level"], 7)  # HSK 7-9 is one band: every advanced case opens at 7
+
+
+def _open_file(slug: str, level: int) -> dict:
+    from app.services import case_files
+
+    case = case_files.get(slug)
+    if case is None:
+        raise CaseError(404, "Case not found")
+    if _file_gate(case) > level:
+        raise CaseError(403, f"This case opens at HSK {_file_gate(case)}")
+    return case
+
+
+def build_file_questions(db: Session, user: models.User, slug: str, level: int, rng: random.Random) -> list[dict]:
+    """A hand-written case as a graded round: its clue questions (read like a
+    story's, with pinyin at the lower levels) and then the deduction, whose
+    answer card is the case's own verdict."""
+    from app.services import case_files, internet
+    from app.services import stories
+
+    case = _open_file(slug, level)
+    book = case_files.as_book(case)
+    tier = profile(db, user)["tier"]
+    show_py = case["level"] <= 3
+    questions: list[dict] = []
+    for cq in case["questions"]:
+        order = list(range(len(cq["options"])))
+        rng.shuffle(order)
+        opts = [cq["options"][k] for k in order]
+        questions.append({
+            "type": "story_q", "item_type": "reading", "q": cq["q"],
+            "q_py": stories.pinyin_of(db, book, cq["q"]) if show_py else None,
+            "q_tr": {k: v for k, v in (cq.get("tr") or {}).items() if k in stories.LOCALES and v},
+            "options": [{"zh": o, "py": stories.pinyin_of(db, book, o) if show_py else ""} for o in opts],
+            "item_id": order.index(cq["answer"]), "option_ids": list(range(len(opts))),
+            "focus_id": internet._focus_of(db, cq["options"][cq["answer"]]), "show_py": show_py,
+        })
+    order = list(range(len(case["suspects"])))
+    rng.shuffle(order)
+    ask = case["ask"]
+    questions.append({
+        "type": "case_deduce", "item_type": "case", "file": case["slug"], "tier": tier,
+        "question": {"zh": ask["zh"], "py": stories.pinyin_of(db, book, ask["zh"])},
+        "item_id": order.index(case["culprit"]), "option_ids": list(range(len(order))),
+        "options": [{"word_id": None, "zh": case["suspects"][i]["name"], "py": case["suspects"][i]["pinyin"]}
+                    for i in order],
+        "focus_id": None, "answer_kind": "deduce",
+        "solution": [v["zh"] for v in case["verdict"]],
+        "verdict": {lang: " ".join(v[lang] for v in case["verdict"]) for lang in ("en", "ru", "tg")},
+    })
+    intro = " ".join(s["zh"] for s in case["brief"])
+    questions[0]["ctx"] = {
+        "kind": "case", "case": FILE_PREFIX + case["slug"], "file": case["slug"], "tier": tier, "icon": case["icon"],
+        "titles": case["title"],
+        "title": {"zh": case["title"]["zh"], "py": stories.pinyin_of(db, book, case["title"]["zh"])},
+        "intro": {"zh": intro, "py": stories.pinyin_of(db, book, intro)},
+        "profile": {"suspects": len(case["suspects"]), "listen_share": 0, "evidence_notes": 0},
+    }
+    return questions
+
+
+def _records(db: Session, user: models.User) -> dict[str, dict]:
+    """played / solved / best per case key ("who_took", "file:<slug>", ...)."""
+    out: dict[str, dict] = {}
+    rows = db.query(models.PracticeSession).filter(
+        models.PracticeSession.user_id == user.id, models.PracticeSession.source == "detective",
+        models.PracticeSession.completed_at.isnot(None)).all()
+    for s in rows:
+        ctx = (s.questions or [{}])[0].get("ctx") or {}
+        key = ctx.get("case")
+        if not key:
+            continue
+        h = out.setdefault(key, {"played": 0, "solved": 0, "best": 0.0})
+        h["played"] += 1
+        h["best"] = max(h["best"], s.score or 0.0)
+        final = s.answers[-1] if s.answers else None
+        if final and final.get("correct"):
+            h["solved"] += 1
+    return out
+
+
+def _loc(d: dict, locale: str) -> str:
+    return d.get(locale) or d.get("en") or ""
+
+
+def file_card(case: dict, level: int, rec: dict | None, locale: str) -> dict:
+    rec = rec or {"played": 0, "solved": 0, "best": 0.0}
+    return {"slug": case["slug"], "level": case["level"], "gate": _file_gate(case), "icon": case["icon"],
+            "title": _loc(case["title"], locale), "title_zh": case["title"]["zh"],
+            "summary": _loc(case["summary"], locale), "suspects": len(case["suspects"]),
+            "clues": len(case["questions"]), "locked": _file_gate(case) > level, **rec}
+
+
+def dossier(db: Session, user: models.User, slug: str, locale: str) -> dict:
+    """The case file to study before (and after) playing: the brief, every
+    suspect's statement, the evidence and the timeline, with curriculum
+    pinyin. The verdict is part of it only once this learner has solved
+    the case -- before that it would give the answer away."""
+    from app.services import case_files
+    from app.services import stories
+    from app.services.gamification import user_rank
+
+    level, _ = user_rank(db, user)
+    case = _open_file(slug, level)
+    book = case_files.as_book(case)
+    show_py = case["level"] <= 4
+
+    def line(s: dict) -> dict:
+        return {"zh": s["zh"], "pinyin": stories.pinyin_of(db, book, s["zh"]) if show_py else None,
+                "tr": _loc(s, locale) if locale != "zh" else s.get("en")}
+
+    rec = _records(db, user).get(FILE_PREFIX + slug)
+    out = {
+        **file_card(case, level, rec, locale),
+        "brief": [line(s) for s in case["brief"]],
+        "suspects": [{"name": s["name"], "pinyin": s["pinyin"], "role": line(s["role"]),
+                      "statement": line(s["statement"])} for s in case["suspects"]],
+        "evidence": [line(s) for s in case["evidence"]],
+        "timeline": [{"time": t["time"], **line(t["event"])} for t in case["timeline"]],
+        "ask": line(case["ask"]),
+        "verdict": None, "culprit": None,
+    }
+    if rec and rec["solved"]:
+        out["verdict"] = [line(s) for s in case["verdict"]]
+        out["culprit"] = case["suspects"][case["culprit"]]["name"]
+    return out
+
+
 # --------------------------------------------------------------------------- rendering
 
 def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, list[dict]]:
@@ -404,6 +615,10 @@ def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, lis
 
 
 def card(db: Session, q: dict, locale: str) -> dict:
+    if q["type"] == "case_deduce" and q.get("file"):
+        o = q["options"][q["item_id"]]
+        return {"hanzi": o["zh"], "pinyin": o["py"], "meaning": _loc(q.get("verdict") or {}, locale),
+                "solution": q.get("solution") or []}
     if q["type"] == "case_deduce":
         o = q["options"][q["item_id"]]
         return {"hanzi": o["zh"], "pinyin": o["py"], "meaning": ss.meanings(db, [o["word_id"]], locale).get(o["word_id"], ""),
@@ -414,21 +629,23 @@ def card(db: Session, q: dict, locale: str) -> dict:
             "answer_zh": o["zh"], "gloss": ss.gloss(db, q["clue"]["zh"], locale)}
 
 
-def case_list(db: Session, user: models.User) -> dict:
-    """The case files and this learner's real record with each."""
+def case_list(db: Session, user: models.User, locale: str = "en", level: int | None = None) -> dict:
+    """The generated case types and the hand-written case files, with this
+    learner's real record with each. `level` narrows the case files to one
+    HSK level (the page shows one level at a time)."""
+    from app.services import case_files
+
     prof = profile(db, user)
-    history: dict[str, dict] = {k: {"played": 0, "solved": 0, "best": 0.0} for k in STRUCTURES}
-    rows = db.query(models.PracticeSession).filter(
-        models.PracticeSession.user_id == user.id, models.PracticeSession.source == "detective",
-        models.PracticeSession.completed_at.isnot(None)).all()
-    for s in rows:
-        ctx = (s.questions or [{}])[0].get("ctx") or {}
-        h = history.get(ctx.get("case"))
-        if h is None:
-            continue
-        h["played"] += 1
-        h["best"] = max(h["best"], s.score or 0.0)
-        final = s.answers[-1] if s.answers else None
-        if final and final.get("correct"):
-            h["solved"] += 1
-    return {"profile": prof, "cases": [{"key": k, "icon": ICONS[k], **history[k]} for k in STRUCTURES]}
+    records = _records(db, user)
+    empty = {"played": 0, "solved": 0, "best": 0.0}
+    files = [c for c in case_files.all_cases() if level is None or c["level"] == level]
+    per_level: dict[int, int] = {}
+    for c in case_files.all_cases():
+        per_level[c["level"]] = per_level.get(c["level"], 0) + 1
+    return {
+        "profile": prof,
+        "cases": [{"key": k, "icon": ICONS[k], **records.get(k, empty)} for k in STRUCTURES],
+        "files": [file_card(c, prof["level"], records.get(FILE_PREFIX + c["slug"]), locale) for c in files],
+        "file_levels": [{"level": lv, "cases": per_level.get(lv, 0), "locked": min(lv, 7) > prof["level"]}
+                        for lv in range(1, 10)],
+    }

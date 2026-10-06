@@ -74,9 +74,11 @@ async def lifespan(_app: FastAPI):
     # The Chinese Stories library is content files; a malformed book stops
     # the start here (with the file and place named) instead of failing a
     # learner later.
-    from app.services import books
+    from app.services import books, case_files
 
     logging.getLogger("app").info("Story library: %d books.", len(books.all_books()))
+    # Detective case files are content files too, checked the same way.
+    logging.getLogger("app").info("Detective case files: %d.", len(case_files.all_cases()))
     # Deliver notification emails earlier runs could not (including follows
     # made before SMTP was configured) and keep retrying failures, in a
     # background thread; does nothing when SMTP isn't configured.
