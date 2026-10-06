@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
+import Art, { placeArt } from "../components/Art.jsx";
 import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
@@ -298,7 +299,8 @@ export default function Dashboard() {
           {d.next_location ? (
             <Link to={`/real-chinese?place=${LOCATION_PLACE[d.next_location.slug] || ""}`}>
               <button className="btn primary">
-                {d.next_location.icon} {d.next_location.name}
+                <Art name={placeArt(LOCATION_PLACE[d.next_location.slug] || d.next_location.slug)} size={24} shape="round" flat />
+                {d.next_location.name}
               </button>
             </Link>
           ) : (

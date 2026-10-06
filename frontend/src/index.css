@@ -52,6 +52,102 @@
   --shadow-lg: 0 26px 60px rgba(90, 66, 20, 0.22);
 }
 
+/* ---- Illustration palette (components/art/): the places and objects of
+   the world are small paintings, so they carry their own fixed palette --
+   allowed, like the companion art, because it is content, never chrome.
+   Ink paints them at night (indigo sky, a moon, lit windows); Paper paints
+   them by day. Same shapes, same ink outline, one product. ---- */
+:root,
+[data-theme="ink"] {
+  --art-sky: #1f2b5e;
+  --art-sky-2: #313e7a;
+  --art-sun: #f1e3b0;
+  --art-star: #f3e9c6;
+  --art-cloud: #3a4785;
+  --art-far: #29356b;
+  --art-grass: #2f6650;
+  --art-grass-2: #3a7a60;
+  --art-pave: #4a5078;
+  --art-pave-2: #5a6190;
+  --art-water: #2e6f8a;
+  --art-water-2: #4b8fa8;
+  --art-wall: #e6d8b9;
+  --art-wall-2: #bfae8b;
+  --art-stone: #9a9db4;
+  --art-stone-2: #767a96;
+  --art-roof: #c8463a;
+  --art-roof-2: #962f27;
+  --art-tile: #4d5576;
+  --art-tile-2: #363c5a;
+  --art-jade: #4a9a74;
+  --art-jade-2: #347657;
+  --art-gold: #efc067;
+  --art-gold-2: #cf9a3c;
+  --art-wood: #8a5a36;
+  --art-wood-2: #633e23;
+  --art-glass: #ffd57a;
+  --art-glass-2: #f0b04e;
+  --art-blue: #5a8fcc;
+  --art-blue-2: #406fa6;
+  --art-pink: #ec9db2;
+  --art-pink-2: #d47791;
+  --art-leaf: #4f9256;
+  --art-leaf-2: #3a7442;
+  --art-paper: #f4ecd8;
+  --art-screen: #141b38;
+  --art-room: #27305c;
+  --art-room-2: #20284f;
+  --art-ink: #0d1226;
+  --art-hl: rgba(255, 255, 255, 0.5);
+  --art-shadow: rgba(0, 0, 0, 0.35);
+  --art-rim: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="paper"] {
+  --art-sky: #f8e2b0;
+  --art-sky-2: #fcefcf;
+  --art-sun: #f6c25e;
+  --art-star: transparent;
+  --art-cloud: #fffaf0;
+  --art-far: #ebd29e;
+  --art-grass: #9fc277;
+  --art-grass-2: #b4d18d;
+  --art-pave: #dccaa0;
+  --art-pave-2: #e8dab6;
+  --art-water: #86c3c0;
+  --art-water-2: #b2dcd6;
+  --art-wall: #fff7e4;
+  --art-wall-2: #ecd8ae;
+  --art-stone: #cbc3b0;
+  --art-stone-2: #aaa08a;
+  --art-roof: #cf4a3c;
+  --art-roof-2: #a3342a;
+  --art-tile: #646c7c;
+  --art-tile-2: #474e5c;
+  --art-jade: #4fa07a;
+  --art-jade-2: #367c5a;
+  --art-gold: #ecb755;
+  --art-gold-2: #c98f2c;
+  --art-wood: #976239;
+  --art-wood-2: #6e4426;
+  --art-glass: #a8d4e2;
+  --art-glass-2: #78b3c9;
+  --art-blue: #4f86bd;
+  --art-blue-2: #386a9c;
+  --art-pink: #f2a7b8;
+  --art-pink-2: #e07f97;
+  --art-leaf: #67a95c;
+  --art-leaf-2: #4b8a45;
+  --art-paper: #fffaf0;
+  --art-screen: #2c3a58;
+  --art-room: #f2deb4;
+  --art-room-2: #e8cf9c;
+  --art-ink: #3a2a1c;
+  --art-hl: rgba(255, 255, 255, 0.75);
+  --art-shadow: rgba(58, 42, 28, 0.2);
+  --art-rim: rgba(58, 42, 28, 0.2);
+}
+
 :root {
   /* ---- The one accent: aged brass → imperial gold. A gradient, not a
      flat fill — used for primary actions, active state, key numbers and
@@ -1790,6 +1886,7 @@ select.input {
   z-index: 5;
   animation: fadeIn var(--dur-fast) var(--ease-out) both;
 }
+.lw-hovercard-title { display: flex; align-items: center; gap: var(--space-2); }
 .lw-hint-nav { margin-left: auto; color: var(--text-faint); }
 .lw-district-list summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 4px; min-height: 36px; }
 .lw-district-list summary::-webkit-details-marker { display: none; }
@@ -1857,13 +1954,16 @@ select.input {
 .lw-node.is-explored .lw-disc { fill: var(--accent-dim); stroke: var(--accent); }
 .lw-node.is-mastered .lw-disc { fill: var(--good-dim); stroke: var(--good); stroke-width: 0.6; }
 .lw-node.is-locked .lw-disc { fill: var(--surface-2); stroke: var(--border); stroke-dasharray: 0.6 0.5; }
-.lw-node.is-locked .lw-icon { opacity: 0.4; }
+/* A locked place is still painted, only faded and drained of colour. */
+.lw-node.is-locked .cv-art { filter: grayscale(0.85); opacity: 0.55; }
 .lw-node.is-selected .lw-disc { stroke: var(--accent-strong); stroke-width: 0.8; }
 .lw-node:focus-visible .lw-disc { stroke: var(--accent-strong); stroke-width: 0.9; }
 .lw-arc { fill: none; stroke: var(--good); stroke-width: 0.7; stroke-linecap: round; }
 .lw-badge { fill: var(--surface-3); stroke: var(--border-strong); stroke-width: 0.15; }
 .lw-badge.is-mastered { fill: var(--good); stroke: none; }
-.lw-badge-text { fill: var(--on-accent); }
+.lw-badge-mark { fill: var(--text-dim); }
+.lw-badge-line { fill: none; stroke: var(--text-dim); stroke-width: 0.32; }
+.is-mastered > .lw-badge-mark { fill: var(--on-accent); }
 .lw-label {
   fill: var(--text);
   font-weight: 700;
@@ -2004,7 +2104,7 @@ a.lw-talk:focus-visible, .lw-topic-link:focus-visible, .lw-place-row:focus-visib
 }
 .lw-place-row.is-selected { border-color: var(--accent); }
 .lw-place-row.is-locked { color: var(--text-dim); }
-.lw-place-icon { font-size: var(--text-lg); }
+.lw-place-row.is-locked .cv-art { filter: grayscale(0.85); opacity: 0.6; }
 .lw-place-name { flex: 1; min-width: 0; font-weight: 700; }
 @media (max-width: 640px) {
   .lw-viewport { aspect-ratio: 4 / 5; max-height: 72vh; }
@@ -2944,6 +3044,93 @@ table.data td {
   display: inline-flex;
   flex-shrink: 0;
 }
+
+/* ---------- Illustrations (components/Art.jsx, components/art/) ----------
+   Every place and content object is a small painting on a 64-unit canvas:
+   flat fills from the --art-* palette, one ink outline, a sky and ground
+   behind. The outline lives on the root so every shape gets the same line;
+   backdrop pieces opt out with .ns. Under ~32px the fine details (.dt)
+   drop out and the line thickens, so a tile still reads in a list row. */
+.cv-art {
+  display: block;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--art-ink);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.cv-art .ns { stroke: none; }
+.cv-art .ln { fill: none; stroke-width: 0.7; }
+.cv-art .hl { fill: none; stroke: var(--art-hl); stroke-width: 0.8; }
+.cv-art .rim { fill: none; stroke: var(--art-rim); stroke-width: 1.2; }
+.cv-art .tx {
+  stroke: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.cv-art.is-sm { stroke-width: 1.7; }
+.cv-art.is-sm .dt { display: none; }
+.cv-art .f-sky { fill: var(--art-sky); }
+.cv-art .f-sky-2 { fill: var(--art-sky-2); }
+.cv-art .f-sun { fill: var(--art-sun); }
+.cv-art .f-star { fill: var(--art-star); }
+.cv-art .f-cloud { fill: var(--art-cloud); }
+.cv-art .f-far { fill: var(--art-far); }
+.cv-art .f-grass { fill: var(--art-grass); }
+.cv-art .f-grass-2 { fill: var(--art-grass-2); }
+.cv-art .f-pave { fill: var(--art-pave); }
+.cv-art .f-pave-2 { fill: var(--art-pave-2); }
+.cv-art .f-water { fill: var(--art-water); }
+.cv-art .f-water-2 { fill: var(--art-water-2); }
+.cv-art .f-wall { fill: var(--art-wall); }
+.cv-art .f-wall-2 { fill: var(--art-wall-2); }
+.cv-art .f-stone { fill: var(--art-stone); }
+.cv-art .f-stone-2 { fill: var(--art-stone-2); }
+.cv-art .f-roof { fill: var(--art-roof); }
+.cv-art .f-roof-2 { fill: var(--art-roof-2); }
+.cv-art .f-tile { fill: var(--art-tile); }
+.cv-art .f-tile-2 { fill: var(--art-tile-2); }
+.cv-art .f-jade { fill: var(--art-jade); }
+.cv-art .f-jade-2 { fill: var(--art-jade-2); }
+.cv-art .f-gold { fill: var(--art-gold); }
+.cv-art .f-gold-2 { fill: var(--art-gold-2); }
+.cv-art .f-wood { fill: var(--art-wood); }
+.cv-art .f-wood-2 { fill: var(--art-wood-2); }
+.cv-art .f-glass { fill: var(--art-glass); }
+.cv-art .f-glass-2 { fill: var(--art-glass-2); }
+.cv-art .f-blue { fill: var(--art-blue); }
+.cv-art .f-blue-2 { fill: var(--art-blue-2); }
+.cv-art .f-pink { fill: var(--art-pink); }
+.cv-art .f-pink-2 { fill: var(--art-pink-2); }
+.cv-art .f-leaf { fill: var(--art-leaf); }
+.cv-art .f-leaf-2 { fill: var(--art-leaf-2); }
+.cv-art .f-paper { fill: var(--art-paper); }
+.cv-art .f-screen { fill: var(--art-screen); }
+.cv-art .f-room { fill: var(--art-room); }
+.cv-art .f-room-2 { fill: var(--art-room-2); }
+.cv-art .f-ink { fill: var(--art-ink); }
+.cv-art .f-shadow { fill: var(--art-shadow); }
+.cv-art .s-roof { stroke: var(--art-roof); }
+.cv-art .s-roof-2 { stroke: var(--art-roof-2); }
+.cv-art .s-gold { stroke: var(--art-gold); }
+.cv-art .s-jade { stroke: var(--art-jade); }
+.cv-art .s-wood { stroke: var(--art-wood-2); }
+.cv-art .s-tile { stroke: var(--art-tile-2); }
+.cv-art .s-stone { stroke: var(--art-stone-2); }
+.cv-art .s-paper { stroke: var(--art-paper); }
+.cv-art .s-leaf { stroke: var(--art-leaf-2); }
+.cv-art .s-water { stroke: var(--art-water-2); }
+.cv-art .s-blue { stroke: var(--art-blue-2); }
+.cv-art .s-pink { stroke: var(--art-pink-2); }
+.cv-art .s-glass { stroke: var(--art-glass-2); }
+/* The tile's own clip is a rounded square (rx 14 of 64 units, i.e. 22%)
+   or a circle; the shadow follows the same outline at any size. */
+.cv-art.is-tile { border-radius: 22%; box-shadow: var(--shadow-sm); }
+.cv-art.is-round { border-radius: 50%; box-shadow: var(--shadow-sm); }
+.cv-art.is-flat { box-shadow: none; }
 
 /* ---------- Route transitions ----------
    One single transition, applied consistently on every route change: a
@@ -4780,7 +4967,12 @@ table.data td {
 .scene-translation summary { cursor: pointer; }
 .scene-thread .chat { max-width: none; }
 .scene-exchange { display: flex; flex-direction: column; gap: var(--space-2); }
-.scene-icon { font-size: var(--text-xl); line-height: 1; }
+/* A Real Chinese scene's page: its place painted beside the title. */
+.scene-head { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.scene-head > div { min-width: 0; }
+@media (max-width: 480px) {
+  .scene-head { flex-direction: column; align-items: flex-start; }
+}
 .scene-card { display: flex; flex-direction: column; color: inherit; text-decoration: none; min-width: 0; }
 .scene-card.is-locked { opacity: 0.78; }
 .scene-meta { margin-top: var(--space-2); }

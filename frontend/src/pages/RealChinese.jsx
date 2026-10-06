@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import Art, { placeArt, sceneArt } from "../components/Art.jsx";
 import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -110,7 +111,7 @@ export default function RealChinese() {
                   <li key={p.key}>
                     <button type="button" className={`lw-place-row is-${p.status}${p.key === selected?.key ? " is-selected" : ""}`}
                             onClick={() => pick(p.key)}>
-                      <span aria-hidden="true" className="lw-place-icon">{p.icon}</span>
+                      <Art name={placeArt(p.key)} size={40} />
                       <span className="lw-place-name">{t(`world.place.${p.key}.name`)}</span>
                       {p.key === rec?.key && <span className="badge accent">{t("world.state.recommended")}</span>}
                       {p.new && <span className="badge accent">{t("world.state.new")}</span>}
@@ -173,10 +174,13 @@ export function RealChineseScene() {
   return (
     <Layout>
       <header className="page-head">
-        <div>
-          <div className="page-eyebrow"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</div>
-          <h1 className="h1"><span aria-hidden="true">{data.icon}</span> {data.title}</h1>
-          <p className="sub">{data.description}</p>
+        <div className="scene-head">
+          <Art name={sceneArt(data.slug)} size={88} />
+          <div>
+            <div className="page-eyebrow"><Icon name="mapPin" size={13} /> {t("nav.realChinese")}</div>
+            <h1 className="h1">{data.title}</h1>
+            <p className="sub">{data.description}</p>
+          </div>
         </div>
         <div className="kpi-row">
           <div className="kpi">

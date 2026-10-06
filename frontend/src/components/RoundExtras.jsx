@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
+import Art, { caseArt, netArt, pronArt, sceneArt, soundArt } from "./Art.jsx";
 import Icon from "./Icon.jsx";
 import MicRecorder, { micSupported } from "./MicRecorder.jsx";
 
@@ -166,7 +167,7 @@ export function RoundContextCard({ context }) {
       <div className="card side-card">
         <p className="side-title">{t("nav.realChinese")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
-          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <Art name={sceneArt(context.slug)} size={56} />
           <div style={{ minWidth: 0 }}>
             <b>{context.title}</b>
             <div className="sub"><span lang="zh-CN">{context.npc?.zh}</span> · {context.npc?.role}</div>
@@ -183,7 +184,7 @@ export function RoundContextCard({ context }) {
       <div className="card side-card">
         <p className="side-title">{t("nav.detective")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
-          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <Art name={caseArt(context.case)} size={56} />
           {/* A case file carries its own title; a generated case is named by its structure. */}
           <b>{context.file ? (context.titles?.[i18n.language] || context.titles?.en) : t(`detective.case.${context.case}.title`)}</b>
         </div>
@@ -201,7 +202,7 @@ export function RoundContextCard({ context }) {
       <div className="card side-card">
         <p className="side-title">{t("nav.internet")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
-          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <Art name={netArt(context.slug)} size={56} />
           <div>
             <b lang="zh-CN">{context.title}</b>
             <div className="sub" lang="zh-CN">{context.source}</div>
@@ -217,7 +218,7 @@ export function RoundContextCard({ context }) {
       <div className="card side-card">
         <p className="side-title">{t("soundWorld.pron.title")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
-          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <Art name={pronArt(context.lesson)} size={56} />
           <div style={{ minWidth: 0 }}>
             <b>{context.titles?.[lang] || context.titles?.en}</b>
             <div className="sub" lang="zh-CN">{context.titles?.zh}</div>
@@ -232,7 +233,7 @@ export function RoundContextCard({ context }) {
       <div className="card side-card">
         <p className="side-title">{t("nav.soundWorld")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
-          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <Art name={soundArt(context.env)} size={56} />
           <div>
             <b>{t(`soundWorld.env.${context.env}`)}</b>
             <div className="sub" lang="zh-CN">{context.zh}</div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import Art, { caseArt, fileArt } from "../components/Art.jsx";
 import Icon from "../components/Icon.jsx";
 import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
@@ -18,7 +19,7 @@ function FileCard({ f }) {
   const body = (
     <>
       <div className="row spread" style={{ margin: 0 }}>
-        <span className="scene-icon" aria-hidden="true">{f.icon}</span>
+        <Art name={fileArt(f.slug)} size={64} />
         {f.locked ? (
           <span className="badge"><Icon name="lock" size={11} /> {t("detective.files.locked", { level: f.gate })}</span>
         ) : f.played > 0 && (
@@ -83,7 +84,7 @@ export default function Detective() {
             {data.cases.map((c) => (
               <Link key={c.key} to={`/practice?source=detective&case=${c.key}`} className="card hover scene-card">
                 <div className="row spread" style={{ margin: 0 }}>
-                  <span className="scene-icon" aria-hidden="true">{c.icon}</span>
+                  <Art name={caseArt(c.key)} size={64} />
                   {c.played > 0 && (
                     <span className={`badge ${c.solved ? "good" : ""}`}>
                       {t("detective.record", { solved: c.solved, played: c.played })}

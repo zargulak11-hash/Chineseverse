@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import Art, { netArt, placeArt } from "./Art.jsx";
 import CompanionFigure from "./CompanionFigure.jsx";
 import Icon from "./Icon.jsx";
 import WordHelper from "./WordHelper.jsx";
@@ -92,7 +93,7 @@ export function NextStopCard({ rec, place, onShow, compact }) {
     return (
       <button type="button" className="lw-nextstop" onClick={() => onShow(place.key)} title={recommendReason(t, rec)}>
         <span className="lw-nextstop-k">{t("world.state.recommended")}</span>
-        <span aria-hidden="true">{place.icon}</span>
+        <Art name={placeArt(place.key)} size={28} shape="round" flat />
         <b>{t(`world.place.${place.key}.name`)}</b>
         <Icon name="chevronRight" size={14} />
       </button>
@@ -102,7 +103,7 @@ export function NextStopCard({ rec, place, onShow, compact }) {
     <div className="card side-card lw-next">
       <p className="side-title">{t("world.recommend.title")}</p>
       <div className="row" style={{ margin: 0, gap: 12 }}>
-        <span className="scene-icon" aria-hidden="true">{place.icon}</span>
+        <Art name={placeArt(place.key)} size={48} />
         <b>{t(`world.place.${place.key}.name`)}</b>
       </div>
       <p className="sub" style={{ marginTop: 8 }}>{recommendReason(t, rec)}</p>
@@ -122,7 +123,7 @@ export default function PlacePanel({ p, animal, onClose, rec, current, level }) 
     <div className="lw-panel" aria-live="polite">
       <div className="row spread" style={{ margin: 0, gap: 8 }}>
         <div className="row" style={{ margin: 0, gap: 12, minWidth: 0 }}>
-          <span className="scene-icon" aria-hidden="true">{p.icon}</span>
+          <Art name={placeArt(p.key)} size={64} />
           <div style={{ minWidth: 0 }}>
             <h2 className="h2" style={{ margin: 0 }}>{t(`world.place.${p.key}.name`)}</h2>
             <span className="sub">{t(`world.district.${p.district}`)}</span>
@@ -266,7 +267,7 @@ export default function PlacePanel({ p, animal, onClose, rec, current, level }) 
                 {p.internet.map((it) => (
                   <li key={it.slug}>
                     <Link to={`/internet/${it.slug}`} className="lw-talk">
-                      <span aria-hidden="true">{it.icon}</span> <span lang="zh-CN">{it.title}</span>
+                      <Art name={netArt(it.slug)} size={22} /> <span lang="zh-CN">{it.title}</span>
                       {it.read && <span className="badge good">{Math.round(it.best)}%</span>}
                     </Link>
                   </li>

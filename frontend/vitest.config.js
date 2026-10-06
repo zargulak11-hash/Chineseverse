@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 // client, error translation). Kept apart from vite.config.js so the
 // production build is untouched; plain Node is enough for these modules.
 export default defineConfig({
+  // The illustration modules (components/art/) are JSX; compile them the way
+  // the app's React plugin does so a test can render them.
+  esbuild: { jsx: "automatic" },
   test: {
     environment: "node",
     include: ["src/**/*.test.js"],

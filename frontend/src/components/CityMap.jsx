@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CityBridges, CityGround, CityLanterns, buildScenery } from "./CityScenery.jsx";
+import Art, { placeArt } from "./Art.jsx";
 import Icon from "./Icon.jsx";
 import { prefersReducedMotion } from "../anime.js";
 import { StateBadges } from "./CityPanels.jsx";
@@ -18,7 +19,21 @@ const RING = 2 * Math.PI * R;
 
 const EDGE = 16; // within this of a side edge a label grows inward
 
-const NODE_STATE_ICON = { locked: "lock", mastered: "star" };
+// The small state badge on a node's shoulder, drawn in the badge's own
+// 2.7-unit circle: a padlock for a locked place, a star for a mastered one.
+const NODE_STATE_MARK = {
+  locked: (
+    <>
+      <path className="lw-badge-line" d="M-0.55 -0.15v-0.45a0.55 0.55 0 0 1 1.1 0v0.45" />
+      <rect className="lw-badge-mark" x="-0.8" y="-0.2" width="1.6" height="1.2" rx="0.25" />
+    </>
+  ),
+  mastered: <polygon className="lw-badge-mark" points="0,-0.95 0.27,-0.33 0.92,-0.3 0.42,0.12 0.58,0.76 0,0.4 -0.58,0.76 -0.42,0.12 -0.92,-0.3 -0.27,-0.33" />,
+};
+
+// The place's painting sits inside the status ring, a little smaller than
+// the disc so the ring and the progress arc stay visible around it.
+const ART_R = R - 0.55;
 
 // A soft curve between two places (bowed sideways so the roads read as
 // streets, not a wiring diagram).
@@ -64,7 +79,7 @@ function DistrictArea({ district, places, paths, tone, title }) {
   );
 }
 
-function PlaceNode({ p, current, selected, recommended, animal, label, onPick, W, onHover, onFocusPlace }) {
+function PlaceNode({ p, current, selected, recommended, animal, label, onPick, W, onHover, onFocusPlace, detail }) {
   const ratio = p.theme.total ? p.theme.known / p.theme.total : 0;
   return (
     <g
@@ -96,17 +111,15 @@ function PlaceNode({ p, current, selected, recommended, animal, label, onPick, W
         {current && <circle r={R + 1.6} className="lw-pulse" />}
         {recommended && <circle r={R + 2.6} className="lw-rec-ring" />}
         <circle r={R} className="lw-disc" />
+        <Art name={placeArt(p.key)} shape="round" flat size={ART_R * 2} x={-ART_R} y={-ART_R} detail={detail} />
         {p.status !== "locked" && ratio > 0 && (
           <circle r={R} className="lw-arc" strokeDasharray={`${ratio * RING} ${RING}`} transform="rotate(-90)" />
         )}
-        <text className="lw-icon" fontSize={R * 0.85} textAnchor="middle" dominantBaseline="central">{p.icon}</text>
         {p.new && <circle cx={-R * 0.78} cy={-R * 0.78} r="1.1" className="lw-new-dot" />}
-        {NODE_STATE_ICON[p.status] && (
-          <g transform={`translate(${R * 0.78} ${-R * 0.78})`}>
+        {NODE_STATE_MARK[p.status] && (
+          <g transform={`translate(${R * 0.78} ${-R * 0.78})`} className={`is-${p.status}`}>
             <circle r="1.35" className={`lw-badge is-${p.status}`} />
-            <text fontSize="1.5" textAnchor="middle" dominantBaseline="central" className="lw-badge-text">
-              {p.status === "locked" ? "🔒" : "★"}
-            </text>
+            {NODE_STATE_MARK[p.status]}
           </g>
         )}
       </g>
@@ -249,7 +262,9 @@ function HoverCard({ p, at, recommended }) {
   const { t } = useTranslation();
   return (
     <div className="lw-hovercard" style={{ left: at.x, top: at.y }} role="presentation">
-      <b>{p.icon} {t(`world.place.${p.key}.name`)}</b>
+      <b className="lw-hovercard-title">
+        <Art name={placeArt(p.key)} size={32} /> {t(`world.place.${p.key}.name`)}
+      </b>
       <span className="sub">{t(`world.district.${p.district}`)}</span>
       <span className="row" style={{ gap: 6, margin: "6px 0 0", flexWrap: "wrap" }}>
         <span className={`badge ${p.status === "mastered" ? "good" : p.status === "locked" ? "" : "accent"}`}>
@@ -467,6 +482,9 @@ export default function CityMap({ data, W, H, order, names, selected, animal, on
   // Names: all of them once they are readable at this zoom, otherwise only
   // the chosen place, the current one and the one under the pointer.
   const readable = LABEL_SIZE * pxPerUnit >= LABEL_MIN_PX;
+  // The paintings keep their fine details once a node is big enough on
+  // screen to show them (the same threshold as a 32px tile elsewhere).
+  const detail = ART_R * 2 * pxPerUnit > 32;
   const important = new Set([selected?.key, data.current, hover, data.recommended?.key].filter(Boolean));
   const shown = data.places.filter((p) => readable || important.has(p.key));
   const labels = layoutLabels(shown, names, data.current, W, H, { x0, y0, x1: x0 + vw, y1: y0 + vh });
@@ -558,6 +576,7 @@ export default function CityMap({ data, W, H, order, names, selected, animal, on
               W={W}
               onHover={setHover}
               onFocusPlace={onFocusPlace}
+              detail={detail}
             />
           ))}
           {shown.map((p) => (

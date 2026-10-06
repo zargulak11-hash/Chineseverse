@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import Art, { pronArt, soundArt } from "../components/Art.jsx";
 import Icon from "../components/Icon.jsx";
 import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
@@ -20,7 +21,7 @@ function PronunciationLesson({ lesson, next }) {
   return (
     <article className={`card pron-lesson${next ? " is-next" : ""}`}>
       <div className="row spread" style={{ margin: 0 }}>
-        <span className="scene-icon" aria-hidden="true">{lesson.icon}</span>
+        <Art name={pronArt(lesson.key)} size={64} />
         {lesson.passed ? (
           <span className="badge good"><Icon name="check" size={11} /> {t("realLife.best", { score: Math.round(lesson.best) })}</span>
         ) : lesson.played > 0 ? (
@@ -122,7 +123,7 @@ export default function SoundWorld() {
             {data.envs.map((e) => (
               <Link key={e.key} to={`/practice?source=sound&env=${e.key}&stage=${chosen}`} className="card hover scene-card">
                 <div className="row spread" style={{ margin: 0 }}>
-                  <span className="scene-icon" aria-hidden="true">{e.icon}</span>
+                  <Art name={soundArt(e.key)} size={64} />
                   {e.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(e.best) })}</span>}
                 </div>
                 <h3 className="h2" style={{ marginTop: 12 }}>{t(`soundWorld.env.${e.key}`)}</h3>

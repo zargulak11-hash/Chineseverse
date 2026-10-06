@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import Art, { netArt } from "../components/Art.jsx";
 import Icon from "../components/Icon.jsx";
 import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
@@ -52,11 +53,12 @@ export default function ChineseInternet() {
           <div className="grid cards">
             {data.items.map((i) => (
               <Link key={i.slug} to={`/internet/${i.slug}`} className="card hover scene-card net-card">
-                <div className="row spread" style={{ margin: 0, gap: 8 }}>
-                  <span className="badge">
-                    <span aria-hidden="true">{i.icon}</span> {t(`internet.kind.${i.kind}`)}
+                <div className="row spread" style={{ margin: 0, gap: 8, alignItems: "flex-start" }}>
+                  <Art name={netArt(i.kind)} size={64} />
+                  <span className="row" style={{ margin: 0, gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    <span className="badge">{t(`internet.kind.${i.kind}`)}</span>
+                    {i.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(i.best) })}</span>}
                   </span>
-                  {i.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(i.best) })}</span>}
                 </div>
                 <h3 className="h2" style={{ marginTop: 12 }} lang="zh-CN">{i.title}</h3>
                 <p className="sub net-preview" lang="zh-CN">{i.preview}</p>
