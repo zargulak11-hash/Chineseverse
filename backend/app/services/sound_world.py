@@ -414,6 +414,12 @@ def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, lis
     ask = {"kind": q["type"], "info": q.get("info"), "ask": q.get("ask"),
            "item": m.get(q.get("ask_item"), "") if q.get("ask_item") else "",
            "speaker": q.get("ask_speaker"), "order": (q.get("ask_order") or 0) + 1}
+    if q.get("pron_ask"):
+        # A pronunciation dialogue asks its own question (services/pronunciation.py),
+        # in Chinese with the learner's translation.
+        pa = q["pron_ask"]
+        ask.update(question_zh=pa["zh"], question_py=pa["py"],
+                   question=pa["en"] if locale == "zh" else (pa.get(locale) or pa["en"]))
     return {"lines": lines, "ask": ask}, options
 
 

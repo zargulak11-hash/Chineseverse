@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
+from app.services import pronunciation
 from app.services import sound_world as svc
 
 router = APIRouter(prefix="/api/sound-world", tags=["sound-world"])
@@ -16,3 +17,13 @@ router = APIRouter(prefix="/api/sound-world", tags=["sound-world"])
 @router.get("/places")
 def places(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return svc.env_list(db, user)
+
+
+@router.get("/pronunciation")
+def pronunciation_lessons(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The pronunciation course (played as source "pronunciation", env = lesson key)."""
+    return pronunciation.lesson_list(db, user, locale)

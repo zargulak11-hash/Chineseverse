@@ -1483,6 +1483,7 @@
     "ambient": "背景声音",
     "ambientOn": "打开",
     "ambientOff": "关闭",
+    "pron": {"title": "发音课", "sub": "声调、语音和短对话，由你设备上的中文语音朗读", "progress": "已通过 {{passed}}/{{total}} 课", "next": "下一课", "listen": "听一听例子", "hear": "听“{{text}}”", "start": "开始上课", "again": "再练一次"},
     "ask": {
       "sound_identify": "他们提到了什么？",
       "sound_info": {
@@ -1501,6 +1502,11 @@
         "price": "对方说多少钱？",
         "bus": "应该坐几路车？"
       },
+      "sound_tone": "你听到的是第几声？",
+      "sound_pinyin": "哪个拼音和你听到的一样？",
+      "sound_pair": "你听到的是哪个词？",
+      "sound_tonepair": "你听到的是哪种声调组合？",
+      "sound_dialogue": "听对话，回答问题。",
       "sound_memory": "第{{order}}个说话的人（{{speaker}}）提到了什么？"
     }
   },

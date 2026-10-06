@@ -69,6 +69,11 @@ PRIMARY_SKILL = {
     "sound_respond": "listening",
     "sound_conversation": "listening",
     "sound_memory": "memory",
+    "sound_tone": "tones",
+    "sound_pinyin": "tones",
+    "sound_pair": "tones",
+    "sound_tonepair": "tones",
+    "sound_dialogue": "listening",
     "net_comprehension": "reading",
     "net_listen": "listening",
 }
@@ -346,7 +351,8 @@ def session_reaction(
 
 
 COMPLETE_EVENT = {"review": "review_complete", "scene": "scene_complete", "sentence": "sentence_complete",
-                  "detective": "detective_complete", "sound": "sound_complete", "internet": "internet_complete"}
+                  "detective": "detective_complete", "sound": "sound_complete", "internet": "internet_complete",
+                  "pronunciation": "sound_complete"}
 
 
 def trained_skill(user: models.User, questions: list, answers: list) -> dict | None:

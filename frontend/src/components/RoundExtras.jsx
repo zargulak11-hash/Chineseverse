@@ -211,6 +211,22 @@ export function RoundContextCard({ context }) {
       </div>
     );
   }
+  if (context.kind === "pronunciation") {
+    const lang = i18n.language;
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("soundWorld.pron.title")}</p>
+        <div className="row" style={{ margin: 0, gap: 12 }}>
+          <span className="scene-icon" aria-hidden="true">{context.icon}</span>
+          <div style={{ minWidth: 0 }}>
+            <b>{context.titles?.[lang] || context.titles?.en}</b>
+            <div className="sub" lang="zh-CN">{context.titles?.zh}</div>
+          </div>
+        </div>
+        <p className="sub" style={{ marginTop: 12 }}>{context.how?.[lang] || context.how?.en}</p>
+      </div>
+    );
+  }
   if (context.kind === "sound") {
     return (
       <div className="card side-card">

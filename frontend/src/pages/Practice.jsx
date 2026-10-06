@@ -72,6 +72,8 @@ export default function Practice({ forceSource }) {
       body.item = item;
       if (version) body.version = version;
     }
+    // Pronunciation lessons (Sound World): `env` names the lesson.
+    if (source === "pronunciation" && env) body.env = env;
     if (source === "sound" && env) {
       body.env = env;
       if (stage) body.stage = stage;
@@ -205,8 +207,8 @@ export default function Practice({ forceSource }) {
         : source === "sentence"
           ? `/sentence${sentence ? `?text=${encodeURIComponent(sentence)}` : ""}`
           : source === "detective"
-            ? "/detective"
-            : source === "sound"
+            ? (caseKey?.startsWith("file:") ? `/detective/file/${caseKey.slice(5)}` : "/detective")
+            : source === "sound" || source === "pronunciation"
               ? "/sound-world"
               : source === "internet"
                 ? `/internet/${item || ""}`
@@ -223,7 +225,7 @@ export default function Practice({ forceSource }) {
         ? t("nav.sentence")
         : source === "detective"
           ? t("nav.detective")
-          : source === "sound"
+          : source === "sound" || source === "pronunciation"
             ? t("nav.soundWorld")
             : source === "internet"
               ? t("nav.internet")

@@ -54,7 +54,7 @@ from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
-           "tones", "story")
+           "tones", "story", "pronunciation")
 # The beginner's first round (services/journey.py, /foundation): tones on real
 # HSK 1 material -- a character's pinyin among the same syllable in other
 # tones, and a word picked by ear. Real items, so SRS and DNA move as usual.
@@ -429,10 +429,10 @@ def build_session(
         if locale in ("ru", "tg") else None
     )
     questions = []
-    if source in ("scene", "sentence", "detective", "sound", "internet", "story"):
+    if source in ("scene", "sentence", "detective", "sound", "internet", "story", "pronunciation"):
         # The learner's real level decides the tier (imported here: these
         # modules build on this one).
-        from app.services import detective, internet, real_life, sound_world, stories
+        from app.services import detective, internet, pronunciation, real_life, sound_world, stories
         from app.services import sentence as sentence_svc
         from app.services.gamification import user_rank
 
@@ -448,12 +448,15 @@ def build_session(
                 questions = internet.build_questions(db, user, item or "", version, hsk_level, rng, translated)
             elif source == "story":
                 questions = stories.build_questions(db, user, story or "", hsk_level, rng, translated, chapter)
+            elif source == "pronunciation":
+                # Sound World pronunciation lessons: `env` names the lesson.
+                questions = pronunciation.build_questions(db, user, env or "", rng)
             else:
                 if stage is None:
                     stage = sound_world.stage_status(db, user)["recommended"]
                 questions = sound_world.build_questions(db, user, env or "", stage, hsk_level, rng, translated)
         except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError,
-                internet.InternetError, stories.StoryError) as exc:
+                internet.InternetError, stories.StoryError, pronunciation.PronunciationError) as exc:
             raise PracticeError(exc.status, exc.detail) from exc
     for i, (item_type, row) in enumerate(picked):
         forced = None
@@ -876,6 +879,13 @@ _VIRTUAL_SKILLS = {
     "sound_respond": (("listening", 1.5, -0.3), ("speaking", 0.5, 0.0)),
     "sound_conversation": (("listening", 2.0, -0.3), ("memory", 0.5, 0.0)),
     "sound_memory": (("listening", 1.5, -0.3), ("memory", 2.0, -0.3)),
+    # Pronunciation lessons (services/pronunciation.py): telling tones and
+    # sounds apart by ear trains tones first; a dialogue is listening.
+    "sound_tone": (("tones", 2.0, -0.3), ("listening", 1.0, 0.0)),
+    "sound_pinyin": (("tones", 1.5, -0.3), ("listening", 1.0, 0.0)),
+    "sound_pair": (("tones", 1.5, -0.3), ("listening", 1.0, 0.0)),
+    "sound_tonepair": (("tones", 2.0, -0.3), ("listening", 0.5, 0.0)),
+    "sound_dialogue": (("listening", 2.0, -0.3), ("memory", 0.5, 0.0)),
     # Chinese Stories: reading for meaning, and the story's key line by ear.
     "story_q": (("reading", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
     "story_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
@@ -1079,7 +1089,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             final = answers[-1] if answers else None
             if final and final.get("correct") and session.questions[-1]["type"] == "case_deduce":
                 progress_missions(db, user, "case")
-        elif session.source == "sound":
+        elif session.source in ("sound", "pronunciation"):
             log_activity(db, user, "sound_world")
         elif session.source == "internet":
             log_activity(db, user, "internet_read")

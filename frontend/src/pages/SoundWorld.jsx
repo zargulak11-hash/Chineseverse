@@ -6,14 +6,52 @@ import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { speakChinese } from "../zhSpeech.js";
 
 // Chinese Sound World (services/sound_world.py). The speed stages and what
 // unlocks them come from the learner's real Sound World rounds and Learning
 // DNA; a place is played as a server-graded round
-// (/practice?source=sound&env=...&stage=...).
+// (/practice?source=sound&env=...&stage=...). The pronunciation course
+// (services/pronunciation.py) is played the same way with
+// source=pronunciation; its sounds are the browser's Chinese voice reading
+// real text, never recordings.
+function PronunciationLesson({ lesson, next }) {
+  const { t } = useTranslation();
+  return (
+    <article className={`card pron-lesson${next ? " is-next" : ""}`}>
+      <div className="row spread" style={{ margin: 0 }}>
+        <span className="scene-icon" aria-hidden="true">{lesson.icon}</span>
+        {lesson.passed ? (
+          <span className="badge good"><Icon name="check" size={11} /> {t("realLife.best", { score: Math.round(lesson.best) })}</span>
+        ) : lesson.played > 0 ? (
+          <span className="badge">{t("realLife.best", { score: Math.round(lesson.best) })}</span>
+        ) : next ? (
+          <span className="badge accent">{t("soundWorld.pron.next")}</span>
+        ) : null}
+      </div>
+      <h3 className="h2" style={{ marginTop: 12 }}>{lesson.n}. {lesson.title}</h3>
+      <p className="sub" lang="zh-CN">{lesson.title_zh}</p>
+      <p className="sub">{lesson.how}</p>
+      <div className="pron-examples" role="group" aria-label={t("soundWorld.pron.listen")}>
+        {lesson.examples.map((e, i) => (
+          <button key={i} type="button" className="btn small ghost" onClick={() => speakChinese(e.zh)}
+                  aria-label={t("soundWorld.pron.hear", { text: e.zh })}>
+            <span lang="zh-CN">{e.zh}</span> <span className="sub">{e.py}{e.note ? ` · ${e.note}` : ""}</span>
+          </button>
+        ))}
+      </div>
+      <Link to={`/practice?source=pronunciation&env=${lesson.key}`} className={`btn small ${next ? "primary" : ""}`}
+            style={{ marginTop: 12, alignSelf: "flex-start" }}>
+        <Icon name="play" size={13} /> {t(lesson.played ? "soundWorld.pron.again" : "soundWorld.pron.start")}
+      </Link>
+    </article>
+  );
+}
+
 export default function SoundWorld() {
   const { t } = useTranslation();
   const { data, error } = useApi("/sound-world/places");
+  const { data: pron } = useApi("/sound-world/pronunciation");
   const [stage, setStage] = useState(null);
 
   useEffect(() => {
@@ -95,6 +133,17 @@ export default function SoundWorld() {
               </Link>
             ))}
           </div>
+
+          <h2 className="h2 section-title" style={{ marginTop: 24 }}>{t("soundWorld.pron.title")}</h2>
+          <p className="sub" style={{ marginBottom: 16 }}>
+            {t("soundWorld.pron.sub")}
+            {pron && <> · {t("soundWorld.pron.progress", { passed: pron.passed, total: pron.lessons.length })}</>}
+          </p>
+          {pron ? (
+            <div className="pron-grid">
+              {pron.lessons.map((l) => <PronunciationLesson key={l.key} lesson={l} next={l.key === pron.next} />)}
+            </div>
+          ) : <Loading />}
         </div>
         <aside className="ws-side">
           <div className="card side-card">

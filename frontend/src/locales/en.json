@@ -1505,6 +1505,7 @@
     "ambient": "Background sound",
     "ambientOn": "Turn on",
     "ambientOff": "Turn off",
+    "pron": {"title": "Pronunciation course", "sub": "Tones, sounds and short dialogues, read aloud by your device's Chinese voice", "progress": "{{passed}}/{{total}} lessons passed", "next": "Next", "listen": "Listen to the examples", "hear": "Hear {{text}}", "start": "Start the lesson", "again": "Practise again"},
     "ask": {
       "sound_identify": "What did they mention?",
       "sound_info": {
@@ -1523,6 +1524,11 @@
         "price": "What price do they say?",
         "bus": "Which bus should they take?"
       },
+      "sound_tone": "Which tone do you hear?",
+      "sound_pinyin": "Which pinyin matches what you hear?",
+      "sound_pair": "Which word did you hear?",
+      "sound_tonepair": "Which tone pattern do you hear?",
+      "sound_dialogue": "Listen to the dialogue and answer.",
       "sound_memory": "What did speaker {{order}} ({{speaker}}) mention?"
     }
   },

@@ -4904,6 +4904,12 @@ table.data td {
   overflow-wrap: anywhere;
 }
 .sound-stage { margin-bottom: var(--space-3); }
+/* Sound World pronunciation course (SoundWorld.jsx). */
+.pron-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: var(--space-4); }
+.pron-lesson { display: flex; flex-direction: column; min-width: 0; }
+.pron-lesson.is-next { border-color: var(--accent-border); }
+.pron-examples { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.pron-examples .btn { overflow-wrap: anywhere; }
 .sound-lines { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .sound-line {
   display: grid;
