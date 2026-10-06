@@ -5,6 +5,7 @@ import Layout from "../components/Layout.jsx";
 import NextStepBar from "../components/NextStep.jsx";
 import { Empty } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import Icon from "../components/Icon.jsx";
 
 // Where to actually re-earn mastery of each mistake type — mastery is
 // never set by a click here, only by answering correctly again on one of
@@ -90,7 +91,7 @@ export default function Mistakes() {
           <div className="grid cards">
             {done.map((m) => (
               <div key={m.id} className="card" style={{ opacity: 0.7 }}>
-                <span className="badge good">✓ {t("pages.mistakes.masteredBadge")}</span>
+                <span className="badge good"><Icon name="check" size={11} /> {t("pages.mistakes.masteredBadge")}</span>
                 <p className="sub" style={{ marginTop: 8 }}>{m.question_text || m.reference}</p>
               </div>
             ))}

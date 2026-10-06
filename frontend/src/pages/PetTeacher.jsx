@@ -90,7 +90,7 @@ export default function PetTeacher() {
                 state={!result || result.error ? "idle" : result.success ? "celebrating" : result.correct_fix ? "happy" : "encouraging"}
               />
             ) : (
-              "🐾"
+              <Icon name="paw" size={14} style={{ verticalAlign: -2 }} />
             )}{" "}
             {animal?.name || t("pages.petTeacher.yourCompanion")}
           </span>
@@ -139,7 +139,7 @@ export default function PetTeacher() {
           </div>
         )}
 
-        {result && result.error && <div className="bubble reaction" role="alert">⚠️ {result.error}</div>}
+        {result && result.error && <div className="bubble reaction" role="alert"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {result.error}</div>}
         {result && !result.error && (
           <div aria-live="polite" className="pt-result">
             <div className="bubble me">

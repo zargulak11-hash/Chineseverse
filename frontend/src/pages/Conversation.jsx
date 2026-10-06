@@ -111,7 +111,7 @@ export default function Conversation() {
           <p className="sub">{sc.description}</p>
         </div>
         <div className="kpi-row">
-          <div className="kpi"><span className="kpi-value">HSK {sc.min_hsk_level}</span><span className="kpi-label">★{sc.difficulty}</span></div>
+          <div className="kpi"><span className="kpi-value">HSK {sc.min_hsk_level}</span><span className="kpi-label"><Icon name="star" size={11} style={{ verticalAlign: -1 }} /> {sc.difficulty}</span></div>
           <div className="kpi">
             <span className="kpi-value">{done ? turns : turnNo}/{turns}</span>
             <span className="kpi-label">{t("pages.conversation.turns")}</span>
@@ -140,7 +140,7 @@ export default function Conversation() {
             return (
               <div key={d.id}>
                 <div className="bubble npc">
-                  <span className="speaker">🧑 {d.speaker}</span>
+                  <span className="speaker"><Icon name="user" size={13} style={{ verticalAlign: -2 }} /> {d.speaker}</span>
                   {d.text}
                   {d.pinyin && <span className="pinyin">{d.pinyin}</span>}
                   {d.english && <span className="english">{d.english}</span>}
@@ -222,7 +222,7 @@ export default function Conversation() {
                 )}
                 {!hasChoices && isCurrent && result && (
                   result.error ? (
-                    <div className="bubble reaction">⚠️ {result.error}</div>
+                    <div className="bubble reaction"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {result.error}</div>
                   ) : (
                     <>
                       <div className="bubble me">
@@ -236,7 +236,7 @@ export default function Conversation() {
                       />
                       {result.improvement && (
                         <div className="bubble reaction" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
-                          ✨ {result.improvement}
+                          <Icon name="sparkles" size={13} style={{ verticalAlign: -2 }} /> {result.improvement}
                         </div>
                       )}
                       <div className="row center" style={{ justifyContent: "center" }}>

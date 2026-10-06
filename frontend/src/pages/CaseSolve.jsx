@@ -55,7 +55,7 @@ export default function CaseSolve() {
 
       {sc.case_data?.clues?.length > 0 && (
         <div className="card" style={{ marginTop: 16 }}>
-          <h2 className="h2">🔍 {t("pages.caseSolve.clues")}</h2>
+          <h2 className="h2"><Icon name="search" size={16} style={{ verticalAlign: -2 }} /> {t("pages.caseSolve.clues")}</h2>
           <ul style={{ marginTop: 8, paddingLeft: 18 }}>
             {sc.case_data.clues.map((clue, i) => (
               <li key={i} className="sub" style={{ marginTop: 4 }}>{clue}</li>
@@ -66,7 +66,7 @@ export default function CaseSolve() {
 
       {sc.case_data?.contradiction_text && (
         <div className="card" style={{ marginTop: 16, borderColor: "var(--bad)" }}>
-          <h2 className="h2" style={{ color: "var(--bad)" }}>⚠️ {t("pages.caseSolve.contradiction")}</h2>
+          <h2 className="h2" style={{ color: "var(--bad)" }}><Icon name="alert" size={16} style={{ verticalAlign: -2 }} /> {t("pages.caseSolve.contradiction")}</h2>
           <p className="sub" style={{ marginTop: 8 }}>{sc.case_data.contradiction_text}</p>
         </div>
       )}
@@ -75,7 +75,7 @@ export default function CaseSolve() {
         <h2 className="h2">{t("pages.caseSolve.witnessStatements")}</h2>
         {dialogs.map((d) => (
           <div key={d.id} className="bubble npc" style={{ marginTop: 10 }}>
-            <span className="speaker">🧑 {d.speaker}</span>
+            <span className="speaker"><Icon name="user" size={13} style={{ verticalAlign: -2 }} /> {d.speaker}</span>
             {d.text}
             {d.pinyin && <span className="pinyin">{d.pinyin}</span>}
             {d.english && <span className="english">{d.english}</span>}

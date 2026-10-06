@@ -419,7 +419,7 @@ export default function DuelBattle() {
         {back}
         <div className="card duel-panel center">
           {banner}
-          <div className="reveal-icon" style={{ fontSize: 44 }}>⏳</div>
+          <div className="reveal-icon" aria-hidden="true"><Icon name="clock" size={44} /></div>
           <h1 className="h1">{t("pages.duelBattle.waitingTitle", { name: oppName })}</h1>
           <p className="sub">{t("pages.duelBattle.yourResult", { correct: me.correct ?? 0, total, score: me.score ?? 0 })}</p>
           <p className="sub">{t(`pages.duelBattle.finish.${me.finish_reason || "completed"}`)}</p>

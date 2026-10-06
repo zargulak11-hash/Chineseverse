@@ -5,6 +5,7 @@ import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
+import Icon from "../components/Icon.jsx";
 
 export default function Vocabulary() {
   const { t } = useTranslation();
@@ -57,7 +58,7 @@ export default function Vocabulary() {
 
       {words.some((w) => w.due_for_review) && (
         <p className="sub" style={{ marginTop: 14 }}>
-          ⏰ {t("pages.vocabulary.dueForReview", { count: words.filter((w) => w.due_for_review).length })}
+          <Icon name="clock" size={13} style={{ verticalAlign: -2 }} /> {t("pages.vocabulary.dueForReview", { count: words.filter((w) => w.due_for_review).length })}
         </p>
       )}
 

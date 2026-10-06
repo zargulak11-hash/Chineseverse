@@ -9,6 +9,7 @@ import MicRecorder from "../components/MicRecorder.jsx";
 import { Bar, Empty, Loading, Stat } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import Icon from "../components/Icon.jsx";
 
 const PHRASES = [
   "你好，加油！",
@@ -85,12 +86,12 @@ export default function Companion() {
             <Stat label={t("pages.profile.dailyGoal")} value={`${dashboard.daily_goal.daily_goal_minutes}m`} tone="var(--accent2)" />
             <Stat label="HSK" value={dashboard.hsk_level} />
           </div>
-          <p className="sub" style={{ marginTop: 12 }}>✨ {animal.special_ability}</p>
-          <p className="sub">🎭 {animal.tone_style}</p>
-          <p className="sub">🎯 {animal.preferred_mechanics}</p>
+          <p className="sub" style={{ marginTop: 12 }}><Icon name="sparkles" size={13} style={{ verticalAlign: -2 }} /> {animal.special_ability}</p>
+          <p className="sub"><Icon name="chat" size={13} style={{ verticalAlign: -2 }} /> {animal.tone_style}</p>
+          <p className="sub"><Icon name="target" size={13} style={{ verticalAlign: -2 }} /> {animal.preferred_mechanics}</p>
           <Link to="/pet-teacher">
             <button className="btn small ghost" style={{ marginTop: 10 }}>
-              🧑‍🏫 {t("pages.companion.catchMistake", { name: animal.name })}
+              <Icon name="teach" size={14} style={{ verticalAlign: -2 }} /> {t("pages.companion.catchMistake", { name: animal.name })}
             </button>
           </Link>
         </div>
@@ -112,7 +113,7 @@ export default function Companion() {
             c.from === "me" ? (
               <div key={i} className="bubble me">{c.text}</div>
             ) : c.error ? (
-              <div key={i} className="bubble reaction">⚠️ {c.error}</div>
+              <div key={i} className="bubble reaction"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {c.error}</div>
             ) : (
               <VoiceFeedbackCard
                 key={i}

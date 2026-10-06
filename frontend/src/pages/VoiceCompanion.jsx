@@ -139,7 +139,7 @@ export default function VoiceCompanion() {
             c.from === "me" ? (
               <div key={i} className="bubble me">{c.text}</div>
             ) : c.error ? (
-              <div key={i} className="bubble reaction">⚠️ {c.error}</div>
+              <div key={i} className="bubble reaction"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {c.error}</div>
             ) : (
               <div key={i}>
                 <div className="bubble npc">

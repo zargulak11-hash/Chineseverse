@@ -95,7 +95,7 @@ export default function Profile() {
           <h2 className="h2" style={{ marginTop: 18 }}>{t("pages.profile.rewardsEarned")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
             <div className="scorecard"><div className="num" style={{ color: "var(--accent)" }}>{me.user.total_xp}</div><div className="lbl">{t("pages.profile.totalXp")}</div></div>
-            <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}>🪙 {me.user.coins}</div><div className="lbl">{t("common.coins")}</div></div>
+            <div className="scorecard"><div className="num" style={{ color: "var(--warn)" }}><Icon name="coin" size={18} style={{ verticalAlign: -3 }} /> {me.user.coins}</div><div className="lbl">{t("common.coins")}</div></div>
           </div>
         </div>
 
