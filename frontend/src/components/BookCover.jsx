@@ -1,10 +1,14 @@
-// A book's cover in the Chinese Stories library: its icon, its Chinese
-// title set like a book spine, and the HSK level as a seal. No artwork
-// files -- the same cover renders for any book a content author adds.
-export default function BookCover({ icon, titleZh, level, size = "md" }) {
+import Art, { bookArt } from "./Art.jsx";
+
+// A book's cover in the Chinese Stories library: a painting of the story
+// (components/Art.jsx bookArt -- its own motif, or the place it happens in),
+// the Chinese title under it and the HSK level as a seal, on a bound cover
+// with a spine. A book a content author adds without its own painting
+// still gets one, from its topic.
+export default function BookCover({ slug, topic, titleZh, level, size = "md" }) {
   return (
     <div className={`book-cover book-cover-${size}`} aria-hidden="true">
-      <span className="book-cover-icon">{icon}</span>
+      <Art name={bookArt(slug, topic)} size={size === "lg" ? 112 : 80} flat className="book-cover-art" />
       <span className="book-cover-title" lang="zh-CN">{titleZh}</span>
       <span className="book-cover-seal">HSK {level}</span>
     </div>

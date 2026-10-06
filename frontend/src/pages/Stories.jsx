@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
+import Art from "../components/Art.jsx";
 import BookCover from "../components/BookCover.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -28,7 +29,7 @@ function BookCard({ b }) {
   const locked = b.status === "locked";
   const body = (
     <>
-      <BookCover icon={b.icon} titleZh={b.title_zh} level={b.level} />
+      <BookCover slug={b.slug} topic={b.topic} titleZh={b.title_zh} level={b.level} />
       <div className="book-card-body">
         <h3 className="book-card-title">{b.title}</h3>
         <span className="book-card-zh" lang="zh-CN">《{b.title_zh}》</span>
@@ -67,7 +68,7 @@ function Feature({ b, kind }) {
   const cont = kind === "continue";
   return (
     <section className="card book-feature" aria-labelledby={`feature-${kind}`}>
-      <BookCover icon={b.icon} titleZh={b.title_zh} level={b.level} size="lg" />
+      <BookCover slug={b.slug} topic={b.topic} titleZh={b.title_zh} level={b.level} size="lg" />
       <div className="book-feature-body">
         <p className="page-eyebrow" id={`feature-${kind}`}>
           <Icon name={cont ? "bookOpen" : "sparkles"} size={13} /> {t(cont ? "stories.continue.title" : "stories.recommended.title")}
@@ -225,7 +226,10 @@ export default function Stories() {
       )}
 
       {shown.length === 0 ? (
-        <Empty>{lv.books ? t("stories.emptyFilter") : t("stories.empty")}</Empty>
+        <Empty>
+          <Art name="book.reading" size={72} className="book-empty-art" />
+          {lv.books ? t("stories.emptyFilter") : t("stories.empty")}
+        </Empty>
       ) : (
         <>
           <div className="book-grid">{shown.map((b) => <BookCard key={b.slug} b={b} />)}</div>

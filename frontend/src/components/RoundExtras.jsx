@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
-import Art, { caseArt, netArt, pronArt, sceneArt, soundArt } from "./Art.jsx";
+import Art, { bookArt, caseArt, netArt, pronArt, sceneArt, soundArt } from "./Art.jsx";
 import Icon from "./Icon.jsx";
 import MicRecorder, { micSupported } from "./MicRecorder.jsx";
 
@@ -240,6 +240,21 @@ export function RoundContextCard({ context }) {
           </div>
         </div>
         <span className="badge accent" style={{ marginTop: 12 }}>{t(`soundWorld.stage.${context.stage}`)}</span>
+      </div>
+    );
+  }
+  if (context.kind === "story") {
+    // services/stories.py: a chapter's practice carries the book, not a sentence.
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("nav.stories")}</p>
+        <div className="row" style={{ margin: 0, gap: 12 }}>
+          <Art name={bookArt(context.slug)} size={56} />
+          <div style={{ minWidth: 0 }}>
+            <b lang="zh-CN">《{context.title}》</b>
+            <div className="sub">HSK {context.level} · {t("stories.help.practice")}</div>
+          </div>
+        </div>
       </div>
     );
   }

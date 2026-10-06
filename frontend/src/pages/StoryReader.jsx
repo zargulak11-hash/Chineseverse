@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api.js";
+import Art, { bookArt } from "../components/Art.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import ReadingHelp, { HELP_ACTIONS } from "../components/ReadingHelp.jsx";
@@ -216,6 +217,7 @@ export default function StoryReader() {
           <div className="row">
             {finish.next ? (
               <Link to={`/stories/${finish.next.slug}`} className="btn primary">
+                <Art name={bookArt(finish.next.slug)} size={28} shape="round" flat />
                 {t("stories.done.next")}: <span lang="zh-CN">《{finish.next.title_zh}》</span> <Icon name="arrowRight" size={13} />
               </Link>
             ) : null}

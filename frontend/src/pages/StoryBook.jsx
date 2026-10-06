@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
+import Art, { bookArt } from "../components/Art.jsx";
 import BookCover from "../components/BookCover.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
@@ -64,7 +65,7 @@ export default function StoryBook() {
       </Link>
       <header className="page-head book-head" style={{ marginTop: 12 }}>
         <div className="book-head-main">
-          <BookCover icon={data.icon} titleZh={data.title_zh} level={data.level} size="lg" />
+          <BookCover slug={data.slug} topic={data.topic} titleZh={data.title_zh} level={data.level} size="lg" />
           <div>
             <div className="page-eyebrow"><Icon name="bookOpen" size={13} /> HSK {data.level} · {t(`stories.topic.${data.topic}`)}</div>
             <h1 className="h1" lang="zh-CN">《{data.title_zh}》</h1>
@@ -111,6 +112,7 @@ export default function StoryBook() {
               <BookStats stats={data.stats} />
               {data.next && (
                 <Link to={`/stories/${data.next.slug}`} className="btn primary">
+                  <Art name={bookArt(data.next.slug)} size={28} shape="round" flat />
                   {t("stories.done.next")}: <span lang="zh-CN">《{data.next.title_zh}》</span> <Icon name="arrowRight" size={13} />
                 </Link>
               )}

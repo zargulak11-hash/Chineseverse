@@ -282,6 +282,45 @@ export function Notes({ x, y, s = 1, tone = "gold" }) {
   );
 }
 
+// A person in the same round, friendly style: standing on (x, y), 21 units
+// tall at s = 1. `arm` "up" waves; `hair` and `shirt` are palette names.
+export function Person({ x, y = 48, s = 1, shirt = "blue", hair = "tile-2", arm }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      {arm === "up" && (
+        <>
+          <path className={`f-${shirt}`} d="M3.2 -9.4l4.6 -6.2l1.9 1.3l-4.3 6.6z" />
+          <circle className="f-skin" cx="9.1" cy="-15.9" r="1.4" />
+        </>
+      )}
+      <path className={`f-${shirt}`} d="M-5 0v-7.2q0 -4.2 5 -4.6q5 0.4 5 4.6V0z" />
+      <circle className="f-skin" cx="0" cy="-16" r="4.4" />
+      <path className={`f-${hair}`} d="M-4.6 -16.2a4.6 4.6 0 0 1 9.2 0q-2.2 -2.2 -4.8 -1.6q-2.2 0.4 -4.4 1.6z" />
+      <g className="f-ink ns">
+        <circle cx="-1.6" cy="-15.3" r="0.55" />
+        <circle cx="1.6" cy="-15.3" r="0.55" />
+      </g>
+      <path className="ln" d="M-1.2 -13.5q1.2 1 2.4 0" style={{ strokeWidth: 0.7 }} />
+      <g className="f-pink ns dt" opacity="0.7">
+        <circle cx="-2.9" cy="-14" r="0.8" />
+        <circle cx="2.9" cy="-14" r="0.8" />
+      </g>
+    </g>
+  );
+}
+
+// A window on an indoor wall, with sky (and sun or moon) outside.
+export function WallWindow({ x, y, w, h }) {
+  return (
+    <g>
+      <rect className="f-wood" x={x - 1.2} y={y - 1.2} width={w + 2.4} height={h + 2.4} rx="1" />
+      <rect className="f-sky" x={x} y={y} width={w} height={h} />
+      <circle className="f-sun ns" cx={x + w * 0.7} cy={y + h * 0.35} r={Math.min(w, h) * 0.16} />
+      <path className="ln s-wood" d={`M${x + w / 2} ${y}v${h}M${x} ${y + h / 2}h${w}`} style={{ strokeWidth: 1 }} />
+    </g>
+  );
+}
+
 // ------------------------------------------------------------ indoor props
 
 // A phone lying in the light: dark body, bright screen. Children draw on
