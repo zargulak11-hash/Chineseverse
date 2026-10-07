@@ -70,6 +70,16 @@ describe("every request", () => {
 });
 
 describe("errors", () => {
+  it("explains in the learner's language why onboarding can't be finished yet", async () => {
+    await i18n.changeLanguage("ru");
+    fetch.mockResolvedValue(respond(409, { detail: "Choose your companion before finishing onboarding" }));
+    const err = await api.post("/onboarding/placement-test/skip").catch((e) => e);
+    expect(err.message).toBe(ru.apiErrors.onboardingCompanionFirst);
+    fetch.mockResolvedValue(respond(409, { detail: "Answer the onboarding questions before finishing onboarding" }));
+    const again = await api.post("/onboarding/placement-test/skip").catch((e) => e);
+    expect(again.message).toBe(ru.apiErrors.onboardingQuestionsFirst);
+  });
+
   it("shows the server's detail in the learner's language and keeps status, code and body", async () => {
     await i18n.changeLanguage("ru");
     fetch.mockResolvedValue(respond(409, { detail: "Quest already claimed", code: "x_code", extra: 1 }));

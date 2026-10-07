@@ -1226,6 +1226,8 @@
     "alreadyAnswered": "This question has already been answered.",
     "answerOne": "Answer at least one question before finishing.",
     "placementDone": "The placement test is part of onboarding, which you have already completed.",
+    "onboardingCompanionFirst": "Choose your companion first, then finish setting up.",
+    "onboardingQuestionsFirst": "Answer the two questions about you first, then finish setting up.",
     "lessonByPractice": "A lesson is completed by passing its practice round.",
     "noStrokeData": "There is no stroke data for this character yet.",
     "traceRejected": "This trace couldn't be checked, so it wasn't saved. Please write the character again.",

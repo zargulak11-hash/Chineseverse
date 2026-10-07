@@ -1223,6 +1223,8 @@
     "alreadyAnswered": "这道题已经回答过了。",
     "answerOne": "请至少回答一道题后再结束。",
     "placementDone": "分级测试是入门设置的一部分，你已经完成了。",
+    "onboardingCompanionFirst": "请先选择你的伙伴，再完成设置。",
+    "onboardingQuestionsFirst": "请先回答关于你的两个问题，再完成设置。",
     "lessonByPractice": "通过课程练习后，课程才算完成。",
     "noStrokeData": "这个汉字暂时没有笔顺数据。",
     "traceRejected": "这次书写无法通过验证，因此没有保存。请再写一遍这个汉字。",

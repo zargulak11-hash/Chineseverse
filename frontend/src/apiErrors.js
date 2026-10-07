@@ -38,6 +38,9 @@ const EXACT = {
   "Answer at least one question before finishing": "answerOne",
   "The placement test is part of onboarding, which is already complete": "placementDone",
   "Placement attempt already finished": "placementDone", // a double submit
+  // routers/onboarding.py: finishing placement before the earlier steps are saved
+  "Choose your companion before finishing onboarding": "onboardingCompanionFirst",
+  "Answer the onboarding questions before finishing onboarding": "onboardingQuestionsFirst",
   "Lessons are completed by passing their practice round": "lessonByPractice",
   "No stroke data available for this character": "noStrokeData",
   "This tracing attempt was already used": "traceUsed",
