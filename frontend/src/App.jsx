@@ -57,10 +57,29 @@ import Stories from "./pages/Stories.jsx";
 import StoryBook from "./pages/StoryBook.jsx";
 import StoryReader from "./pages/StoryReader.jsx";
 
+// Onboarding is a one-time setup the server records
+// (user_profiles.onboarding_completed, carried on every auth//me `user`).
+// Until it is done, every signed-in page -- typed URL, bookmark, old link --
+// leads back to /onboarding; the shell route is wrapped in this too, so the
+// sidebar and top bar never render around an unfinished onboarding. Only the
+// stored flag decides, never which pages were visited: deciding by the
+// visited page is what let onboarding come back after a refresh or a new
+// sign-in.
 function RequireAuth({ children }) {
   const { user } = useAuth();
   const location = useLocation();
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  if (!user.onboarding_completed) return <Navigate to="/onboarding" replace />;
+  return children;
+}
+
+// The other side of the same gate: /onboarding is only for a learner who
+// hasn't finished it. Once the server says it's done, it can't be reopened.
+function RequireOnboarding({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  if (user.onboarding_completed) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -151,6 +170,16 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Onboarding is full-screen, outside the app shell: no sidebar or
+            navigation to leave it by before it's finished. */}
+        <Route
+          path="/onboarding"
+          element={
+            <RequireOnboarding>
+              <Onboarding />
+            </RequireOnboarding>
+          }
+        />
         {/* Every signed-in page shares ONE persistent shell (sidebar + top bar,
             components/Layout.jsx AppShell): it stays mounted across navigation
             so the sidebar keeps its scroll position and state. */}
@@ -166,14 +195,6 @@ export default function App() {
             element={
               <RequireAuth>
                 <AnimalSelect />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/onboarding"
-            element={
-              <RequireAuth>
-                <Onboarding />
               </RequireAuth>
             }
           />

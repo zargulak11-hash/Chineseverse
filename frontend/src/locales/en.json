@@ -544,10 +544,21 @@
       "findPeopleToFollow": "Find people to follow"
     },
     "animalSelect": {
+      "picked": "Chosen",
       "title": "Choose your companion",
       "subtitle": "Each one teaches with a different style. You can change later — {{name}}."
     },
     "onboarding": {
+      "eyebrow": "Getting started",
+      "stepsLabel": "Setup steps",
+      "stage": {
+        "companion": "Companion",
+        "questions": "About you",
+        "level": "Your level"
+      },
+      "companionSub": "Your companion learns alongside you and reacts to every answer. You can change it later.",
+      "loadErrorTitle": "We couldn't load your setup",
+      "retry": "Try again",
       "loading": "Setting things up…",
       "saving": "Saving…",
       "motivationTitle": "Why are you learning Chinese?",

@@ -86,6 +86,10 @@ def test_another_learners_mistake_is_a_404_not_a_500(client, learner):
 
 def test_placement_cannot_rerun_after_onboarding(client, learner):
     fid, fh = learner
+    animal = expect(client, "get", "/api/animals", 200)[0]
+    expect(client, "post", "/api/me/animal", 200, headers=fh, json={"animal_id": animal["id"]})
+    expect(client, "patch", "/api/me/profile", 200, headers=fh,
+           json={"learning_motivation": "work", "discovery_source": "search"})
     start = expect(client, "post", "/api/onboarding/placement-test/start", 200, headers=fh)
     with SessionLocal() as db:
         qd = db.get(models.PlacementAttempt, start["attempt_id"]).question_data

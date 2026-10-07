@@ -2,24 +2,59 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api.js";
+import { useAuth } from "../auth.js";
+import BrandLogo from "../components/BrandLogo.jsx";
+import CompanionPicker from "../components/CompanionPicker.jsx";
 import Icon from "../components/Icon.jsx";
-import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
 import { Loading } from "../components/ui.jsx";
+import { SUPPORTED_LANGS } from "../i18n.js";
 import { usePrefs } from "../prefs.jsx";
 
 const MOTIVATIONS = ["travel", "work", "culture", "exam", "family", "other"];
 const SOURCES = ["friend", "social", "school", "search", "other"];
 
+// The three stages shown in the progress bar, and the screens in each.
+const STAGES = [
+  { key: "companion", steps: ["companion"] },
+  { key: "questions", steps: ["motivation", "discovery"] },
+  { key: "level", steps: ["intro", "test", "result"] },
+];
+
+// Where a learner (re)enters onboarding: the first step whose answer the
+// server doesn't have yet. Every step is saved the moment it's answered, so
+// a refresh, a closed tab or a new sign-in resumes here instead of starting
+// over -- it used to restart at the first question every time, which is how
+// the questions kept coming back.
+function resumeStep(me) {
+  if (!me.user.animal_id) return "companion";
+  if (!me.profile.learning_motivation) return "motivation";
+  if (!me.profile.discovery_source) return "discovery";
+  return "intro";
+}
+
+// Back only ever moves between onboarding's own screens.
+const BACK = { motivation: "companion", discovery: "motivation", intro: "discovery", test: "intro" };
+
+// The one-time setup a new account goes through before the app opens:
+// companion -> two questions -> level (placement test, or "complete
+// beginner"). It is full-screen on purpose (App.jsx renders it outside the
+// app shell): no sidebar or menu to wander off by. Finishing the level step
+// is what marks onboarding complete on the server, and the server refuses it
+// until the companion and both answers are saved (routers/onboarding.py).
 export default function Onboarding() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { user, setCurrentUser, logout } = useAuth();
   const { soundEnabled } = usePrefs() || {};
 
-  const [step, setStep] = useState("loading"); // loading|motivation|discovery|intro|test|result
+  const [step, setStep] = useState("loading"); // loading|companion|motivation|discovery|intro|test|result
+  const [loadError, setLoadError] = useState("");
+  const [loadVersion, setLoadVersion] = useState(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const [animalId, setAnimalId] = useState(null);
   const [motivation, setMotivation] = useState(null);
   const [motivationOther, setMotivationOther] = useState("");
   const [source, setSource] = useState(null);
@@ -31,30 +66,47 @@ export default function Onboarding() {
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
 
+  // Runs once (and on "try again") -- not on a language change, which only
+  // re-renders the same step in the new language.
   useEffect(() => {
+    let cancelled = false;
+    setLoadError("");
     api
       .get("/me")
       .then((me) => {
-        if (me.profile.onboarding_completed) {
-          navigate("/dashboard", { replace: true });
-        } else {
-          setStep("motivation");
+        if (cancelled) return;
+        if (me.user.onboarding_completed) {
+          // Already done (e.g. finished in another tab): the route guard
+          // takes it from here and opens the app.
+          setCurrentUser(me.user);
+          return;
         }
+        const p = me.profile;
+        setAnimalId(me.user.animal_id);
+        setMotivation(p.learning_motivation || null);
+        setMotivationOther(p.learning_motivation_other || "");
+        setSource(p.discovery_source || null);
+        setSourceOther(p.discovery_source_other || "");
+        setStep(resumeStep(me));
       })
-      .catch(() => setStep("motivation"));
-  }, [navigate]);
+      .catch((err) => {
+        if (!cancelled) setLoadError(err.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadVersion]);
 
-  async function saveMotivationAndSource() {
+  function go(next) {
+    setError("");
+    setStep(next);
+  }
+
+  async function run(action) {
     setBusy(true);
     setError("");
     try {
-      await api.patch("/me/profile", {
-        learning_motivation: motivation,
-        learning_motivation_other: motivation === "other" ? motivationOther : null,
-        discovery_source: source,
-        discovery_source_other: source === "other" ? sourceOther : null,
-      });
-      setStep("intro");
+      await action();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -62,46 +114,66 @@ export default function Onboarding() {
     }
   }
 
-  async function startTest() {
-    setBusy(true);
-    setError("");
-    try {
+  const chooseCompanion = (id) =>
+    run(async () => {
+      await api.post("/me/animal", { animal_id: id });
+      setAnimalId(id);
+      const me = await api.get("/me");
+      setCurrentUser(me.user);
+      go("motivation");
+    });
+
+  const saveMotivation = () =>
+    run(async () => {
+      await api.patch("/me/profile", {
+        learning_motivation: motivation,
+        learning_motivation_other: motivation === "other" ? motivationOther.trim() : null,
+      });
+      go("discovery");
+    });
+
+  const saveSource = () =>
+    run(async () => {
+      await api.patch("/me/profile", {
+        discovery_source: source,
+        discovery_source_other: source === "other" ? sourceOther.trim() : null,
+      });
+      go("intro");
+    });
+
+  const startTest = () =>
+    run(async () => {
       const r = await api.post("/onboarding/placement-test/start");
       setAttemptId(r.attempt_id);
       setQuestions(r.questions);
       setAnswers({});
       setQIdx(0);
-      setStep("test");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
+      go("test");
+    });
+
+  // Onboarding is complete on the server now; enter the app with the
+  // server's own copy of the user (so the route guard lets them through).
+  // Should that re-read fail, the completion call itself already succeeded.
+  async function enterApp(to) {
+    let next;
+    try {
+      next = (await api.get("/me")).user;
+    } catch {
+      next = { ...user, onboarding_completed: true };
     }
+    setCurrentUser(next);
+    navigate(to, { replace: true });
   }
 
-  async function skipTest(beginner = false) {
-    setBusy(true);
-    setError("");
-    try {
-      const r = await api.post("/onboarding/placement-test/skip");
-      // A complete beginner goes straight to step 1 of the journey.
-      if (beginner) {
-        navigate("/journey", { replace: true });
-        return;
-      }
-      setResult(r);
-      setStep("result");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  // A complete beginner goes straight to step 1 of the journey.
+  const startAsBeginner = () =>
+    run(async () => {
+      await api.post("/onboarding/placement-test/skip");
+      await enterApp("/journey");
+    });
 
-  async function finishSubmit(finalAnswers) {
-    setBusy(true);
-    setError("");
-    try {
+  const submitTest = (finalAnswers) =>
+    run(async () => {
       const payload = {
         answers: Object.entries(finalAnswers).map(([index, answer]) => ({
           index: Number(index),
@@ -110,13 +182,8 @@ export default function Onboarding() {
       };
       const r = await api.post(`/onboarding/placement-test/${attemptId}/submit`, payload);
       setResult(r);
-      setStep("result");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+      go("result");
+    });
 
   function answerQuestion(value) {
     const q = questions[qIdx];
@@ -125,8 +192,13 @@ export default function Onboarding() {
     if (qIdx + 1 < questions.length) {
       setQIdx(qIdx + 1);
     } else {
-      finishSubmit(nextAnswers);
+      submitTest(nextAnswers);
     }
+  }
+
+  function signOut() {
+    logout();
+    navigate("/", { replace: true });
   }
 
   const q = questions[qIdx];
@@ -139,156 +211,241 @@ export default function Onboarding() {
     }
   }, [step, qIdx, q?.type, q?.tts_text, soundEnabled]);
 
-  if (step === "loading") {
-    return (
-      <Layout>
-        <Loading>{t("pages.onboarding.loading")}</Loading>
-      </Layout>
+  const stageIdx = STAGES.findIndex((s) => s.steps.includes(step));
+  const wide = step === "companion";
+
+  let body;
+  if (loadError) {
+    body = (
+      <section className="card onboard-card" role="alert">
+        <h1 className="h1">{t("pages.onboarding.loadErrorTitle")}</h1>
+        <p className="sub">{loadError}</p>
+        <button type="button" className="btn primary" style={{ marginTop: 16 }} onClick={() => setLoadVersion((v) => v + 1)}>
+          {t("pages.onboarding.retry")}
+        </button>
+      </section>
+    );
+  } else if (step === "loading") {
+    body = <Loading>{t("pages.onboarding.loading")}</Loading>;
+  } else {
+    body = (
+      <>
+        <p className="page-eyebrow">
+          <Icon name="sparkles" size={13} /> {t("pages.onboarding.eyebrow")}
+        </p>
+        <ol className="onboard-steps" aria-label={t("pages.onboarding.stepsLabel")}>
+          {STAGES.map((s, i) => (
+            <li
+              key={s.key}
+              className={i < stageIdx ? "is-done" : i === stageIdx ? "is-current" : ""}
+              aria-current={i === stageIdx ? "step" : undefined}
+            >
+              {t(`pages.onboarding.stage.${s.key}`)}
+            </li>
+          ))}
+        </ol>
+
+        <section key={step} className={wide ? "onboard-panel" : "card onboard-card"}>
+          {BACK[step] && (
+            <button type="button" className="btn small ghost onboard-back" disabled={busy} onClick={() => go(BACK[step])}>
+              ← {t("common.back")}
+            </button>
+          )}
+          {error && (
+            <p className="formerr" role="alert">
+              {error}
+            </p>
+          )}
+
+          {step === "companion" && (
+            <>
+              <h1 className="h1">{t("pages.animalSelect.title")}</h1>
+              <p className="sub">{t("pages.onboarding.companionSub")}</p>
+              <CompanionPicker picked={animalId} busy={busy} onChoose={chooseCompanion} />
+            </>
+          )}
+
+          {step === "motivation" && (
+            <>
+              <h1 className="h1">{t("pages.onboarding.motivationTitle")}</h1>
+              <p className="sub">{t("pages.onboarding.motivationSubtitle")}</p>
+              <div className="col" style={{ marginTop: 16, gap: 8 }}>
+                {MOTIVATIONS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`option${motivation === key ? " picked" : ""}`}
+                    aria-pressed={motivation === key}
+                    onClick={() => setMotivation(key)}
+                  >
+                    {t(`pages.onboarding.motivation.${key}`)}
+                  </button>
+                ))}
+              </div>
+              {motivation === "other" && (
+                <div className="field" style={{ marginTop: 12 }}>
+                  <input
+                    className="input"
+                    value={motivationOther}
+                    maxLength={200}
+                    aria-label={t("pages.onboarding.otherPlaceholder")}
+                    onChange={(e) => setMotivationOther(e.target.value)}
+                    placeholder={t("pages.onboarding.otherPlaceholder")}
+                  />
+                </div>
+              )}
+              <button
+                type="button"
+                className="btn primary"
+                style={{ marginTop: 16 }}
+                disabled={busy || !motivation || (motivation === "other" && !motivationOther.trim())}
+                onClick={saveMotivation}
+              >
+                {busy ? t("pages.onboarding.saving") : t("pages.onboarding.next")}
+              </button>
+            </>
+          )}
+
+          {step === "discovery" && (
+            <>
+              <h1 className="h1">{t("pages.onboarding.discoveryTitle")}</h1>
+              <div className="col" style={{ marginTop: 16, gap: 8 }}>
+                {SOURCES.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`option${source === key ? " picked" : ""}`}
+                    aria-pressed={source === key}
+                    onClick={() => setSource(key)}
+                  >
+                    {t(`pages.onboarding.source.${key}`)}
+                  </button>
+                ))}
+              </div>
+              {source === "other" && (
+                <div className="field" style={{ marginTop: 12 }}>
+                  <input
+                    className="input"
+                    value={sourceOther}
+                    maxLength={200}
+                    aria-label={t("pages.onboarding.otherPlaceholder")}
+                    onChange={(e) => setSourceOther(e.target.value)}
+                    placeholder={t("pages.onboarding.otherPlaceholder")}
+                  />
+                </div>
+              )}
+              <button
+                type="button"
+                className="btn primary"
+                style={{ marginTop: 16 }}
+                disabled={busy || !source || (source === "other" && !sourceOther.trim())}
+                onClick={saveSource}
+              >
+                {busy ? t("pages.onboarding.saving") : t("pages.onboarding.next")}
+              </button>
+            </>
+          )}
+
+          {step === "intro" && (
+            // Three honest starting points: a complete beginner starts the
+            // foundation (no test, level 1); anyone who knows some Chinese takes
+            // the real placement test -- the level is never guessed.
+            <>
+              <h1 className="h1">{t("pages.onboarding.levelTitle")}</h1>
+              <p className="sub">{t("pages.onboarding.levelSub")}</p>
+              <div className="level-choices">
+                <button type="button" className="level-choice is-primary" disabled={busy} onClick={startAsBeginner}>
+                  <b>{t("pages.onboarding.levelBeginner")}</b>
+                  <span className="sub">{t("pages.onboarding.levelBeginnerHint")}</span>
+                </button>
+                <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
+                  <b>{t("pages.onboarding.levelSome")}</b>
+                  <span className="sub">{t("pages.onboarding.levelSomeHint")}</span>
+                </button>
+                <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
+                  <b>{t("pages.onboarding.levelStudy")}</b>
+                  <span className="sub">{t("pages.onboarding.levelStudyHint")}</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === "test" && q && (
+            <>
+              <div className="row spread">
+                <span className="ilb">{t("pages.onboarding.questionProgress", { current: qIdx + 1, total: questions.length })}</span>
+                <span className="ilb">HSK{q.level}</span>
+              </div>
+              <h2 className="h2 onboard-question">{q.prompt}</h2>
+
+              <div className="col" style={{ marginTop: 16, gap: 8 }}>
+                {q.options &&
+                  q.options.map((opt) => (
+                    <button key={opt} type="button" className="option" onClick={() => answerQuestion(opt)} disabled={busy}>
+                      {opt}
+                    </button>
+                  ))}
+                {!q.options && q.type === "recognition" && (
+                  <div className="row center" style={{ justifyContent: "center" }}>
+                    <MicRecorder onTranscript={(text) => answerQuestion(text)} disabled={busy} />
+                    <span className="muted" style={{ fontSize: "var(--text-xs)" }}>{t("pages.onboarding.sayItAloud")}</span>
+                  </div>
+                )}
+              </div>
+              {/* A failed submit keeps the answers: send them again. */}
+              {error && qIdx + 1 === questions.length && answers[q.index] !== undefined && (
+                <button type="button" className="btn primary" style={{ marginTop: 16 }} disabled={busy} onClick={() => submitTest(answers)}>
+                  {t("pages.onboarding.retry")}
+                </button>
+              )}
+            </>
+          )}
+
+          {step === "result" && result && (
+            <div className="center">
+              <div className="reveal-icon">
+                <Icon name="sparkles" size={44} />
+              </div>
+              <h1 className="h1">{t("pages.onboarding.resultTitle")}</h1>
+              <p className="sub">{t("pages.onboarding.resultLevel", { level: result.placed_level })}</p>
+              {result.total_count > 0 && (
+                <p className="sub">{t("pages.onboarding.resultScore", { correct: result.correct_count, total: result.total_count })}</p>
+              )}
+              <button type="button" className="btn primary" style={{ marginTop: 16 }} disabled={busy} onClick={() => run(() => enterApp("/journey"))}>
+                {t("pages.onboarding.startJourney")}
+              </button>
+            </div>
+          )}
+        </section>
+      </>
     );
   }
 
   return (
-    <Layout>
-      <div className="card formcard is-step">
-        {error && <p className="formerr">{error}</p>}
-
-        {step === "motivation" && (
-          <>
-            <h1 className="h1">{t("pages.onboarding.motivationTitle")}</h1>
-            <p className="sub">{t("pages.onboarding.motivationSubtitle")}</p>
-            <div className="col" style={{ marginTop: 16, gap: 10 }}>
-              {MOTIVATIONS.map((key) => (
-                <button
-                  key={key}
-                  className={`option${motivation === key ? " picked" : ""}`}
-                  onClick={() => setMotivation(key)}
-                >
-                  {t(`pages.onboarding.motivation.${key}`)}
-                </button>
-              ))}
-            </div>
-            {motivation === "other" && (
-              <div className="field" style={{ marginTop: 12 }}>
-                <input
-                  className="input"
-                  value={motivationOther}
-                  onChange={(e) => setMotivationOther(e.target.value)}
-                  placeholder={t("pages.onboarding.otherPlaceholder")}
-                />
-              </div>
-            )}
-            <button
-              className="btn primary"
-              style={{ marginTop: 18 }}
-              disabled={!motivation || (motivation === "other" && !motivationOther.trim())}
-              onClick={() => setStep("discovery")}
-            >
-              {t("pages.onboarding.next")}
-            </button>
-          </>
-        )}
-
-        {step === "discovery" && (
-          <>
-            <h1 className="h1">{t("pages.onboarding.discoveryTitle")}</h1>
-            <div className="col" style={{ marginTop: 16, gap: 10 }}>
-              {SOURCES.map((key) => (
-                <button
-                  key={key}
-                  className={`option${source === key ? " picked" : ""}`}
-                  onClick={() => setSource(key)}
-                >
-                  {t(`pages.onboarding.source.${key}`)}
-                </button>
-              ))}
-            </div>
-            {source === "other" && (
-              <div className="field" style={{ marginTop: 12 }}>
-                <input
-                  className="input"
-                  value={sourceOther}
-                  onChange={(e) => setSourceOther(e.target.value)}
-                  placeholder={t("pages.onboarding.otherPlaceholder")}
-                />
-              </div>
-            )}
-            <button
-              className="btn primary"
-              style={{ marginTop: 18 }}
-              disabled={busy || !source || (source === "other" && !sourceOther.trim())}
-              onClick={saveMotivationAndSource}
-            >
-              {t("pages.onboarding.next")}
-            </button>
-          </>
-        )}
-
-        {step === "intro" && (
-          // Three honest starting points: a complete beginner starts the
-          // foundation (no test, level 1); anyone who knows some Chinese takes
-          // the real placement test -- the level is never guessed.
-          <>
-            <h1 className="h1">{t("pages.onboarding.levelTitle")}</h1>
-            <p className="sub">{t("pages.onboarding.levelSub")}</p>
-            <div className="level-choices">
-              <button type="button" className="level-choice is-primary" disabled={busy} onClick={() => skipTest(true)}>
-                <b>{t("pages.onboarding.levelBeginner")}</b>
-                <span className="sub">{t("pages.onboarding.levelBeginnerHint")}</span>
+    <div className="onboard">
+      <header className="onboard-top">
+        <BrandLogo className="brand-logo--boot" />
+        <div className="onboard-tools">
+          <div className="row onboard-langs" role="group" aria-label={t("settings.language")}>
+            {SUPPORTED_LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                lang={l.code}
+                className={`btn small${i18n.language === l.code ? " primary" : " ghost"}`}
+                aria-pressed={i18n.language === l.code}
+                onClick={() => i18n.changeLanguage(l.code)}
+              >
+                {l.label}
               </button>
-              <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
-                <b>{t("pages.onboarding.levelSome")}</b>
-                <span className="sub">{t("pages.onboarding.levelSomeHint")}</span>
-              </button>
-              <button type="button" className="level-choice" disabled={busy} onClick={startTest}>
-                <b>{t("pages.onboarding.levelStudy")}</b>
-                <span className="sub">{t("pages.onboarding.levelStudyHint")}</span>
-              </button>
-            </div>
-          </>
-        )}
-
-        {step === "test" && q && (
-          <>
-            <div className="row spread">
-              <span className="ilb">{t("pages.onboarding.questionProgress", { current: qIdx + 1, total: questions.length })}</span>
-              <span className="ilb">HSK{q.level}</span>
-            </div>
-            <h2 className="h2" style={{ marginTop: 14, fontSize: 22 }}>{q.prompt}</h2>
-
-            <div className="col" style={{ marginTop: 14, gap: 10 }}>
-              {q.options &&
-                q.options.map((opt) => (
-                  <button key={opt} className="option" onClick={() => answerQuestion(opt)} disabled={busy}>
-                    {opt}
-                  </button>
-                ))}
-              {!q.options && q.type === "recognition" && (
-                <div className="row center" style={{ justifyContent: "center" }}>
-                  <MicRecorder onTranscript={(text) => answerQuestion(text)} disabled={busy} />
-                  <span className="muted" style={{ fontSize: 12 }}>{t("pages.onboarding.sayItAloud")}</span>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === "result" && result && (
-          <div className="center">
-            <div className="reveal-icon" style={{ fontSize: 52 }}>
-              <Icon name="sparkles" size={44} />
-            </div>
-            <h1 className="h1">{t("pages.onboarding.resultTitle")}</h1>
-            <p className="sub">{t("pages.onboarding.resultLevel", { level: result.placed_level })}</p>
-            {result.total_count > 0 && (
-              <p className="sub">{t("pages.onboarding.resultScore", { correct: result.correct_count, total: result.total_count })}</p>
-            )}
-            <button className="btn primary" style={{ marginTop: 18 }} onClick={() => navigate("/journey", { replace: true })}>
-              {t("pages.onboarding.startJourney")}
-            </button>
+            ))}
           </div>
-        )}
-
-      </div>
-    </Layout>
+          <button type="button" className="btn small ghost" onClick={signOut}>
+            {t("common.logOut")}
+          </button>
+        </div>
+      </header>
+      <main className={`onboard-main${wide ? " is-wide" : ""}`}>{body}</main>
+    </div>
   );
 }

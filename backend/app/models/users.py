@@ -79,6 +79,14 @@ class User(Base):
     trace_attempts = relationship("HanziTraceAttempt", back_populates="user", cascade="all, delete-orphan")
     story_progress = relationship("StoryProgress", back_populates="user", cascade="all, delete-orphan")
 
+    @property
+    def onboarding_completed(self) -> bool:
+        """The profile's flag, carried on the user every auth and /me response
+        returns (schemas.UserResponse), so the frontend's route guard reads it
+        from the same stored `user` it already gates sign-in on. The profile
+        column stays the one source of truth; this only exposes it."""
+        return bool(self.profile is not None and self.profile.onboarding_completed)
+
 
 class UserProfile(Base):
     __tablename__ = "user_profiles"

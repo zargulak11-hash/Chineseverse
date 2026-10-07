@@ -20,7 +20,9 @@ export default function Register() {
 
   function afterAuth(user) {
     setCurrentUser(user);
-    navigate("/animals", { replace: true });
+    // "Continue with Google" here can also sign in an existing, already
+    // onboarded account -- that one goes straight into the app.
+    navigate(user.onboarding_completed ? "/dashboard" : "/onboarding", { replace: true });
   }
 
   async function submit(e) {

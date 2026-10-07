@@ -61,6 +61,10 @@ class UserResponse(BaseModel):
     # schema. The frontend only uses it to decide whether to render the
     # admin nav link/route — the real gate is app.deps.require_admin.
     is_admin: bool = False
+    # Read-only, from user_profiles.onboarding_completed (models.User
+    # property). The frontend sends a learner without it to /onboarding and
+    # keeps one with it out of there; only the placement endpoints set it.
+    onboarding_completed: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -22,7 +22,10 @@ export function DashboardProvider({ children }) {
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
 
   useEffect(() => {
-    if (!user) {
+    // Nothing in onboarding reads the dashboard, and it isn't reachable
+    // until onboarding is done (App.jsx RequireAuth), so don't build one
+    // for a learner who is still choosing a companion.
+    if (!user || !user.onboarding_completed) {
       setDashboard(null);
       return;
     }

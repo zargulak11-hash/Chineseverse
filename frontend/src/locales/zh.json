@@ -543,10 +543,21 @@
       "findPeopleToFollow": "寻找可关注的人"
     },
     "animalSelect": {
+      "picked": "已选择",
       "title": "选择你的伙伴",
       "subtitle": "每一个都有自己独特的教学风格，{{name}}，你之后也可以更换。"
     },
     "onboarding": {
+      "eyebrow": "开始设置",
+      "stepsLabel": "设置步骤",
+      "stage": {
+        "companion": "伙伴",
+        "questions": "关于你",
+        "level": "你的水平"
+      },
+      "companionSub": "你的伙伴会陪你一起学习，并对每个回答做出反应。之后也可以更换。",
+      "loadErrorTitle": "无法加载设置",
+      "retry": "重试",
       "loading": "正在准备…",
       "saving": "保存中…",
       "motivationTitle": "你为什么学习中文？",

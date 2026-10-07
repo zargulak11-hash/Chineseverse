@@ -10,9 +10,22 @@ from app.database import SessionLocal
 from helpers import expect, register, unique_name
 
 
+def save_earlier_steps(client, h, companion=True, questions=True):
+    """The onboarding steps before placement: the companion, then the two
+    questions -- exactly the calls the Onboarding page makes."""
+    if companion:
+        animal = expect(client, "get", "/api/animals", 200)[0]
+        expect(client, "post", "/api/me/animal", 200, headers=h, json={"animal_id": animal["id"]})
+    if questions:
+        expect(client, "patch", "/api/me/profile", 200, headers=h,
+               json={"learning_motivation": "travel", "discovery_source": "friend"})
+
+
 @pytest.fixture
 def learner(client):
-    return register(client, unique_name("newbie"))
+    uid, h = register(client, unique_name("newbie"))
+    save_earlier_steps(client, h)
+    return uid, h
 
 
 def start(client, h):
@@ -92,3 +105,69 @@ def test_placement_requires_sign_in(client):
     expect(client, "post", "/api/onboarding/placement-test/start", 401)
     expect(client, "post", "/api/onboarding/placement-test/skip", 401)
     expect(client, "post", "/api/onboarding/placement-test/1/submit", 401, json={"answers": []})
+
+
+def onboarded(client, h):
+    me = expect(client, "get", "/api/me", 200, headers=h)
+    assert me["user"]["onboarding_completed"] == me["profile"]["onboarding_completed"]
+    return me["user"]["onboarding_completed"]
+
+
+@pytest.mark.parametrize("companion,questions,detail", [
+    (False, True, "Choose your companion before finishing onboarding"),
+    (True, False, "Answer the onboarding questions before finishing onboarding"),
+    (False, False, "Choose your companion before finishing onboarding"),
+])
+def test_onboarding_cannot_finish_before_the_earlier_steps_are_saved(client, companion, questions, detail):
+    uid, h = register(client, unique_name("half_done"))
+    save_earlier_steps(client, h, companion=companion, questions=questions)
+    body = expect(client, "post", "/api/onboarding/placement-test/skip", 409, headers=h)
+    assert body["detail"] == detail
+    s = start(client, h)  # the test itself may be taken; only finishing waits
+    assert submit(client, h, s["attempt_id"], answers(s["attempt_id"], {1}), expected=409)["detail"] == detail
+    assert onboarded(client, h) is False
+    with SessionLocal() as db:
+        assert db.get(models.PlacementAttempt, s["attempt_id"]).status == "active"  # can still be finished
+    # ... and once the missing step is saved, the very same attempt finishes it.
+    save_earlier_steps(client, h, companion=not companion, questions=not questions)
+    submit(client, h, s["attempt_id"], answers(s["attempt_id"], {1}))
+    assert onboarded(client, h) is True
+
+
+def test_completion_is_reported_by_every_sign_in_and_survives_a_new_session(client):
+    name = unique_name("returning")
+    reg = expect(client, "post", "/api/auth/register", 201,
+                 json={"username": name, "email": f"{name}@example.com", "password": "secret1"})
+    assert reg["user"]["onboarding_completed"] is False  # a new account starts in onboarding
+    h = {"Authorization": f"Bearer {reg['access_token']}"}
+    save_earlier_steps(client, h)
+    assert onboarded(client, h) is False  # companion + answers alone don't finish it
+    expect(client, "post", "/api/onboarding/placement-test/skip", 200, headers=h)
+    assert onboarded(client, h) is True
+    # Log out and back in: a brand-new token, same answer -- and the saved
+    # companion and answers are still there.
+    again = expect(client, "post", "/api/auth/login", 200, json={"username": name, "password": "secret1"})
+    assert again["user"]["onboarding_completed"] is True and again["user"]["animal_id"] is not None
+    me = expect(client, "get", "/api/me", 200, headers={"Authorization": f"Bearer {again['access_token']}"})
+    assert (me["profile"]["learning_motivation"], me["profile"]["discovery_source"]) == ("travel", "friend")
+
+
+def test_finished_onboarding_cannot_be_finished_again(client, learner):
+    _, h = learner
+    expect(client, "post", "/api/onboarding/placement-test/skip", 200, headers=h)
+    with SessionLocal() as db:
+        n = db.query(models.PlacementAttempt).count()
+    body = expect(client, "post", "/api/onboarding/placement-test/skip", 409, headers=h)
+    assert body["detail"] == "The placement test is part of onboarding, which is already complete"
+    with SessionLocal() as db:
+        assert db.query(models.PlacementAttempt).count() == n
+
+
+def test_changing_the_companion_later_keeps_onboarding_complete(client, learner):
+    _, h = learner
+    expect(client, "post", "/api/onboarding/placement-test/skip", 200, headers=h)
+    other = expect(client, "get", "/api/animals", 200)[-1]
+    expect(client, "post", "/api/me/animal", 200, headers=h, json={"animal_id": other["id"]})
+    expect(client, "patch", "/api/me/profile", 200, headers=h, json={"bio": "hi"})
+    me = expect(client, "get", "/api/me", 200, headers=h)
+    assert me["user"]["onboarding_completed"] is True and me["user"]["animal_id"] == other["id"]

@@ -37,6 +37,20 @@ def _placement_still_open(db: Session, user: models.User) -> None:
         raise HTTPException(status_code=409, detail="The placement test is part of onboarding, which is already complete")
 
 
+def _earlier_steps_saved(user: models.User) -> None:
+    """Finishing placement (submit or skip) is what marks onboarding
+    complete, and from then on the app never shows onboarding again. So it
+    may only happen once the steps before it are really saved -- the
+    companion (POST /api/me/animal) and the two questions (PATCH
+    /api/me/profile) -- or a learner could end up "onboarded" with no
+    companion or answers and no way back to give them."""
+    if user.animal_id is None:
+        raise HTTPException(status_code=409, detail="Choose your companion before finishing onboarding")
+    profile = user.profile
+    if profile is None or not profile.learning_motivation or not profile.discovery_source:
+        raise HTTPException(status_code=409, detail="Answer the onboarding questions before finishing onboarding")
+
+
 @router.post("/placement-test/start", response_model=schemas.PlacementStartResponse)
 def start_placement_test(
     user: models.User = Depends(get_current_user),
@@ -131,6 +145,7 @@ def submit_placement_test(
     if attempt.status != "active":
         raise HTTPException(status_code=409, detail="Placement attempt already finished")
     _placement_still_open(db, user)
+    _earlier_steps_saved(user)
 
     submitted = {a.index: a.answer for a in payload.answers}
     correct_count = 0
@@ -170,6 +185,8 @@ def skip_placement_test(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _placement_still_open(db, user)
+    _earlier_steps_saved(user)
     ensure_user_skills(db, user)
     current_level, overall_mastery = user_rank(db, user)
 

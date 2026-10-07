@@ -16,6 +16,12 @@ export default function Login() {
 
   function afterAuth(user) {
     setCurrentUser(user);
+    // A first Google sign-in creates the account here too: it starts in
+    // onboarding like any new account (and so does one that left it unfinished).
+    if (!user.onboarding_completed) {
+      navigate("/onboarding", { replace: true });
+      return;
+    }
     // Back to exactly where the learner was sent from -- with its query, so
     // e.g. /real-chinese?place=tea_house reopens that place, not just the page.
     const from = location.state?.from;
