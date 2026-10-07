@@ -18,6 +18,8 @@ const EXACT = {
   "Google sign-in could not be verified": "googleInvalid",
   "Google credential has no account id": "googleInvalid",
   "Could not reach Google to verify the sign-in": "googleUnreachable",
+  // routers/auth.py POST /auth/github/session (ticket missing or used)
+  "This GitHub sign-in has expired. Please try again.": "githubExpired",
   "Not authenticated": "sessionExpired",
   "Invalid or expired token": "sessionExpired",
   "This location isn't unlocked yet": "locationLocked",

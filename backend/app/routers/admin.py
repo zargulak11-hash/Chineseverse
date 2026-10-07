@@ -129,7 +129,7 @@ def list_users(
                 companion_slug=u.animal.slug if u.animal is not None else None,
                 companion_name=u.animal.name if u.animal is not None else None,
                 google_sub=u.google_sub,
-                auth_method="google" if u.google_sub else "password",
+                auth_method="google" if u.google_sub else "github" if u.github_id else "password",
                 last_activity_at=last,
             )
         )

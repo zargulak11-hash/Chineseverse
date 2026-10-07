@@ -36,6 +36,10 @@ class User(Base):
     # first Google sign-in and used before email for every later one, so a
     # Google identity always resolves to the same row (see routers/auth.py).
     google_sub = Column(String(255), unique=True, nullable=True, index=True)
+    # GitHub's permanent numeric account id (stored as text), the GitHub
+    # counterpart of google_sub: a GitHub login or email can change, the id
+    # never does.
+    github_id = Column(String(64), unique=True, nullable=True, index=True)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     # Grants access to /api/admin/*. Never set from a request payload — the

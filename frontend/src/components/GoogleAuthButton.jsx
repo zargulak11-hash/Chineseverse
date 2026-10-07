@@ -51,11 +51,15 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
           }
         },
       });
+      // Google draws the button at a fixed pixel width (200-400). A fixed
+      // 320 overflowed the auth card on a 360px phone; take the card's
+      // own width instead, within Google's limits.
+      const room = divRef.current.parentElement?.clientWidth || 320;
       window.google.accounts.id.renderButton(divRef.current, {
         theme: "filled_black",
         size: "large",
         shape: "pill",
-        width: 320,
+        width: Math.max(200, Math.min(400, Math.floor(room))),
         text: "continue_with",
       });
       setReady(true);
@@ -87,14 +91,14 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
 
   if (!CLIENT_ID) {
     return (
-      <p className="sub" style={{ opacity: 0.6, fontSize: 12 }}>
+      <p className="sub center" style={{ fontSize: "var(--text-xs)" }}>
         {t("ui.googleNotConfigured")}
       </p>
     );
   }
 
   return (
-    <div className="center" style={{ display: "flex", justifyContent: "center" }}>
+    <div className="google-auth">
       <div ref={divRef} />
       {!ready && (
         <p className="sub" style={{ fontSize: "var(--text-xs)" }}>

@@ -72,6 +72,8 @@ Backend settings come from `backend/.env` (see `backend/.env.example`; never com
 | `DATABASE_URL` | PostgreSQL URL (`postgresql+psycopg://…`) |
 | `JWT_SECRET` | signs session tokens — must be a long random value on any server; the API logs an error at startup while it is the placeholder |
 | `GOOGLE_CLIENT_ID` | enables Google Sign-In (same value as the frontend's `VITE_GOOGLE_CLIENT_ID`) |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | enable "Continue with GitHub" (one GitHub OAuth App per environment; the secret stays in the backend) |
+| `GITHUB_REDIRECT_URI` | the OAuth App's callback URL; defaults to `PUBLIC_APP_URL` + `/api/auth/github/callback` (production). Locally: `http://localhost:5173/api/auth/github/callback` |
 | `ADMIN_EMAILS` | Google-verified emails granted admin on sign-in |
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | optional AI; without a key everything runs offline |
 | `SMTP_*`, `PUBLIC_APP_URL` | optional notification email; without `SMTP_HOST` notifications are in-app only |
@@ -89,6 +91,8 @@ The curated curriculum ships as `backend/app/seed_content/curriculum.json.gz`, k
 - **Passwords** are hashed with salted PBKDF2-SHA256 and compared in constant time. Sessions are signed JWTs (7 days); every request re-checks that the account still exists and is active.
 - **Login throttling**: failed password logins are counted per account + address, per account from anywhere, and per address across accounts; past the allowance the API answers 429 for a lock that doubles from 30 s up to 15 minutes. Unknown usernames are treated exactly like real ones, so answers never reveal which accounts exist.
 - **Google Sign-In** resolves an account by Google `sub`, then the verified email (case-insensitive), then a new account; an email already linked to a different Google account is refused.
+- **GitHub sign-in** is a full-page OAuth redirect run by the backend: `/api/auth/github/start` sets an HttpOnly, SameSite=Lax state cookie and sends the browser to GitHub; `/callback` checks the state, exchanges the code with the client secret server-side, and resolves the account the same way as Google (GitHub id, then a verified non-noreply email, then a new account); the SPA's `/auth/github` page then swaps a one-time, two-minute HttpOnly ticket for the normal session token. The session token never appears in a URL, and the GitHub access token is used once and never stored. GitHub sign-in never grants admin.
+- **New accounts** from any method start in onboarding; the server's `onboarding_completed` flag (on every auth and `/me` response) decides, so completed learners are never sent back.
 - **Admin** rights come only from the server: a Google-verified email in `ADMIN_EMAILS`, or a deliberate database change. Registration and request payloads can never grant admin.
 - **Authorization**: learners only ever read or change their own rows (another learner's practice round, duel, exam attempt or notification is a 404). Grades, XP, mastery and lesson completion are decided by the server, never accepted from the client.
 - **AI endpoints** are rate-limited per learner.

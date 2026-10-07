@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../api.js";
-import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
+import SocialAuth from "../components/SocialAuth.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Login() {
@@ -16,8 +16,9 @@ export default function Login() {
 
   function afterAuth(user) {
     setCurrentUser(user);
-    // A first Google sign-in creates the account here too: it starts in
-    // onboarding like any new account (and so does one that left it unfinished).
+    // A first Google sign-in creates the account here too (GitHub's does on
+    // /auth/github): it starts in onboarding like any new account (and so
+    // does one that left it unfinished).
     if (!user.onboarding_completed) {
       navigate("/onboarding", { replace: true });
       return;
@@ -33,6 +34,7 @@ export default function Login() {
 
   async function submit(e) {
     e.preventDefault();
+    if (busy) return;
     setError("");
     setBusy(true);
     try {
@@ -73,12 +75,11 @@ export default function Login() {
             />
           </div>
           {error && <p className="formerr">{error}</p>}
-          <button className="btn primary" style={{ width: "100%" }} disabled={busy}>
-            {busy ? "…" : t("auth.logIn")}
+          <button type="submit" className="btn primary" style={{ width: "100%" }} disabled={busy} aria-busy={busy || undefined}>
+            {busy ? t("auth.signingIn") : t("auth.logIn")}
           </button>
         </form>
-        <div className="divider" style={{ margin: "18px 0" }}>{t("auth.or")}</div>
-        <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
+        <SocialAuth page="login" onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
           {t("auth.newHere")} <Link to="/register">{t("auth.createAccount")}</Link>
         </p>

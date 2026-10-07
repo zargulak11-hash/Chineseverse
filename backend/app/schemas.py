@@ -841,7 +841,7 @@ class AdminUserSummary(BaseModel):
     # created before linking existed until their next Google sign-in, which
     # is why auth_method can only say "google" when the link is recorded.
     google_sub: Optional[str] = None
-    auth_method: str = "password"  # "google" | "password"
+    auth_method: str = "password"  # "google" | "github" | "password"
     # There is no last-login column; this is the newest real ActivityEvent
     # (practice, reviews, lessons, voice, ...) or, failing that, the streak's
     # last active day. None when the account has never done anything.

@@ -123,6 +123,26 @@
     "hskDisclaimer": "与官方HSK考试无关联 — ChineseVerse 仅对你的备考程度进行估算。"
   },
   "auth": {
+    "continueGithub": "使用 GitHub 继续",
+    "githubRedirecting": "正在打开 GitHub…",
+    "githubNotConfigured": "本网站尚未设置 GitHub 登录。",
+    "githubCompleting": "正在通过 GitHub 登录…",
+    "githubFailedTitle": "GitHub 登录未完成",
+    "backToLogin": "返回登录",
+    "signingIn": "正在登录…",
+    "creatingAccount": "正在创建账号…",
+    "oauthErrors": {
+      "github_cancelled": "已取消 GitHub 登录。你可以重试，或用其他方式登录。",
+      "github_failed": "GitHub 登录失败，请重试。",
+      "github_state": "无法确认此次 GitHub 登录（可能是在其他标签页中发起，或耗时过长）。请重试。",
+      "github_code": "GitHub 授权已过期或已被使用，请重试。",
+      "github_no_email": "你的 GitHub 账号没有已验证的邮箱。请在 GitHub 的 Settings → Emails 中验证邮箱后重试。",
+      "github_unreachable": "暂时无法连接 GitHub，请检查网络后稍后再试。",
+      "github_not_configured": "本网站尚未设置 GitHub 登录。",
+      "github_other_account": "该邮箱已属于一个关联了其他 GitHub 账号的 ChineseVerse 账号。",
+      "deactivated": "该账号已被停用。",
+      "unknown": "登录失败，请重试。"
+    },
     "welcomeBack": "欢迎回来",
     "welcomeBackSub": "你的伙伴很想你。",
     "username": "用户名",
@@ -759,6 +779,7 @@
       "close": "关闭"
     },
     "adminUsers": {
+      "authGithub": "GitHub",
       "title": "用户管理",
       "subtitle": "查看并管理所有已注册的ChineseVerse账户。",
       "totalUsers": "共{{count}}位注册用户",
@@ -1176,6 +1197,8 @@
     "googleUnavailable": "Google 登录无法加载。请检查网络或关闭内容拦截插件，然后刷新页面。"
   },
   "apiErrors": {
+    "githubExpired": "此次 GitHub 登录已过期，请重新开始。",
+    "network": "无法连接 ChineseVerse，请检查网络连接后重试。",
     "invalidLogin": "用户名或密码错误。",
     "usernameTaken": "该用户名已被使用。",
     "emailTaken": "该邮箱已注册账号。",

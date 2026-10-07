@@ -108,7 +108,11 @@ export default function AdminUsers() {
   const authCell = (u) => (
     <div>
       <span className="badge">
-        {u.auth_method === "google" ? t("pages.adminUsers.authGoogle") : t("pages.adminUsers.authPassword")}
+        {u.auth_method === "google"
+          ? t("pages.adminUsers.authGoogle")
+          : u.auth_method === "github"
+            ? t("pages.adminUsers.authGithub")
+            : t("pages.adminUsers.authPassword")}
       </span>
       {u.google_sub && (
         <div className="admin-mono" title={t("pages.adminUsers.googleId")}>

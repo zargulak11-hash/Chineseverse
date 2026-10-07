@@ -28,6 +28,19 @@ class Settings(BaseSettings):
     google_client_id: str | None = None
     google_client_secret: str | None = None
 
+    # GitHub sign-in (OAuth App, authorization-code flow run entirely by the
+    # backend: routers/auth.py /api/auth/github/*). The secret never leaves
+    # this process -- the frontend only ever navigates to /start. GitHub
+    # accepts exactly one callback URL per OAuth App, so local development
+    # and production need two apps. The callback is served by this API but
+    # reached through the frontend's own origin (Vite's /api proxy locally,
+    # nginx in production); unset, it is PUBLIC_APP_URL +
+    # /api/auth/github/callback. Local: set
+    # GITHUB_REDIRECT_URI=http://localhost:5173/api/auth/github/callback.
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    github_redirect_uri: str | None = None
+
     # Accounts whose Google-VERIFIED email is listed here are granted
     # is_admin on Google sign-in. Only the Google path consults this list:
     # a password registration never proves email ownership, so it must not

@@ -53,6 +53,40 @@ def create_access_token(user_id: int) -> str:
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
+def _ticket_key() -> str:
+    # Its own key, derived from the JWT secret: a sign-in ticket is then not
+    # a validly signed access token (decode_access_token checks the plain
+    # secret), so the short hand-off credential can never be used as a
+    # session, and an access token can never be replayed as a ticket.
+    return hmac.new(
+        settings.jwt_secret.encode("utf-8"), b"oauth-sign-in-ticket", hashlib.sha256
+    ).hexdigest()
+
+
+def create_sign_in_ticket(user_id: int, ttl_seconds: int = 120) -> str:
+    """A short-lived proof that the backend just finished an OAuth sign-in
+    for `user_id`, carried from the provider callback to the SPA in an
+    HttpOnly cookie and swapped once for a normal access token."""
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(user_id),
+        "purpose": "oauth_sign_in",
+        "iat": now,
+        "exp": now + timedelta(seconds=ttl_seconds),
+    }
+    return jwt.encode(payload, _ticket_key(), algorithm="HS256")
+
+
+def decode_sign_in_ticket(ticket: str) -> int | None:
+    try:
+        payload = jwt.decode(ticket, _ticket_key(), algorithms=["HS256"])
+        if payload.get("purpose") != "oauth_sign_in":
+            return None
+        return int(payload.get("sub"))
+    except (jwt.PyJWTError, TypeError, ValueError):
+        return None
+
+
 def decode_access_token(token: str) -> int | None:
     try:
         payload = jwt.decode(

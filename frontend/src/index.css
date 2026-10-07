@@ -1168,6 +1168,44 @@ select.input {
   background: var(--border);
 }
 
+/* Login / Register: "or" + Google + GitHub (components/SocialAuth.jsx).
+   One column, each button as wide as the card allows (Google caps its own
+   at 400px), so neither runs off a 360px phone. */
+.social-auth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+}
+.social-auth .divider {
+  align-self: stretch;
+}
+.google-auth {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+/* Same height and pill shape as Google's "large" button beside it. */
+.oauth-btn {
+  width: 100%;
+  max-width: 400px;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+}
+.oauth-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: progress;
+}
+.oauth-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ---------- Animals ----------
    Vivid, cartoon-mascot style (see AnimalAvatar.jsx) — each of the 20
    companions has its own bold, distinct color trio plus a shared shape/

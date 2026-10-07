@@ -126,6 +126,26 @@
     "hskDisclaimer": "Не связано с официальным экзаменом HSK — ChineseVerse лишь оценивает вашу готовность."
   },
   "auth": {
+    "continueGithub": "Продолжить с GitHub",
+    "githubRedirecting": "Открываем GitHub…",
+    "githubNotConfigured": "Вход через GitHub для этого сайта пока не настроен.",
+    "githubCompleting": "Входим через GitHub…",
+    "githubFailedTitle": "Вход через GitHub не завершён",
+    "backToLogin": "Вернуться ко входу",
+    "signingIn": "Входим…",
+    "creatingAccount": "Создаём аккаунт…",
+    "oauthErrors": {
+      "github_cancelled": "Вход через GitHub отменён. Попробуйте ещё раз или войдите другим способом.",
+      "github_failed": "Не удалось войти через GitHub. Попробуйте ещё раз.",
+      "github_state": "Не удалось подтвердить вход через GitHub (возможно, он начат в другой вкладке или занял слишком много времени). Попробуйте ещё раз.",
+      "github_code": "Разрешение GitHub истекло или уже использовано. Попробуйте ещё раз.",
+      "github_no_email": "В вашем аккаунте GitHub нет подтверждённого email. Подтвердите его в GitHub (Settings → Emails) и попробуйте снова.",
+      "github_unreachable": "Не удалось связаться с GitHub. Проверьте подключение и попробуйте чуть позже.",
+      "github_not_configured": "Вход через GitHub для этого сайта пока не настроен.",
+      "github_other_account": "Этот email уже принадлежит аккаунту ChineseVerse, привязанному к другому аккаунту GitHub.",
+      "deactivated": "Этот аккаунт отключён.",
+      "unknown": "Не удалось войти. Попробуйте ещё раз."
+    },
     "welcomeBack": "С возвращением",
     "welcomeBackSub": "Компаньон скучал по вам.",
     "username": "Имя пользователя",
@@ -762,6 +782,7 @@
       "close": "Закрыть"
     },
     "adminUsers": {
+      "authGithub": "GitHub",
       "title": "Управление пользователями",
       "subtitle": "Просмотр и управление всеми зарегистрированными аккаунтами ChineseVerse.",
       "totalUsers": "Зарегистрировано пользователей: {{count}}",
@@ -1185,6 +1206,8 @@
     "googleUnavailable": "Не удалось загрузить вход через Google. Проверьте подключение или отключите блокировщики и перезагрузите страницу."
   },
   "apiErrors": {
+    "githubExpired": "Срок входа через GitHub истёк. Начните заново.",
+    "network": "Нет связи с ChineseVerse. Проверьте подключение к интернету и попробуйте снова.",
     "invalidLogin": "Неверное имя пользователя или пароль.",
     "usernameTaken": "Это имя пользователя уже занято.",
     "emailTaken": "Аккаунт с этим email уже существует.",

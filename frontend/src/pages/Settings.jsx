@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { api, clearSession } from "../api.js";
+import { api } from "../api.js";
 import Icon from "../components/Icon.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
 import Layout from "../components/Layout.jsx";
@@ -27,7 +27,7 @@ function Toggle({ checked, onChange, label, hint }) {
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
-  const { user, setCurrentUser } = useAuth();
+  const { user, setCurrentUser, logout: signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { soundEnabled, setSoundEnabled, notifEnabled, setNotifEnabled } = usePrefs() || {};
   const { dashboard, refresh } = useDashboard() || {};
@@ -108,9 +108,8 @@ export default function Settings() {
   }
 
   function logout() {
-    clearSession();
-    setCurrentUser(null);
-    navigate("/");
+    signOut();
+    navigate("/", { replace: true });
   }
 
 

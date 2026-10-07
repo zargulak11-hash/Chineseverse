@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api.js";
-import GoogleAuthButton from "../components/GoogleAuthButton.jsx";
+import SocialAuth from "../components/SocialAuth.jsx";
 import { useAuth } from "../auth.js";
 
 export default function Register() {
@@ -21,12 +21,14 @@ export default function Register() {
   function afterAuth(user) {
     setCurrentUser(user);
     // "Continue with Google" here can also sign in an existing, already
-    // onboarded account -- that one goes straight into the app.
+    // onboarded account -- that one goes straight into the app. (GitHub
+    // finishes on /auth/github, which applies the same rule.)
     navigate(user.onboarding_completed ? "/dashboard" : "/onboarding", { replace: true });
   }
 
   async function submit(e) {
     e.preventDefault();
+    if (busy) return;
     setError("");
     if (form.password !== form.confirm) {
       setError(t("auth.passwordMismatch"));
@@ -95,12 +97,11 @@ export default function Register() {
             />
           </div>
           {error && <p className="formerr">{error}</p>}
-          <button className="btn primary" style={{ width: "100%" }} disabled={busy}>
-            {busy ? "…" : t("auth.register")}
+          <button type="submit" className="btn primary" style={{ width: "100%" }} disabled={busy} aria-busy={busy || undefined}>
+            {busy ? t("auth.creatingAccount") : t("auth.register")}
           </button>
         </form>
-        <div className="divider" style={{ margin: "18px 0" }}>{t("auth.or")}</div>
-        <GoogleAuthButton onSuccess={afterAuth} onError={setError} />
+        <SocialAuth page="register" onSuccess={afterAuth} onError={setError} />
         <p className="sub" style={{ marginTop: 14 }}>
           {t("auth.haveAccount")} <Link to="/login">{t("auth.logIn")}</Link>
         </p>

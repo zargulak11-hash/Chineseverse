@@ -124,6 +124,26 @@
     "hskDisclaimer": "No affiliation with the official HSK exam — ChineseVerse only estimates your preparation readiness."
   },
   "auth": {
+    "continueGithub": "Continue with GitHub",
+    "githubRedirecting": "Opening GitHub…",
+    "githubNotConfigured": "GitHub sign-in isn't set up for this site yet.",
+    "githubCompleting": "Signing you in with GitHub…",
+    "githubFailedTitle": "GitHub sign-in didn't finish",
+    "backToLogin": "Back to sign in",
+    "signingIn": "Signing in…",
+    "creatingAccount": "Creating your account…",
+    "oauthErrors": {
+      "github_cancelled": "GitHub sign-in was cancelled. You can try again or sign in another way.",
+      "github_failed": "GitHub sign-in didn't work. Please try again.",
+      "github_state": "This GitHub sign-in couldn't be confirmed (it may have started in another tab or taken too long). Please try again.",
+      "github_code": "That GitHub authorization expired or was already used. Please try again.",
+      "github_no_email": "Your GitHub account has no verified email address. Verify one in GitHub under Settings → Emails, then try again.",
+      "github_unreachable": "We couldn't reach GitHub. Check your connection and try again in a moment.",
+      "github_not_configured": "GitHub sign-in isn't set up for this site yet.",
+      "github_other_account": "This email already belongs to a ChineseVerse account linked to a different GitHub account.",
+      "deactivated": "This account has been deactivated.",
+      "unknown": "Sign-in didn't work. Please try again."
+    },
     "welcomeBack": "Welcome back",
     "welcomeBackSub": "Your companion missed you.",
     "username": "Username",
@@ -760,6 +780,7 @@
       "close": "Close"
     },
     "adminUsers": {
+      "authGithub": "GitHub",
       "title": "Admin Users",
       "subtitle": "View and manage all registered ChineseVerse accounts.",
       "totalUsers": "{{count}} registered user(s)",
@@ -1179,6 +1200,8 @@
     "googleUnavailable": "Google Sign-In couldn't load. Check your connection or disable content blockers, then reload the page."
   },
   "apiErrors": {
+    "githubExpired": "This GitHub sign-in has expired. Please start again.",
+    "network": "Can't reach ChineseVerse. Check your internet connection and try again.",
     "invalidLogin": "Invalid username or password.",
     "usernameTaken": "This username is already taken.",
     "emailTaken": "An account with this email already exists.",

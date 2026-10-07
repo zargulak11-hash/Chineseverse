@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
-import { api, clearSession, getSavedUser, getToken } from "./api.js";
+import { api, clearSession, getSavedUser, getToken, onSessionExpired, SESSION_KEYS } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
 import { initButtonFX } from "./buttonFx.js";
 import BrandLogo from "./components/BrandLogo.jsx";
@@ -10,6 +10,7 @@ import { DashboardProvider } from "./context/DashboardContext.jsx";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import GitHubCallback from "./pages/GitHubCallback.jsx";
 import AnimalSelect from "./pages/AnimalSelect.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -83,6 +84,16 @@ function RequireOnboarding({ children }) {
   return children;
 }
 
+// Login and Register are for signed-out visitors. A signed-in one (a
+// bookmark, the Back button after signing in, a GitHub callback opened a
+// second time and sent back to /login) goes where the onboarding flag says
+// instead of seeing a form for an account they're already in.
+function RedirectIfAuthed({ children }) {
+  const { user } = useAuth();
+  if (user) return <Navigate to={user.onboarding_completed ? "/dashboard" : "/onboarding"} replace />;
+  return children;
+}
+
 // Frontend visibility is NOT the security boundary here — it's only UX
 // (don't show a page whose API calls would fail anyway). A non-admin who
 // reaches /admin/users by any means still gets a real 401/403 from
@@ -136,6 +147,23 @@ export default function App() {
       .finally(() => setBooted(true));
   }, []);
 
+  // A request answered 401 mid-session (token expired, account
+  // deactivated): api.js has cleared storage; drop the in-memory user too,
+  // so the route guards send the learner to /login instead of leaving a
+  // page up whose every request fails.
+  useEffect(() => onSessionExpired(() => setUser(null)), []);
+
+  // Another tab signed out, or signed in as someone else: follow it, so two
+  // tabs never act as two different accounts on one stored token.
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key !== null && !SESSION_KEYS.includes(e.key)) return;
+      setUser(getToken() ? getSavedUser() : null);
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   useEffect(() => {
     initButtonFX();
   }, []);
@@ -168,8 +196,24 @@ export default function App() {
       <ErrorBoundary resetKey={pathname}>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuthed>
+              <Login />
+            </RedirectIfAuthed>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <RedirectIfAuthed>
+              <Register />
+            </RedirectIfAuthed>
+          }
+        />
+        {/* The backend's GitHub callback lands here (routers/auth.py). */}
+        <Route path="/auth/github" element={<GitHubCallback />} />
         {/* Onboarding is full-screen, outside the app shell: no sidebar or
             navigation to leave it by before it's finished. */}
         <Route

@@ -1,5 +1,16 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { api, clearSession, getSavedUser, getToken, login, saveToken, saveUser } from "./api.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  api,
+  clearSession,
+  completeGitHubSignIn,
+  getSavedUser,
+  getToken,
+  githubStartUrl,
+  login,
+  onSessionExpired,
+  saveToken,
+  saveUser,
+} from "./api.js";
 import i18n from "./i18n.js";
 import ru from "./locales/ru.json";
 
@@ -78,6 +89,32 @@ describe("errors", () => {
     expect(getSavedUser()).toBeNull();
   });
 
+  it("an expired session tells the app to sign out; a wrong password does not", async () => {
+    const expired = vi.fn();
+    const stop = onSessionExpired(expired);
+    // No token sent: a failed login is not an ended session.
+    fetch.mockResolvedValue(respond(401, { detail: "Invalid username or password" }));
+    await expect(login({ username: "a", password: "b" })).rejects.toThrow();
+    expect(expired).not.toHaveBeenCalled();
+    saveToken("old");
+    fetch.mockResolvedValue(respond(401, { detail: "Invalid or expired token" }));
+    await expect(api.get("/dashboard")).rejects.toThrow();
+    expect(expired).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it.each([
+    ["Chrome/Edge", "Failed to fetch"],
+    ["Firefox", "NetworkError when attempting to fetch resource."],
+    ["Safari", "Load failed"],
+  ])("an unreachable server reads the same in every browser (%s)", async (_browser, raw) => {
+    await i18n.changeLanguage("ru");
+    fetch.mockRejectedValue(new TypeError(raw));
+    const err = await api.get("/me").catch((e) => e);
+    expect(err.message).toBe(ru.apiErrors.network);
+    expect(err.status).toBe(0);
+  });
+
   it("a 403 does not sign the learner out", async () => {
     saveToken("still-valid");
     fetch.mockResolvedValue(respond(403, { detail: "Admin access required" }));
@@ -101,6 +138,29 @@ describe("sign-in", () => {
     expect(getSavedUser()).toEqual({ id: 5, username: "zarina" });
     clearSession();
     expect(getToken()).toBeNull();
+  });
+
+  it("GitHub starts as a plain navigation to the backend and returns to the right page", () => {
+    expect(githubStartUrl("register")).toBe("/api/auth/github/start?page=register");
+  });
+
+  it("GitHub finishes by swapping the ticket cookie for a stored session", async () => {
+    fetch.mockResolvedValue(respond(200, { access_token: "gh-token", user: { id: 9, onboarding_completed: false } }));
+    expect(await completeGitHubSignIn()).toEqual({ id: 9, onboarding_completed: false });
+    const { url, options } = lastCall();
+    expect(url).toBe("/api/auth/github/session");
+    expect(options.method).toBe("POST");
+    expect(getToken()).toBe("gh-token");
+  });
+
+  it("a spent GitHub ticket is a translated message, not a sign-out", async () => {
+    await i18n.changeLanguage("ru");
+    const expired = vi.fn();
+    const stop = onSessionExpired(expired);
+    fetch.mockResolvedValue(respond(401, { detail: "This GitHub sign-in has expired. Please try again." }));
+    await expect(completeGitHubSignIn()).rejects.toThrow(ru.apiErrors.githubExpired);
+    expect(expired).not.toHaveBeenCalled();
+    stop();
   });
 });
 

@@ -30,6 +30,42 @@ export function clearSession() {
   localStorage.removeItem(USER_KEY);
 }
 
+// The storage keys, for App.jsx's cross-tab sync (a "storage" event names
+// the key that changed in another tab).
+export const SESSION_KEYS = [TOKEN_KEY, USER_KEY];
+
+// A 401 on a request that carried a token means the session is over
+// (expired, account deactivated). Clearing storage alone left React still
+// holding the signed-in user, so the page stayed up and every request
+// failed until a manual reload; App.jsx subscribes here and signs out.
+const expiredListeners = new Set();
+
+export function onSessionExpired(listener) {
+  expiredListeners.add(listener);
+  return () => expiredListeners.delete(listener);
+}
+
+function endSession(hadToken) {
+  clearSession();
+  if (hadToken) expiredListeners.forEach((listener) => listener());
+}
+
+// fetch() rejects with a TypeError worded differently in every browser
+// ("Failed to fetch" in Chrome/Edge, "NetworkError when attempting to fetch
+// resource." in Firefox, "Load failed" in Safari) when the server can't be
+// reached at all; learners saw that raw English text. An abort is the
+// caller's own doing (the assistant's Stop button) and passes through.
+async function send(url, options) {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    if (err?.name === "AbortError") throw err;
+    const offline = new Error(i18n.t("apiErrors.network"));
+    offline.status = 0;
+    throw offline;
+  }
+}
+
 // The session token and the UI language, on every request. X-Locale lets
 // the backend localize DB-driven content (lessons, vocab meanings,
 // missions, ...) the same way the UI chrome already follows i18n.language
@@ -49,7 +85,7 @@ async function request(method, path, body) {
     options.headers["Content-Type"] = "application/json";
     options.body = JSON.stringify(body);
   }
-  const res = await fetch(`${API_BASE}${path}`, options);
+  const res = await send(`${API_BASE}${path}`, options);
   if (res.status === 204) return null;
   let data = null;
   try {
@@ -60,7 +96,7 @@ async function request(method, path, body) {
   if (!res.ok) {
     const detail = data && data.detail;
     const message = localizeApiError(detail, res.status);
-    if (res.status === 401) clearSession();
+    if (res.status === 401) endSession(Boolean(options.headers.Authorization));
     const err = new Error(message);
     // Some endpoints (duels) add a stable machine code next to `detail` so
     // the page can show the message in the learner's language.
@@ -75,7 +111,8 @@ async function request(method, path, body) {
 async function upload(method, path, file) {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE}${path}`, { method, headers: sessionHeaders(), body: form });
+  const headers = sessionHeaders();
+  const res = await send(`${API_BASE}${path}`, { method, headers, body: form });
   let data = null;
   try {
     data = await res.json();
@@ -84,7 +121,7 @@ async function upload(method, path, file) {
   }
   if (!res.ok) {
     const detail = data && data.detail;
-    if (res.status === 401) clearSession();
+    if (res.status === 401) endSession(Boolean(headers.Authorization));
     throw new Error(localizeApiError(detail, res.status));
   }
   return data;
@@ -96,7 +133,7 @@ async function upload(method, path, file) {
 // which the caller treats as "stopped", not as a failure.
 async function stream(path, body, { signal, onEvent }) {
   const headers = sessionHeaders({ "Content-Type": "application/json" });
-  const res = await fetch(`${API_BASE}${path}`, { method: "POST", headers, body: JSON.stringify(body), signal });
+  const res = await send(`${API_BASE}${path}`, { method: "POST", headers, body: JSON.stringify(body), signal });
   if (!res.ok) {
     let data = null;
     try {
@@ -104,7 +141,7 @@ async function stream(path, body, { signal, onEvent }) {
     } catch {
       data = null;
     }
-    if (res.status === 401) clearSession();
+    if (res.status === 401) endSession(Boolean(headers.Authorization));
     const err = new Error(localizeApiError(data && data.detail, res.status));
     err.status = res.status;
     throw err;
@@ -170,6 +207,22 @@ export async function login(payload) {
 
 export async function loginWithGoogle(credential) {
   const data = await request("POST", "/auth/google", { credential });
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}
+
+// GitHub sign-in is a full-page redirect run by the backend
+// (routers/auth.py): the browser leaves for this URL, and after GitHub the
+// backend sends it to /auth/github holding a one-time HttpOnly ticket
+// cookie, which this POST swaps for the normal session token. `page` is
+// where a failure returns to ("login" | "register").
+export function githubStartUrl(page) {
+  return `${API_BASE}/auth/github/start?page=${encodeURIComponent(page)}`;
+}
+
+export async function completeGitHubSignIn() {
+  const data = await request("POST", "/auth/github/session");
   saveToken(data.access_token);
   saveUser(data.user);
   return data.user;

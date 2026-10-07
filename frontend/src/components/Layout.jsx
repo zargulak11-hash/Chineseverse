@@ -134,7 +134,8 @@ function Shell({ children }) {
 
   function handleLogout() {
     logout();
-    navigate("/");
+    // replace: Back must not return to the signed-in page just left.
+    navigate("/", { replace: true });
   }
 
   return (
