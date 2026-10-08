@@ -1571,6 +1571,60 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .feature-intro-open { margin-top: var(--space-4); }
 /* Empty states say what will fill them (Review, Mistakes). */
 .empty-teach { max-width: 62ch; margin: var(--space-2) auto 0; text-align: center; }
+
+/* ---------- Mistake notebook (pages/Mistakes.jsx) ----------
+   Mix-ups are two items side by side -- the comparison the learner missed --
+   with how far they are from telling them apart; other mistakes are rows
+   grouped by kind. Tokens only. */
+.notebook-section { margin-top: var(--space-5); }
+.notebook-head { align-items: flex-start; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-3); }
+.notebook-head > div { min-width: 0; max-width: 72ch; }
+.notebook-label { margin: var(--space-4) 0 var(--space-2); }
+.mixup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: var(--space-4); }
+.mixup-card { padding: 18px; display: flex; flex-direction: column; gap: var(--space-3); }
+.mixup-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-2); }
+.mixup-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.mixup-side:hover { border-color: var(--border-strong); }
+.mixup-side:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mixup-side b { font-size: var(--text-2xl); font-weight: 800; line-height: 1.15; }
+.mixup-meaning { font-size: var(--text-xs); color: var(--text-dim); overflow-wrap: anywhere; }
+.mixup-vs { align-self: center; color: var(--text-faint); font-size: var(--text-lg); }
+.mixup-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
+.notebook-item { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 18px; }
+.notebook-item-text { min-width: 0; overflow-wrap: anywhere; }
+.notebook-item-text .sub { margin-top: var(--space-1); font-size: var(--text-xs); }
+.notebook-item-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); flex-shrink: 0; }
+.notebook-resolved { list-style: none; margin: 0; padding: 0; }
+.notebook-resolved li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.notebook-resolved li svg { color: var(--good); flex-shrink: 0; }
+@media (max-width: 640px) {
+  .notebook-item { flex-direction: column; align-items: stretch; }
+  .notebook-item-side { flex-direction: row; align-items: center; justify-content: space-between; }
+}
 @media (max-width: 640px) {
   .next-hero { padding: var(--space-4); }
   .next-hero-title { font-size: var(--text-lg); }

@@ -59,7 +59,8 @@
     "passport": "My Chinese Journey",
     "toLanding": "ChineseVerse — main page",
     "journey": "Your journey",
-    "stories": "Stories"
+    "stories": "Stories",
+    "mistakes": "Mistake notebook"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -494,7 +495,7 @@
       "openClickToEnter": "Open — click to enter"
     },
     "mistakes": {
-      "title": "Mistakes lab",
+      "title": "Mistake notebook",
       "subtitle": "Every slip is data. Mastery is earned by getting it right again — in Review, practice, voice, a case or a duel — not by a click here.",
       "stillWorking": "Still working on",
       "youSaid": "You said",
@@ -505,7 +506,25 @@
       "masteredBadge": "mastered",
       "empty": "No mistakes recorded yet. Go make some.",
       "reviewNow": "Review now",
-      "emptyTeach": "When you miss an answer anywhere, it is saved here and comes back in your practice until you get it right."
+      "emptyTeach": "When you miss an answer anywhere, it is saved here and comes back in your practice until you get it right.",
+      "mixupsTitle": "Mix-ups",
+      "mixupsSub": "Pairs you have taken for each other. Each comes back in your rounds next to its partner until you tell them apart {{n}} times in a row.",
+      "confused_one": "mixed up {{count}} time",
+      "confused_other": "mixed up {{count}} times",
+      "toldApart": "told apart {{done}} of {{need}}",
+      "drill": "Drill these pairs",
+      "resolvedTitle": "Sorted out",
+      "resolvedLine_one": "told apart {{count}} time since the last mix-up",
+      "resolvedLine_other": "told apart {{count}} times since the last mix-up",
+      "mixupsEmpty": "No mix-ups yet. When you pick one word for another twice, the pair appears here.",
+      "otherTitle": "Other mistakes",
+      "group": {
+        "word": "Words",
+        "hanzi": "Characters",
+        "sound": "Tones & pronunciation",
+        "grammar": "Grammar",
+        "other": "Other"
+      }
     },
     "progress": {
       "title": "Your progress",
@@ -901,7 +920,8 @@
       "sound": "Sound World · {{place}}",
       "internet": "Chinese Internet · {{title}}",
       "tones": "Sounds & tones round",
-      "story": "Story · {{title}}"
+      "story": "Story · {{title}}",
+      "mixups": "Mix-up drill"
     },
     "retry": "Try again",
     "back": "Back",
@@ -948,7 +968,9 @@
     "roundProgress": "This round",
     "nextLesson": "Next lesson",
     "toneRound": "Sounds & tones",
-    "reviewWhat": "Review brings back what you've practised just before you would forget it. Every word you meet in lessons, stories and rounds comes back here on its own schedule."
+    "reviewWhat": "Review brings back what you've practised just before you would forget it. Every word you meet in lessons, stories and rounds comes back here on its own schedule.",
+    "mixupsNothing": "Nothing to drill — every pair you mixed up has been told apart.",
+    "mixupsWhat": "When you choose one word for another twice, the pair is saved and keeps coming back side by side until you tell them apart {{n}} times in a row."
   },
   "companionReact": {
     "fallbackName": "Your companion",
@@ -1410,7 +1432,9 @@
       "stale_area_never": "You started {{area}} but haven't practised it in a round yet.",
       "weak_skill": "Your {{skill}} is your quietest skill so far ({{value}}/100) — a good one to grow next.",
       "passport_milestone": "A new page in My Chinese Journey: {{event}}",
-      "reading_word": "{{name}} noticed you keep looking up {{word}} while reading — let's review it."
+      "reading_word": "{{name}} noticed you keep looking up {{word}} while reading — let's review it.",
+      "resolved_pair_one": "You used to mix up {{a}} and {{b}} — since then you've told them apart {{count}} time.",
+      "resolved_pair_other": "You used to mix up {{a}} and {{b}} — since then you've told them apart {{count}} times."
     },
     "area": {
       "vocab": "vocabulary",
@@ -1422,7 +1446,7 @@
       "welcome_back": "Start a review",
       "lesson_completed": "Open the lesson",
       "difficult_chars": "Practise characters",
-      "confused_pair": "Review them",
+      "confused_pair": "Drill this pair",
       "recent_mistakes": "See my mistakes",
       "improving_listening": "Try a real conversation",
       "stale_area": "Pick it up again",
@@ -1431,7 +1455,8 @@
       "achievement": "See achievements",
       "mastered_recently": "My vocabulary",
       "passport_milestone": "Open My Chinese Journey",
-      "reading_word": "Review it"
+      "reading_word": "Review it",
+      "resolved_pair": "Open the notebook"
     }
   },
   "detective": {
@@ -3049,6 +3074,9 @@
     "read": "Read a story at your level",
     "readWhy": "Real reading ties your words and grammar together.",
     "doneToday": "Done today",
-    "summary": "Today so far: {{rounds}} practice rounds · {{words}} words practised · {{minutes}} of {{goal}} minutes"
+    "summary": "Today so far: {{rounds}} practice rounds · {{words}} words practised · {{minutes}} of {{goal}} minutes",
+    "mixups_one": "Tell apart the pair you keep mixing up",
+    "mixups_other": "Tell apart the {{count}} pairs you keep mixing up",
+    "mixupsWhy": "You chose one for the other more than once — seeing them side by side is how they come apart."
   }
 }

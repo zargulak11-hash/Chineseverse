@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_current_user, get_locale
+from app.services import mixups
 from app.services.gamification import check_achievements
 
 router = APIRouter(prefix="/api/mistakes", tags=["mistakes"])
@@ -33,6 +34,19 @@ def list_mistakes(
         .all()
     )
     return [_serialize(m) for m in rows]
+
+
+@router.get("/mixups", response_model=schemas.MixupsResponse)
+def list_mixups(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The learner's own mix-ups: pairs still being confused, and pairs they
+    have since told apart. Read from their stored answers only."""
+    rows = mixups.pairs(db, user, locale)
+    return {"active": [r for r in rows if r["status"] == "active"],
+            "resolved": [r for r in rows if r["status"] == "resolved"]}
 
 
 @router.patch("/{mistake_id}", response_model=schemas.MistakeResponse)

@@ -73,12 +73,14 @@ export function TodayPlan({ today, next, skills = {} }) {
     if (task.key === "review") return t("today.review", { count: task.count });
     if (task.key === "learn") return nextTitle(t, task.next || next);
     if (task.key === "weak") return t("today.weak", { skill: skills[task.skill] || task.skill });
+    if (task.key === "mixups") return t("today.mixups", { count: task.count });
     return t("today.read");
   };
   const why = (task) => {
     if (task.key === "review") return t("today.reviewWhy");
     if (task.key === "learn") return nextWhy(t, task.next || next);
     if (task.key === "weak") return t("today.weakWhy", { mastery: task.mastery });
+    if (task.key === "mixups") return t("today.mixupsWhy");
     return t("today.readWhy");
   };
   return (

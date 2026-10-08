@@ -200,7 +200,7 @@ export default function Practice({ forceSource }) {
   });
   const backTo = lessonId
     ? `/lessons/${lessonId}`
-    : source === "review"
+    : source === "review" || source === "mixups"
       ? "/mistakes"
       : source === "scene"
         ? `/real-chinese/${scene || ""}`
@@ -233,7 +233,9 @@ export default function Practice({ forceSource }) {
                 ? t("nav.stories")
                 : source === "tones"
                   ? t("nav.journey")
-                  : t(source === "review" ? "nav.review" : "nav.lessons");
+                  : source === "mixups"
+                    ? t("nav.mistakes")
+                    : t(source === "review" ? "nav.review" : "nav.lessons");
   const head = (kpis = null) => (
     <header className="page-head">
       <div>
@@ -270,9 +272,15 @@ export default function Practice({ forceSource }) {
             reaction={session.reaction || { mood: "happy", event: "review_clear", streak: 0 }}
             size={88}
           />
-          <p className="sub" style={{ marginTop: 10 }}>{t("practice.nothingDue")}</p>
-          {/* An empty queue teaches what fills it, then leads on. */}
-          <p className="sub empty-teach">{t("practice.reviewWhat")}</p>
+          <p className="sub" style={{ marginTop: 10 }}>
+            {t(source === "mixups" ? "practice.mixupsNothing" : "practice.nothingDue")}
+          </p>
+          {/* An empty queue teaches what fills it, then leads on. (3 is
+              services/mixups.RESOLVE_AFTER; an empty drill has no pair to
+              carry it.) */}
+          <p className="sub empty-teach">
+            {source === "mixups" ? t("practice.mixupsWhat", { n: 3 }) : t("practice.reviewWhat")}
+          </p>
           <div className="row" style={{ justifyContent: "center", marginTop: 12, flexWrap: "wrap" }}>
             <Link to="/vocabulary"><button className="btn">{t("nav.vocabulary")}</button></Link>
             <Link to="/hanzi"><button className="btn">{t("nav.hanzi")}</button></Link>

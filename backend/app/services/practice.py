@@ -54,7 +54,7 @@ from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
-           "tones", "story", "pronunciation")
+           "tones", "story", "pronunciation", "mixups")
 # The beginner's first round (services/journey.py, /foundation): tones on real
 # HSK 1 material -- a character's pinyin among the same syllable in other
 # tones, and a word picked by ear. Real items, so SRS and DNA move as usual.
@@ -323,7 +323,7 @@ def _translated_ids(db: Session, content_type: str, locale: str) -> set[int]:
 
 
 def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Random, k: int = 3,
-                 prefer: set[int] | None = None) -> list[int]:
+                 prefer: set[int] | None = None, first: list[int] | None = None) -> list[int]:
     model, id_field = _MODEL[item_type]
     pool = db.query(model).filter(id_field == target.hsk_level_id, model.id != target.id).all()
     pool = [r for r in pool if _usable(item_type, r)]
@@ -341,6 +341,15 @@ def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Ra
         # Options in the learner's language first, so all four can be shown
         # in it (one language per question -- see _option_labels).
         pool = [r for r in pool if r.id in prefer] + [r for r in pool if r.id not in prefer]
+    if first:
+        # The learner's own mix-up partners of this item (services/mixups.py)
+        # lead, whatever their level: the wrong option they really chose
+        # before is the comparison worth making again. At most two, so the
+        # round still has an ordinary option too.
+        lead = [r for r in (db.get(model, i) for i in first[:2])
+                if r is not None and r.id != target.id and _usable(item_type, r)]
+        lead_ids = {r.id for r in lead}
+        pool = lead + [r for r in pool if r.id not in lead_ids]
     taken = {_option_label_key(qtype, target)}
     out = []
     for r in pool:
@@ -355,14 +364,15 @@ def _distractors(db: Session, item_type: str, qtype: str, target, rng: random.Ra
 
 
 def _question(db: Session, item_type: str, row, index: int, rng: random.Random,
-              translated: dict[str, set[int]] | None = None, qtype: str | None = None) -> dict | None:
+              translated: dict[str, set[int]] | None = None, qtype: str | None = None,
+              first: list[int] | None = None) -> dict | None:
     qtype = qtype or _pick_type(item_type, index)
     content_type = _MEANING_OPTIONS.get(qtype)
     prefer = (translated or {}).get(content_type) if content_type else None
     # Only worth it when the answer itself is translated.
     if prefer is not None and row.id not in prefer:
         prefer = None
-    distractors = _distractors(db, item_type, qtype, row, rng, prefer=prefer)
+    distractors = _distractors(db, item_type, qtype, row, rng, prefer=prefer, first=first)
     if len(distractors) < 2:
         return None
     options = distractors + [row.id]
@@ -387,6 +397,7 @@ def build_session(
     now = datetime.utcnow()
     rng = random.Random()
     picked: list[tuple[str, object]] = []
+    mix_plan: list[tuple[str, list[int]]] = []  # source "mixups": (question type, partner) per item
     lesson = None
 
     if source in ("vocab", "hanzi", "grammar"):
@@ -412,6 +423,20 @@ def build_session(
             raise PracticeError(422, "This lesson has no linked vocabulary or grammar to practice yet")
     elif source == "review":
         picked = _review_items(db, user, size, now)
+        if not picked:
+            return None
+    elif source == "mixups":
+        # The mix-up drill: each active pair's two items, each asked with
+        # its partner among the options, in the question type the mix-up
+        # happened in (services/mixups.py). Nothing to drill -> "nothing due".
+        from app.services import mixups
+
+        for pair in mixups.active_pairs(db, user)[: max(1, size // 2)]:
+            for me, other in (("a_id", "b_id"), ("b_id", "a_id")):
+                row = _row(db, pair["item_type"], pair[me])
+                if row is not None and _usable(pair["item_type"], row):
+                    picked.append((pair["item_type"], row))
+                    mix_plan.append((pair["qtype"], [pair[other]]))
         if not picked:
             return None
     elif source == "tones":
@@ -458,11 +483,20 @@ def build_session(
         except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError,
                 internet.InternetError, stories.StoryError, pronunciation.PronunciationError) as exc:
             raise PracticeError(exc.status, exc.detail) from exc
+    # Every round meets the learner's own mix-ups: an item they have taken
+    # for another is offered with that other one among its options.
+    partners = {}
+    if picked and source != "mixups":
+        from app.services import mixups
+
+        partners = mixups.partners_by_item(db, user)
     for i, (item_type, row) in enumerate(picked):
-        forced = None
+        forced, first = None, partners.get((item_type, row.id))
         if source == "tones":
             forced = "char_to_pinyin" if item_type == "hanzi" else "listen_to_word"
-        q = _question(db, item_type, row, i, rng, translated, qtype=forced)
+        elif source == "mixups":
+            forced, first = mix_plan[i]
+        q = _question(db, item_type, row, i, rng, translated, qtype=forced, first=first)
         if q:
             questions.append(q)
     if not questions:
@@ -795,7 +829,8 @@ def _focus(item_type: str, row, labels: dict) -> dict:
     return card
 
 
-def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int) -> dict:
+def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int,
+            picked_row=None) -> dict:
     """Applies one graded answer to mastery, DNA, mistakes, quests and XP.
     Returns what changed (status before/after, the primary DNA skill's value
     before/after) so the companion can react to the real result."""
@@ -844,10 +879,18 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
         progress_missions(db, user, quest)
         user.total_xp += XP_PER_CORRECT
     else:
-        card = _item_card(item_type, row, {"vocab": {}, "hanzi": {}, "grammar": {}})
+        none = {"vocab": {}, "hanzi": {}, "grammar": {}}
+        card = _item_card(item_type, row, none)
+        # What the learner actually chose: the mistake notebook's "you
+        # answered" (it used to stay empty for every practice mistake).
+        given = None
+        if picked_row is not None:
+            chose = _item_card(item_type, picked_row, none)
+            given = " ".join(x for x in (chose["hanzi"], chose["pinyin"]) if x) or chose["meaning"]
         record_mistake(
             db, user, ref_type, ref,
             question_text=q.get("prompt") or card["meaning"],
+            answer_given=given,
             correct_answer=" ".join(x for x in (card["hanzi"], card["pinyin"]) if x) or card["meaning"],
         )
     touch_streak(user)
@@ -1013,7 +1056,8 @@ def answer_question(
         if q["item_type"] == "vocab":
             rec = db.query(models.UserVocabulary).filter_by(user_id=user.id, word_id=row.id).first()
             status_was = rec.status if rec else None
-        change = _record(db, user, session, q, row, correct, response_ms)
+        change = _record(db, user, session, q, row, correct, response_ms,
+                         picked_row=None if correct else _row(db, q["item_type"], choice_id))
         change["vocab_mastered"] = (q["item_type"] == "vocab" and change["status_after"] == "mastered"
                                     and status_was != "mastered")
     answers = list(session.answers)  # reassign so the JSON column is marked dirty

@@ -661,6 +661,30 @@ class MistakeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MixupSide(BaseModel):
+    hanzi: str
+    pinyin: str = ""
+    meaning: str = ""
+
+
+class MixupPair(BaseModel):
+    """Two items the learner has taken for each other (services/mixups.py).
+    Read-only: computed from their own stored answers, never posted."""
+    item_type: str  # vocab | hanzi
+    a: MixupSide
+    b: MixupSide
+    confused: int
+    told_apart: int
+    resolve_after: int
+    status: str  # active | resolved
+    last_confused_at: Optional[str] = None
+
+
+class MixupsResponse(BaseModel):
+    active: list[MixupPair]
+    resolved: list[MixupPair]
+
+
 class MistakePatch(BaseModel):
     # No client-settable `mastered` — mastery is only ever earned by
     # reinforce_mistake() (answering correctly again via voice/vocab/duel/

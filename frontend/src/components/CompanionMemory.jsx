@@ -17,7 +17,8 @@ const LINKS = {
   welcome_back: "/review",
   lesson_completed: null, // set from data.lesson_id
   difficult_chars: "/hanzi",
-  confused_pair: "/review",
+  confused_pair: "/practice?source=mixups",
+  resolved_pair: "/mistakes",
   recent_mistakes: "/mistakes",
   improving_listening: "/real-chinese",
   stale_area: null, // set from data.area
@@ -44,7 +45,8 @@ function useMemoryLine() {
     const vars = {
       name,
       // Plural form follows the number the sentence actually says.
-      count: DAY_KINDS.has(m.kind) ? d.days ?? 0 : d.count ?? 0,
+      // A sorted-out pair counts the times it was told apart since.
+      count: DAY_KINDS.has(m.kind) ? d.days ?? 0 : m.kind === "resolved_pair" ? d.told_apart ?? 0 : d.count ?? 0,
       days: d.days ?? 0,
       total: d.total ?? 0,
       title: achievementTitle(t, d.code, d.title || ""),
@@ -75,7 +77,7 @@ function useMemoryLine() {
 
 function Items({ m }) {
   const items = m.data?.items || (m.data?.item ? [m.data.item] : []) || [];
-  const pair = m.kind === "confused_pair" ? [m.data.a, m.data.b] : null;
+  const pair = m.kind === "confused_pair" || m.kind === "resolved_pair" ? [m.data.a, m.data.b] : null;
   const list = pair || items.filter((x) => x.hanzi);
   if (!list.length) return null;
   return (

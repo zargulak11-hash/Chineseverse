@@ -59,6 +59,7 @@ ZH = {
     "mastered_recently": "你最近又掌握了新词！",
     "difficult_chars": "这几个字有点难，我们多练习。",
     "confused_pair": "{a}和{b}很像，别着急，慢慢分清楚。",
+    "resolved_pair": "以前你常把{a}和{b}弄混，现在已经分清楚了！",
     "recent_mistakes": "错了没关系，我们一起复习。",
     "improving_listening": "你的听力越来越好了！",
     "reviews_done": "复习做得很好，记忆更牢了！",
@@ -70,7 +71,7 @@ ZH = {
 _AREA_ZH = {"vocab": "词汇", "hanzi": "汉字", "grammar": "语法"}
 PRIORITY = [
     "welcome_back", "passport_milestone", "word_milestone", "achievement", "lesson_completed", "mastered_hard", "streak",
-    "improving_listening", "confused_pair", "reading_word", "difficult_chars", "recent_mistakes", "mastered_recently",
+    "improving_listening", "resolved_pair", "confused_pair", "reading_word", "difficult_chars", "recent_mistakes", "mastered_recently",
     "reviews_done", "stale_area", "weak_skill", "new_learner",
 ]
 
@@ -274,12 +275,21 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
 
     sessions = _recent_sessions(db, user, CONFUSION_WINDOW_DAYS)
 
-    # --- two items confused more than once
-    pairs = [(k, n) for k, n in confusion_pairs(sessions).most_common(3) if n >= 2]
-    for (item_type, lo, hi), n in pairs[:1]:
-        a, b = _item_label(db, item_type, lo), _item_label(db, item_type, hi)
+    # --- two items confused more than once, and two the learner now tells
+    # apart -- the same mix-up memory the notebook and the drill read
+    # (services/mixups.py), so the companion never says otherwise.
+    from app.services import mixups
+
+    mix = mixups.pairs(db, user, labels=False)
+    for kind, status in (("confused_pair", "active"), ("resolved_pair", "resolved")):
+        pair = next((p for p in mix if p["status"] == status), None)
+        if pair is None:
+            continue
+        a, b = _item_label(db, pair["item_type"], pair["a_id"]), _item_label(db, pair["item_type"], pair["b_id"])
         if a and b:
-            out.append(_m("confused_pair", "encouraging", {"a": a, "b": b, "count": n, "item_type": item_type},
+            out.append(_m(kind, "encouraging" if status == "active" else "proud",
+                          {"a": a, "b": b, "count": pair["confused"], "told_apart": pair["told_apart"],
+                           "item_type": pair["item_type"]},
                           a=a["hanzi"], b=b["hanzi"]))
 
     # --- mistakes that came back this week

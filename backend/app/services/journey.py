@@ -123,7 +123,7 @@ SKILL_PRACTICE = {
 # The practice source that does each kind of "next step".
 NEXT_SOURCE = {"tones": "tones", "characters": "hanzi", "first_lesson": "lesson", "sentence": "sentence",
                "listen": "sound", "speak": "voice", "story": "story", "review": "review",
-               "lesson": "lesson", "stories": "story", "exam": "exam"}
+               "lesson": "lesson", "stories": "story", "exam": "exam", "mixups": "mixups"}
 
 
 def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool) -> dict:
@@ -160,6 +160,14 @@ def today(db: Session, user: models.User, level: int, nxt: dict, due: int, found
     if nxt.get("kind") != "review":
         tasks.append({"key": "learn", "to": nxt["to"], "next": nxt,
                       "done": NEXT_SOURCE.get(nxt.get("key"), "") in did})
+    # Words or characters the learner keeps taking for each other: a short
+    # drill of exactly those pairs (services/mixups.py) beats a generic one.
+    from app.services import mixups
+
+    mixed = mixups.active_pairs(db, user)
+    if mixed or "mixups" in did:
+        tasks.append({"key": "mixups", "to": "/practice?source=mixups", "count": len(mixed),
+                      "done": "mixups" in did})
     practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
     weakest = min(practised, key=lambda s: s.mastery) if practised else None
     if weakest is not None and weakest.mastery < 70 and weakest.skill.code in SKILL_PRACTICE:

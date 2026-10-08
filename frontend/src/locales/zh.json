@@ -59,7 +59,8 @@
     "passport": "我的中文之旅",
     "toLanding": "ChineseVerse——首页",
     "journey": "我的学习之路",
-    "stories": "中文故事"
+    "stories": "中文故事",
+    "mistakes": "错题本"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -493,7 +494,7 @@
       "openClickToEnter": "已开放——点击进入"
     },
     "mistakes": {
-      "title": "错题实验室",
+      "title": "错题本",
       "subtitle": "每个错误都是数据。只有再次答对——在复习、练习、口语、案件或对战中——才算掌握，而不是在这里点一下。",
       "stillWorking": "仍在攻克",
       "youSaid": "你说的是",
@@ -504,7 +505,23 @@
       "masteredBadge": "已掌握",
       "empty": "尚未记录任何错误。快去犯几个吧。",
       "reviewNow": "立即复习",
-      "emptyTeach": "你在任何地方答错的题都会保存在这里，并在练习中再次出现，直到你答对为止。"
+      "emptyTeach": "你在任何地方答错的题都会保存在这里，并在练习中再次出现，直到你答对为止。",
+      "mixupsTitle": "易混词",
+      "mixupsSub": "你把它们当成了彼此。它们会在练习中并排出现，直到你连续{{n}}次分清它们。",
+      "confused_other": "弄混{{count}}次",
+      "toldApart": "已分清 {{done}}/{{need}}",
+      "drill": "练习这些易混词",
+      "resolvedTitle": "已经分清",
+      "resolvedLine_other": "上次弄混之后已分清{{count}}次",
+      "mixupsEmpty": "还没有易混词。当你两次把一个词选成另一个词，它们就会出现在这里。",
+      "otherTitle": "其他错题",
+      "group": {
+        "word": "词语",
+        "hanzi": "汉字",
+        "sound": "声调和发音",
+        "grammar": "语法",
+        "other": "其他"
+      }
     },
     "progress": {
       "title": "你的进度",
@@ -900,7 +917,8 @@
       "sound": "声音世界 · {{place}}",
       "internet": "中文网络 · {{title}}",
       "tones": "声音和声调练习",
-      "story": "故事 · {{title}}"
+      "story": "故事 · {{title}}",
+      "mixups": "易混词练习"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -947,7 +965,9 @@
     "roundProgress": "本轮进度",
     "nextLesson": "下一课",
     "toneRound": "声音和声调",
-    "reviewWhat": "复习会在你快要忘记之前，把练过的内容带回来。你在课程、故事和练习中遇到的每个词，都会按自己的时间表回到这里。"
+    "reviewWhat": "复习会在你快要忘记之前，把练过的内容带回来。你在课程、故事和练习中遇到的每个词，都会按自己的时间表回到这里。",
+    "mixupsNothing": "暂时没有要练的——你弄混过的词都已经分清了。",
+    "mixupsWhat": "当你两次把一个词选成另一个词时，这对词会被记下来并排出现，直到你连续{{n}}次分清它们。"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",
@@ -1391,7 +1411,8 @@
       "stale_area_never": "你开始学{{area}}了，但还没有在练习中练过。",
       "weak_skill": "你的{{skill}}目前最弱（{{value}}/100）——下一步可以重点提高。",
       "passport_milestone": "我的中文之旅翻开了新的一页：{{event}}",
-      "reading_word": "{{name}}发现你读故事时常常查“{{word}}”——我们复习一下吧。"
+      "reading_word": "{{name}}发现你读故事时常常查“{{word}}”——我们复习一下吧。",
+      "resolved_pair_other": "你以前常把“{{a}}”和“{{b}}”弄混——之后你已经{{count}}次分清了它们。"
     },
     "area": {
       "vocab": "词汇",
@@ -1403,7 +1424,7 @@
       "welcome_back": "开始复习",
       "lesson_completed": "打开课程",
       "difficult_chars": "练习汉字",
-      "confused_pair": "去复习",
+      "confused_pair": "练习这对词",
       "recent_mistakes": "查看错题",
       "improving_listening": "试试真实对话",
       "stale_area": "继续练习",
@@ -1412,7 +1433,8 @@
       "achievement": "查看成就",
       "mastered_recently": "我的词汇",
       "passport_milestone": "打开我的中文之旅",
-      "reading_word": "去复习"
+      "reading_word": "去复习",
+      "resolved_pair": "看错题本"
     }
   },
   "detective": {
@@ -2982,6 +3004,8 @@
     "read": "读一个适合你水平的故事",
     "readWhy": "真实的阅读把词语和语法联系在一起。",
     "doneToday": "今天已完成",
-    "summary": "今天：练习 {{rounds}} 轮 · 练习词语 {{words}} 个 · {{minutes}}/{{goal}} 分钟"
+    "summary": "今天：练习 {{rounds}} 轮 · 练习词语 {{words}} 个 · {{minutes}}/{{goal}} 分钟",
+    "mixups_other": "分清你常弄混的{{count}}对词",
+    "mixupsWhy": "你不止一次把它们选错了——放在一起比较，就能分清。"
   }
 }
