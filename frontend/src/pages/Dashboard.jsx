@@ -81,7 +81,8 @@ export default function Dashboard() {
   return (
     <Layout>
       <header className="dash-greeting">
-        <h1 className="h1"><span lang="zh-CN">你好</span>, {d.user.username}</h1>
+        {/* The top bar already greets the learner by name on every page. */}
+        <h1 className="h1">{t("nav.groupToday")}</h1>
         <p className="sub">HSK {d.hsk_level} · {t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}</p>
       </header>
 

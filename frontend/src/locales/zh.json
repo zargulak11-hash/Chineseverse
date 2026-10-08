@@ -622,7 +622,8 @@
       "stage": {
         "companion": "伙伴",
         "questions": "关于你",
-        "level": "你的水平"
+        "level": "你的水平",
+        "ready": "准备好了"
       },
       "companionSub": "你的伙伴会陪你一起学习，并对每个回答做出反应。之后也可以更换。",
       "loadErrorTitle": "无法加载设置",
@@ -667,7 +668,21 @@
       "levelSomeHint": "一个简短的测试帮你确定水平。",
       "levelStudy": "我已经在学中文",
       "levelStudyHint": "做分级测试，跳过已经会的内容。",
-      "startJourney": "开始学习"
+      "startJourney": "开始学习",
+      "how": {
+        "title": "ChineseVerse 怎么用",
+        "nextTitle": "每天一个下一步",
+        "next": "首页最上面总会告诉你现在该做什么、为什么——不用自己在菜单里挑。",
+        "lessonsTitle": "课程教学，练习检验",
+        "lessons": "每节课学几个新词、汉字和一个语法点，然后做一轮简短的练习。",
+        "reviewTitle": "复习帮你记住",
+        "review": "词语会在你快忘记之前回来。每天几分钟就够了。",
+        "notebookTitle": "错题会被记住",
+        "notebook": "你弄混的内容会并排回来，直到你分清为止。只有你自己能看到。",
+        "firstTask": "你的第一个任务",
+        "start": "开始第一个任务",
+        "home": "去首页"
+      }
     },
     "assistant": {
       "title": "学习助手",

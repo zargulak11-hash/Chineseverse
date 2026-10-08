@@ -7,6 +7,7 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import CompanionPicker from "../components/CompanionPicker.jsx";
 import Icon from "../components/Icon.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
+import { nextTitle } from "../components/NextStep.jsx";
 import { Loading } from "../components/ui.jsx";
 import { SUPPORTED_LANGS } from "../i18n.js";
 import { usePrefs } from "../prefs.jsx";
@@ -18,7 +19,17 @@ const SOURCES = ["friend", "social", "school", "search", "other"];
 const STAGES = [
   { key: "companion", steps: ["companion"] },
   { key: "questions", steps: ["motivation", "discovery"] },
-  { key: "level", steps: ["intro", "test", "result"] },
+  { key: "level", steps: ["intro", "test"] },
+  { key: "ready", steps: ["result"] },
+];
+
+// The closing screen's "how ChineseVerse works": the four things a new
+// learner meets every day, in the order they meet them.
+const HOW = [
+  ["route", "next"],
+  ["book", "lessons"],
+  ["clock", "review"],
+  ["crosshair", "notebook"],
 ];
 
 // Where a learner (re)enters onboarding: the first step whose answer the
@@ -65,6 +76,7 @@ export default function Onboarding() {
   const [qIdx, setQIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
+  const [firstTask, setFirstTask] = useState(null); // the journey's next step once onboarding is done
 
   // Runs once (and on "try again") -- not on a language change, which only
   // re-renders the same step in the new language.
@@ -165,11 +177,24 @@ export default function Onboarding() {
     navigate(to, { replace: true });
   }
 
-  // A complete beginner goes straight to step 1 of the journey.
+  // Onboarding is complete on the server: ask the journey for the real
+  // first task (for a beginner, step 1 of the foundation) so the closing
+  // screen can start it. Without it the button still opens the journey.
+  async function loadFirstTask() {
+    try {
+      setFirstTask((await api.get("/journey")).next || null);
+    } catch {
+      setFirstTask(null);
+    }
+  }
+
+  // A complete beginner starts at HSK 1, without a test.
   const startAsBeginner = () =>
     run(async () => {
-      await api.post("/onboarding/placement-test/skip");
-      await enterApp("/journey");
+      const r = await api.post("/onboarding/placement-test/skip");
+      await loadFirstTask();
+      setResult(r);
+      go("result");
     });
 
   const submitTest = (finalAnswers) =>
@@ -181,6 +206,7 @@ export default function Onboarding() {
         })),
       };
       const r = await api.post(`/onboarding/placement-test/${attemptId}/submit`, payload);
+      await loadFirstTask();
       setResult(r);
       go("result");
     });
@@ -402,19 +428,42 @@ export default function Onboarding() {
           )}
 
           {step === "result" && result && (
-            <div className="center">
-              <div className="reveal-icon">
-                <Icon name="sparkles" size={44} />
-              </div>
+            // The last screen explains how ChineseVerse works before the
+            // learner is in it, then starts their real first task.
+            <>
               <h1 className="h1">{t("pages.onboarding.resultTitle")}</h1>
-              <p className="sub">{t("pages.onboarding.resultLevel", { level: result.placed_level })}</p>
-              {result.total_count > 0 && (
-                <p className="sub">{t("pages.onboarding.resultScore", { correct: result.correct_count, total: result.total_count })}</p>
+              <p className="sub">
+                {t("pages.onboarding.resultLevel", { level: result.placed_level })}
+                {result.total_count > 0 && <> · {t("pages.onboarding.resultScore", { correct: result.correct_count, total: result.total_count })}</>}
+              </p>
+              <h2 className="h2 onboard-how-title">{t("pages.onboarding.how.title")}</h2>
+              <ul className="onboard-how">
+                {HOW.map(([icon, key]) => (
+                  <li key={key}>
+                    <span className="onboard-how-icon"><Icon name={icon} size={17} /></span>
+                    <span>
+                      <b>{t(`pages.onboarding.how.${key}Title`)}</b>
+                      <span className="sub">{t(`pages.onboarding.how.${key}`)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {firstTask && (
+                <p className="onboard-first">
+                  <span className="side-title">{t("pages.onboarding.how.firstTask")}</span>
+                  <b>{nextTitle(t, firstTask)}</b>
+                </p>
               )}
-              <button type="button" className="btn primary" style={{ marginTop: 16 }} disabled={busy} onClick={() => run(() => enterApp("/journey"))}>
-                {t("pages.onboarding.startJourney")}
-              </button>
-            </div>
+              <div className="row" style={{ gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+                <button type="button" className="btn primary" disabled={busy}
+                        onClick={() => run(() => enterApp(firstTask?.to || "/journey"))}>
+                  {t("pages.onboarding.how.start")}
+                </button>
+                <button type="button" className="btn ghost" disabled={busy} onClick={() => run(() => enterApp("/dashboard"))}>
+                  {t("pages.onboarding.how.home")}
+                </button>
+              </div>
+            </>
           )}
         </section>
       </>

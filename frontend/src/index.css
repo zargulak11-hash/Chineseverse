@@ -1500,6 +1500,30 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .onboard-card, .onboard-panel { animation: fadeInUp var(--dur-base) var(--ease-out) both; }
 .onboard-back { margin-bottom: var(--space-4); }
 .onboard-question { margin-top: var(--space-4); font-size: var(--text-lg); }
+.onboard-how-title { margin-top: var(--space-5); }
+.onboard-how { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.onboard-how li { display: flex; align-items: flex-start; gap: var(--space-3); }
+.onboard-how li > span:last-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.onboard-how-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+}
+.onboard-first {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
 @media (max-width: 640px) {
   .onboard-top { padding: var(--space-3) var(--space-4); }
   .onboard-main { padding: var(--space-5) var(--space-4) var(--space-7); }

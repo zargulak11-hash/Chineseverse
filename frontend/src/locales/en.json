@@ -628,7 +628,8 @@
       "stage": {
         "companion": "Companion",
         "questions": "About you",
-        "level": "Your level"
+        "level": "Your level",
+        "ready": "Ready"
       },
       "companionSub": "Your companion learns alongside you and reacts to every answer. You can change it later.",
       "loadErrorTitle": "We couldn't load your setup",
@@ -673,7 +674,21 @@
       "levelSomeHint": "A short test finds your level.",
       "levelStudy": "I already study Chinese",
       "levelStudyHint": "Take the placement test to skip what you know.",
-      "startJourney": "Start learning"
+      "startJourney": "Start learning",
+      "how": {
+        "title": "How ChineseVerse works",
+        "nextTitle": "One next step, every day",
+        "next": "The top of Home always says what to do now and why — you never have to choose from a menu.",
+        "lessonsTitle": "Lessons teach, practice checks",
+        "lessons": "Each lesson brings a few new words, characters and a grammar point, then a short graded round.",
+        "reviewTitle": "Review keeps what you learn",
+        "review": "Words come back just before you would forget them. A few minutes a day is enough.",
+        "notebookTitle": "Your mistakes are remembered",
+        "notebook": "Whatever you mix up comes back, side by side, until you can tell it apart. Nobody else sees it.",
+        "firstTask": "Your first task",
+        "start": "Start my first task",
+        "home": "Go to Home"
+      }
     },
     "assistant": {
       "title": "Study Assistant",
