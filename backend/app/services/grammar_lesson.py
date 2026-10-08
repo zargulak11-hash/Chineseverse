@@ -41,6 +41,7 @@ from app import models
 from app.services import sentence as sent
 from app.services import sentence_check
 from app.services import story_slots as ss
+from app.services.grammar_terms import category_label
 from app.services.localization import load_translations, tr
 
 LESSONS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "seed_content", "grammar")
@@ -320,7 +321,7 @@ def page(db: Session, user: models.User, topic_id: int, locale: str) -> dict:
         "title": tr(trs, topic.id, "title", topic.title),
         "syllabus_title": topic.title,
         "pattern": topic.pattern,
-        "category": tr(trs, topic.id, "category", topic.category),
+        "category": category_label(topic.category, trs, topic.id, locale),
         "hsk_level": _level_of(db, topic),
         "explanation": tr(trs, topic.id, "explanation", topic.explanation),
         "examples": blocks,

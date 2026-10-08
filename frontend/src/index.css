@@ -4127,6 +4127,16 @@ table.data td {
 .fix-mistake .fix-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
 .fix-mistake .fix-text b { color: var(--text); font-size: var(--text-base); }
 .dna-overall { font-size: var(--text-2xl); font-weight: 800; line-height: 1.1; }
+/* Grammar index (pages/Grammar.jsx): the points grouped by syllabus category. */
+.grammar-jump { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
+.grammar-group { margin-top: var(--space-5); scroll-margin-top: 88px; }
+.grammar-group .section-title { margin-bottom: var(--space-3); }
+.grammar-count { color: var(--text-faint); font-weight: 700; font-size: var(--text-xs); margin-left: var(--space-1); }
+/* On a phone the ~25 category links would fill the screen: one row that
+   scrolls sideways instead (the page itself still never scrolls sideways). */
+@media (max-width: 640px) {
+  .grammar-jump { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--space-2); scrollbar-width: thin; }
+  .grammar-jump .btn { flex-shrink: 0; }
 .notebook-zh { font-size: var(--text-lg); }
 .fix-mistake {
   display: flex;

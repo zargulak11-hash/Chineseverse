@@ -29,6 +29,22 @@ export default function Grammar() {
   const counts = {};
   for (const lv of roadmap?.levels || []) counts[lv.level] = lv.grammar_total;
 
+  // A level holds up to ~90 points; one undifferentiated grid of them was
+  // hard to scan. They are grouped by syllabus category (localized by the
+  // API), in curriculum order, the hand-written core points first.
+  const groups = [];
+  const byKey = new Map();
+  for (const topic of topics) {
+    const key = topic.category || "";
+    if (!byKey.has(key)) {
+      const g = { key, label: key || t("pages.grammar.core"), items: [] };
+      byKey.set(key, g);
+      groups.push(g);
+    }
+    byKey.get(key).items.push(topic);
+  }
+  groups.sort((a, b) => (a.key === "" ? -1 : b.key === "" ? 1 : 0));
+
   return (
     <Layout>
       <h1 className="h1">{t("pages.grammar.title")}</h1>
@@ -54,40 +70,56 @@ export default function Grammar() {
         </div>
       )}
 
-      <div className="grid cards" style={{ marginTop: 16 }}>
-        {topics.map((topic) => (
-          <Link
-            key={topic.id}
-            to={`/grammar/${topic.id}`}
-            className="card hover gt-card"
-            style={topic.due_for_review ? { borderColor: "var(--accent-border)" } : undefined}
-          >
-            <div className="row spread" style={{ alignItems: "flex-start", gap: 8 }}>
-              <div style={{ minWidth: 0 }}>
-                {topic.category && <span className="ilb" style={{ marginBottom: 4 }}>{topic.category}</span>}
-                {topic.name ? (
-                  <>
-                    <div className="gt-card-title">{topic.name}</div>
-                    <div className="sub" lang="zh-CN">{topic.title}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="gt-card-title" lang="zh-CN">{topic.title}</div>
-                    {topic.pattern && topic.pattern !== topic.title && <div className="sub" lang="zh-CN">{topic.pattern}</div>}
-                  </>
-                )}
-              </div>
-              {topic.due_for_review && <span className="badge accent">{t("pages.vocabulary.due")}</span>}
-            </div>
-            {topic.explanation && <p className="sub" style={{ marginTop: 8 }}>{topic.explanation}</p>}
-            {firstExample(topic.examples) && <p className="gt-card-ex" lang="zh-CN">{firstExample(topic.examples)}</p>}
-            <div style={{ marginTop: 12 }}>
-              <Bar value={topic.mastery ?? 0} alt />
-            </div>
-            <span className="gt-card-open">{t("pages.grammar.open")} <Icon name="chevronRight" size={13} /></span>
-          </Link>
-        ))}
-      </div>
+      {groups.length > 2 && (
+        <nav className="grammar-jump" aria-label={t("pages.grammar.jump")}>
+          {groups.map((g, i) => (
+            <a key={g.key || "core"} href={`#grammar-group-${i}`} className="btn small ghost">
+              {g.label} <span className="grammar-count">{g.items.length}</span>
+            </a>
+          ))}
+        </nav>
+      )}
+
+      {groups.map((g, i) => (
+        <section key={g.key || "core"} id={`grammar-group-${i}`} className="grammar-group">
+          <h2 className="h2 section-title">
+            {g.label} <span className="grammar-count">{g.items.length}</span>
+          </h2>
+          <div className="grid cards">
+            {g.items.map((topic) => (
+              <Link
+                key={topic.id}
+                to={`/grammar/${topic.id}`}
+                className="card hover gt-card"
+                style={topic.due_for_review ? { borderColor: "var(--accent-border)" } : undefined}
+              >
+                <div className="row spread" style={{ alignItems: "flex-start", gap: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    {topic.name ? (
+                      <>
+                        <div className="gt-card-title">{topic.name}</div>
+                        <div className="sub" lang="zh-CN">{topic.title}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="gt-card-title" lang="zh-CN">{topic.title}</div>
+                        {topic.pattern && topic.pattern !== topic.title && <div className="sub" lang="zh-CN">{topic.pattern}</div>}
+                      </>
+                    )}
+                  </div>
+                  {topic.due_for_review && <span className="badge accent">{t("pages.vocabulary.due")}</span>}
+                </div>
+                {topic.explanation && <p className="sub" style={{ marginTop: 8 }}>{topic.explanation}</p>}
+                {firstExample(topic.examples) && <p className="gt-card-ex" lang="zh-CN">{firstExample(topic.examples)}</p>}
+                <div style={{ marginTop: 12 }}>
+                  <Bar value={topic.mastery ?? 0} alt />
+                </div>
+                <span className="gt-card-open">{t("pages.grammar.open")} <Icon name="chevronRight" size={13} /></span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ))}
       {topics.length === 0 && <Empty>{t("pages.grammar.empty")}</Empty>}
     </Layout>
   );

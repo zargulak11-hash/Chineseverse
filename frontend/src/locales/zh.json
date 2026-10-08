@@ -817,7 +817,9 @@
       "showExamples": "显示例句",
       "hideExamples": "隐藏例句",
       "empty": "此级别暂无语法点。",
-      "open": "打开课程"
+      "open": "打开课程",
+      "core": "核心语法点",
+      "jump": "跳到分组"
     },
     "hanzi": {
       "title": "汉字",

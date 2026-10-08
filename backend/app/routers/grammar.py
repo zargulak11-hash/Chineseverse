@@ -9,6 +9,7 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import grammar_lesson as gl
 from app.services.hsk_band import resolve_level_filter
+from app.services.grammar_terms import category_label
 from app.services.localization import load_translations, tr
 from app.services.gamification import ensure_user_skills
 
@@ -47,7 +48,7 @@ def list_grammar(
         item = schemas.GrammarTopicWithStatus.model_validate(topic)
         item.title = tr(translations, topic.id, "title", item.title)
         item.explanation = tr(translations, topic.id, "explanation", item.explanation)
-        item.category = tr(translations, topic.id, "category", item.category)
+        item.category = category_label(item.category, translations, topic.id, locale)
         item.difficulty = tr(translations, topic.id, "difficulty", item.difficulty)
         rec = user_map.get(topic.id)
         item.status = rec.status if rec else "new"

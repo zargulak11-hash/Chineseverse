@@ -824,7 +824,9 @@
       "showExamples": "Show examples",
       "hideExamples": "Hide examples",
       "empty": "No grammar points at this level yet.",
-      "open": "Open lesson"
+      "open": "Open lesson",
+      "core": "Core grammar points",
+      "jump": "Jump to a group"
     },
     "hanzi": {
       "title": "Hanzi",
