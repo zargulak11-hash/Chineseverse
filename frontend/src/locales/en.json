@@ -964,6 +964,8 @@
     "completed": "Completed"
   },
   "practice": {
+    "scoreLabel": "Score",
+    "correctLabel": "Correct",
     "title": {
       "vocab": "Vocabulary practice · HSK {{level}}",
       "hanzi": "Hanzi practice · HSK {{level}}",
@@ -3139,7 +3141,7 @@
     "read": "Read a story at your level",
     "readWhy": "Real reading ties your words and grammar together.",
     "doneToday": "Done today",
-    "summary": "Today so far: {{rounds}} practice rounds · {{words}} words practised · {{minutes}} of {{goal}} minutes",
+    "summary": "Today so far: practice rounds — {{rounds}} · words practised — {{words}} · {{minutes}} of {{goal}} minutes",
     "mixups_one": "Tell apart the pair you keep mixing up",
     "mixups_other": "Tell apart the {{count}} pairs you keep mixing up",
     "mixupsWhy": "You chose one for the other more than once — seeing them side by side is how they come apart.",

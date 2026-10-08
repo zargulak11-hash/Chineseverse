@@ -964,6 +964,8 @@
     "completed": "Анҷом ёфт"
   },
   "practice": {
+    "scoreLabel": "Натиҷа",
+    "correctLabel": "Дуруст",
     "title": {
       "vocab": "Машқи калимаҳо · HSK {{level}}",
       "hanzi": "Машқи иероглифҳо · HSK {{level}}",

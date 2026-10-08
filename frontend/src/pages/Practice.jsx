@@ -22,7 +22,19 @@ export default function Practice({ forceSource }) {
   const [params] = useSearchParams();
   const { dashboard, refresh } = useDashboard();
   const source = forceSource || params.get("source") || (params.get("lesson") ? "lesson" : "vocab");
-  const level = params.get("level") ? Number(params.get("level")) : null;
+  const askedLevel = params.get("level") ? Number(params.get("level")) : null;
+  // Vocabulary, Hanzi and Grammar rounds are built for one HSK level. Opened
+  // without one (a typed /practice, an old bookmark) the server refused with
+  // a raw "hsk_level (1-9) is required" -- use the learner's own level
+  // instead. Taken once, so a level-up shown on the dashboard after the
+  // round doesn't restart it.
+  const needsLevel = ["vocab", "hanzi", "grammar"].includes(source);
+  const [ownLevel, setOwnLevel] = useState(null);
+  useEffect(() => {
+    if (!askedLevel && needsLevel && ownLevel === null && dashboard?.hsk_level) setOwnLevel(dashboard.hsk_level);
+  }, [askedLevel, needsLevel, ownLevel, dashboard]);
+  const level = askedLevel || (needsLevel ? ownLevel : null);
+  const waitingForLevel = needsLevel && !level;
   const lessonId = params.get("lesson") ? Number(params.get("lesson")) : null;
   // Real Chinese scene slug / One Sentence lesson text (services/real_life.py,
   // services/sentence.py) -- the server builds and grades those rounds too.
@@ -51,16 +63,22 @@ export default function Practice({ forceSource }) {
   // index -> graded correct/incorrect, straight from each /answer response;
   // display only (round tracker + progress), never sent anywhere.
   const [outcomes, setOutcomes] = useState({});
+  // index -> XP the server credited for that answer. The summary's
+  // xp_bonus is only the end-of-round bonus, so showing it alone read
+  // "+0 XP" after a round that had earned XP answer by answer.
+  const [earned, setEarned] = useState({});
   const shownAt = useRef(Date.now());
   // Language the current round was rendered in (see the effect below).
   const renderedLang = useRef(i18n.language);
 
   const start = useCallback(() => {
+    if (waitingForLevel) return;
     setSession(null);
     setSummary(null);
     setResult(null);
     setIndex(0);
     setOutcomes({});
+    setEarned({});
     setError("");
     const body = { source, size: source === "review" ? 12 : 10 };
     if (level) body.hsk_level = level;
@@ -93,7 +111,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, topicId, i18n]);
+  }, [source, level, waitingForLevel, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, topicId, i18n]);
 
   useEffect(start, [start]);
 
@@ -158,6 +176,7 @@ export default function Practice({ forceSource }) {
       });
       setResult({ ...r, choice_id: optionId, index });
       setOutcomes((o) => ({ ...o, [index]: r.correct }));
+      setEarned((x) => ({ ...x, [index]: r.xp_gained || 0 }));
       // Scene/sentence answers come back with the question as it now reads
       // (a hidden line revealed) for the conversation thread.
       if (r.question) {
@@ -293,20 +312,23 @@ export default function Practice({ forceSource }) {
   }
 
   if (summary) {
+    // What this round really earned: each answer's XP as the server
+    // credited it, plus the end-of-round bonus.
+    const roundXp = Object.values(earned).reduce((a, b) => a + b, 0) + (summary.xp_bonus || 0);
     return (
       <Layout>
         {head(
           <div className="kpi-row">
             <div className="kpi">
               <span className="kpi-value">{Math.round(summary.score)}%</span>
-              <span className="kpi-label">{t("practice.score")}</span>
+              <span className="kpi-label">{t("practice.scoreLabel")}</span>
             </div>
             <div className="kpi">
               <span className="kpi-value">{summary.correct}/{summary.total}</span>
-              <span className="kpi-label">{t("practice.accuracy")}</span>
+              <span className="kpi-label">{t("practice.correctLabel")}</span>
             </div>
             <div className="kpi">
-              <span className="kpi-value">+{summary.xp_bonus}</span>
+              <span className="kpi-value">+{roundXp}</span>
               <span className="kpi-label">XP</span>
             </div>
           </div>

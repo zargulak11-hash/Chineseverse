@@ -7,10 +7,16 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 // Renders Google's own "Continue with Google" button via Google Identity
 // Services and exchanges the resulting ID token with our backend, which
 // verifies it and issues our own session token. No credentials are ever
-// invented here — if VITE_GOOGLE_CLIENT_ID isn't set, we say so instead of
-// showing a decorative button that would silently fail.
+// invented here — if VITE_GOOGLE_CLIENT_ID isn't set, there is no button
+// rather than a decorative one that would silently fail.
+export const GOOGLE_CONFIGURED = Boolean(CLIENT_ID);
+
 export default function GoogleAuthButton({ onSuccess, onError }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Google's button speaks the browser's language unless told otherwise;
+  // drawing reads the current UI language each time.
+  const langRef = useRef(i18n.language);
+  langRef.current = i18n.language;
   const divRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
@@ -33,6 +39,8 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
     let cancelled = false;
     let poll;
     let timeout;
+    let redraw;
+    let resizeObserver;
 
     function init() {
       if (cancelled || !window.google?.accounts?.id || !divRef.current) return;
@@ -51,9 +59,27 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
           }
         },
       });
-      // Google draws the button at a fixed pixel width (200-400). A fixed
-      // 320 overflowed the auth card on a 360px phone; take the card's
-      // own width instead, within Google's limits.
+      draw();
+      setReady(true);
+      // Google draws the button at a fixed pixel width, so it is redrawn
+      // when the card's width changes (a phone rotated, a window narrowed):
+      // drawn once at 400px, it ran 40px off a 360px screen.
+      const box = divRef.current.parentElement;
+      if (box && "ResizeObserver" in window) {
+        let last = box.clientWidth;
+        resizeObserver = new ResizeObserver(() => {
+          if (Math.abs(box.clientWidth - last) < 8) return;
+          last = box.clientWidth;
+          clearTimeout(redraw);
+          redraw = setTimeout(draw, 150);
+        });
+        resizeObserver.observe(box);
+      }
+    }
+
+    // Google's limits are 200-400px; inside them, the card's own width.
+    function draw() {
+      if (cancelled || !divRef.current) return;
       const room = divRef.current.parentElement?.clientWidth || 320;
       window.google.accounts.id.renderButton(divRef.current, {
         theme: "filled_black",
@@ -61,8 +87,8 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
         shape: "pill",
         width: Math.max(200, Math.min(400, Math.floor(room))),
         text: "continue_with",
+        locale: langRef.current,
       });
-      setReady(true);
     }
 
     if (window.google?.accounts?.id) {
@@ -86,16 +112,14 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
       cancelled = true;
       clearInterval(poll);
       clearTimeout(timeout);
+      clearTimeout(redraw);
+      resizeObserver?.disconnect();
     };
   }, []);
 
-  if (!CLIENT_ID) {
-    return (
-      <p className="sub center" style={{ fontSize: "var(--text-xs)" }}>
-        {t("ui.googleNotConfigured")}
-      </p>
-    );
-  }
+  // Not configured for this build: no button rather than a setup note
+  // meant for the operator (SocialAuth drops the "or" too).
+  if (!CLIENT_ID) return null;
 
   return (
     <div className="google-auth">

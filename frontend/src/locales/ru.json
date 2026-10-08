@@ -978,6 +978,8 @@
     "completed": "Пройден"
   },
   "practice": {
+    "scoreLabel": "Результат",
+    "correctLabel": "Верно",
     "title": {
       "vocab": "Практика слов · HSK {{level}}",
       "hanzi": "Практика иероглифов · HSK {{level}}",

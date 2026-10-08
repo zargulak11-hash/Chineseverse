@@ -28,13 +28,9 @@ export default function GitHubAuthButton({ page, available }) {
     return () => window.removeEventListener("pageshow", onShow);
   }, []);
 
-  if (available === false) {
-    return (
-      <p className="sub center" style={{ fontSize: "var(--text-xs)" }}>
-        {t("auth.githubNotConfigured")}
-      </p>
-    );
-  }
+  // A server without a GitHub app can't complete the sign-in: offer nothing
+  // rather than a button that fails, or a setup note meant for the operator.
+  if (available === false) return null;
 
   function onClick(e) {
     // One flow at a time: a second click would start a second state and

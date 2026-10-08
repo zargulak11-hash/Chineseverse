@@ -72,7 +72,9 @@ export default function PublicProfile() {
             <div>
               <h1 className="h1">@{profile.username}</h1>
               <p className="sub">
-                {profile.total_xp} XP · {t("pages.profile.joined")} {new Date(profile.created_at).toLocaleDateString()}
+                {profile.total_xp} XP · {t("pages.profile.joined")}{" "}
+                {/* created_at is naive UTC: read it as UTC, show it in the UI language. */}
+                {new Date(profile.created_at.endsWith("Z") ? profile.created_at : `${profile.created_at}Z`).toLocaleDateString(i18n.language)}
               </p>
             </div>
           </div>

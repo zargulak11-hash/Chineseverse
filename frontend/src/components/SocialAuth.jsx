@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import GitHubAuthButton from "./GitHubAuthButton.jsx";
-import GoogleAuthButton from "./GoogleAuthButton.jsx";
+import GoogleAuthButton, { GOOGLE_CONFIGURED } from "./GoogleAuthButton.jsx";
 
 // Reasons the backend's GitHub callback can send a learner back with
 // (?auth_error=..., routers/auth.py); anything else gets the generic one.
@@ -53,11 +53,16 @@ export default function SocialAuth({ page, onSuccess, onError }) {
     setSearchParams(next, { replace: true });
   }, [authError]);
 
+  // Until /auth/providers answers, GitHub counts as available (its own
+  // redirect still explains a server that can't complete it).
+  const github = providers ? providers.github : undefined;
+  if (!GOOGLE_CONFIGURED && github === false) return null;
+
   return (
     <div className="social-auth">
       <div className="divider">{t("auth.or")}</div>
       <GoogleAuthButton onSuccess={onSuccess} onError={onError} />
-      <GitHubAuthButton page={page} available={providers ? providers.github : undefined} />
+      <GitHubAuthButton page={page} available={github} />
     </div>
   );
 }

@@ -957,6 +957,8 @@
     "completed": "已完成"
   },
   "practice": {
+    "scoreLabel": "得分",
+    "correctLabel": "答对",
     "title": {
       "vocab": "词汇练习 · HSK {{level}}",
       "hanzi": "汉字练习 · HSK {{level}}",

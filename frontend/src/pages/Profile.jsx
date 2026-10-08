@@ -11,7 +11,15 @@ import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 export default function Profile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Dates in the UI language, not the browser's: created_at is naive UTC,
+  // last_active_date a plain day ("YYYY-MM-DD", which new Date() would read
+  // as UTC midnight -- the previous day west of Greenwich).
+  const joined = (iso) => new Date(iso.endsWith("Z") ? iso : `${iso}Z`).toLocaleDateString(i18n.language);
+  const day = (ymd) => {
+    const [y, m, d] = ymd.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(i18n.language);
+  };
   const { data: me, error } = useApi("/me");
   const { dashboard } = useDashboard();
   const animal = dashboard?.animal;
@@ -32,7 +40,7 @@ export default function Profile() {
           <UserAvatar url={dashboard?.avatar_url} name={me.user.username} size={56} />
           <div>
             <h1 className="h1">@{me.user.username}</h1>
-            <p className="sub">{me.user.email} · {t("pages.profile.joined")} {new Date(me.user.created_at).toLocaleDateString()}</p>
+            <p className="sub">{me.user.email} · {t("pages.profile.joined")} {joined(me.user.created_at)}</p>
           </div>
         </div>
         <div className="row">
@@ -90,7 +98,7 @@ export default function Profile() {
             <div className="scorecard"><div className="num">{me.streak.total_active_days}</div><div className="lbl">{t("pages.profile.activeDays")}</div></div>
           </div>
           {me.streak.last_active_date && (
-            <p className="sub" style={{ marginTop: 10 }}>{t("pages.profile.lastActive")}: {me.streak.last_active_date}</p>
+            <p className="sub" style={{ marginTop: 10 }}>{t("pages.profile.lastActive")}: {day(me.streak.last_active_date)}</p>
           )}
           <h2 className="h2" style={{ marginTop: 18 }}>{t("pages.profile.rewardsEarned")}</h2>
           <div className="scores" style={{ marginTop: 10 }}>
