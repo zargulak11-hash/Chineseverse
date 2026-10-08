@@ -41,6 +41,13 @@ const EXACT = {
   // routers/onboarding.py: finishing placement before the earlier steps are saved
   "Choose your companion before finishing onboarding": "onboardingCompanionFirst",
   "Answer the onboarding questions before finishing onboarding": "onboardingQuestionsFirst",
+  // routers/me.py change_password
+  "Current password is incorrect": "currentPasswordWrong",
+  "Enter your current password": "currentPasswordMissing",
+  "The new password must be at least 6 characters": "passwordTooShort",
+  "The new password must be at most 128 characters": "passwordTooLong",
+  "The new passwords don't match": "newPasswordMismatch",
+  "The new password must be different from the current one": "passwordSame",
   "Lessons are completed by passing their practice round": "lessonByPractice",
   "No stroke data available for this character": "noStrokeData",
   "This tracing attempt was already used": "traceUsed",

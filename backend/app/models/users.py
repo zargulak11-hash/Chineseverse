@@ -32,6 +32,12 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+    # When the learner last changed their password (POST /api/me/password),
+    # in whole UTC seconds. Access tokens issued before it are refused
+    # (deps.get_current_user), so a password change also ends every other
+    # session -- JWTs are otherwise valid until they expire. Null: never
+    # changed, nothing refused.
+    password_changed_at = Column(DateTime, nullable=True)
     # Google's permanent account id (the ID token's `sub` claim). Set on the
     # first Google sign-in and used before email for every later one, so a
     # Google identity always resolves to the same row (see routers/auth.py).

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
@@ -7,7 +8,9 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas
 from app.database import get_db
-from app.deps import get_current_user
+from app.deps import get_client_ip, get_current_user
+from app.security import create_access_token, hash_password, verify_password
+from app.services import login_throttle
 from app.services.avatars import AVATAR_DIR, UPLOAD_PREFIX, file_for
 from app.services.gamification import touch_streak
 from app.services.notifications import remember_locale
@@ -59,6 +62,18 @@ class ProfilePatch(BaseModel):
 
 class AccountPatch(BaseModel):
     username: str = Field(min_length=3, max_length=50)
+
+
+class PasswordChange(BaseModel):
+    # Plain strings, checked in change_password: a constrained field's 422
+    # body echoes the submitted value back, and these are passwords.
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+
+# The same rule as registration (schemas.RegisterRequest.password).
+PASSWORD_MIN, PASSWORD_MAX = 6, 128
 
 
 class PingResponse(BaseModel):
@@ -156,6 +171,57 @@ def update_account(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post("/password", response_model=schemas.TokenResponse)
+def change_password(
+    payload: PasswordChange,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    ip: str | None = Depends(get_client_ip),
+):
+    """Change the signed-in learner's own password. The current password is
+    required even with a valid session -- a borrowed or stolen session must
+    not be able to take the account over for good -- and guessing it shares
+    the sign-in throttle, so a session is no side door around that limit.
+
+    A wrong current password is a 400, never a 401: the app signs out on a
+    401, and a typo here must not log the learner out. Every session opened
+    before the change stops working (deps.get_current_user); this one gets a
+    fresh token in the response so the learner stays signed in. Nothing in
+    the request is logged or returned."""
+    if not payload.current_password:
+        raise HTTPException(status_code=422, detail="Enter your current password")
+    if len(payload.new_password) < PASSWORD_MIN:
+        raise HTTPException(status_code=422, detail="The new password must be at least 6 characters")
+    if len(payload.new_password) > PASSWORD_MAX:
+        raise HTTPException(status_code=422, detail="The new password must be at most 128 characters")
+    if payload.new_password != payload.confirm_password:
+        raise HTTPException(status_code=422, detail="The new passwords don't match")
+    if payload.new_password == payload.current_password:
+        raise HTTPException(status_code=422, detail="The new password must be different from the current one")
+
+    wait = login_throttle.retry_after(user.username, ip)
+    if wait:
+        raise HTTPException(
+            status_code=429,
+            detail=login_throttle.LOCKED_DETAIL,
+            headers={"Retry-After": str(wait)},
+        )
+    # Longer than any password we accept: wrong, without hashing it.
+    if len(payload.current_password) > PASSWORD_MAX or not verify_password(
+        payload.current_password, user.password_hash
+    ):
+        login_throttle.record_failure(user.username, ip)
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    login_throttle.record_success(user.username, ip)
+
+    user.password_hash = hash_password(payload.new_password)
+    # Whole seconds, like a token's `iat` (security.token_predates_password_change).
+    user.password_changed_at = datetime.utcnow().replace(microsecond=0)
+    db.commit()
+    db.refresh(user)
+    return schemas.TokenResponse(access_token=create_access_token(user.id), user=user)
 
 
 @router.post("/avatar", response_model=schemas.UserProfileResponse)

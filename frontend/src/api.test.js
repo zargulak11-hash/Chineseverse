@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   api,
+  changePassword,
   clearSession,
   completeGitHubSignIn,
   getSavedUser,
@@ -171,6 +172,36 @@ describe("sign-in", () => {
     await expect(completeGitHubSignIn()).rejects.toThrow(ru.apiErrors.githubExpired);
     expect(expired).not.toHaveBeenCalled();
     stop();
+  });
+});
+
+describe("change password", () => {
+  it("sends the three fields, swaps in the fresh token and stores no password", async () => {
+    saveToken("old-token");
+    fetch.mockResolvedValue(respond(200, { access_token: "fresh-token", user: { id: 1, username: "a" } }));
+    const user = await changePassword({ current: "secret1", next: "brand-new", confirm: "brand-new" });
+    const { url, options } = lastCall();
+    expect(url).toBe("/api/me/password");
+    expect(options.headers.Authorization).toBe("Bearer old-token");
+    expect(JSON.parse(options.body)).toEqual({
+      current_password: "secret1",
+      new_password: "brand-new",
+      confirm_password: "brand-new",
+    });
+    expect(user).toEqual({ id: 1, username: "a" });
+    expect(getToken()).toBe("fresh-token");
+    const stored = Object.keys(localStorage).map((k) => localStorage.getItem(k)).join("|");
+    expect(stored).not.toContain("secret1");
+    expect(stored).not.toContain("brand-new");
+  });
+
+  it("keeps the session on a wrong current password and says so in the learner's language", async () => {
+    saveToken("still-valid");
+    await i18n.changeLanguage("ru");
+    fetch.mockResolvedValue(respond(400, { detail: "Current password is incorrect" }));
+    const err = await changePassword({ current: "nope", next: "brand-new", confirm: "brand-new" }).catch((e) => e);
+    expect(err.message).toBe(ru.apiErrors.currentPasswordWrong);
+    expect(getToken()).toBe("still-valid");
   });
 });
 

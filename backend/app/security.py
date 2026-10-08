@@ -1,3 +1,4 @@
+import calendar
 import hashlib
 import hmac
 import os
@@ -87,13 +88,34 @@ def decode_sign_in_ticket(ticket: str) -> int | None:
         return None
 
 
-def decode_access_token(token: str) -> int | None:
+def decode_access_claims(token: str) -> tuple[int, int | None] | None:
+    """(user id, issued-at in whole epoch seconds) of a valid access token,
+    else None. The issue time is what lets a password change end the
+    sessions opened before it (see token_predates_password_change)."""
     try:
         payload = jwt.decode(
             token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
         )
-        return int(payload.get("sub"))
+        iat = payload.get("iat")
+        return int(payload.get("sub")), (int(iat) if iat is not None else None)
     # A validly signed token without a numeric "sub" is still not a session:
     # a 401, not an unhandled TypeError (500).
     except (jwt.PyJWTError, TypeError, ValueError):
         return None
+
+
+def decode_access_token(token: str) -> int | None:
+    claims = decode_access_claims(token)
+    return claims[0] if claims else None
+
+
+def token_predates_password_change(issued_at: int | None, changed_at: datetime | None) -> bool:
+    """True for a token issued before the account's last password change.
+    Both sides are whole seconds (PyJWT truncates `iat`; the change time is
+    stored truncated), so the token handed out right after the change --
+    in the same second -- still counts as issued after it."""
+    if changed_at is None:
+        return False
+    if issued_at is None:
+        return True
+    return issued_at < calendar.timegm(changed_at.timetuple())

@@ -205,6 +205,21 @@ export async function login(payload) {
   return data.user;
 }
 
+// Settings -> Change password. The server ends every other session and
+// hands this one a fresh token, which replaces the stored one at once (the
+// old token is refused from now on). The passwords are only ever in this
+// request body -- never stored here or anywhere in the browser.
+export async function changePassword({ current, next, confirm }) {
+  const data = await request("POST", "/me/password", {
+    current_password: current,
+    new_password: next,
+    confirm_password: confirm,
+  });
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}
+
 export async function loginWithGoogle(credential) {
   const data = await request("POST", "/auth/google", { credential });
   saveToken(data.access_token);

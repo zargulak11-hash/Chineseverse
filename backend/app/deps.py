@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.config import settings
 from app.database import get_db
-from app.security import decode_access_token
+from app.security import decode_access_claims, token_predates_password_change
 from app.services.localization import SUPPORTED_LOCALES, base_locale
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -58,15 +58,23 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
-    user_id = decode_access_token(credentials.credentials)
-    if user_id is None:
+    claims = decode_access_claims(credentials.credentials)
+    if claims is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )
+    user_id, issued_at = claims
     user = db.get(models.User, user_id)
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
+    # Changing the password ends every session opened before it (the device
+    # that changed it got a new token): a stolen token must not outlive the
+    # password it was signed in with.
+    if token_predates_password_change(issued_at, user.password_changed_at):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )
     return user
 
@@ -92,13 +100,17 @@ def get_user_or_none(
 ) -> models.User | None:
     if credentials is None:
         return None
-    user_id = decode_access_token(credentials.credentials)
-    if user_id is None:
+    claims = decode_access_claims(credentials.credentials)
+    if claims is None:
         return None
+    user_id, issued_at = claims
     user = db.get(models.User, user_id)
     # A deactivated account is anonymous here too, as get_current_user
     # refuses it: its still-unexpired token must not keep an admin's view
-    # of lesson bodies or a learner's unlocks.
+    # of lesson bodies or a learner's unlocks. So is a session the password
+    # change ended.
     if user is None or not user.is_active:
+        return None
+    if token_predates_password_change(issued_at, user.password_changed_at):
         return None
     return user
