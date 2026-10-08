@@ -1,5 +1,5 @@
 import { animate, stagger } from "animejs";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, Suspense, useContext, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import { useAuth } from "../auth.js";
@@ -8,6 +8,7 @@ import AchievementToast from "./AchievementToast.jsx";
 import ErrorBoundary from "./ErrorBoundary.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Topbar from "./Topbar.jsx";
+import { Loading } from "./ui.jsx";
 
 const COLLAPSE_KEY = "chineseverse_sidebar_collapsed";
 
@@ -169,7 +170,11 @@ export function AppShell() {
     <ShellContext.Provider value={true}>
       <Shell>
         <ErrorBoundary resetKey={pathname} inShell>
-          <Outlet />
+          {/* Pages load on first visit (App.jsx): the shell stays put
+              meanwhile, only the page column waits. */}
+          <Suspense fallback={<main className="page"><Loading /></main>}>
+            <Outlet />
+          </Suspense>
         </ErrorBoundary>
       </Shell>
     </ShellContext.Provider>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { api, clearSession, getSavedUser, getToken, onSessionExpired, SESSION_KEYS } from "./api.js";
 import { AuthContext, useAuth } from "./auth.js";
@@ -11,52 +11,59 @@ import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import GitHubCallback from "./pages/GitHubCallback.jsx";
-import AnimalSelect from "./pages/AnimalSelect.jsx";
-import Onboarding from "./pages/Onboarding.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import DNA from "./pages/DNA.jsx";
-import Roadmap from "./pages/Roadmap.jsx";
-import Lessons from "./pages/Lessons.jsx";
-import LessonDetail from "./pages/LessonDetail.jsx";
-import Vocabulary from "./pages/Vocabulary.jsx";
-import Grammar from "./pages/Grammar.jsx";
-import GrammarTopic from "./pages/GrammarTopic.jsx";
-import Hanzi from "./pages/Hanzi.jsx";
-import Conversation from "./pages/Conversation.jsx";
-import CaseSolve from "./pages/CaseSolve.jsx";
-import Quests from "./pages/Quests.jsx";
-import Missions from "./pages/Missions.jsx";
-import Duels from "./pages/Duels.jsx";
-import DuelBattle from "./pages/DuelBattle.jsx";
-import Achievements from "./pages/Achievements.jsx";
-import Companion from "./pages/Companion.jsx";
-import VoiceCompanion from "./pages/VoiceCompanion.jsx";
-import PetTeacher from "./pages/PetTeacher.jsx";
-import Mistakes from "./pages/Mistakes.jsx";
-import Practice from "./pages/Practice.jsx";
-import RealChinese, { RealChineseScene } from "./pages/RealChinese.jsx";
-import SentenceLesson from "./pages/SentenceLesson.jsx";
-import Detective from "./pages/Detective.jsx";
-import DetectiveFile from "./pages/DetectiveFile.jsx";
-import SoundWorld from "./pages/SoundWorld.jsx";
-import CharacterDNA from "./pages/CharacterDNA.jsx";
-import Ecosystem from "./pages/Ecosystem.jsx";
-import ChineseInternet, { InternetItem } from "./pages/ChineseInternet.jsx";
-import Passport from "./pages/Passport.jsx";
-import Exam from "./pages/Exam.jsx";
-import Progress from "./pages/Progress.jsx";
-import Profile from "./pages/Profile.jsx";
-import Settings from "./pages/Settings.jsx";
-import Assistant from "./pages/Assistant.jsx";
-import Community from "./pages/Community.jsx";
-import PublicProfile from "./pages/PublicProfile.jsx";
-import AdminUsers from "./pages/AdminUsers.jsx";
-import AdminHome from "./pages/AdminHome.jsx";
-import Journey from "./pages/Journey.jsx";
-import Foundation from "./pages/Foundation.jsx";
-import Stories from "./pages/Stories.jsx";
-import StoryBook from "./pages/StoryBook.jsx";
-import StoryReader from "./pages/StoryReader.jsx";
+
+// Every page behind sign-in is its own chunk, loaded when first opened: the
+// whole app used to ship as one 1.4 MB script, so the landing and login
+// pages downloaded every page of the product before showing anything. The
+// public entry pages above stay in the main bundle.
+const AnimalSelect = lazy(() => import("./pages/AnimalSelect.jsx"));
+const Onboarding = lazy(() => import("./pages/Onboarding.jsx"));
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const DNA = lazy(() => import("./pages/DNA.jsx"));
+const Roadmap = lazy(() => import("./pages/Roadmap.jsx"));
+const Lessons = lazy(() => import("./pages/Lessons.jsx"));
+const LessonDetail = lazy(() => import("./pages/LessonDetail.jsx"));
+const Vocabulary = lazy(() => import("./pages/Vocabulary.jsx"));
+const Grammar = lazy(() => import("./pages/Grammar.jsx"));
+const GrammarTopic = lazy(() => import("./pages/GrammarTopic.jsx"));
+const Hanzi = lazy(() => import("./pages/Hanzi.jsx"));
+const Conversation = lazy(() => import("./pages/Conversation.jsx"));
+const CaseSolve = lazy(() => import("./pages/CaseSolve.jsx"));
+const Quests = lazy(() => import("./pages/Quests.jsx"));
+const Missions = lazy(() => import("./pages/Missions.jsx"));
+const Duels = lazy(() => import("./pages/Duels.jsx"));
+const DuelBattle = lazy(() => import("./pages/DuelBattle.jsx"));
+const Achievements = lazy(() => import("./pages/Achievements.jsx"));
+const Companion = lazy(() => import("./pages/Companion.jsx"));
+const VoiceCompanion = lazy(() => import("./pages/VoiceCompanion.jsx"));
+const PetTeacher = lazy(() => import("./pages/PetTeacher.jsx"));
+const Mistakes = lazy(() => import("./pages/Mistakes.jsx"));
+const Practice = lazy(() => import("./pages/Practice.jsx"));
+const RealChinese = lazy(() => import("./pages/RealChinese.jsx"));
+const RealChineseScene = lazy(() => import("./pages/RealChinese.jsx").then((m) => ({ default: m.RealChineseScene })));
+const SentenceLesson = lazy(() => import("./pages/SentenceLesson.jsx"));
+const Detective = lazy(() => import("./pages/Detective.jsx"));
+const DetectiveFile = lazy(() => import("./pages/DetectiveFile.jsx"));
+const SoundWorld = lazy(() => import("./pages/SoundWorld.jsx"));
+const CharacterDNA = lazy(() => import("./pages/CharacterDNA.jsx"));
+const Ecosystem = lazy(() => import("./pages/Ecosystem.jsx"));
+const ChineseInternet = lazy(() => import("./pages/ChineseInternet.jsx"));
+const InternetItem = lazy(() => import("./pages/ChineseInternet.jsx").then((m) => ({ default: m.InternetItem })));
+const Passport = lazy(() => import("./pages/Passport.jsx"));
+const Exam = lazy(() => import("./pages/Exam.jsx"));
+const Progress = lazy(() => import("./pages/Progress.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const Settings = lazy(() => import("./pages/Settings.jsx"));
+const Assistant = lazy(() => import("./pages/Assistant.jsx"));
+const Community = lazy(() => import("./pages/Community.jsx"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile.jsx"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers.jsx"));
+const AdminHome = lazy(() => import("./pages/AdminHome.jsx"));
+const Journey = lazy(() => import("./pages/Journey.jsx"));
+const Foundation = lazy(() => import("./pages/Foundation.jsx"));
+const Stories = lazy(() => import("./pages/Stories.jsx"));
+const StoryBook = lazy(() => import("./pages/StoryBook.jsx"));
+const StoryReader = lazy(() => import("./pages/StoryReader.jsx"));
 
 // Onboarding is a one-time setup the server records
 // (user_profiles.onboarding_completed, carried on every auth//me `user`).
@@ -200,6 +207,7 @@ export default function App() {
     <AuthContext.Provider value={{ user, setCurrentUser, logout }}>
       <DashboardProvider>
       <ErrorBoundary resetKey={pathname}>
+      <Suspense fallback={<div className="boot"><BrandLogo className="brand-logo--boot" /></div>}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
@@ -630,6 +638,7 @@ export default function App() {
         <Route path="/cases/:scenarioId" element={<MovedTo base="/real-chinese/case" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
       </ErrorBoundary>
       </DashboardProvider>
     </AuthContext.Provider>
