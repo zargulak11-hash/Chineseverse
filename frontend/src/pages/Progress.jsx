@@ -140,7 +140,10 @@ export default function Progress() {
         <h2 className="h2">{t("pages.progress.activityMap")}</h2>
         <div className="activity-chips">
           <span className="chip"><Icon name="target" size={12} /> {t("pages.progress.actionsThisYear", { count: data.total_actions_past_year })}</span>
-          <span className="chip"><Icon name="flame" size={12} /> {t("pages.progress.currentStreakDays", { count: data.streak.current_streak })}</span>
+          {/* The Streak card above counts days the app was opened; this map
+              counts days with learning in them. Named for what it counts, so
+              "1 record" there and "0" here no longer read as a contradiction
+              (and the current streak isn't shown twice). */}
           <span className="chip"><Icon name="trophy" size={12} /> {t("pages.progress.bestStreakDays", { count: data.best_streak_past_year })}</span>
         </div>
         <ActivityHeatmap days={data.days} />
