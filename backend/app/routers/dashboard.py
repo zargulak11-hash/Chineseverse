@@ -12,7 +12,7 @@ from app.routers.missions import _localize_mission
 from app.routers.quests import _localize_quest
 from app.services import achievements as achievements_svc
 from app.services.avatars import photo_url
-from app.services.dna import compute_dna
+from app.services.dna import compute_dna, skill_status
 from app.services.gamification import (
     check_achievements,
     ensure_user_skills,
@@ -115,15 +115,14 @@ def dashboard(
                     name=skill_name(code),
                     mastery=value,
                     xp=next((s.xp for s in user.user_skills if s.skill and s.skill.code == code), 0),
-                    status="strong" if value >= 70 else ("developing" if value >= 40 else "weak"),
+                    status=skill_status(value),
                 )
                 for code, value in dna["skills"].items()
             ],
             # A skill nobody has practised yet is untested, not weak: a new learner
             # used to see all nine listed under "needs work" (the assistant
             # already applied this rule).
-            weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30]
-            if any(s.mastery > 0 for s in user.user_skills) else [],
+            weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and 0 < s.mastery <= 30],
             strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
         ),
         streak=schemas.StreakResponse(**streak_snapshot(user.streak)),

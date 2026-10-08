@@ -206,7 +206,10 @@
       "due_other": "{{count}} items due for review",
       "dueWhy": "Due now — this is when it sticks best.",
       "slipping_one": "Including {{count}} you knew that is slipping — catch it before it fades.",
-      "slipping_other": "Including {{count}} you knew that are slipping — catch them before they fade."
+      "slipping_other": "Including {{count}} you knew that are slipping — catch them before they fade.",
+      "recent": "Recent mistakes",
+      "onlyDue_one": "No mistakes to fix. {{count}} item is due for review — it's in today's plan.",
+      "onlyDue_other": "No mistakes to fix. {{count}} items are due for review — they're in today's plan."
     },
     "built": {
       "title": "What you've built",
@@ -270,8 +273,11 @@
       "status": {
         "weak": "weak",
         "developing": "developing",
-        "strong": "strong"
-      }
+        "strong": "strong",
+        "untested": "not started"
+      },
+      "untestedHint": "No practice yet — nothing to measure.",
+      "overallHint": "average mastery across the nine skills"
     },
     "roadmap": {
       "title": "HSK roadmap",
@@ -550,7 +556,8 @@
         "sound": "Tones & pronunciation",
         "grammar": "Grammar",
         "other": "Other"
-      }
+      },
+      "youChose": "you chose"
     },
     "progress": {
       "title": "Your progress",
@@ -1462,8 +1469,8 @@
       "mastered_recently_one": "This week you reviewed and mastered {{count}} word.",
       "mastered_recently_other": "This week you reviewed and mastered {{count}} words.",
       "difficult_chars": "These characters keep being tricky — {{name}} suggests a little extra practice.",
-      "confused_pair_one": "You've mixed up {{a}} and {{b}} {{count}} time — they look alike, so let's tell them apart in Review.",
-      "confused_pair_other": "You've mixed up {{a}} and {{b}} {{count}} times — they look alike, so let's tell them apart in Review.",
+      "confused_pair_one": "You've mixed up {{a}} and {{b}} {{count}} time — they look alike, so let's tell them apart in a short drill.",
+      "confused_pair_other": "You've mixed up {{a}} and {{b}} {{count}} times — they look alike, so let's tell them apart in a short drill.",
       "recent_mistakes_one": "{{count}} mistake came back this week. No rush — {{name}} will go through it with you.",
       "recent_mistakes_other": "{{count}} mistakes came back this week. No rush — {{name}} will go through them with you.",
       "improving_listening": "Your listening is improving: {{recent}}% correct this week, up from {{before}}%.",

@@ -13,6 +13,7 @@ import { Bar, Badge, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { achievementHow, achievementIcon, achievementTitle, progressText } from "../achievements.js";
+import { mistakeView } from "../mistakes.js";
 
 // Staggered entrance for the quest rows. Opts its container out of Layout's
 // page-level reveal via data-self-animate so the two don't stack.
@@ -74,7 +75,8 @@ export default function Dashboard() {
   const due = journey?.due_reviews ?? d.review_due ?? 0;
   const pairs = mix?.active || [];
   const mistakes = d.recent_mistakes.slice(0, 3);
-  const nothingToFix = due === 0 && pairs.length === 0 && mistakes.length === 0;
+  const slipping = journey?.slipping ?? 0;
+  const nothingToFix = slipping === 0 && pairs.length === 0 && mistakes.length === 0;
   const today = journey?.today;
   const placeSlug = d.next_location ? LOCATION_PLACE[d.next_location.slug] || "" : "";
 
@@ -99,47 +101,52 @@ export default function Dashboard() {
             <h2 className="h2" id="dash-fix">{t("dashboard.fix.title")}</h2>
             <Link to="/mistakes" className="btn small ghost">{t("nav.mistakes")}</Link>
           </div>
-          {nothingToFix && <p className="sub">{t("dashboard.fix.clear")}</p>}
-          <ul className="fix-list">
-            {due > 0 && (
-              <li>
-                <Link to="/review" className="fix-row">
-                  <Icon name="clock" size={16} />
-                  <span className="fix-text">
-                    <b>{t("dashboard.fix.due", { count: due })}</b>
-                    <span className="sub">
-                      {journey?.slipping > 0
-                        ? t("dashboard.fix.slipping", { count: journey.slipping })
-                        : t("dashboard.fix.dueWhy")}
-                    </span>
-                  </span>
-                  <Icon name="chevronRight" size={15} />
-                </Link>
-              </li>
-            )}
-            {pairs.length > 0 && (
-              <li>
-                <Link to="/practice?source=mixups" className="fix-row">
-                  <Icon name="crosshair" size={16} />
-                  <span className="fix-text">
-                    <b>{t("today.mixups", { count: pairs.length })}</b>
-                    <span className="fix-pairs" lang="zh-CN">
-                      {pairs.slice(0, 3).map((p) => (
-                        <span key={`${p.a.hanzi}-${p.b.hanzi}`}>{p.a.hanzi} ≠ {p.b.hanzi}</span>
-                      ))}
-                    </span>
-                  </span>
-                  <Icon name="chevronRight" size={15} />
-                </Link>
-              </li>
-            )}
-            {mistakes.map((m) => (
-              <li key={m.id} className="fix-mistake">
-                <span className="fix-text">{m.question_text || m.reference}</span>
-                <Badge tone="bad">×{m.occurrences}</Badge>
-              </li>
-            ))}
-          </ul>
+          {/* The plan above already says "review N items" and "drill the
+              pairs"; this card shows WHAT: the words fading, the pairs and
+              the latest mistakes, in Chinese. */}
+          {nothingToFix && (
+            <p className="sub">{due > 0 ? t("dashboard.fix.onlyDue", { count: due }) : t("dashboard.fix.clear")}</p>
+          )}
+          {slipping > 0 && (
+            <Link to="/review" className="fix-row">
+              <Icon name="clock" size={16} />
+              <span className="fix-text">
+                <b>{t("pages.vocabulary.slippingCount", { count: slipping })}</b>
+                <span className="sub">{t("dashboard.fix.dueWhy")}</span>
+              </span>
+              <Icon name="chevronRight" size={15} />
+            </Link>
+          )}
+          {pairs.length > 0 && (
+            <div className="fix-group">
+              <p className="side-title">{t("pages.mistakes.mixupsTitle")}</p>
+              <div className="fix-chips">
+                {pairs.slice(0, 4).map((p) => (
+                  <Link key={`${p.a.hanzi}-${p.b.hanzi}`} to="/mistakes" className="fix-chip" lang="zh-CN">
+                    {p.a.hanzi} <span aria-hidden="true">≠</span> {p.b.hanzi}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {mistakes.length > 0 && (
+            <div className="fix-group">
+              <p className="side-title">{t("dashboard.fix.recent")}</p>
+              <ul className="fix-list">
+                {mistakes.map((m) => {
+                  const v = mistakeView(m);
+                  return (
+                    <li key={m.id} className="fix-mistake">
+                      <span className="fix-text">
+                        {v.zh ? <><b lang="zh-CN">{v.zh}</b>{v.gloss && <span className="sub">{v.gloss}</span>}</> : v.text}
+                      </span>
+                      <Badge tone="bad">×{m.occurrences}</Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section className="card" aria-labelledby="dash-built">
@@ -240,7 +247,7 @@ export default function Dashboard() {
         <section className="card" aria-labelledby="dash-world">
           <h2 className="h2" id="dash-world">{t("dashboard.nextLocation")}</h2>
           {d.next_location ? (
-            <Link to={`/real-chinese?place=${placeSlug}`} className="btn primary" style={{ marginTop: 12 }}>
+            <Link to={`/real-chinese?place=${placeSlug}`} className="btn" style={{ marginTop: 12 }}>
               <Art name={placeArt(placeSlug || d.next_location.slug)} size={24} shape="round" flat />
               {d.next_location.name}
             </Link>

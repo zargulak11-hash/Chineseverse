@@ -6,6 +6,7 @@ import Layout from "../components/Layout.jsx";
 import NextStepBar from "../components/NextStep.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { mistakeView } from "../mistakes.js";
 import { speakChinese } from "../zhSpeech.js";
 
 // The mistake notebook (错题本). Two kinds of entries, both read from the
@@ -51,6 +52,34 @@ function Side({ s }) {
       {s.pinyin && <span className="sub">{s.pinyin}</span>}
       {s.meaning && <span className="mixup-meaning">{s.meaning}</span>}
     </button>
+  );
+}
+
+// One mistake: a word or character leads with its Chinese and gloss, then
+// what the learner chose instead; spoken and grammar slips keep their
+// prompt, what was said and the expected answer.
+function MistakeText({ m }) {
+  const { t } = useTranslation();
+  const v = mistakeView(m);
+  if (v.zh) {
+    return (
+      <div className="notebook-item-text">
+        <b className="notebook-zh" lang="zh-CN">{v.zh}</b>
+        <p className="sub">
+          {v.gloss}
+          {v.chose && <>{v.gloss && " · "}{t("pages.mistakes.youChose")}: <span lang="zh-CN">{v.chose}</span></>}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="notebook-item-text">
+      <b>{v.text}</b>
+      <p className="sub">
+        {v.said && <>{t("pages.mistakes.youSaid")}: <em>{v.said}</em> · </>}
+        {m.correct_answer && <>{t("pages.mistakes.correct")}: <b>{m.correct_answer}</b></>}
+      </p>
+    </div>
   );
 }
 
@@ -160,13 +189,7 @@ export default function Mistakes() {
             <div className="col">
               {list.map((m) => (
                 <div key={m.id} className="card notebook-item">
-                  <div className="notebook-item-text">
-                    <b>{m.question_text || m.reference}</b>
-                    <p className="sub">
-                      {m.answer_given && <>{t("pages.mistakes.youSaid")}: <em>{m.answer_given}</em> · </>}
-                      {m.correct_answer && <>{t("pages.mistakes.correct")}: <b>{m.correct_answer}</b></>}
-                    </p>
-                  </div>
+                  <MistakeText m={m} />
                   <div className="notebook-item-side">
                     <span className={`badge ${m.due_for_review ? "accent" : "bad"}`}>
                       {m.due_for_review ? t("pages.mistakes.dueNow") : `×${m.occurrences}`}
@@ -193,12 +216,15 @@ export default function Mistakes() {
         <section className="notebook-section">
           <p className="side-title notebook-label">{t("pages.mistakes.mastered")} ({done.length})</p>
           <ul className="notebook-resolved">
-            {done.map((m) => (
-              <li key={m.id}>
-                <Icon name="check" size={15} />
-                <span>{m.question_text || m.reference}</span>
-              </li>
-            ))}
+            {done.map((m) => {
+              const v = mistakeView(m);
+              return (
+                <li key={m.id}>
+                  <Icon name="check" size={15} />
+                  {v.zh ? <><b lang="zh-CN">{v.zh}</b>{v.gloss && <span>{v.gloss}</span>}</> : <span>{v.text}</span>}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

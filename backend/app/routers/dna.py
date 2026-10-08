@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user, get_locale
-from app.services.dna import compute_dna
+from app.services.dna import compute_dna, skill_status
 from app.services.gamification import ensure_user_skills, user_rank
 from app.services.localization import load_translations, tr
 
@@ -42,7 +42,7 @@ def my_dna(
                     (s.xp for s in user.user_skills if s.skill and s.skill.code == code),
                     0,
                 ),
-                status="strong" if value >= 70 else ("developing" if value >= 40 else "weak"),
+                status=skill_status(value),
             )
             for code, value in skills
         ],
@@ -50,9 +50,8 @@ def my_dna(
         # recomputed here off user_skills directly so the name can be
         # localized instead of taking compute_dna's already-English names.
         strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
-        # A skill nobody has practised yet is untested, not weak: a new learner
-        # used to see all nine listed under "needs work" (the assistant
-        # already applied this rule).
-        weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery <= 30]
-        if any(s.mastery > 0 for s in user.user_skills) else [],
+        # A skill not practised yet is untested, not weak -- per skill: once a
+        # learner practised one strand, the eight they hadn't touched were all
+        # listed as weak (this rule used to apply only while ALL were at 0).
+        weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and 0 < s.mastery <= 30],
     )

@@ -203,7 +203,9 @@
       "clear": "现在没有需要巩固的——复习和错题本都清空了。",
       "due_other": "{{count}}项待复习",
       "dueWhy": "现在正是复习的时候，最容易记牢。",
-      "slipping_other": "其中有{{count}}个学会的快忘了——趁还记得赶紧复习。"
+      "slipping_other": "其中有{{count}}个学会的快忘了——趁还记得赶紧复习。",
+      "recent": "最近的错题",
+      "onlyDue_other": "没有要巩固的错题。有{{count}}项待复习，已经在今天的计划里了。"
     },
     "built": {
       "title": "你的积累",
@@ -266,8 +268,11 @@
       "status": {
         "weak": "薄弱",
         "developing": "发展中",
-        "strong": "强"
-      }
+        "strong": "强",
+        "untested": "还没开始"
+      },
+      "untestedHint": "还没有练习，暂时无法衡量。",
+      "overallHint": "九项能力的平均掌握度"
     },
     "roadmap": {
       "title": "HSK 计划",
@@ -544,7 +549,8 @@
         "sound": "声调和发音",
         "grammar": "语法",
         "other": "其他"
-      }
+      },
+      "youChose": "你选了"
     },
     "progress": {
       "title": "你的进度",
@@ -1441,7 +1447,7 @@
       "mastered_hard": "你最近掌握了“{{word}}”——以前它总让你出错，现在它是你的了。",
       "mastered_recently_other": "这周你复习并掌握了{{count}}个词。",
       "difficult_chars": "这几个字还有点难——{{name}}建议再多练一练。",
-      "confused_pair_other": "你把“{{a}}”和“{{b}}”弄混了{{count}}次——它们很像，我们在复习里分清楚吧。",
+      "confused_pair_other": "你把“{{a}}”和“{{b}}”弄混了{{count}}次——它们很像，我们做个小练习分清楚吧。",
       "recent_mistakes_other": "这周有{{count}}个错误又出现了。别着急——{{name}}陪你一起复习。",
       "improving_listening": "你的听力在进步：这周正确率{{recent}}%，之前是{{before}}%。",
       "reviews_done_other": "这周你完成了{{count}}次复习——记忆越来越牢了。",

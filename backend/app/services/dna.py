@@ -37,6 +37,14 @@ def _util(user_skills) -> Dict[str, float]:
     return out
 
 
+def skill_status(mastery: float) -> str:
+    """A Learning Compass strand's state. "untested" until the learner has
+    practised it at all -- zero mastery means no evidence, not weakness."""
+    if mastery <= 0:
+        return "untested"
+    return "strong" if mastery >= 70 else ("developing" if mastery >= 40 else "weak")
+
+
 def compute_dna(user: models.User) -> dict:
     skills = _util(user.user_skills)
     attempts = list(user.voice_attempts)

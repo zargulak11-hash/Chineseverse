@@ -37,8 +37,10 @@ export default function DNA() {
       <FeatureIntro feature="dna" />
 
       <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
-        <div className="h1" style={{ fontSize: 42 }}>{dna.overall.toFixed(1)}</div>
-        <p className="sub">{t("pages.dna.overall")}</p>
+        {/* Mastery averaged over the nine strands, as the whole number the
+            bars use (it showed "0.7" -- a decimal nobody can read as progress). */}
+        <div className="dna-overall">{Math.round(dna.overall)}%</div>
+        <p className="sub">{t("pages.dna.overallHint")}</p>
         <div className="col" style={{ maxWidth: 520, margin: "0 auto" }}>
           <div className="hbar">
             <span className="badge warn">{t("pages.dna.weak")} · {dna.weak_areas.join(", ") || t("pages.dna.none")}</span>
@@ -65,16 +67,16 @@ export default function DNA() {
                   </span>
                   <div>
                     <b>{s.name}</b>
-                    <div className="muted" style={{ fontSize: 11.5 }}>
-                      {s.code} · {s.xp} {t("common.xp")}
+                    <div className="muted" style={{ fontSize: "var(--text-2xs)" }}>
+                      {s.xp} {t("common.xp")}
                     </div>
                   </div>
                 </div>
                 <BadgeTone s={s} />
               </div>
               <Bar value={s.mastery} alt={s.status === "weak"} />
-              <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
-                {s.mastery.toFixed(0)}% · {t(`pages.dna.status.${s.status}`)}
+              <div className="muted" style={{ fontSize: "var(--text-2xs)", marginTop: 6 }}>
+                {s.status === "untested" ? t("pages.dna.untestedHint") : `${s.mastery.toFixed(0)}% · ${t(`pages.dna.status.${s.status}`)}`}
               </div>
             </div>
           );
@@ -86,6 +88,6 @@ export default function DNA() {
 
 function BadgeTone({ s }) {
   const { t } = useTranslation();
-  const tone = s.status === "strong" ? "good" : s.status === "weak" ? "bad" : "accent";
-  return <span className={`badge ${tone}`}>{t(`pages.dna.status.${s.status}`)}</span>;
+  const tone = s.status === "strong" ? " good" : s.status === "weak" ? " bad" : s.status === "untested" ? "" : " accent";
+  return <span className={`badge${tone}`}>{t(`pages.dna.status.${s.status}`)}</span>;
 }

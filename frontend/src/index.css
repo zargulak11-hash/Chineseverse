@@ -4107,6 +4107,27 @@ table.data td {
 .fix-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
 .fix-text .sub { font-size: var(--text-xs); }
 .fix-pairs { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); color: var(--text-dim); font-size: var(--text-sm); }
+.fix-group { margin-top: var(--space-4); }
+.fix-group:first-of-type { margin-top: var(--space-2); }
+.fix-group .side-title { margin: 0 0 var(--space-2); }
+.fix-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.fix-chip {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--text-base);
+  text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.fix-chip:hover { border-color: var(--border-strong); }
+.fix-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fix-chip span { color: var(--text-faint); }
+.fix-mistake .fix-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
+.fix-mistake .fix-text b { color: var(--text); font-size: var(--text-base); }
+.dna-overall { font-size: var(--text-2xl); font-weight: 800; line-height: 1.1; }
+.notebook-zh { font-size: var(--text-lg); }
 .fix-mistake {
   display: flex;
   align-items: center;
