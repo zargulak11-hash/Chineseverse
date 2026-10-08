@@ -182,8 +182,10 @@
   /* ---- Type: Manrope for Latin/Cyrillic UI text, Noto Sans SC carries
      Chinese characters in the same clean sans-serif register — no serif
      anywhere in the application. ---- */
-  --font-ui: "Manrope", "Noto Sans SC", sans-serif;
-  --font-display: "Manrope", "Noto Sans SC", sans-serif;
+  --font-ui: "Manrope", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --font-display: "Manrope", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --text-2xs: 11.5px;
   --text-xs: 13px;
   --text-sm: 14.5px;
@@ -4127,6 +4129,11 @@ table.data td {
 .fix-mistake .fix-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: var(--space-2); }
 .fix-mistake .fix-text b { color: var(--text); font-size: var(--text-base); }
 .dna-overall { font-size: var(--text-2xl); font-weight: 800; line-height: 1.1; }
+/* Assistant on a phone: the chat is the page -- its summary tiles (also in
+   the side panel) would push the message box below the first screen. */
+@media (max-width: 640px) {
+  .assistant-head .kpi-row { display: none; }
+}
 /* Grammar index (pages/Grammar.jsx): the points grouped by syllabus category. */
 .grammar-jump { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 .grammar-group { margin-top: var(--space-5); scroll-margin-top: 88px; }
@@ -4137,6 +4144,7 @@ table.data td {
 @media (max-width: 640px) {
   .grammar-jump { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--space-2); scrollbar-width: thin; }
   .grammar-jump .btn { flex-shrink: 0; }
+}
 .notebook-zh { font-size: var(--text-lg); }
 .fix-mistake {
   display: flex;

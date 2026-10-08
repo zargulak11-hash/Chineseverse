@@ -284,7 +284,7 @@ export default function Assistant() {
 
   return (
     <Layout>
-      <header className="page-head">
+      <header className="page-head assistant-head">
         <div>
           <div className="page-eyebrow">
             <Icon name="chat" size={13} /> {animal?.name || t("nav.assistant")}

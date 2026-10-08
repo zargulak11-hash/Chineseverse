@@ -19,10 +19,23 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- The web fonts must never hold the page back: a render-blocking
+         stylesheet kept the whole app blank wherever fonts.googleapis.com is
+         slow or unreachable (it is blocked in mainland China). Loaded as
+         "print" and switched on when it arrives, so the app paints at once in
+         the system fallback (--font-ui) and swaps the fonts in. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+      />
+    </noscript>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
       // Set the theme before first paint so switching themes doesn't flash
