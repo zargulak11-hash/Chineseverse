@@ -2297,13 +2297,20 @@
       "lesson": "继续学习课程：{{title}}",
       "review": "复习 {{count}} 个待复习的词",
       "exam": "参加 HSK {{level}} 考试",
-      "stories": "读一个适合你水平的故事"
+      "stories": "读一个适合你水平的故事",
+      "mixups": "分清“{{a}}”和“{{b}}”",
+      "continue": "继续读《{{title}}》第{{chapter}}章",
+      "skill": "练习{{skill}}"
     },
     "nextWhy": {
       "lesson": "课程是你 HSK 之路的主干：新词、语法和一轮简短练习。",
       "review": "单词会在你快要忘记时回来——现在花几分钟，以后省下好几个小时。",
       "exam": "你已经学完这一级的课程。通过考试就能开启下一级。",
-      "stories": "读真实的故事，能把认识的词变成真正的理解。"
+      "stories": "读真实的故事，能把认识的词变成真正的理解。",
+      "mixups_other": "你已经{{count}}次把它们选错了。把两个词放在一起做个小练习，就能分清。",
+      "continue": "你正在读这本书——书签就在你上次停下的地方。",
+      "skill": "这是你目前最弱的能力（{{mastery}}%），而前面的课程已经学完了。",
+      "reviewSlipping_other": "有{{count}}个学会的词快忘了——现在复习就能记住。"
     },
     "foundationTitle": "入门：你的第一步",
     "foundationSub": "按最容易掌握的顺序学习中文基础。每一步在你真正完成时就算完成。",
@@ -3029,6 +3036,7 @@
     "doneToday": "今天已完成",
     "summary": "今天：练习 {{rounds}} 轮 · 练习词语 {{words}} 个 · {{minutes}}/{{goal}} 分钟",
     "mixups_other": "分清你常弄混的{{count}}对词",
-    "mixupsWhy": "你不止一次把它们选错了——放在一起比较，就能分清。"
+    "mixupsWhy": "你不止一次把它们选错了——放在一起比较，就能分清。",
+    "readBook": "继续读《{{title}}》"
   }
 }

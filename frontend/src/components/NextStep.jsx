@@ -14,12 +14,22 @@ export function nextTitle(t, next) {
   if (next.kind === "lesson") return t("journey.next.lesson", { title: next.title });
   if (next.kind === "review") return t("journey.next.review", { count: next.count });
   if (next.kind === "exam") return t("journey.next.exam", { level: next.level });
+  if (next.kind === "mixups") return t("journey.next.mixups", { a: next.a, b: next.b });
+  if (next.kind === "continue") return t("journey.next.continue", { title: next.title, chapter: next.chapter });
+  if (next.kind === "skill") return t("journey.next.skill", { skill: t(`companionReact.skill.${next.skill}`, { defaultValue: next.skill }) });
   return t("journey.next.stories");
 }
 
+// Why this step, in the learner's own numbers (services/journey.py sends
+// them with the step): the pair they keep confusing, how many known words
+// are fading, how weak the skill is -- never a generic line when there is
+// a real reason.
 export function nextWhy(t, next) {
   if (!next) return "";
   if (next.kind === "foundation") return t(`journey.step.${next.key}.what`);
+  if (next.kind === "review" && next.slipping > 0) return t("journey.nextWhy.reviewSlipping", { count: next.slipping });
+  if (next.kind === "mixups") return t("journey.nextWhy.mixups", { count: next.count });
+  if (next.kind === "skill") return t("journey.nextWhy.skill", { mastery: next.mastery });
   return t(`journey.nextWhy.${next.kind}`);
 }
 
@@ -74,7 +84,7 @@ export function TodayPlan({ today, next, skills = {} }) {
     if (task.key === "learn") return nextTitle(t, task.next || next);
     if (task.key === "weak") return t("today.weak", { skill: skills[task.skill] || task.skill });
     if (task.key === "mixups") return t("today.mixups", { count: task.count });
-    return t("today.read");
+    return task.book ? t("today.readBook", { title: task.book }) : t("today.read");
   };
   const why = (task) => {
     if (task.key === "review") return t("today.reviewWhy");

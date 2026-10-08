@@ -29,6 +29,10 @@ from app import models
 
 PASS = 60.0  # a foundation round counts at this score (percent)
 REVIEW_FIRST_AT = 8  # due reviews that take priority over new material
+SLIPPING_FIRST_AT = 3  # ... or this many words/characters they KNEW fading (srs.is_slipping)
+MIXUP_FIRST_AT = 3  # a pair confused this often comes before new material (services/mixups.py)
+FRESH_READING_DAYS = 2  # a book opened this recently is "continue reading" before the next lesson
+WEAK_SKILL_BELOW = 50.0  # a practised Learning Compass skill this low is worth a step of its own
 
 # key -> (practice source or special evidence, route). Order = the path.
 FOUNDATION = (
@@ -140,10 +144,36 @@ SKILL_PRACTICE = {
 # The practice source that does each kind of "next step".
 NEXT_SOURCE = {"tones": "tones", "characters": "hanzi", "first_lesson": "lesson", "sentence": "sentence",
                "listen": "sound", "speak": "voice", "story": "story", "review": "review",
-               "lesson": "lesson", "stories": "story", "exam": "exam", "mixups": "mixups"}
+               "lesson": "lesson", "stories": "story", "exam": "exam", "mixups": "mixups",
+               "continue": "story", "skill": ""}
 
 
-def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool) -> dict:
+def _reading(db: Session, user: models.User, level: int, locale: str) -> dict | None:
+    """The book the learner is in the middle of (their last-touched
+    unfinished StoryProgress whose book is open at their level), with where
+    the bookmark is. None when they are not reading anything."""
+    from datetime import datetime
+
+    from app.services import books as books_lib
+    from app.services import stories as stories_svc
+
+    by_slug = {b["slug"]: b for b in books_lib.all_books()}
+    rows = (db.query(models.StoryProgress)
+            .filter(models.StoryProgress.user_id == user.id, models.StoryProgress.completed_at.is_(None))
+            .order_by(models.StoryProgress.updated_at.desc()).limit(5).all())
+    for row in rows:
+        book = by_slug.get(row.slug)
+        if book is None or stories_svc.gate(book) > level:
+            continue
+        title = book["title"].get(locale) or book["title"]["en"]
+        return {"slug": row.slug, "chapter": row.chapter + 1, "title": title, "title_zh": book["title"]["zh"],
+                "to": f"/stories/{row.slug}/read/{row.chapter + 1}",
+                "days": (datetime.utcnow() - row.updated_at).days}
+    return None
+
+
+def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool,
+          mixed: list[dict] | None = None, reading: dict | None = None) -> dict:
     """Today's plan: at most four real tasks, each with why it is suggested,
     ticked off only by what the learner really did today (UTC day, the same
     day the dashboard's minutes use). A brand-new learner gets the one next
@@ -179,10 +209,9 @@ def today(db: Session, user: models.User, level: int, nxt: dict, due: int, found
                       "done": NEXT_SOURCE.get(nxt.get("key"), "") in did})
     # Words or characters the learner keeps taking for each other: a short
     # drill of exactly those pairs (services/mixups.py) beats a generic one.
-    from app.services import mixups
-
-    mixed = mixups.active_pairs(db, user)
-    if mixed or "mixups" in did:
+    # (Not twice when the drill already IS the next step.)
+    mixed = mixed or []
+    if (mixed or "mixups" in did) and nxt.get("kind") != "mixups":
         tasks.append({"key": "mixups", "to": "/practice?source=mixups", "count": len(mixed),
                       "done": "mixups" in did})
     practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
@@ -192,8 +221,10 @@ def today(db: Session, user: models.User, level: int, nxt: dict, due: int, found
         if not any(t["to"] == route.format(level=level) for t in tasks):
             tasks.append({"key": "weak", "skill": weakest.skill.code, "mastery": round(weakest.mastery),
                           "to": route.format(level=level), "done": source in did})
-    if foundation_complete and not any(t["to"] == "/stories" for t in tasks):
-        tasks.append({"key": "read", "to": "/stories", "done": "story" in did})
+    if foundation_complete and not any(t["to"].startswith("/stories") for t in tasks):
+        # Back into the book they are reading, when there is one.
+        tasks.append({"key": "read", "to": reading["to"] if reading else "/stories", "done": "story" in did,
+                      "book": reading["title"] if reading else None})
     tasks = tasks[:4]
 
     minutes = (db.query(func.coalesce(func.sum(models.ActivityEvent.minutes), 0.0))
@@ -242,12 +273,28 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     counts = practice.review_counts(db, user)
     due = counts["total"] + counts["mistakes"]
     slipping = _slipping_count(db, user)
+    from app.services import mixups
+
+    mixed = [p for p in mixups.pairs(db, user, locale) if p["status"] == "active"]
+    reading = _reading(db, user, level, locale)
+    practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
+    weakest = min(practised, key=lambda s: s.mastery) if practised else None
+
+    # Each step carries the learner's own numbers that justify it, so the
+    # page can say WHY (the pair they keep confusing, how many words are
+    # fading), never a generic line.
     if current is not None:
         nxt = {"kind": "foundation", "key": current, "to": next(s["to"] for s in steps if s["key"] == current)}
-    elif due >= REVIEW_FIRST_AT:
-        nxt = {"kind": "review", "key": "review", "to": "/review", "count": due}
+    elif due >= REVIEW_FIRST_AT or slipping >= SLIPPING_FIRST_AT:
+        nxt = {"kind": "review", "key": "review", "to": "/review", "count": due, "slipping": slipping}
+    elif mixed and mixed[0]["confused"] >= MIXUP_FIRST_AT:
+        top = mixed[0]
+        nxt = {"kind": "mixups", "key": "mixups", "to": "/practice?source=mixups",
+               "a": top["a"]["hanzi"], "b": top["b"]["hanzi"], "count": top["confused"], "pairs": len(mixed)}
     elif state.exam_level is not None:
         nxt = {"kind": "exam", "key": "exam", "to": f"/exam/{state.exam_level}", "level": state.exam_level}
+    elif reading is not None and reading["days"] < FRESH_READING_DAYS:
+        nxt = {"kind": "continue", "key": "continue", **reading}
     elif state.current is not None:
         from app.services.localization import load_translations, tr
 
@@ -256,6 +303,11 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         title = tr(load_translations(db, "lesson", [str(cur.id)], locale), cur.id, "title", cur.title)
         nxt = {"kind": "lesson", "key": "lesson", "to": f"/lessons/{cur.id}",
                "lesson_id": cur.id, "title": title, "level": state.current.level}
+    elif reading is not None:
+        nxt = {"kind": "continue", "key": "continue", **reading}
+    elif weakest is not None and weakest.mastery < WEAK_SKILL_BELOW and weakest.skill.code in SKILL_PRACTICE:
+        nxt = {"kind": "skill", "key": "skill", "skill": weakest.skill.code, "mastery": round(weakest.mastery),
+               "to": SKILL_PRACTICE[weakest.skill.code][0].format(level=level)}
     else:
         nxt = {"kind": "stories", "key": "stories", "to": "/stories"}
 
@@ -287,5 +339,5 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         "level": level, "stage": "foundation" if (not foundation["complete"] and not past) else STAGE_OF[level],
         "foundation": foundation, "next": nxt, "levels": levels, "features": features,
         "due_reviews": due, "slipping": slipping, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
-        "today": today(db, user, level, nxt, due, foundation["complete"] or past),
+        "today": today(db, user, level, nxt, due, foundation["complete"] or past, mixed, reading),
     }

@@ -2349,13 +2349,22 @@
       "lesson": "Continue your lesson: {{title}}",
       "review": "Review {{count}} words that are waiting",
       "exam": "Take the HSK {{level}} exam",
-      "stories": "Read a story at your level"
+      "stories": "Read a story at your level",
+      "mixups": "Tell {{a}} and {{b}} apart",
+      "continue": "Continue “{{title}}” — chapter {{chapter}}",
+      "skill": "Practise {{skill}}"
     },
     "nextWhy": {
       "lesson": "Lessons are the backbone of your HSK path: new words, grammar and a short practice round.",
       "review": "Words come back just before you'd forget them — a few minutes now saves hours later.",
       "exam": "You finished this level's lessons. The exam opens the next level.",
-      "stories": "Reading real stories turns the words you know into understanding."
+      "stories": "Reading real stories turns the words you know into understanding.",
+      "mixups_one": "You chose one for the other {{count}} time. A short drill with both side by side fixes it.",
+      "mixups_other": "You chose one for the other {{count}} times. A short drill with both side by side fixes it.",
+      "continue": "You were reading this — your bookmark is waiting where you stopped.",
+      "skill": "It is your weakest skill right now ({{mastery}}%), and the lessons ahead are done.",
+      "reviewSlipping_one": "{{count}} word you knew is slipping — reviewing it now keeps it.",
+      "reviewSlipping_other": "{{count}} words you knew are slipping — reviewing them now keeps them."
     },
     "foundationTitle": "Foundation: your first steps",
     "foundationSub": "The basics of Chinese, in the order that makes them easy. Each step opens the moment you really do it.",
@@ -3103,6 +3112,7 @@
     "summary": "Today so far: {{rounds}} practice rounds · {{words}} words practised · {{minutes}} of {{goal}} minutes",
     "mixups_one": "Tell apart the pair you keep mixing up",
     "mixups_other": "Tell apart the {{count}} pairs you keep mixing up",
-    "mixupsWhy": "You chose one for the other more than once — seeing them side by side is how they come apart."
+    "mixupsWhy": "You chose one for the other more than once — seeing them side by side is how they come apart.",
+    "readBook": "Keep reading “{{title}}”"
   }
 }
