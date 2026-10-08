@@ -45,7 +45,8 @@
   --border-strong: #c7b381;
   --text: #251d10;
   --text-dim: #6b5f42;
-  --text-faint: #94875f;
+  /* 2.8:1 on --surface-2 at #94875f, too faint even for labels. */
+  --text-faint: #857852;
   --glass-bg: rgba(250, 245, 231, 0.72);
   --shadow-sm: 0 2px 8px rgba(90, 66, 20, 0.1);
   --shadow-md: 0 14px 30px rgba(90, 66, 20, 0.16);
@@ -157,7 +158,12 @@
   --accent: #c9974a;
   --accent-strong: #e8c373;
   --accent-soft: #a97c3a;
-  --accent-gradient: linear-gradient(135deg, var(--accent-soft) 0%, var(--accent-strong) 55%, var(--accent) 100%);
+  /* The same gold as a FILL under dark --on-accent text (primary buttons,
+     tags, the gradient). Kept apart from --accent/--accent-strong because
+     those are also text colours, which Paper darkens to stay readable. */
+  --accent-fill: #c9974a;
+  --accent-fill-strong: #e8c373;
+  --accent-gradient: linear-gradient(135deg, var(--accent-soft) 0%, var(--accent-fill-strong) 55%, var(--accent-fill) 100%);
   --accent-dim: rgba(201, 151, 74, 0.15);
   --accent-border: rgba(201, 151, 74, 0.45);
   --on-accent: #1c1409;
@@ -224,6 +230,17 @@
   --dur-fast: 0.12s;
   --dur-base: 0.22s;
   --dur-slow: 0.42s;
+}
+
+/* Paper: the accent as TEXT (eyebrows, badges, labels, the active nav
+   item, key numbers) was the Ink gold on parchment -- 1.5:1 for
+   --accent-strong, 2.4:1 for --accent, close to invisible. Paper gets a
+   deeper brass for both; fills keep their gold through --accent-fill*. */
+[data-theme="paper"] {
+  --accent: #9a6e26;
+  --accent-strong: #84601f;
+  /* Jade "correct / strong" text was 3.0:1 on parchment. */
+  --good: #3b7f5c;
 }
 
 /* Smooth, deliberate theme swap instead of a hard cut — everything that
@@ -777,14 +794,14 @@ a.navlink.active::after {
 }
 
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--on-accent);
 }
 
 .btn.primary:hover {
-  background: var(--accent-strong);
-  border-color: var(--accent-strong);
+  background: var(--accent-fill-strong);
+  border-color: var(--accent-fill-strong);
   box-shadow: 0 8px 24px -6px rgba(234, 178, 68, 0.45);
 }
 
@@ -1276,7 +1293,7 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
   right: 10px;
   font-size: 9.5px;
   letter-spacing: 0.12em;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   border-radius: var(--radius-full);
   padding: 3px 8px;
@@ -5270,7 +5287,7 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 .story-item.is-exam_passed .story-icon,
 .story-item.is-cases_solved .story-icon,
 .story-item.is-sound_stage .story-icon,
-.story-item.is-scene_done .story-icon { background: var(--accent); color: var(--on-accent); }
+.story-item.is-scene_done .story-icon { background: var(--accent-fill); color: var(--on-accent); }
 .story-item.is-words_mastered .story-icon,
 .story-item.is-chars_mastered .story-icon,
 .story-item.is-mistake_conquered .story-icon { border-color: var(--good); color: var(--good); }
