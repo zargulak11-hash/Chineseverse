@@ -43,3 +43,21 @@ def apply_srs(rec, correct: bool, user: models.User, delta: float = 10.0, counte
     else:
         rec.status = "learning"
     rec.last_reviewed_at = now
+
+
+# A word or character the learner already knew (reviewing or mastered) whose
+# scheduled review is this late is "slipping": the schedule chose that day
+# because recall was expected to fade around then. It is not a new status --
+# nothing is downgraded or reset -- only a reading of the stored schedule, so
+# the learner sees what they are losing before it is lost.
+SLIP_AFTER = timedelta(days=3)
+
+
+def is_slipping(rec, now: datetime | None = None) -> bool:
+    now = now or datetime.utcnow()
+    return bool(
+        rec is not None
+        and rec.status in ("reviewing", "mastered")
+        and rec.next_review_at is not None
+        and now - rec.next_review_at >= SLIP_AFTER
+    )

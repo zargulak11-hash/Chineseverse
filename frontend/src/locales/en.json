@@ -204,7 +204,9 @@
       "clear": "Nothing to fix right now — your reviews and mistake notebook are clear.",
       "due_one": "{{count}} item due for review",
       "due_other": "{{count}} items due for review",
-      "dueWhy": "Due now — this is when it sticks best."
+      "dueWhy": "Due now — this is when it sticks best.",
+      "slipping_one": "Including {{count}} you knew that is slipping — catch it before it fades.",
+      "slipping_other": "Including {{count}} you knew that are slipping — catch them before they fade."
     },
     "built": {
       "title": "What you've built",
@@ -252,7 +254,10 @@
       "dueForReview": "{{count}} word(s) due for review — surfaced first below.",
       "due": "due",
       "empty": "No words at this level yet.",
-      "tapToHear": "Tap a card to hear it."
+      "tapToHear": "Tap a card to hear it.",
+      "slipping": "slipping",
+      "slippingCount_one": "{{count}} word you knew is slipping",
+      "slippingCount_other": "{{count}} words you knew are slipping"
     },
     "dna": {
       "title": "Your Learning Compass",

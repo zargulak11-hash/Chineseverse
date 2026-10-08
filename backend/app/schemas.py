@@ -393,6 +393,9 @@ class WordWithStatus(WordResponse):
     status: Optional[str] = None
     mastery: Optional[float] = None
     due_for_review: bool = False
+    # Known (reviewing/mastered) but well past its review date
+    # (services/srs.is_slipping) -- read from the schedule, never stored.
+    slipping: bool = False
 
 
 class GrammarTopicResponse(BaseModel):

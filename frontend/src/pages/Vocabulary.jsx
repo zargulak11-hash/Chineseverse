@@ -59,6 +59,9 @@ export default function Vocabulary() {
       {words.some((w) => w.due_for_review) && (
         <p className="sub" style={{ marginTop: 14 }}>
           <Icon name="clock" size={13} style={{ verticalAlign: -2 }} /> {t("pages.vocabulary.dueForReview", { count: words.filter((w) => w.due_for_review).length })}
+          {words.some((w) => w.slipping) && (
+            <> · {t("pages.vocabulary.slippingCount", { count: words.filter((w) => w.slipping).length })}</>
+          )}
         </p>
       )}
 
@@ -66,14 +69,16 @@ export default function Vocabulary() {
         {words.map((w) => (
           <button
             key={w.id}
-            className="card hover animal"
-            style={{ border: w.due_for_review ? "1px solid var(--accent)" : 0, textAlign: "center", position: "relative" }}
+            className={`card hover animal${w.due_for_review ? " is-due" : ""}`}
+            style={{ textAlign: "center", position: "relative" }}
             onClick={() => hear(w)}
             aria-pressed={playing === w.id}
           >
+            {/* A word they knew, well past its review date, says so: it is
+                fading (services/srs.is_slipping), not merely due. */}
             {w.due_for_review && (
-              <span className="badge accent" style={{ position: "absolute", top: 8, right: 8, fontSize: 10 }}>
-                {t("pages.vocabulary.due")}
+              <span className={`badge ${w.slipping ? "bad" : "accent"} word-due-badge`}>
+                {t(w.slipping ? "pages.vocabulary.slipping" : "pages.vocabulary.due")}
               </span>
             )}
             <div style={{ fontSize: 24, fontWeight: 800 }}>{w.simplified}</div>

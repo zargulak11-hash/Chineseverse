@@ -202,7 +202,8 @@
       "title": "需要巩固",
       "clear": "现在没有需要巩固的——复习和错题本都清空了。",
       "due_other": "{{count}}项待复习",
-      "dueWhy": "现在正是复习的时候，最容易记牢。"
+      "dueWhy": "现在正是复习的时候，最容易记牢。",
+      "slipping_other": "其中有{{count}}个学会的快忘了——趁还记得赶紧复习。"
     },
     "built": {
       "title": "你的积累",
@@ -250,7 +251,9 @@
       "dueForReview": "{{count}}个词语待复习——已置顶显示。",
       "due": "待复习",
       "empty": "该级别暂无词语。",
-      "tapToHear": "点一下卡片就能听发音。"
+      "tapToHear": "点一下卡片就能听发音。",
+      "slipping": "快忘了",
+      "slippingCount_other": "{{count}}个学会的词快忘了"
     },
     "dna": {
       "title": "你的学习指南针",

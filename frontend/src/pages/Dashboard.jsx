@@ -106,7 +106,11 @@ export default function Dashboard() {
                   <Icon name="clock" size={16} />
                   <span className="fix-text">
                     <b>{t("dashboard.fix.due", { count: due })}</b>
-                    <span className="sub">{t("dashboard.fix.dueWhy")}</span>
+                    <span className="sub">
+                      {journey?.slipping > 0
+                        ? t("dashboard.fix.slipping", { count: journey.slipping })
+                        : t("dashboard.fix.dueWhy")}
+                    </span>
                   </span>
                   <Icon name="chevronRight" size={15} />
                 </Link>

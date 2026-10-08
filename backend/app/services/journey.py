@@ -85,6 +85,23 @@ def evidence(db: Session, user: models.User) -> dict:
             "books": books}
 
 
+def _slipping_count(db: Session, user: models.User) -> int:
+    """Words and characters the learner knew that are slipping
+    (services/srs.is_slipping): known, and SLIP_AFTER past their review."""
+    from datetime import datetime
+
+    from app.services.srs import SLIP_AFTER
+
+    cut = datetime.utcnow() - SLIP_AFTER
+    total = 0
+    for rec_model in (models.UserVocabulary, models.UserHanzi):
+        total += (db.query(rec_model.id)
+                  .filter(rec_model.user_id == user.id, rec_model.status.in_(("reviewing", "mastered")),
+                          rec_model.next_review_at.isnot(None), rec_model.next_review_at <= cut)
+                  .count())
+    return total
+
+
 def _step_done(key: str, ev: dict) -> bool:
     best = ev["best"]
     if key == "tones":
@@ -224,6 +241,7 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     # review jumped ahead of new lessons at half the intended backlog.
     counts = practice.review_counts(db, user)
     due = counts["total"] + counts["mistakes"]
+    slipping = _slipping_count(db, user)
     if current is not None:
         nxt = {"kind": "foundation", "key": current, "to": next(s["to"] for s in steps if s["key"] == current)}
     elif due >= REVIEW_FIRST_AT:
@@ -268,6 +286,6 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     return {
         "level": level, "stage": "foundation" if (not foundation["complete"] and not past) else STAGE_OF[level],
         "foundation": foundation, "next": nxt, "levels": levels, "features": features,
-        "due_reviews": due, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
+        "due_reviews": due, "slipping": slipping, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
         "today": today(db, user, level, nxt, due, foundation["complete"] or past),
     }
