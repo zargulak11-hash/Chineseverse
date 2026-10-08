@@ -134,9 +134,15 @@
     "featDuelsDesc": "Challenge another learner 1-vs-1: the same questions, the same time, the result decided by the server.",
     "featCompanionsTitle": "20 Companions",
     "featCompanionsDesc": "From Zen capybaras to wise owls — each one teaches with a different style and voice.",
-    "showcase": "Sixteen companions, one art style",
+    "showcase": "Twenty companions, one art style",
     "meetCompanion": "Meet your companion",
-    "hskDisclaimer": "No affiliation with the official HSK exam — ChineseVerse only estimates your preparation readiness."
+    "hskDisclaimer": "No affiliation with the official HSK exam — ChineseVerse only estimates your preparation readiness.",
+    "featPathTitle": "One clear next step",
+    "featPathDesc": "HSK 1 to 9 as one path. Every day ChineseVerse says what to learn, what to review and why — worked out from your own answers.",
+    "featNotebookTitle": "Mistakes that teach",
+    "featNotebookDesc": "Every slip is remembered. Words you mix up come back side by side until you can tell them apart.",
+    "featStoriesTitle": "Real Chinese books",
+    "featStoriesDesc": "Graded stories for every HSK level, written in Chinese. Tap a word or select a sentence whenever you need help."
   },
   "auth": {
     "continueGithub": "Continue with GitHub",

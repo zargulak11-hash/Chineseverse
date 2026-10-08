@@ -133,9 +133,15 @@
     "featDuelsDesc": "一对一挑战其他学习者：同样的题目、同样的时间，结果由服务器判定。",
     "featCompanionsTitle": "20个伙伴",
     "featCompanionsDesc": "从禅意水豚到睿智猫头鹰 — 每一个都有自己独特的教学风格和声音。",
-    "showcase": "十六个伙伴，同一种画风",
+    "showcase": "二十个伙伴，同一种画风",
     "meetCompanion": "认识你的伙伴",
-    "hskDisclaimer": "与官方HSK考试无关联 — ChineseVerse 仅对你的备考程度进行估算。"
+    "hskDisclaimer": "与官方HSK考试无关联 — ChineseVerse 仅对你的备考程度进行估算。",
+    "featPathTitle": "每天一个清楚的下一步",
+    "featPathDesc": "HSK 1–9 是一条完整的路。ChineseVerse 每天根据你自己的答题情况，告诉你学什么、复习什么、为什么。",
+    "featNotebookTitle": "会教你的错题本",
+    "featNotebookDesc": "每个错误都会被记住。你弄混的词会并排回来，直到你分清为止。",
+    "featStoriesTitle": "真正的中文分级读物",
+    "featStoriesDesc": "每个 HSK 级别都有用中文写成的分级故事。需要帮助时，点一个词或选一个句子就行。"
   },
   "auth": {
     "continueGithub": "使用 GitHub 继续",

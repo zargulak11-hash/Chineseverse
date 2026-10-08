@@ -3157,6 +3157,10 @@ table.data td {
   }
 }
 
+@media (max-width: 480px) {
+  .appbar-cta { display: none; }
+}
+
 .scrollhint {
   font-size: var(--text-2xs);
   color: var(--text-faint);

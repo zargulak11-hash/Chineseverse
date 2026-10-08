@@ -14,12 +14,16 @@ import { useTheme } from "../theme.jsx";
 // Voice (2); DNA/Cases/Duels form one even row of three (2 each);
 // Companions has no span class, so it defaults to the full 6 — a
 // banner leading straight into the animal showcase below it.
+// The learning loop leads (the path with one next step, the mistakes that
+// come back, real books), then the city, voice and companions that make it
+// ChineseVerse. Detective cases and duels are still in the app; they were
+// pitched here as if they were the product.
 const FEATURES = [
-  ["world", "featWorldTitle", "featWorldDesc", "#4FC3F7", "feat-span-4"],
+  ["route", "featPathTitle", "featPathDesc", "#E9B44C", "feat-span-4"],
+  ["crosshair", "featNotebookTitle", "featNotebookDesc", "#FF7A45", "feat-span-2"],
+  ["bookOpen", "featStoriesTitle", "featStoriesDesc", "#4CC26B", "feat-span-2"],
+  ["world", "featWorldTitle", "featWorldDesc", "#4FC3F7", "feat-span-2"],
   ["mic", "featVoiceTitle", "featVoiceDesc", "#C58AF2", "feat-span-2"],
-  ["dna", "featDnaTitle", "featDnaDesc", "#4CC26B", "feat-span-2"],
-  ["search", "featCasesTitle", "featCasesDesc", "#FF7A45", "feat-span-2"],
-  ["swords", "featDuelsTitle", "featDuelsDesc", "#FF8A3D", "feat-span-2"],
   ["paw", "featCompanionsTitle", "featCompanionsDesc", "#FFC24B", ""],
 ];
 
@@ -56,7 +60,9 @@ export default function Landing() {
               <Link to="/login">
                 <button className="btn ghost">{t("landing.logIn")}</button>
               </Link>
-              <Link to="/register">
+              {/* On a small phone the hero's own "Create account" is the call
+                  to action; this one wrapped onto a row of its own. */}
+              <Link to="/register" className="appbar-cta">
                 <button className="btn primary">{t("landing.startFree")}</button>
               </Link>
             </>
