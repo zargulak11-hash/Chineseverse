@@ -60,7 +60,12 @@
     "toLanding": "ChineseVerse — main page",
     "journey": "Your journey",
     "stories": "Stories",
-    "mistakes": "Mistake notebook"
+    "mistakes": "Mistake notebook",
+    "groupToday": "Today",
+    "groupLearn": "Learn",
+    "groupUse": "Use Chinese",
+    "groupYou": "You",
+    "groupPlay": "Play & extras"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -193,7 +198,23 @@
     "viewAllMissions": "View all missions",
     "needsWork": "Needs work",
     "reviewMistakes": "Review mistakes",
-    "noQuestsToday": "No quests today — go explore."
+    "noQuestsToday": "No quests today — go explore.",
+    "fix": {
+      "title": "To fix",
+      "clear": "Nothing to fix right now — your reviews and mistake notebook are clear.",
+      "due_one": "{{count}} item due for review",
+      "due_other": "{{count}} items due for review",
+      "dueWhy": "Due now — this is when it sticks best."
+    },
+    "built": {
+      "title": "What you've built",
+      "level": "your level",
+      "words": "words you can recall",
+      "lessons": "lessons completed",
+      "streak": "days in a row",
+      "today": "Today",
+      "minutes": "{{minutes}} of {{goal}} min"
+    }
   },
   "pages": {
     "lessons": {

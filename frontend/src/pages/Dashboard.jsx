@@ -1,24 +1,21 @@
 import { animate, stagger } from "animejs";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Art, { placeArt } from "../components/Art.jsx";
 import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
-import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
 import { NextStepHero, TodayPlan } from "../components/NextStep.jsx";
-import { Bar, Badge, Empty, Loading, RingHero } from "../components/ui.jsx";
+import { Bar, Badge, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { achievementHow, achievementIcon, achievementTitle, progressText } from "../achievements.js";
 
-// Elastic, staggered card entrance for a grid/list of small elements — used
-// by the quick-action cards, the stat grid and the today's-quests rows.
-// Opts its container out of Layout's page-level reveal via
-// data-self-animate so the two animations don't stack on the same block.
+// Staggered entrance for the quest rows. Opts its container out of Layout's
+// page-level reveal via data-self-animate so the two don't stack.
 function useCardStagger(deps) {
   const ref = useRef(null);
   useEffect(() => {
@@ -34,15 +31,10 @@ function useCardStagger(deps) {
     }
     animate(targets, {
       opacity: [0, 1],
-      translateY: [26, 0],
-      scale: [0.9, 1],
-      duration: 620,
-      delay: stagger(65),
-      ease: "outElastic(1, .7)",
-      // The entrance animation writes opacity/transform as inline styles,
-      // which would permanently shadow any CSS transform a card wants at
-      // rest (e.g. the quick-action stack's hand-placed rotation) — hand
-      // control back to CSS once settled instead of leaving them behind.
+      translateY: [12, 0],
+      duration: 420,
+      delay: stagger(50),
+      ease: "outQuad",
       onComplete: () => {
         targets.forEach((el) => {
           el.style.opacity = "";
@@ -55,10 +47,6 @@ function useCardStagger(deps) {
   return ref;
 }
 
-// World is the core gameplay loop — the one action a learner reaches for
-// most — so it gets the large "featured" slot; the other three are a
-// smaller, deliberately hand-placed stack next to it (each a few degrees
-// off-square, straightening on hover) instead of four identical boxes.
 // Old World location slugs (the dashboard's "next location") -> places of
 // the living world on /real-chinese.
 const LOCATION_PLACE = {
@@ -66,276 +54,223 @@ const LOCATION_PLACE = {
   hospital: "hospital", "train-station": "train_station", hotel: "hotel", airport: "airport",
 };
 
-const QUICK_ACTIONS = [
-  { to: "/real-chinese", labelKey: "nav.realChinese", icon: "mapPin", gradient: "linear-gradient(135deg, #1f5b7a, #4fc3f7)", featured: true },
-  { to: "/dna", labelKey: "dashboard.viewDna", icon: "dna", gradient: "linear-gradient(135deg, #2f7a4c, #4cc26b)" },
-  { to: "/duels", labelKey: "dashboard.startDuel", icon: "swords", gradient: "linear-gradient(135deg, #b1501c, #ff8a3d)" },
-  { to: "/missions", labelKey: "dashboard.pickMission", icon: "flag", gradient: "linear-gradient(135deg, var(--accent-soft), var(--accent-strong))" },
-];
-
+// The Dashboard answers, in this order: what to do now (the next step and
+// today's plan), what to fix, what has been built, then everything else.
+// It used to open with a greeting banner, four gradient shortcut tiles and
+// two rows of the same stats (streak and coins twice each) before any of
+// that -- twelve blocks of equal weight. Every number here is read from the
+// learner's own records (GET /api/dashboard, /api/journey, the mix-ups).
 export default function Dashboard() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { dashboard: d, error } = useDashboard();
-  // The Dashboard is a guide first: the one next step leads, the numbers follow.
   const { data: journey } = useApi("/journey");
+  const { data: mix } = useApi("/mistakes/mixups");
 
-  // Hooks must run unconditionally on every render — including while `d`
-  // is still loading — so these are called before the early returns below,
-  // with safe fallbacks for the dependency that isn't ready yet.
-  const quickActionsRef = useCardStagger([]);
-  const statGridRef = useCardStagger([]);
   const questsListRef = useCardStagger([d?.quests_today?.length ?? 0]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!d) return <Layout><Loading>{t("common.loadingWorld")}</Loading></Layout>;
 
-  const skillAnchor = (code) => navigate(`/dna?focus=${code}`);
-  const questsDone = d.quests_today.filter((q) => q.completed).length;
-  const questsTotal = d.quests_today.length;
-  const badgesUnlocked = d.achievements.filter((a) => a.unlocked).length;
+  const due = journey?.due_reviews ?? d.review_due ?? 0;
+  const pairs = mix?.active || [];
+  const mistakes = d.recent_mistakes.slice(0, 3);
+  const nothingToFix = due === 0 && pairs.length === 0 && mistakes.length === 0;
+  const today = journey?.today;
+  const placeSlug = d.next_location ? LOCATION_PLACE[d.next_location.slug] || "" : "";
 
   return (
     <Layout>
+      <header className="dash-greeting">
+        <h1 className="h1"><span lang="zh-CN">你好</span>, {d.user.username}</h1>
+        <p className="sub">HSK {d.hsk_level} · {t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}</p>
+      </header>
+
       <NextStepHero journey={journey} />
       <TodayPlan
-        today={journey?.today}
+        today={today}
         next={journey?.next}
         skills={Object.fromEntries((d.dna?.skills || []).map((s) => [s.code, s.name]))}
       />
-      <div className="hero-banner" style={{ position: "relative" }}>
-        <InkBrush variant="hero" />
-        <span className="kicker">{t("landing.kicker")}</span>
-        <h1>你好, {d.user.username}</h1>
-        <p className="sub">
-          HSK {d.hsk_level} · {d.mastery.toFixed(0)}{t("dashboard.overallMastery")} · {t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}
-        </p>
-        <div className="hero-stats-row">
-          <div className="hero-stat-pill">
-            <span className="ic"><Icon name="target" size={15} /></span>
-            <div>
-              <div className="num">{questsDone}/{questsTotal || 0}</div>
-              <div className="lbl">{t("dashboard.todaysQuests")}</div>
-            </div>
-          </div>
-          <div className="hero-stat-pill">
-            <span className="ic"><Icon name="flame" size={15} /></span>
-            <div>
-              <div className="num">{d.streak.current_streak}</div>
-              <div className="lbl">{t("dashboard.dayStreak")}</div>
-            </div>
-          </div>
-          <div className="hero-stat-pill">
-            <span className="ic"><Icon name="coin" size={15} /></span>
-            <div>
-              <div className="num">{d.user.coins}</div>
-              <div className="lbl">{t("dashboard.coins")}</div>
-            </div>
-          </div>
-          <div className="hero-stat-pill">
-            <span className="ic"><Icon name="trending" size={15} /></span>
-            <div>
-              <div className="num">HSK {d.hsk_level}</div>
-              <div className="lbl">{t("dashboard.level")}</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="quick-actions" ref={quickActionsRef} data-self-animate="true">
-        {QUICK_ACTIONS.map(({ to, labelKey, icon, gradient, featured }) => (
-          <Link
-            to={to}
-            key={to}
-            className={`quick-action${featured ? " featured" : ""}`}
-            style={{ background: gradient }}
-          >
-            {featured && (
-              <svg className="qa-globe" viewBox="0 0 120 120" aria-hidden="true">
-                <circle cx="60" cy="60" r="46" />
-                <ellipse cx="60" cy="60" rx="46" ry="17" />
-                <ellipse cx="60" cy="60" rx="17" ry="46" />
-                <line x1="14" y1="60" x2="106" y2="60" />
-              </svg>
+      <div className="dash-row">
+        <section className="card" aria-labelledby="dash-fix">
+          <div className="row spread dash-card-head">
+            <h2 className="h2" id="dash-fix">{t("dashboard.fix.title")}</h2>
+            <Link to="/mistakes" className="btn small ghost">{t("nav.mistakes")}</Link>
+          </div>
+          {nothingToFix && <p className="sub">{t("dashboard.fix.clear")}</p>}
+          <ul className="fix-list">
+            {due > 0 && (
+              <li>
+                <Link to="/review" className="fix-row">
+                  <Icon name="clock" size={16} />
+                  <span className="fix-text">
+                    <b>{t("dashboard.fix.due", { count: due })}</b>
+                    <span className="sub">{t("dashboard.fix.dueWhy")}</span>
+                  </span>
+                  <Icon name="chevronRight" size={15} />
+                </Link>
+              </li>
             )}
-            <div className="qa-top">
-              <span className="ic"><Icon name={icon} size={featured ? 25 : 18} /></span>
-              <Icon name="arrowRight" size={featured ? 19 : 15} className="arrow" />
-            </div>
-            <span className="label">{t(labelKey)}</span>
-          </Link>
-        ))}
-      </div>
-
-      <div className="stat-grid" ref={statGridRef} data-self-animate="true">
-        <div className="stat-card" style={{ "--stat-color": "#ff8a3d" }}>
-          <span className="ic"><Icon name="flame" size={18} /></span>
-          <div className="num">{d.streak.current_streak}</div>
-          <div className="lbl">{t("dashboard.dayStreak")}</div>
-        </div>
-        <div className="stat-card" style={{ "--stat-color": "var(--accent)" }}>
-          <span className="ic"><Icon name="coin" size={18} /></span>
-          <div className="num">{d.user.coins}</div>
-          <div className="lbl">{t("dashboard.coinsEarned")}</div>
-        </div>
-        <div className="stat-card" style={{ "--stat-color": "#3fb6a8" }}>
-          <span className="ic"><Icon name="dna" size={18} /></span>
-          <div className="num">{d.mastery.toFixed(0)}%</div>
-          <div className="lbl">{t("dashboard.hskMastery")}</div>
-        </div>
-        <div className="stat-card" style={{ "--stat-color": "#9b6fe0" }}>
-          <span className="ic"><Icon name="award" size={18} /></span>
-          <div className="num">{badgesUnlocked}</div>
-          <div className="lbl">{t("nav.achievements")}</div>
-        </div>
-      </div>
-
-      <div className="bento" style={{ marginTop: 16 }}>
-        <div className="card bento-2">
-          <div className="row">
-            {d.animal ? (
-              <>
-                <AnimalAvatar slug={d.animal.slug} size={64} />
-                <div>
-                  <h2 className="h2">{d.animal.name}</h2>
-                  <p className="sub">{d.animal.species}</p>
-                  <p className="sub">{d.animal.special_ability}</p>
-                </div>
-              </>
-            ) : (
-              <Link to="/animals">
-                <button className="btn primary">{t("dashboard.chooseCompanion")}</button>
-              </Link>
+            {pairs.length > 0 && (
+              <li>
+                <Link to="/practice?source=mixups" className="fix-row">
+                  <Icon name="crosshair" size={16} />
+                  <span className="fix-text">
+                    <b>{t("today.mixups", { count: pairs.length })}</b>
+                    <span className="fix-pairs" lang="zh-CN">
+                      {pairs.slice(0, 3).map((p) => (
+                        <span key={`${p.a.hanzi}-${p.b.hanzi}`}>{p.a.hanzi} ≠ {p.b.hanzi}</span>
+                      ))}
+                    </span>
+                  </span>
+                  <Icon name="chevronRight" size={15} />
+                </Link>
+              </li>
             )}
+            {mistakes.map((m) => (
+              <li key={m.id} className="fix-mistake">
+                <span className="fix-text">{m.question_text || m.reference}</span>
+                <Badge tone="bad">×{m.occurrences}</Badge>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="card" aria-labelledby="dash-built">
+          <div className="row spread dash-card-head">
+            <h2 className="h2" id="dash-built">{t("dashboard.built.title")}</h2>
+            <Link to="/progress" className="btn small ghost">{t("nav.progress")}</Link>
           </div>
-        </div>
-        <div className="card bento-4 center dna-hero-card">
-          <RingHero value={d.dna.overall} label={t("dashboard.learningDnaOverall")} />
-        </div>
+          <div className="dash-facts">
+            <div className="kpi">
+              <span className="kpi-value">HSK {d.hsk_level}</span>
+              <span className="kpi-label">{t("dashboard.built.level")}</span>
+            </div>
+            <div className="kpi">
+              <span className="kpi-value">{journey?.known_words ?? "—"}</span>
+              <span className="kpi-label">{t("dashboard.built.words")}</span>
+            </div>
+            <div className="kpi">
+              <span className="kpi-value">{journey?.lessons_done ?? "—"}</span>
+              <span className="kpi-label">{t("dashboard.built.lessons")}</span>
+            </div>
+            <div className="kpi">
+              <span className="kpi-value">{d.streak.current_streak}</span>
+              <span className="kpi-label">{t("dashboard.built.streak")}</span>
+            </div>
+          </div>
+          {today && (
+            <div className="dash-goal">
+              <div className="row spread" style={{ margin: 0 }}>
+                <span className="sub">{t("dashboard.built.today")}</span>
+                <span className="sub">{t("dashboard.built.minutes", { minutes: today.minutes, goal: today.goal_minutes })}</span>
+              </div>
+              <Bar value={Math.min(today.minutes, today.goal_minutes)} max={today.goal_minutes || 1} />
+            </div>
+          )}
+        </section>
       </div>
 
-      <div className="card" style={{ marginTop: 16 }}>
-        <div className="row spread" style={{ margin: 0, flexWrap: "wrap" }}>
-          <h2 className="h2">{t("companionMemory.title", { name: d.animal?.name || t("companionReact.fallbackName") })}</h2>
-          <div className="row" style={{ gap: 8, margin: 0, flexWrap: "wrap" }}>
-            <Link to="/passport" className="btn small primary"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
-            <Link to="/sentence" className="btn small ghost"><Icon name="sparkles" size={13} /> {t("nav.sentence")}</Link>
+      <section className="card dash-section" aria-labelledby="dash-companion">
+        <div className="row spread dash-card-head">
+          <div className="row" style={{ margin: 0, gap: 12 }}>
+            {d.animal && <AnimalAvatar slug={d.animal.slug} size={44} />}
+            <h2 className="h2" id="dash-companion">
+              {t("companionMemory.title", { name: d.animal?.name || t("companionReact.fallbackName") })}
+            </h2>
           </div>
+          {d.animal ? (
+            <Link to="/passport" className="btn small ghost"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
+          ) : (
+            <Link to="/animals" className="btn small primary">{t("dashboard.chooseCompanion")}</Link>
+          )}
         </div>
         <CompanionMemory animal={d.animal} />
-      </div>
+      </section>
 
-      <div className="bento" style={{ marginTop: 16 }}>
-        <div className="card bento-3">
-          <h2 className="h2">{t("dashboard.todaysQuests")}</h2>
-          {d.quests_today.length === 0 && <Empty>{t("dashboard.noQuestsToday")}</Empty>}
+      <div className="dash-row">
+        <section className="card" aria-labelledby="dash-compass">
+          <div className="row spread dash-card-head">
+            <h2 className="h2" id="dash-compass">{t("dashboard.prosConsDna")}</h2>
+            <Link to="/dna" className="btn small ghost">{t("dashboard.fullDna")}</Link>
+          </div>
+          <div className="col">
+            {d.dna.skills.slice(0, 6).map((s) => (
+              <Link key={s.code} to={`/dna?focus=${s.code}`} className="hbar hbar-link">
+                <span className="muted hbar-name">{s.name}</span>
+                <Bar value={s.mastery} />
+                <span className="hbar-value">{s.mastery.toFixed(0)}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="card" aria-labelledby="dash-quests">
+          <div className="row spread dash-card-head">
+            <h2 className="h2" id="dash-quests">{t("dashboard.todaysQuests")}</h2>
+            <Link to="/quests" className="btn small ghost">{t("common.allQuests")}</Link>
+          </div>
+          {d.quests_today.length === 0 && <p className="sub">{t("dashboard.noQuestsToday")}</p>}
           <div className="col" ref={questsListRef} data-self-animate="true">
             {d.quests_today.map((q) => (
               <div key={q.id} className="hbar">
                 <span className="ic" style={{ width: 30, height: 30 }}>
                   <Icon name={q.completed ? "check" : "target"} size={14} />
                 </span>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="row spread" style={{ margin: 0 }}>
                     <b>{q.title}</b>
-                    <span className="muted">
-                      {q.progress}/{q.target}
-                    </span>
+                    <span className="muted">{q.progress}/{q.target}</span>
                   </div>
                   <Bar value={q.progress} max={q.target} />
                 </div>
               </div>
             ))}
           </div>
-          <Link to="/quests">
-            <button className="btn small ghost" style={{ marginTop: 12 }}>{t("common.allQuests")}</button>
-          </Link>
-        </div>
-
-        <div className="card bento-3">
-          <h2 className="h2">{t("dashboard.prosConsDna")}</h2>
-          <div className="col">
-            {d.dna.skills.slice(0, 6).map((s) => (
-              <div key={s.code} className="hbar" onClick={() => skillAnchor(s.code)}>
-                <span className="muted" style={{ width: 90, fontSize: 12.5 }}>
-                  {s.name}
-                </span>
-                <Bar value={s.mastery} />
-                <span style={{ width: 34, textAlign: "right" }}>{s.mastery.toFixed(0)}</span>
-              </div>
-            ))}
-          </div>
-          <Link to="/dna">
-            <button className="btn small ghost" style={{ marginTop: 12 }}>{t("dashboard.fullDna")}</button>
-          </Link>
-        </div>
+        </section>
       </div>
 
-      {d.next_achievements?.length > 0 && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <div className="row spread" style={{ margin: 0, flexWrap: "wrap" }}>
-            <h2 className="h2">{t("achievements.dashboard.title")}</h2>
-            <Link to="/achievements" className="btn small ghost">{t("achievements.dashboard.all")}</Link>
-          </div>
-          <div className="ach-next">
-            {d.next_achievements.map((a) => (
-              <Link key={a.id} to={a.to || "/achievements"} className="ach-next-row">
-                <span className="seal-stamp locked"><Icon name={achievementIcon(a)} size={15} /></span>
-                <span className="ach-next-text">
-                  <b className="ach-title">{achievementTitle(t, a.code, a.title)}</b>
-                  <span className="ach-text">{achievementHow(t, a)}</span>
-                  {a.target > 1 && <Bar value={a.progress} max={a.target} />}
-                </span>
-                {a.target > 1 && <span className="muted">{progressText(a)}</span>}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="bento" style={{ marginTop: 16 }}>
-        <div className="card bento-3">
-          <h2 className="h2">{t("dashboard.nextLocation")}</h2>
+      <div className="dash-row">
+        <section className="card" aria-labelledby="dash-world">
+          <h2 className="h2" id="dash-world">{t("dashboard.nextLocation")}</h2>
           {d.next_location ? (
-            <Link to={`/real-chinese?place=${LOCATION_PLACE[d.next_location.slug] || ""}`}>
-              <button className="btn primary">
-                <Art name={placeArt(LOCATION_PLACE[d.next_location.slug] || d.next_location.slug)} size={24} shape="round" flat />
-                {d.next_location.name}
-              </button>
+            <Link to={`/real-chinese?place=${placeSlug}`} className="btn primary" style={{ marginTop: 12 }}>
+              <Art name={placeArt(placeSlug || d.next_location.slug)} size={24} shape="round" flat />
+              {d.next_location.name}
             </Link>
           ) : (
             <p className="sub">{t("dashboard.exploreEverything")}</p>
           )}
-        </div>
-        <div className="card bento-3">
-          <h2 className="h2">{t("dashboard.recommendedMission")}</h2>
-          {d.recommended_mission ? (
-            <p className="sub">{d.recommended_mission.title}</p>
-          ) : (
-            <p className="sub">{t("dashboard.onARoll")}</p>
-          )}
-          <Link to="/missions">
-            <button className="btn small">{t("dashboard.viewAllMissions")}</button>
-          </Link>
-        </div>
-      </div>
+          <p className="sub" style={{ marginTop: 16 }}>
+            {t("dashboard.recommendedMission")}:{" "}
+            {d.recommended_mission ? <b>{d.recommended_mission.title}</b> : t("dashboard.onARoll")}
+          </p>
+          <Link to="/missions" className="btn small ghost" style={{ marginTop: 8 }}>{t("dashboard.viewAllMissions")}</Link>
+        </section>
 
-      {d.recent_mistakes.length > 0 && (
-        <div className="card" style={{ marginTop: 16 }}>
-          <h2 className="h2">{t("dashboard.needsWork")}</h2>
-          <div className="col">
-            {d.recent_mistakes.slice(0, 4).map((m) => (
-              <div key={m.id} className="row spread">
-                <span className="muted">{m.answer_given || m.question_text}</span>
-                <Badge tone="bad">×{m.occurrences}</Badge>
-              </div>
-            ))}
-          </div>
-          <Link to="/mistakes">
-            <button className="btn small ghost" style={{ marginTop: 12 }}>{t("dashboard.reviewMistakes")}</button>
-          </Link>
-        </div>
-      )}
+        {d.next_achievements?.length > 0 && (
+          <section className="card" aria-labelledby="dash-ach">
+            <div className="row spread dash-card-head">
+              <h2 className="h2" id="dash-ach">{t("achievements.dashboard.title")}</h2>
+              <Link to="/achievements" className="btn small ghost">{t("achievements.dashboard.all")}</Link>
+            </div>
+            <div className="ach-next">
+              {d.next_achievements.map((a) => (
+                <Link key={a.id} to={a.to || "/achievements"} className="ach-next-row">
+                  <span className="seal-stamp locked"><Icon name={achievementIcon(a)} size={15} /></span>
+                  <span className="ach-next-text">
+                    <b className="ach-title">{achievementTitle(t, a.code, a.title)}</b>
+                    <span className="ach-text">{achievementHow(t, a)}</span>
+                    {a.target > 1 && <Bar value={a.progress} max={a.target} />}
+                  </span>
+                  {a.target > 1 && <span className="muted">{progressText(a)}</span>}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </Layout>
   );
 }

@@ -7,47 +7,69 @@ import BrandLogo from "./BrandLogo.jsx";
 import Icon from "./Icon.jsx";
 import UserAvatar from "./UserAvatar.jsx";
 
-// Every real authenticated route, grouped the way the app itself is
-// organized: MAIN is the core loop (home / explore / your DNA / compete),
-// LEARNING is everything that builds or reviews vocabulary and grammar.
-// No route here is invented — this is the same 12-link set the old top
-// nav carried, just grouped and given room to breathe. Labels come from
-// i18n (nav.*); this array only carries the route shape.
+// Every real authenticated route, grouped by what the learner is there to
+// do -- not by when each feature was built. It used to be two flat lists of
+// 26 links of equal weight, with the core loop (lessons, review) buried
+// among side games. Now:
+//   TODAY        where to start and what to come back to
+//   LEARN        the curriculum: lessons, words, characters, grammar,
+//                sounds, reading, the HSK path
+//   USE CHINESE  putting it to work in situations
+//   YOU          what you have learned and who is learning with you
+//   PLAY         optional games and extras
+// Nothing was removed. Labels come from i18n (nav.*); this array only
+// carries the route shape. Keep Topbar's NAV_INDEX (search) in step.
 const GROUPS = [
   {
-    labelKey: "nav.groupMain",
+    labelKey: "nav.groupToday",
     links: [
-      ["/journey", "nav.journey", "route"],
       ["/dashboard", "nav.home", "home"],
-      ["/real-chinese", "nav.realChinese", "mapPin"],
-      ["/sound-world", "nav.soundWorld", "ear"],
-      ["/detective", "nav.detective", "search"],
-      ["/passport", "nav.passport", "award"],
-      ["/dna", "nav.dna", "dna"],
-      ["/duels", "nav.duels", "swords"],
-      ["/progress", "nav.progress", "chart"],
+      ["/journey", "nav.journey", "route"],
+      ["/review", "nav.review", "clock"],
+      ["/mistakes", "nav.mistakes", "crosshair"],
     ],
   },
   {
-    labelKey: "nav.groupLearning",
+    labelKey: "nav.groupLearn",
     links: [
       ["/lessons", "nav.lessons", "book"],
-      ["/stories", "nav.stories", "bookOpen"],
-      ["/sentence", "nav.sentence", "sparkles"],
-      ["/internet", "nav.internet", "eye"],
-      ["/review", "nav.review", "clock"],
       ["/vocabulary", "nav.vocabulary", "type"],
       ["/hanzi", "nav.hanzi", "pen"],
-      ["/ecosystem", "nav.ecosystem", "world"],
       ["/grammar", "nav.grammar", "seal"],
+      ["/sound-world", "nav.soundWorld", "ear"],
+      ["/stories", "nav.stories", "bookOpen"],
       ["/roadmap", "nav.roadmap", "trending"],
+    ],
+  },
+  {
+    labelKey: "nav.groupUse",
+    links: [
+      ["/real-chinese", "nav.realChinese", "mapPin"],
+      ["/sentence", "nav.sentence", "sparkles"],
+      ["/internet", "nav.internet", "eye"],
+      ["/detective", "nav.detective", "search"],
+      ["/ecosystem", "nav.ecosystem", "world"],
+      ["/assistant", "nav.assistant", "chat"],
+    ],
+  },
+  {
+    labelKey: "nav.groupYou",
+    links: [
+      ["/dna", "nav.dna", "dna"],
+      ["/passport", "nav.passport", "award"],
+      ["/progress", "nav.progress", "chart"],
+      ["/achievements", "nav.achievements", "trophy"],
+      ["/companion", "nav.companion", "heart"],
+    ],
+  },
+  {
+    labelKey: "nav.groupPlay",
+    links: [
+      ["/duels", "nav.duels", "swords"],
       ["/quests", "nav.quests", "target"],
       ["/missions", "nav.missions", "flag"],
       ["/pet-teacher", "nav.petTeacher", "teach"],
-      ["/companion", "nav.companion", "heart"],
       ["/voice-companion", "nav.voiceCompanion", "mic"],
-      ["/achievements", "nav.achievements", "award"],
-      ["/assistant", "nav.assistant", "chat"],
     ],
   },
 ];

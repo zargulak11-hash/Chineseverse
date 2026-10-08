@@ -22,6 +22,7 @@ const NAV_INDEX = [
   ["/sentence", "nav.sentence", "sparkles"],
   ["/internet", "nav.internet", "eye"],
   ["/review", "nav.review", "clock"],
+  ["/mistakes", "nav.mistakes", "crosshair"],
   ["/vocabulary", "nav.vocabulary", "type"],
   ["/hanzi", "nav.hanzi", "pen"],
   ["/ecosystem", "nav.ecosystem", "world"],
@@ -31,8 +32,9 @@ const NAV_INDEX = [
   ["/missions", "nav.missions", "flag"],
   ["/pet-teacher", "nav.petTeacher", "teach"],
   ["/companion", "nav.companion", "heart"],
-  ["/achievements", "nav.achievements", "award"],
+  ["/achievements", "nav.achievements", "trophy"],
   ["/assistant", "nav.assistant", "chat"],
+  ["/voice-companion", "nav.voiceCompanion", "mic"],
 ];
 
 // The places of the living world (backend services/world_places.py).

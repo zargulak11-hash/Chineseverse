@@ -60,7 +60,12 @@
     "toLanding": "ChineseVerse——首页",
     "journey": "我的学习之路",
     "stories": "中文故事",
-    "mistakes": "错题本"
+    "mistakes": "错题本",
+    "groupToday": "今天",
+    "groupLearn": "学习",
+    "groupUse": "用中文",
+    "groupYou": "我的",
+    "groupPlay": "游戏与更多"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -192,7 +197,22 @@
     "viewAllMissions": "查看全部使命",
     "needsWork": "需要加强",
     "reviewMistakes": "复习错题",
-    "noQuestsToday": "今天没有任务——去探索一下吧。"
+    "noQuestsToday": "今天没有任务——去探索一下吧。",
+    "fix": {
+      "title": "需要巩固",
+      "clear": "现在没有需要巩固的——复习和错题本都清空了。",
+      "due_other": "{{count}}项待复习",
+      "dueWhy": "现在正是复习的时候，最容易记牢。"
+    },
+    "built": {
+      "title": "你的积累",
+      "level": "当前水平",
+      "words": "能回想起的词",
+      "lessons": "完成的课程",
+      "streak": "连续学习天数",
+      "today": "今天",
+      "minutes": "{{minutes}}/{{goal}} 分钟"
+    }
   },
   "pages": {
     "lessons": {
