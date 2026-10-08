@@ -21,7 +21,7 @@ import { CASE_ART, FILE_ART, NET_ART, PRON_ART, caseFallback, fileFallback, netF
 const SCENE_PLACE = {
   university: "university", "convenience-store": "shop", "job-interview": "office", hospital: "hospital",
   "train-station": "train_station", airport: "airport", hotel: "hotel", restaurant: "restaurant",
-  travel: "old_town", shopping: "shopping_district",
+  travel: "old_town", shopping: "shopping_district", pharmacy: "pharmacy", taxi: "street", bank: "bank",
 };
 const SOUND_PLACE = {
   night_market: "food_street", restaurant: "restaurant", train_station: "train_station", school: "university",

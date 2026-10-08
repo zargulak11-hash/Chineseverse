@@ -76,7 +76,7 @@ PLACES = [
               TOPIC("recommend", ("小说", "推荐"), "你能给我推荐一本小说吗？"))),
 
     # ---- downtown: streets, shops, offices and services
-    P("street", "🏙️", "centre", 81, 60, 1, location="city-street", sound="street",
+    P("street", "🏙️", "centre", 81, 60, 1, scene="taxi", location="city-street", sound="street",
       theme=("左边", "右边", "前面", "后面", "附近", "往", "走", "路"),
       topics=(TOPIC("directions", ("左边", "右边", "往"), "往前走，银行在左边，饭馆在右边。"),
               TOPIC("nearby", ("附近", "前面", "后面"), "附近有一家饭馆，就在银行后面，书店前面。"))),
@@ -98,7 +98,7 @@ PLACES = [
       theme=("邮局", "寄", "信", "地址", "快递", "收"),
       topics=(TOPIC("send", ("寄", "信"), "我要寄一封信。"),
               TOPIC("address", ("地址", "写"), "请把地址写在这里。"))),
-    P("bank", "🏦", "centre", 133, 26, 2,
+    P("bank", "🏦", "centre", 133, 26, 2, scene="bank",
       theme=("银行", "钱", "换", "卡", "人民币", "存", "取"),
       topics=(TOPIC("exchange", ("换", "钱"), "我想在银行换钱。"),
               TOPIC("card", ("卡", "取"), "我用卡取了一些人民币。"))),
@@ -117,7 +117,7 @@ PLACES = [
       topics=(TOPIC("symptoms", ("舒服", "发烧", "身体"), "我身体不舒服，有点儿发烧。"),
               TOPIC("doctor", ("医生", "检查", "医院"), "医生在医院给我检查了一下。"),
               TOPIC("medicine", ("药", "次"), "这个药一天吃三次。"))),
-    P("pharmacy", "💊", "health", 164, 76, 2,
+    P("pharmacy", "💊", "health", 164, 76, 2, scene="pharmacy",
       theme=("药", "感冒", "头疼", "次", "药店", "身体"),
       topics=(TOPIC("cold", ("感冒", "药"), "我感冒了，想买点儿药。"),
               TOPIC("dosage", ("次", "吃"), "一天吃两次，饭后吃。"))),

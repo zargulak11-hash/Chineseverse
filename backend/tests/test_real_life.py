@@ -80,7 +80,7 @@ def test_a_new_learners_companion_invents_no_memories(client, learner):
 def test_scene_list_and_preview_are_localized_and_tiered_by_level(client, learner):
     _, h = learner
     data = expect(client, "get", "/api/real-life/scenes", 200, headers=h)
-    assert data["tier"] == "beginner" and len(data["scenes"]) == 10, data
+    assert data["tier"] == "beginner" and len(data["scenes"]) == 13, data
     assert all(s["exchanges"] == 3 and s["completed"] == 0 for s in data["scenes"])
     ru = expect(client, "get", "/api/real-life/scenes", 200, headers={**h, "X-Locale": "ru"})
     assert ru["scenes"][0]["title"] == "Ресторан", ru["scenes"][0]
@@ -288,3 +288,39 @@ def test_mastering_a_repeatedly_missed_word_is_celebrated_and_remembered(client,
     assert "mastered_hard" in kinds and "new_learner" not in kinds, kinds
     ru = expect(client, "get", "/api/companion/memory", 200, headers={**ch, "X-Locale": "ru"})
     assert all(m["zh"] for m in ru["memories"]) and ru["companion"] is None  # no companion chosen yet
+
+
+TIER_SHAPE = {"beginner": (3, 2), "intermediate": (4, 2), "advanced": (5, 3)}  # exchanges, wrong replies
+
+
+def test_every_scene_has_three_complete_tiers_at_a_place_on_the_map():
+    from app.services.world_places import PLACE_BY_SCENE
+
+    for scene in SCENES:
+        slug = scene["slug"]
+        assert slug in PLACE_BY_SCENE, slug
+        assert all(scene["title"].get(loc) for loc in ("en", "ru", "tg", "zh")), slug
+        for tier, (n, wrong) in TIER_SHAPE.items():
+            exchanges = scene["tiers"][tier]
+            assert len(exchanges) == n, (slug, tier, len(exchanges))
+            for ex in exchanges:
+                assert len(ex["wrong"]) == wrong, (slug, tier, ex["reply"]["zh"])
+                for line in (ex["npc"], ex["reply"]):
+                    assert line["zh"] and line["py"] and all(line["tr"].get(loc) for loc in ("en", "ru", "tg")), line
+                if tier == "beginner":  # that tier shows pinyin on every option
+                    assert all(py for _zh, py in ex["wrong"]), (slug, ex["wrong"])
+
+
+@pytest.mark.parametrize("slug", ["pharmacy", "taxi", "bank"])
+def test_the_everyday_scenes_are_playable(client, slug):
+    uid, h = register(client, unique_name(f"scene_{slug}"))
+    expect(client, "get", "/api/journey", 200, headers=h)
+    with SessionLocal() as db:  # pharmacy and bank open at HSK 2
+        for s in db.get(models.User, uid).user_skills:
+            s.mastery = 20.0
+        db.commit()
+    s = start(client, h, source="scene", scene=slug)
+    assert s["context"]["kind"] == "scene" and s["questions"], s
+    qs, _ = stored(s["id"])
+    focus = {ex["focus"] for ex in next(x for x in SCENES if x["slug"] == slug)["tiers"][s["context"]["tier"]]}
+    assert focus, slug

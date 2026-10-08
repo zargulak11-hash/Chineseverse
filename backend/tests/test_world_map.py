@@ -84,7 +84,7 @@ def test_places_use_real_words_valid_sentences_and_every_scene(client):
             for t in p["topics"]:
                 assert all(w in have and w in t["sentence"] for w in t["words"]), (p["key"], t["key"])
                 sent.validate(db, t["sentence"])
-    assert len({p["scene"] for p in PLACES if p["scene"]}) == 10
+    assert len({p["scene"] for p in PLACES if p["scene"]}) == 13
 
 
 def test_the_city_is_laid_out_and_every_place_is_reachable_from_home():

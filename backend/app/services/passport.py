@@ -49,12 +49,12 @@ VOCAB = {"meaning_to_word", "word_to_meaning", "listen_to_word"}
 WORLD = {
     "restaurant": {"scenes": ("restaurant",), "sound": ("restaurant", "night_market"), "net": ("review", "comments")},
     "shopping": {"scenes": ("shopping", "convenience-store"), "sound": ("shopping", "night_market"), "net": ("product", "shopping")},
-    "travel": {"scenes": ("train-station", "airport", "hotel", "travel"), "sound": ("train_station", "airport", "street"),
+    "travel": {"scenes": ("train-station", "airport", "hotel", "travel", "taxi"), "sound": ("train_station", "airport", "street"),
                "net": ("travel", "news")},
     "university": {"scenes": ("university",), "sound": ("school",), "net": ("messages",)},
-    "health": {"scenes": ("hospital",), "sound": (), "net": ()},
+    "health": {"scenes": ("hospital", "pharmacy"), "sound": (), "net": ()},
     "work": {"scenes": ("job-interview",), "sound": (), "net": ("notice",)},
-    "daily": {"scenes": (), "sound": ("street",), "net": ("chat", "social", "messages")},
+    "daily": {"scenes": ("bank",), "sound": ("street",), "net": ("chat", "social", "messages")},
 }
 CAN_DO = 80.0
 
