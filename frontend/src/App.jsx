@@ -124,12 +124,18 @@ function NavLink({ to, children }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(getSavedUser());
+  // Signed in only with BOTH halves of a session. A saved user without a
+  // token (storage partly cleared, or a request finishing after sign-out
+  // wrote the user back) used to count as signed in until every request
+  // came back 401 -- /login even bounced to an empty Dashboard.
+  const [user, setUser] = useState(() => (getToken() ? getSavedUser() : null));
   const [booted, setBooted] = useState(false);
   const { pathname } = useLocation();
 
   useEffect(() => {
     if (!getToken() || !getSavedUser()) {
+      if (getToken() || getSavedUser()) clearSession(); // drop the stray half
+      setUser(null);
       setBooted(true);
       return;
     }
