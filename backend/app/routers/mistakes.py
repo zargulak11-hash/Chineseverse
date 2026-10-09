@@ -8,12 +8,19 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import mixups
 from app.services.gamification import check_achievements
+from app.services.localization import localize_glosses
 
 router = APIRouter(prefix="/api/mistakes", tags=["mistakes"])
 
 
-def _serialize(m: models.LearningMistake) -> schemas.MistakeResponse:
+def _serialize(m: models.LearningMistake, glosses: dict[str, str] | None = None) -> schemas.MistakeResponse:
     out = schemas.MistakeResponse.model_validate(m)
+    if glosses:
+        # Stored in the language of the round it happened in; shown in the
+        # learner's language now (localization.localize_glosses).
+        out.question_text = glosses.get(out.question_text, out.question_text)
+        out.answer_given = glosses.get(out.answer_given, out.answer_given)
+        out.correct_answer = glosses.get(out.correct_answer, out.correct_answer)
     out.due_for_review = bool(
         not m.mastered and m.next_review_at and m.next_review_at <= datetime.utcnow()
     )
@@ -24,6 +31,7 @@ def _serialize(m: models.LearningMistake) -> schemas.MistakeResponse:
 def list_mistakes(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     check_achievements(db, user)
     rows = (
@@ -33,7 +41,8 @@ def list_mistakes(
         .limit(50)
         .all()
     )
-    return [_serialize(m) for m in rows]
+    glosses = localize_glosses(db, {t for m in rows for t in (m.question_text, m.answer_given, m.correct_answer)}, locale)
+    return [_serialize(m, glosses) for m in rows]
 
 
 @router.get("/mixups", response_model=schemas.MixupsResponse)

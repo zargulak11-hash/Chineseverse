@@ -53,8 +53,10 @@ class SceneError(Exception):
 
 
 def text_for(d: dict, locale: str) -> str:
-    """A content string in the UI language; zh UI reads the English gloss of
-    a Chinese line (the line itself would be the "translation")."""
+    """The translation of a Chinese line in the UI language. A Chinese UI gets
+    none -- the line itself is the text -- rather than an English gloss."""
+    if locale == "zh":
+        return ""
     return d.get(locale) or d.get("en") or ""
 
 

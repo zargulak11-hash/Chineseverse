@@ -563,7 +563,9 @@ def dossier(db: Session, user: models.User, slug: str, locale: str) -> dict:
 
     def line(s: dict) -> dict:
         return {"zh": s["zh"], "pinyin": stories.pinyin_of(db, book, s["zh"]) if show_py else None,
-                "tr": _loc(s, locale) if locale != "zh" else s.get("en")}
+                # No translation of a Chinese line in a Chinese UI (it was
+                # the English one); the dossier then hides the toggle.
+                "tr": _loc(s, locale) if locale != "zh" else None}
 
     rec = _records(db, user).get(FILE_PREFIX + slug)
     out = {

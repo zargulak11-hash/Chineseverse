@@ -87,6 +87,11 @@ def _loc(value, locale: str):
     # A localized string is a dict of language codes only ({"en", "ru", ...});
     # an example item {"zh", "tr"} is not one, though it has a "zh" key.
     if isinstance(value, dict) and value and "en" in value and set(value) <= set(LANGS):
+        # Every explanation has a zh version; what lacks one is the
+        # translation of a Chinese example, which a Chinese UI doesn't show
+        # (it used to fall back to English).
+        if locale == "zh":
+            return value.get("zh")
         return value.get(locale) or value.get("en")
     if isinstance(value, list):
         return [_loc(v, locale) for v in value]

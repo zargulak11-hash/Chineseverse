@@ -718,8 +718,12 @@ def _context(session: models.PracticeSession, locale: str) -> dict | None:
 
 
 def _line_tr(d: dict | None, locale: str) -> str:
-    # zh UI reads the English gloss of a Chinese line (see real_life.text_for).
+    # The translation of a Chinese line. A Chinese UI has nothing to translate
+    # it into -- it used to get the English gloss, which put English on a
+    # Chinese screen (see real_life.text_for).
     d = d or {}
+    if locale == "zh":
+        return ""
     return d.get(locale) or d.get("en") or ""
 
 
@@ -782,7 +786,9 @@ def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, local
     for oid in q["option_ids"]:
         o = q["options"][oid]
         if qtype == "scene_listen":
-            options.append({"id": oid, "label": _line_tr(o.get("tr"), locale)})
+            # The options are what the line means; in a Chinese UI, the lines
+            # themselves ("which one did you hear?").
+            options.append({"id": oid, "label": o["zh"] if locale == "zh" else _line_tr(o.get("tr"), locale)})
         else:
             options.append({"id": oid, "label": o["zh"],
                             "pinyin": (o.get("py") or None) if rules.get("option_pinyin") else None})

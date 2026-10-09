@@ -26,6 +26,25 @@ from app.services.practice import review_counts
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
 
+def _recent_mistakes(db: Session, user: models.User, locale: str) -> list[schemas.MistakeResponse]:
+    """The five open mistakes Home shows, read in the learner's language."""
+    from app.routers.mistakes import _serialize
+    from app.services.localization import localize_glosses
+
+    rows = (
+        db.query(models.LearningMistake)
+        .filter(
+            models.LearningMistake.user_id == user.id,
+            models.LearningMistake.mastered.is_(False),
+        )
+        .order_by(models.LearningMistake.priority.desc())
+        .limit(5)
+        .all()
+    )
+    glosses = localize_glosses(db, {t for m in rows for t in (m.question_text, m.answer_given, m.correct_answer)}, locale)
+    return [_serialize(m, glosses) for m in rows]
+
+
 @router.get("", response_model=schemas.DashboardResponse)
 def dashboard(
     user: models.User = Depends(get_current_user),
@@ -133,16 +152,7 @@ def dashboard(
             "minutes_today": round(minutes_today),
         },
         recommended_mission=_localize_mission(next_mission, mission_tr) if next_mission else None,
-        recent_mistakes=(
-            db.query(models.LearningMistake)
-            .filter(
-                models.LearningMistake.user_id == user.id,
-                models.LearningMistake.mastered.is_(False),
-            )
-            .order_by(models.LearningMistake.priority.desc())
-            .limit(5)
-            .all()
-        ),
+        recent_mistakes=_recent_mistakes(db, user, locale),
         next_location=next_location_out,
         quests_today=[_localize_quest(q, quest_tr) for q in quests],
         achievements=ach_out[:n_earned],

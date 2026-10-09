@@ -9,6 +9,7 @@ doesn't exist for the requested locale (or the locale is "en").
 
 from __future__ import annotations
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app import models
@@ -55,6 +56,41 @@ def tr(translations: dict[str, dict[str, str]], key: str, field: str, fallback: 
     if row and field in row:
         return row[field]
     return fallback
+
+
+def localize_glosses(db: Session, texts, locale: str) -> dict[str, str]:
+    """English vocabulary/Hanzi meanings among `texts` -> the same meaning in
+    `locale`. For text stored at the time it was shown, such as a mistake's
+    question ("he, him") recorded during an English round: read back later in
+    Tajik it stayed English. Only an exact match of a meaning (in full, or as
+    practice shortens it) is replaced, so free text is never touched."""
+    from app.services.practice import _short  # practice imports this module
+
+    wanted = {t for t in texts if t}
+    if locale not in SUPPORTED_LOCALES or not wanted:
+        return {}
+    out: dict[str, str] = {}
+    for model, content_type, column in (
+        (models.VocabularyWord, "vocab_word", "meanings"),
+        (models.Hanzi, "hanzi", "meaning"),
+    ):
+        col = getattr(model, column)
+        # A shortened meaning ends in "…": match the rest as a prefix.
+        prefixes = [w[:-1].replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+                    for w in wanted if w.endswith("…")]
+        cond = or_(col.in_(wanted), *[col.like(p + "%", escape="\\") for p in prefixes])
+        rows = db.query(model.id, col).filter(cond).all()
+        hits = [(i, en) for i, en in rows if en in wanted or _short(en) in wanted]
+        if not hits:
+            continue
+        trs = load_translations(db, content_type, [str(i) for i, _ in hits], locale)
+        for i, en in hits:
+            text = tr(trs, i, column, None)
+            if text:
+                for form in (en, _short(en)):
+                    if form in wanted:
+                        out.setdefault(form, text)
+    return out
 
 
 def set_translation(db: Session, content_type: str, content_key: str, field: str, locale: str, text: str) -> None:

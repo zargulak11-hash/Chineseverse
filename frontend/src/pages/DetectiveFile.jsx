@@ -153,10 +153,13 @@ export default function DetectiveFile() {
           <div className="card side-card">
             <p className="side-title">{t("detective.howTitle")}</p>
             <p className="sub">{t("detective.file.how")}</p>
-            <button type="button" className="btn small ghost" aria-pressed={showTr} onClick={() => setShowTr((v) => !v)}
-                    style={{ marginTop: 12 }}>
-              <Icon name="eye" size={13} /> {t(showTr ? "detective.file.hideTr" : "detective.file.showTr")}
-            </button>
+            {/* A Chinese UI gets no translations of the Chinese lines. */}
+            {data.brief.some((l) => l.tr) && (
+              <button type="button" className="btn small ghost" aria-pressed={showTr} onClick={() => setShowTr((v) => !v)}
+                      style={{ marginTop: 12 }}>
+                <Icon name="eye" size={13} /> {t(showTr ? "detective.file.hideTr" : "detective.file.showTr")}
+              </button>
+            )}
           </div>
           <Link to="/detective" className="btn ghost">
             <Icon name="arrowLeft" size={14} /> {t("detective.file.back")}

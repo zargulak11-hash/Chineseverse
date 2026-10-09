@@ -419,7 +419,7 @@ def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, lis
         # in Chinese with the learner's translation.
         pa = q["pron_ask"]
         ask.update(question_zh=pa["zh"], question_py=pa["py"],
-                   question=pa["en"] if locale == "zh" else (pa.get(locale) or pa["en"]))
+                   question=None if locale == "zh" else (pa.get(locale) or pa["en"]))
     return {"lines": lines, "ask": ask}, options
 
 
