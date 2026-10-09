@@ -4,10 +4,12 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { PrefsProvider } from "./prefs.jsx";
 import { ThemeProvider } from "./theme.jsx";
-import "./i18n.js";
+import { i18nReady } from "./i18n.js";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+// Wait for the learner's language (i18n.js loads all but English on demand);
+// a failed load still renders, in English.
+i18nReady.finally(() => ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ThemeProvider>
       <PrefsProvider>
@@ -17,4 +19,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       </PrefsProvider>
     </ThemeProvider>
   </React.StrictMode>
-);
+));
