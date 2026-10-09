@@ -51,11 +51,16 @@ def test_a_chinese_quiz_is_in_chinese_and_never_points_at_the_answer(client):
     for _ in range(3):
         s = expect(client, "post", "/api/practice/sessions", 201, headers=zh,
                    json={"source": "vocab", "hsk_level": 1, "size": 10})
-        for q in s["questions"]:
-            labels = [o["label"] for o in q["options"]]
+        for i, q in enumerate(s["questions"]):
+            labels = {o["id"]: o["label"] for o in q["options"]}
             if q["type"] == "word_to_meaning":
                 word = q["prompt"]["text"]
-                assert all(CJK.search(l) and not LATIN.search(l) for l in labels), labels
-                assert not [l for l in labels if word in l], (word, labels)
+                assert all(CJK.search(l) and not LATIN.search(l) for l in labels.values()), labels
+                # The right definition must not contain the word itself (it is
+                # written "～"). A WRONG option may: 早饭 "早上吃的饭" is a
+                # fair distractor when the word is 吃.
+                a = expect(client, "post", f"/api/practice/sessions/{s['id']}/answer", 200, headers=zh,
+                           json={"index": i, "choice_id": next(iter(labels)), "response_ms": 1000})
+                assert word not in labels[a["correct_id"]], (word, labels[a["correct_id"]])
             if q["type"] == "meaning_to_word":
                 assert CJK.search(q["prompt"]["text"]) and not LATIN.search(q["prompt"]["text"]), q["prompt"]
