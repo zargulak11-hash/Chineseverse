@@ -478,3 +478,35 @@ def test_provider_resolution_is_gemini_with_a_key_and_offline_otherwise(monkeypa
     assert ai_client._active_provider() == "offline"
     settings.ai_provider, settings.gemini_api_key = "offline", "test-gemini-key"
     assert ai_client._active_provider() == "offline"
+
+
+# --- a sentence the learner asks about ----------------------------------------
+
+@pytest.mark.parametrize("locale", LOCALES)
+def test_offline_explains_shi_before_an_adjective_not_ma(client, asklearner, locale):
+    # The reported bug: "我是很高兴。对吗？" matched the 吗 keyword, so the
+    # answer (and every Retry) explained 吗 instead of the real error.
+    table = ai_client.ASSISTANT_OFFLINE[locale]
+    issues = ai_client.ASSISTANT_SENTENCE_ISSUES[locale]
+    reply = chat(client, asklearner, "我是很高兴。对吗？", locale)["reply"]
+    assert issues["shi_adj"] in reply and "我很高兴" in reply, (locale, reply)
+    assert table["ma"] not in reply, (locale, reply)
+    assert_language(reply, locale)
+
+
+def test_offline_does_not_invent_an_error_in_a_correct_sentence(client, asklearner):
+    reply = chat(client, asklearner, "我很高兴。", "en")["reply"]
+    assert ai_client.ASSISTANT_SENTENCE_ISSUES["en"]["intro"] not in reply, reply
+
+
+def test_offline_finds_the_error_inside_an_english_question(client, asklearner):
+    reply = chat(client, asklearner, "Why is 我是很高兴 wrong?", "en")["reply"]
+    assert ai_client.ASSISTANT_SENTENCE_ISSUES["en"]["shi_adj"] in reply, reply
+
+
+def test_the_model_is_told_what_the_grammar_checker_found(client, asklearner, model):
+    chat(client, asklearner, "Why is 我是很高兴 wrong?", "ru")
+    assert "grammar checker found" in system_prompt(model)
+    assert ai_client.ASSISTANT_SENTENCE_ISSUES["en"]["shi_adj"] in system_prompt(model)
+    chat(client, asklearner, "我很高兴", "ru")
+    assert "grammar checker found" not in system_prompt(model)

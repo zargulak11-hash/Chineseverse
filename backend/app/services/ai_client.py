@@ -1179,9 +1179,91 @@ def _is_greeting(text: str) -> bool:
     return any(w in _KW_GREET for w in words) or _contain(text, "привет", "здравств", "салом", "你好", "您好")
 
 
-def _offline_answer(last: str, context: dict, t: dict) -> str:
+# What the offline helper says about a known learner error it finds in the
+# question itself (services/sentence_check.py rule codes). Without this,
+# "我是很高兴。对吗？" matched the 吗 keyword and Retry answered with how 吗
+# makes a question -- an unrelated answer to "why is this sentence wrong?".
+ASSISTANT_SENTENCE_ISSUES = {
+    "en": {
+        "intro": "I checked the Chinese in your message and found a common mistake:",
+        "shi_adj": "是 isn't used before an adjective. In Chinese the adjective is itself the predicate, so you say 我很高兴。, not 我是很高兴。 是 links two nouns: 我是学生。",
+        "you_adj": "有 means \"to have\" and goes with nouns. An adjective takes 很 instead: 我很忙。, not 我有忙。",
+        "hen_noun": "很 goes with adjectives, not nouns. To say what someone is, use 是: 我是学生。",
+        "missing_shi": "Two nouns need 是 between them: 我是学生。",
+        "bu_you": "有 is negated with 没, never 不: 我没有钱。",
+        "missing_measure": "A number needs a measure word before the noun: 三个苹果, not 三苹果.",
+        "dou_order": "都 goes before the verb: 他们都是学生。",
+        "ma_question_word": "A question word (什么, 谁, 哪儿…) already makes a question — don't add 吗 too: 你叫什么？",
+        "le_habitual": "了 marks one completed event. A routine (每天…) usually doesn't take 了: 我每天吃早饭。",
+    },
+    "ru": {
+        "intro": "Я проверил китайский текст в твоём сообщении и нашёл частую ошибку:",
+        "shi_adj": "是 не ставится перед прилагательным. В китайском прилагательное само является сказуемым, поэтому говорят 我很高兴。, а не 我是很高兴。 是 связывает два существительных: 我是学生。",
+        "you_adj": "有 значит «иметь» и стоит перед существительными. С прилагательным нужно 很: 我很忙。, а не 我有忙。",
+        "hen_noun": "很 употребляется с прилагательными, а не с существительными. Чтобы сказать, кто человек, нужно 是: 我是学生。",
+        "missing_shi": "Между двумя существительными нужен 是: 我是学生。",
+        "bu_you": "有 отрицается через 没, никогда через 不: 我没有钱。",
+        "missing_measure": "После числа перед существительным нужно счётное слово: 三个苹果, а не 三苹果.",
+        "dou_order": "都 ставится перед глаголом: 他们都是学生。",
+        "ma_question_word": "Вопросительное слово (什么, 谁, 哪儿…) уже делает предложение вопросом — 吗 добавлять не нужно: 你叫什么？",
+        "le_habitual": "了 отмечает одно завершённое действие. Привычное действие (每天…) обычно без 了: 我每天吃早饭。",
+    },
+    "tg": {
+        "intro": "Ман матни чинии паёматонро санҷидам ва як хатои маъмулиро ёфтам:",
+        "shi_adj": "是 пеш аз сифат намеояд. Дар забони чинӣ худи сифат хабар аст, бинобар ин 我很高兴。 мегӯянд, на 我是很高兴。 是 ду исмро мепайвандад: 我是学生。",
+        "you_adj": "有 маънои «доштан»-ро дорад ва бо исм меояд. Бо сифат 很 лозим аст: 我很忙。, на 我有忙。",
+        "hen_noun": "很 бо сифат меояд, на бо исм. Барои гуфтани кӣ будани касе 是 лозим аст: 我是学生。",
+        "missing_shi": "Байни ду исм 是 лозим аст: 我是学生。",
+        "bu_you": "有 бо 没 инкор карда мешавад, ҳеҷ гоҳ бо 不: 我没有钱。",
+        "missing_measure": "Пас аз шумора пеш аз исм калимаи ҳисобӣ лозим аст: 三个苹果, на 三苹果.",
+        "dou_order": "都 пеш аз феъл меояд: 他们都是学生。",
+        "ma_question_word": "Калимаи саволӣ (什么, 谁, 哪儿…) худаш ҷумларо савол мекунад — 吗 илова кардан лозим нест: 你叫什么？",
+        "le_habitual": "了 як амали анҷомёфтаро нишон медиҳад. Амали ҳаррӯза (每天…) одатан бе 了 аст: 我每天吃早饭。",
+    },
+    "zh": {
+        "intro": "我检查了你消息里的中文，发现一个常见错误：",
+        "shi_adj": "形容词前面一般不用“是”。汉语里形容词本身就能做谓语，所以说 我很高兴。，不说 我是很高兴。“是”用来连接两个名词：我是学生。",
+        "you_adj": "“有”表示拥有，后面接名词。形容词前面用“很”：我很忙。，不说 我有忙。",
+        "hen_noun": "“很”修饰形容词，不修饰名词。说身份要用“是”：我是学生。",
+        "missing_shi": "两个名词之间需要“是”：我是学生。",
+        "bu_you": "“有”的否定是“没有”，不能说“不有”：我没有钱。",
+        "missing_measure": "数词和名词之间要有量词：三个苹果，不说 三苹果。",
+        "dou_order": "“都”放在动词前面：他们都是学生。",
+        "ma_question_word": "疑问词（什么、谁、哪儿……）已经构成问句，不要再加“吗”：你叫什么？",
+        "le_habitual": "“了”表示一次完成的动作。习惯性的动作（每天……）一般不用“了”：我每天吃早饭。",
+    },
+}
+
+
+def _chinese_errors(text: str) -> list[dict]:
+    """Error-level rule findings in the Chinese runs of a chat message. The
+    rules anchor on a clause's end, so a question like "Why is 我是很高兴
+    wrong?" is checked on 我是很高兴 alone, not on the Latin around it."""
+    runs = re.findall(r"[㐀-鿿，。！？、；：]+", text or "")
+    if not runs:
+        return []
+    from app.services.sentence_check import detect
+
+    return [i for i in detect("。".join(runs)) if i["severity"] == "error"]
+
+
+def _sentence_issue_answer(text: str, locale: str) -> Optional[str]:
+    """The rules' explanation of known errors in the Chinese the learner
+    asked about, or None when there is no Chinese or no known error (the
+    rules miss errors rather than invent them, so silence proves nothing)."""
+    issues = _chinese_errors(text)
+    if not issues:
+        return None
+    t = ASSISTANT_SENTENCE_ISSUES.get(locale, ASSISTANT_SENTENCE_ISSUES["en"])
+    return t["intro"] + "\n\n" + "\n\n".join(t[i["code"]] for i in issues if i["code"] in t)
+
+
+def _offline_answer(last: str, context: dict, t: dict, locale: str = "en") -> str:
     q = _normalize(last)
     name = context.get("username") or t["default_name"]
+    issue = _sentence_issue_answer(last, locale)
+    if issue:
+        return issue
     if not q or _is_greeting(last):
         return t["greet"].format(name=name)
     if _contain(q, *_KW_LEVEL):
@@ -1209,7 +1291,7 @@ def _offline_answer(last: str, context: dict, t: dict) -> str:
 def _offline_assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> str:
     t = ASSISTANT_OFFLINE.get(locale, ASSISTANT_OFFLINE["en"])
     last = messages[-1]["content"] if messages else ""
-    return f"{t['unavailable']}\n\n{_offline_answer(last, context, t)}"
+    return f"{t['unavailable']}\n\n{_offline_answer(last, context, t, locale)}"
 
 
 def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> tuple[str, str]:
@@ -1222,7 +1304,7 @@ def assistant_reply(messages: List[dict], context: dict, locale: str = "en") -> 
     if _active_provider() == "gemini" and messages:
         try:
             reply = _gemini_chat(
-                [{"role": "system", "content": _assistant_system(context, locale)}] + messages,
+                [{"role": "system", "content": _assistant_system(context, locale, messages)}] + messages,
                 max_tokens=1500,
                 temperature=0.6,
             )
@@ -1310,13 +1392,24 @@ ASSISTANT_NO_VISION = {
 }
 
 
-def _assistant_system(context: dict, locale: str) -> str:
-    return ASSISTANT_SYSTEM_TEMPLATE.format(
+def _assistant_system(context: dict, locale: str, messages: Optional[List[dict]] = None) -> str:
+    system = ASSISTANT_SYSTEM_TEMPLATE.format(
         learner=_learner_block(context),
         language=ASSISTANT_LANGUAGE_NAMES.get(locale, "English"),
         language_detail=ASSISTANT_LANGUAGE_DETAIL.get(locale, ""),
         compass=ASSISTANT_COMPASS_NAME.get(locale, ASSISTANT_COMPASS_NAME["en"]),
     )
+    # The same rules that grade practice (services/sentence_check.py) look at
+    # the Chinese in the latest question, so the model explains the error the
+    # app's own checker sees instead of contradicting it.
+    last = next((m["content"] for m in reversed(messages or []) if m.get("role") == "user"), "")
+    found = _chinese_errors(last)
+    if found:
+        explained = ASSISTANT_SENTENCE_ISSUES["en"]
+        system += ("\n\nThe app's grammar checker found these known errors in the Chinese of the "
+                   "learner's latest message; explain them correctly, with the corrected sentence:\n"
+                   + "\n".join(f"- {explained.get(i['code'], i['code'])}" for i in found))
+    return system
 
 
 def assistant_stream(messages: List[dict], context: dict, locale: str = "en"):
@@ -1328,7 +1421,7 @@ def assistant_stream(messages: List[dict], context: dict, locale: str = "en"):
     helper, exactly like assistant_reply."""
     has_files = any(m.get("attachments") for m in messages)
     if _active_provider() == "gemini" and messages:
-        stream = _gemini_stream([{"role": "system", "content": _assistant_system(context, locale)}] + messages,
+        stream = _gemini_stream([{"role": "system", "content": _assistant_system(context, locale, messages)}] + messages,
                                 max_tokens=1500, temperature=0.6)
         started = False
         try:
