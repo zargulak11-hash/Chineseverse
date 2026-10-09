@@ -228,9 +228,18 @@
     "built": {
       "title": "Чего вы достигли",
       "level": "ваш уровень",
-      "words": "слов вы вспоминаете",
-      "lessons": "уроков пройдено",
-      "streak": "дней подряд",
+      "words_one": "слово в памяти",
+      "words_few": "слова в памяти",
+      "words_many": "слов в памяти",
+      "words_other": "слова в памяти",
+      "lessons_one": "урок пройден",
+      "lessons_few": "урока пройдено",
+      "lessons_many": "уроков пройдено",
+      "lessons_other": "урока пройдено",
+      "streak_one": "день подряд",
+      "streak_few": "дня подряд",
+      "streak_many": "дней подряд",
+      "streak_other": "дня подряд",
       "today": "Сегодня",
       "minutes": "{{minutes}} из {{goal}} мин"
     }

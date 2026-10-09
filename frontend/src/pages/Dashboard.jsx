@@ -161,15 +161,15 @@ export default function Dashboard() {
             </div>
             <div className="kpi">
               <span className="kpi-value">{journey?.known_words ?? "—"}</span>
-              <span className="kpi-label">{t("dashboard.built.words")}</span>
+              <span className="kpi-label">{t("dashboard.built.words", { count: journey?.known_words ?? 0 })}</span>
             </div>
             <div className="kpi">
               <span className="kpi-value">{journey?.lessons_done ?? "—"}</span>
-              <span className="kpi-label">{t("dashboard.built.lessons")}</span>
+              <span className="kpi-label">{t("dashboard.built.lessons", { count: journey?.lessons_done ?? 0 })}</span>
             </div>
             <div className="kpi">
               <span className="kpi-value">{d.streak.current_streak}</span>
-              <span className="kpi-label">{t("dashboard.built.streak")}</span>
+              <span className="kpi-label">{t("dashboard.built.streak", { count: d.streak.current_streak })}</span>
             </div>
           </div>
           {today && (

@@ -220,9 +220,12 @@
     "built": {
       "title": "What you've built",
       "level": "your level",
-      "words": "words you can recall",
-      "lessons": "lessons completed",
-      "streak": "days in a row",
+      "words_one": "word you can recall",
+      "words_other": "words you can recall",
+      "lessons_one": "lesson completed",
+      "lessons_other": "lessons completed",
+      "streak_one": "day in a row",
+      "streak_other": "days in a row",
       "today": "Today",
       "minutes": "{{minutes}} of {{goal}} min"
     }
