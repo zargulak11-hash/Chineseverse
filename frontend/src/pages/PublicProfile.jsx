@@ -6,6 +6,7 @@ import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
 import { Empty, Loading, MotionButton } from "../components/ui.jsx";
+import { formatDate } from "../dates.js";
 
 function FollowRow({ u }) {
   const { t } = useTranslation();
@@ -74,7 +75,7 @@ export default function PublicProfile() {
               <p className="sub">
                 {profile.total_xp} XP · {t("pages.profile.joined")}{" "}
                 {/* created_at is naive UTC: read it as UTC, show it in the UI language. */}
-                {new Date(profile.created_at.endsWith("Z") ? profile.created_at : `${profile.created_at}Z`).toLocaleDateString(i18n.language)}
+                {formatDate(profile.created_at, i18n.language)}
               </p>
             </div>
           </div>

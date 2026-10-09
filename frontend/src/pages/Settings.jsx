@@ -163,7 +163,9 @@ export default function Settings() {
       .get("/me")
       .then((me) => {
         setForm({
-          native_language: me.profile.native_language || "",
+          native_language: me.profile.native_language
+            ? t(`common.languageNames.${me.profile.native_language}`, { defaultValue: me.profile.native_language })
+            : "",
           goal_text: me.profile.goal_text || "",
           // 10 is the model default; 20 here silently changed the goal on save.
           daily_goal_minutes: me.profile.daily_goal_minutes ?? 10,

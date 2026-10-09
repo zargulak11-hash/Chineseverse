@@ -9,16 +9,17 @@ import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { formatDate } from "../dates.js";
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
   // Dates in the UI language, not the browser's: created_at is naive UTC,
   // last_active_date a plain day ("YYYY-MM-DD", which new Date() would read
   // as UTC midnight -- the previous day west of Greenwich).
-  const joined = (iso) => new Date(iso.endsWith("Z") ? iso : `${iso}Z`).toLocaleDateString(i18n.language);
+  const joined = (iso) => formatDate(iso, i18n.language);
   const day = (ymd) => {
     const [y, m, d] = ymd.split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString(i18n.language);
+    return formatDate(new Date(y, m - 1, d), i18n.language);
   };
   const { data: me, error } = useApi("/me");
   const { dashboard } = useDashboard();
@@ -66,7 +67,9 @@ export default function Profile() {
           <div className="col" style={{ marginTop: 10 }}>
             <div className="hbar">
               <span className="muted" style={{ width: 130 }}>{t("pages.profile.nativeLanguage")}</span>
-              <span>{me.profile.native_language || "—"}</span>
+              {/* Registration stores "English" etc.; show the four app languages in
+                  the reader's own language, anything typed by hand as typed. */}
+              <span>{me.profile.native_language ? t(`common.languageNames.${me.profile.native_language}`, { defaultValue: me.profile.native_language }) : "—"}</span>
             </div>
             <div className="hbar">
               <span className="muted" style={{ width: 130 }}>{t("pages.profile.goal")}</span>

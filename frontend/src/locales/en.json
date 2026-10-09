@@ -24,7 +24,13 @@
     "confirm": "Confirm",
     "renderError": "Something went wrong on this page.",
     "renderErrorHint": "Reload the page to try again. Your progress is saved on the server.",
-    "reload": "Reload"
+    "reload": "Reload",
+    "languageNames": {
+      "English": "English",
+      "Russian": "Russian",
+      "Tajik": "Tajik",
+      "Chinese": "Chinese"
+    }
   },
   "nav": {
     "groupMain": "Main",
@@ -1291,7 +1297,8 @@
     "toggleTheme": "Switch light/dark theme",
     "googleNotConfigured": "Google Sign-In isn't set up for this site yet.",
     "googleLoading": "Loading Google Sign-In…",
-    "googleUnavailable": "Google Sign-In couldn't load. Check your connection or disable content blockers, then reload the page."
+    "googleUnavailable": "Google Sign-In couldn't load. Check your connection or disable content blockers, then reload the page.",
+    "companionAvatar": "Companion"
   },
   "apiErrors": {
     "githubExpired": "This GitHub sign-in has expired. Please start again.",

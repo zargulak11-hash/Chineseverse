@@ -7,6 +7,7 @@ import { speakChinese } from "../zhSpeech.js";
 import Icon from "./Icon.jsx";
 import { GlossList } from "./CaseAndSound.jsx";
 import { Loading } from "./ui.jsx";
+import { formatDate } from "../dates.js";
 
 // Help with one word met in real Chinese (GET /api/internet/words/:id):
 // meaning, reading, what the learner's own data says about it, the
@@ -15,7 +16,6 @@ import { Loading } from "./ui.jsx";
 // server refuses duplicates too) -- a mastered or scheduled word is left
 // alone, and mastery is never touched here.
 
-const LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 
 export default function WordHelper({ wordId, item, version, onClose }) {
   const { t, i18n } = useTranslation();
@@ -57,7 +57,7 @@ export default function WordHelper({ wordId, item, version, onClose }) {
   const s = data.state;
   const stateKey = s.due ? "due" : s.status;
   const next = s.next_review_at
-    ? new Intl.DateTimeFormat(LOCALE[i18n.language] || "en-US", { dateStyle: "medium" }).format(new Date(s.next_review_at))
+    ? formatDate(s.next_review_at, i18n.language, { dateStyle: "medium" })
     : null;
   return (
     <div className="word-helper" aria-live="polite">

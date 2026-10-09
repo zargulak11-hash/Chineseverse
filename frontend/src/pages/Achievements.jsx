@@ -17,6 +17,7 @@ import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
+import { formatDate } from "../dates.js";
 
 // Category order on the page and in the filter (the backend's categories).
 const CATEGORIES = ["start", "places", "words", "characters", "listening", "speaking", "reading", "stories",
@@ -119,7 +120,7 @@ export default function Achievements() {
 
   const { unlocked, close, next, rest } = groups;
   const completion = badges.length ? (unlocked.length / badges.length) * 100 : 0;
-  const fmtDate = (iso) => new Date(iso).toLocaleDateString(i18n.language);
+  const fmtDate = (iso) => formatDate(iso, i18n.language);
   const catLabel = (c) => t(`achievements.cat.${c}`, { defaultValue: c });
   const shown = (list) => (filter === "all" ? list : list.filter((b) => b.category === filter));
   const present = CATEGORIES.filter((c) => badges.some((b) => b.category === c));

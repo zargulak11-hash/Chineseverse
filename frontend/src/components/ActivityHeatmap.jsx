@@ -1,13 +1,11 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { formatDate } from "../dates.js";
 
-// Short month names in the UI language (Intl), not a fixed English list.
+// Short month names in the UI language (dates.js: Intl, Tajik spelled out),
+// not a fixed English list.
 function monthLabel(month, lang) {
-  try {
-    return new Date(2024, month, 1).toLocaleDateString(lang, { month: "short" });
-  } catch {
-    return String(month + 1);
-  }
+  return formatDate(new Date(2024, month, 1), lang, { month: "short" }) || String(month + 1);
 }
 
 function levelOf(actions, max) {

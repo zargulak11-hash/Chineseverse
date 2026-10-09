@@ -70,4 +70,19 @@ i18n.on("languageChanged", (lng) => {
   if (typeof document !== "undefined") document.documentElement.lang = lng;
 });
 
+// Browsers ship no Tajik locale data: Intl.PluralRules("tg") silently
+// becomes the device's own locale (Russian rules on a Russian Windows,
+// English on most others). i18next then asked for "_few"/"_many", found no
+// Tajik key and showed the ENGLISH string -- "lessons completed" on a Tajik
+// Home. Tajik nouns don't change after a numeral (5 калима, 1 калима), so
+// one fixed rule is both correct and independent of the device.
+const TAJIK_PLURAL = {
+  select: () => "other",
+  resolvedOptions: () => ({ locale: "tg", pluralCategories: ["other"] }),
+};
+const pluralResolver = i18n.services.pluralResolver;
+const intlRule = pluralResolver.getRule.bind(pluralResolver);
+pluralResolver.getRule = (code, options = {}) =>
+  /^tg(\b|[-_])/.test(code || "") && !options.ordinal ? TAJIK_PLURAL : intlRule(code, options);
+
 export default i18n;

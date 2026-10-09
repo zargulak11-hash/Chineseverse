@@ -6,6 +6,7 @@ import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { achievementTitle } from "../achievements.js";
+import { formatDate } from "../dates.js";
 
 // Chinese Passport (GET /api/passport): what this learner can actually DO in
 // Chinese, each capability with the evidence behind it (graded answers,
@@ -13,7 +14,6 @@ import { achievementTitle } from "../achievements.js";
 // The server decides every band from stored activity -- nothing here is
 // derived from XP, and nothing is shown that the data doesn't support.
 
-const LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 const BAND_TONE = { strong: "good", developing: "accent", emerging: "", none: "" };
 const WORLD_TONE = { can_do: "good", trying: "accent", not_yet: "" };
 const EVENT_ICON = {
@@ -30,7 +30,7 @@ function useDate() {
   return (iso, opts = { dateStyle: "medium" }) => {
     if (!iso) return "";
     try {
-      return new Intl.DateTimeFormat(LOCALE[i18n.language] || "en-US", opts).format(new Date(iso));
+      return formatDate(iso, i18n.language, opts);
     } catch {
       return iso.slice(0, 10);
     }

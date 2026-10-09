@@ -5,17 +5,17 @@ import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
+import { formatDate } from "../dates.js";
 
 // Character DNA (GET /api/hanzi/character/:char/dna): one character's
 // structure, the real words built from it, related characters, curriculum
 // examples, and this learner's own history with it. Read-only.
 
-const LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 
 function fmtDate(iso, lang) {
   if (!iso) return null;
   try {
-    return new Intl.DateTimeFormat(LOCALE[lang] || "en-US", { dateStyle: "medium" }).format(new Date(iso));
+    return formatDate(iso, lang, { dateStyle: "medium" });
   } catch {
     return iso.slice(0, 10);
   }

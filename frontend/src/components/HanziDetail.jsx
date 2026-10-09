@@ -8,6 +8,7 @@ import { Bar } from "./ui.jsx";
 import Icon from "./Icon.jsx";
 import HanziTrace from "./HanziTrace.jsx";
 import { speakChinese } from "../zhSpeech.js";
+import { formatDate } from "../dates.js";
 
 // The full "SEE -> pronunciation -> hear -> meaning -> examples -> progress"
 // hub for one character. Writing practice (watch stroke order -> try
@@ -146,7 +147,7 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
         {notDue && (
           <p className="sub" role="status" style={{ textAlign: "center", marginTop: 8, fontSize: "var(--text-xs)" }}>
             {t("pages.hanzi.notDueYet", {
-              date: new Date(notDue.endsWith("Z") ? notDue : `${notDue}Z`).toLocaleDateString(i18n.language),
+              date: formatDate(notDue, i18n.language),
             })}
           </p>
         )}

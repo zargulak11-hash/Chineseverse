@@ -6,6 +6,7 @@ import { usePrefs } from "../prefs.jsx";
 import { useTheme } from "../theme.jsx";
 import Icon from "./Icon.jsx";
 import UserAvatar from "./UserAvatar.jsx";
+import { formatDate, timeAgo } from "../dates.js";
 
 const NAV_INDEX = [
   ["/journey", "nav.journey", "route"],
@@ -45,8 +46,6 @@ const WORLD_PLACES = [
   "bamboo_garden", "restaurant", "food_street", "market", "tea_house", "calligraphy", "museum", "temple", "hutong",
   "old_town", "shopping_district", "mall", "cinema", "ktv",
 ];
-
-const DATE_LOCALE = { en: "en-US", ru: "ru-RU", tg: "tg-TJ", zh: "zh-CN" };
 
 // A real search over the app's own content, not a decorative box: it
 // matches page names instantly, and matches lesson/location titles once
@@ -102,20 +101,6 @@ function useGlobalSearch(t, lang) {
 // Stored notifications don't need the learner online -- this only
 // refreshes the badge for someone who is.
 const NOTIF_POLL_MS = 20_000;
-
-function timeAgo(iso, lang) {
-  if (!iso) return "";
-  // The API returns naive UTC timestamps.
-  const then = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`).getTime();
-  const secs = Math.round((then - Date.now()) / 1000);
-  const rtf = new Intl.RelativeTimeFormat(DATE_LOCALE[lang] || "en-US", { numeric: "auto" });
-  const abs = Math.abs(secs);
-  if (abs < 60) return rtf.format(secs, "second");
-  if (abs < 3600) return rtf.format(Math.round(secs / 60), "minute");
-  if (abs < 86400) return rtf.format(Math.round(secs / 3600), "hour");
-  if (abs < 86400 * 30) return rtf.format(Math.round(secs / 86400), "day");
-  return new Intl.DateTimeFormat(DATE_LOCALE[lang] || "en-US", { month: "short", day: "numeric" }).format(new Date(then));
-}
 
 // Text for a stored notification, in the reader's language. Literal keys
 // (not a template) so the i18n checker sees every one of them.
@@ -296,10 +281,7 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
   const searchRef = useRef(null);
   const { pathname } = useLocation();
   useEffect(() => setSearchOpen(false), [pathname]);
-  const dateFmt = useMemo(
-    () => new Intl.DateTimeFormat(DATE_LOCALE[i18n.language] || "en-US", { weekday: "long", month: "long", day: "numeric" }),
-    [i18n.language]
-  );
+  const today = formatDate(new Date(), i18n.language, { weekday: "long", month: "long", day: "numeric" });
 
   useEffect(() => {
     function onDocClick(e) {
@@ -328,7 +310,7 @@ export default function Topbar({ user, dashboard, onOpenMobileSidebar }) {
 
       <div className="topbar-greeting">
         <div className="hello">{t("topbar.hello", { name: user?.username })}</div>
-        <div className="date">{dateFmt.format(new Date())}</div>
+        <div className="date">{today}</div>
       </div>
 
       <div className="topbar-search" ref={searchRef}>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 // ChineseVerse companion portraits. Each of the 20 companions is a hand-picked
 // illustration in frontend/public/animals/<slug>.png (round, with its own
 // pastel background baked in). The roster itself lives in the backend
@@ -97,6 +98,7 @@ const STATE_ACCESSORY = {
 };
 
 export default function AnimalAvatar({ slug, size = 48, className = "", state = "idle" }) {
+  const { t } = useTranslation();
   const accessory = STATE_ACCESSORY[state] || "none";
   const src = KNOWN.has(slug) ? `${import.meta.env.BASE_URL}animals/${slug}.png` : null;
 
@@ -107,7 +109,7 @@ export default function AnimalAvatar({ slug, size = 48, className = "", state = 
       height={size}
       className={`animal-avatar ${className}`}
       role="img"
-      aria-label={`${slug} avatar, ${state}`}
+      aria-label={t("ui.companionAvatar")}
     >
       {src ? (
         <image href={src} x="0" y="0" width="64" height="64" preserveAspectRatio="xMidYMid slice" />

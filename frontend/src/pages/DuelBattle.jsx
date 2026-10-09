@@ -9,6 +9,7 @@ import { Bar, Celebration, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { speakChinese } from "../zhSpeech.js";
 import { duelErrorText } from "./Duels.jsx";
+import { formatDate } from "../dates.js";
 
 // One duel. The server is the only authority: it says whose turn it is,
 // which question is next, how much time each player has left, and who won.
@@ -31,8 +32,7 @@ function fmtClock(ms) {
 
 function fmtWhen(iso, lang) {
   if (!iso) return "";
-  const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`); // server sends naive UTC
-  return new Intl.DateTimeFormat(lang, { dateStyle: "medium", timeStyle: "short" }).format(d);
+  return formatDate(iso, lang, { dateStyle: "medium", timeStyle: "short" }); // naive UTC: dates.js reads it as UTC
 }
 
 function PlayerCard({ p, isMe, total, highlight }) {

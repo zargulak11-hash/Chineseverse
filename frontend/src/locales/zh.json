@@ -24,7 +24,13 @@
     "confirm": "确认",
     "renderError": "此页面出了点问题。",
     "renderErrorHint": "请重新加载页面再试一次。你的学习进度已保存在服务器上。",
-    "reload": "重新加载"
+    "reload": "重新加载",
+    "languageNames": {
+      "English": "英语",
+      "Russian": "俄语",
+      "Tajik": "塔吉克语",
+      "Chinese": "中文"
+    }
   },
   "nav": {
     "groupMain": "主要",
@@ -1277,7 +1283,8 @@
     "toggleTheme": "切换浅色/深色主题",
     "googleNotConfigured": "本网站尚未设置 Google 登录。",
     "googleLoading": "正在加载 Google 登录…",
-    "googleUnavailable": "Google 登录无法加载。请检查网络或关闭内容拦截插件，然后刷新页面。"
+    "googleUnavailable": "Google 登录无法加载。请检查网络或关闭内容拦截插件，然后刷新页面。",
+    "companionAvatar": "学习伙伴"
   },
   "apiErrors": {
     "githubExpired": "此次 GitHub 登录已过期，请重新开始。",
