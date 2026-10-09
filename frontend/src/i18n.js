@@ -63,4 +63,11 @@ export const i18nReady = i18n
     },
   });
 
+// <html lang> follows the interface language. index.html ships lang="en", so
+// a Russian page was read by screen readers with an English voice and the
+// browser offered to "translate from English".
+i18n.on("languageChanged", (lng) => {
+  if (typeof document !== "undefined") document.documentElement.lang = lng;
+});
+
 export default i18n;

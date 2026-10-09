@@ -259,6 +259,16 @@ body,
   box-sizing: border-box;
 }
 
+/* One keyboard focus ring for every control -- the ring the per-component
+   rules below already use. Buttons, nav links, chips and answer options had
+   only the browser's default, which is hard to see on Ink. :where() keeps it
+   at zero specificity so any component's own focus style still wins; a
+   mouse click doesn't show it (:focus-visible). */
+:where(a, button, select, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ---------- Motion system ----------
    A small, deliberate set of keyframes reused everywhere instead of
    bespoke per-page animations, so motion feels like one system. */
