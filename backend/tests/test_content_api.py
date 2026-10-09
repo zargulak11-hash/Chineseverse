@@ -111,3 +111,14 @@ def test_roadmap_shows_every_stage_with_the_new_learner_at_hsk1(client, h):
     assert [l["level"] for l in road["levels"]] == list(range(1, 10))
     assert road["levels"][0]["status"] == "current" and all(l["status"] == "locked" for l in road["levels"][1:])
     expect(client, "get", "/api/hsk/roadmap", 401)
+
+
+@pytest.mark.parametrize("locale", ["ru", "tg", "zh"])
+def test_every_companion_is_described_in_the_learners_language(client, locale):
+    # Monkey, Koala, Elephant, Cow, Penguin and Owl were translated in
+    # scripts/seed_translations.py but never reached the curriculum snapshot,
+    # so the onboarding picker showed six English cards in every language.
+    english = {a["slug"]: a for a in expect(client, "get", "/api/animals", 200)}
+    for a in expect(client, "get", "/api/animals", 200, headers={"X-Locale": locale}):
+        for field in ("description", "personality", "tone_style", "special_ability", "preferred_mechanics"):
+            assert a[field] != english[a["slug"]][field], (locale, a["slug"], field, a[field])
