@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../api.js";
 import SocialAuth from "../components/SocialAuth.jsx";
 import { useAuth } from "../auth.js";
+import LanguagePicker from "../components/LanguagePicker.jsx";
 
 export default function Register() {
   const { t } = useTranslation();
@@ -51,12 +52,15 @@ export default function Register() {
   return (
     <div className="page">
       <div className="card formcard">
+        <div className="formcard-tools"><LanguagePicker /></div>
         <h1 className="h1">{t("auth.register")}</h1>
         <p className="sub">{t("auth.registerSub")}</p>
         <form onSubmit={submit}>
           <div className="field">
-            <label>{t("auth.username")}</label>
+            <label htmlFor="reg-username">{t("auth.username")}</label>
             <input
+              id="reg-username"
+              autoComplete="username"
               className="input"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -65,8 +69,10 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>{t("auth.email")}</label>
+            <label htmlFor="reg-email">{t("auth.email")}</label>
             <input
+              id="reg-email"
+              autoComplete="email"
               className="input"
               type="email"
               value={form.email}
@@ -75,8 +81,10 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>{t("auth.password")}</label>
+            <label htmlFor="reg-password">{t("auth.password")}</label>
             <input
+              id="reg-password"
+              autoComplete="new-password"
               className="input"
               type="password"
               value={form.password}
@@ -86,8 +94,10 @@ export default function Register() {
             />
           </div>
           <div className="field">
-            <label>{t("auth.confirmPassword")}</label>
+            <label htmlFor="reg-confirm">{t("auth.confirmPassword")}</label>
             <input
+              id="reg-confirm"
+              autoComplete="new-password"
               className="input"
               type="password"
               value={form.confirm}

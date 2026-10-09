@@ -238,11 +238,12 @@ export default function Settings() {
           <div className="card">
             <h2 className="h2">{t("settings.appearance")}</h2>
             <div className="field">
-              <label>{t("settings.theme")}</label>
-              <div className="row" style={{ marginTop: 4 }}>
+              <label id="set-theme">{t("settings.theme")}</label>
+              <div className="row" role="group" aria-labelledby="set-theme" style={{ marginTop: 4 }}>
                 <button
                   type="button"
                   className={`btn small${theme === "ink" ? " primary" : " ghost"}`}
+                  aria-pressed={theme === "ink"}
                   onClick={() => theme !== "ink" && toggleTheme()}
                 >
                   <Icon name="droplet" size={13} /> {t("settings.themeInk")}
@@ -250,6 +251,7 @@ export default function Settings() {
                 <button
                   type="button"
                   className={`btn small${theme === "paper" ? " primary" : " ghost"}`}
+                  aria-pressed={theme === "paper"}
                   onClick={() => theme !== "paper" && toggleTheme()}
                 >
                   <Icon name="droplet" size={13} /> {t("settings.themePaper")}
@@ -257,13 +259,14 @@ export default function Settings() {
               </div>
             </div>
             <div className="field">
-              <label>{t("settings.language")}</label>
-              <div className="row" style={{ marginTop: 4 }}>
+              <label id="set-language">{t("settings.language")}</label>
+              <div className="row" role="group" aria-labelledby="set-language" style={{ marginTop: 4 }}>
                 {SUPPORTED_LANGS.map((l) => (
                   <button
                     key={l.code}
                     type="button"
                     className={`btn small${i18n.language === l.code ? " primary" : " ghost"}`}
+                    aria-pressed={i18n.language === l.code}
                     onClick={() => i18n.changeLanguage(l.code)}
                   >
                     {l.label}
@@ -331,8 +334,8 @@ export default function Settings() {
               {t("settings.signedInAs")} <b>{user?.username}</b>
             </p>
             <div className="field">
-              <label>{t("auth.username")}</label>
-              <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <label htmlFor="set-username">{t("auth.username")}</label>
+              <input id="set-username" className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
             </div>
             <button className="btn danger" style={{ width: "100%" }} onClick={logout}>
               {t("common.logOut")}
@@ -344,16 +347,18 @@ export default function Settings() {
           <div className="card formcard is-inline">
             <h2 className="h2">{t("settings.learningProfile")}</h2>
             <div className="field">
-              <label>{t("settings.nativeLanguage")}</label>
+              <label htmlFor="set-native">{t("settings.nativeLanguage")}</label>
               <input
+                id="set-native"
                 className="input"
                 value={form.native_language}
                 onChange={(e) => setForm({ ...form, native_language: e.target.value })}
               />
             </div>
             <div className="field">
-              <label>{t("settings.goalText")}</label>
+              <label htmlFor="set-goal">{t("settings.goalText")}</label>
               <input
+                id="set-goal"
                 className="input"
                 value={form.goal_text}
                 onChange={(e) => setForm({ ...form, goal_text: e.target.value })}
@@ -361,8 +366,9 @@ export default function Settings() {
               />
             </div>
             <div className="field">
-              <label>{t("settings.dailyGoal")}</label>
+              <label htmlFor="set-daily">{t("settings.dailyGoal")}</label>
               <input
+                id="set-daily"
                 className="input"
                 type="number"
                 min={5}
@@ -372,8 +378,9 @@ export default function Settings() {
               />
             </div>
             <div className="field">
-              <label>{t("settings.bio")}</label>
+              <label htmlFor="set-bio">{t("settings.bio")}</label>
               <textarea
+                id="set-bio"
                 className="input"
                 rows={2}
                 value={form.bio}

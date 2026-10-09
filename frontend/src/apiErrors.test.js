@@ -65,4 +65,11 @@ describe("server error messages", () => {
     expect(localizeApiError(null, 502)).toBe(ru.apiErrors.server);
     expect(localizeApiError(undefined, 418)).toContain("418");
   });
+
+  it("a 422 on a field the learner typed names that field", async () => {
+    await i18n.changeLanguage("ru");
+    const body = [{ loc: ["body", "email"], msg: "value is not a valid email address" }];
+    expect(localizeApiError(body, 422)).toBe(ru.apiErrors.invalidField.email);
+    expect(localizeApiError([{ loc: ["body", "daily_goal_minutes"], msg: "x" }], 422)).toBe(ru.apiErrors.invalidInput);
+  });
 });

@@ -1347,7 +1347,12 @@
     "fileType": "{{name}}: this file type isn't supported.",
     "fileUtf8": "{{name}}: text files must be UTF-8.",
     "chatLimit": "You've sent a lot of messages this hour — take a short break and try again.",
-    "loginLocked": "Too many sign-in attempts. Please wait a few minutes and try again."
+    "loginLocked": "Too many sign-in attempts. Please wait a few minutes and try again.",
+    "invalidField": {
+      "email": "That email address doesn't look right. Check it and try again.",
+      "username": "The username must be 3 to 50 characters long.",
+      "password": "The password must be at least 6 characters long."
+    }
   },
   "realLife": {
     "title": "Real-life Chinese",

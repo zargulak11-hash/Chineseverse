@@ -1336,7 +1336,12 @@
     "fileType": "{{name}}：不支持这种文件类型。",
     "fileUtf8": "{{name}}：文本文件必须是 UTF-8 编码。",
     "chatLimit": "这一小时发的消息太多了，休息一下再试吧。",
-    "loginLocked": "登录尝试次数过多，请稍等几分钟后再试。"
+    "loginLocked": "登录尝试次数过多，请稍等几分钟后再试。",
+    "invalidField": {
+      "email": "这个邮箱地址好像不对，请检查后再试。",
+      "username": "用户名长度须为 3 到 50 个字符。",
+      "password": "密码至少需要 6 个字符。"
+    }
   },
   "realLife": {
     "title": "生活中的中文",

@@ -104,8 +104,9 @@ export default function PetTeacher() {
             style={{ flexDirection: "column", alignItems: "stretch" }}
           >
             <div className="field">
-              <label>{t("pages.petTeacher.yourCorrection")}</label>
+              <label htmlFor="pet-correction">{t("pages.petTeacher.yourCorrection")}</label>
               <input
+                id="pet-correction"
                 className="input"
                 value={correction}
                 onChange={(e) => setCorrection(e.target.value)}
@@ -113,9 +114,10 @@ export default function PetTeacher() {
               />
             </div>
             <div className="field">
-              <label>{t("pages.petTeacher.explainRule")}</label>
+              <label htmlFor="pet-explain">{t("pages.petTeacher.explainRule")}</label>
               <div className="row" style={{ alignItems: "stretch" }}>
                 <textarea
+                  id="pet-explain"
                   className="input"
                   rows={2}
                   style={{ flex: 1 }}

@@ -7,6 +7,7 @@ import HeroCarousel from "../components/HeroCarousel.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
 import { useTheme } from "../theme.jsx";
+import LanguagePicker from "../components/LanguagePicker.jsx";
 
 // Each feature gets its own color and its own size — bento-style
 // asymmetric rhythm, not a row of identical boxes. Column spans (out of
@@ -42,6 +43,7 @@ export default function Landing() {
             <BrandLogo className="brand-logo--bar" />
           </Link>
           <span className="spacer" />
+          <LanguagePicker />
           <button
             type="button"
             className="theme-toggle"

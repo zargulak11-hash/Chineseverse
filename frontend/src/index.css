@@ -1120,6 +1120,24 @@ select.input {
   max-width: 420px !important;
   margin: 48px auto;
 }
+
+/* components/LanguagePicker.jsx: the compact language control on the landing
+   bar and the sign-in / sign-up cards, as tall as the theme toggle beside it. */
+select.input.lang-select {
+  width: auto;
+  min-height: 34px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.formcard-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
 /* A form card that sits in a page's column (Settings) instead of alone in
    the middle of an auth page: it fills the column like the cards beside it.
    React can't set an inline !important, so this has to be a class. */
@@ -3174,8 +3192,32 @@ table.data td {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 760px) {
+  /* The landing bar on one row on a phone or tablet: logo, language and the sign-in
+     buttons -- what a first-time visitor needs. With the desktop gaps (and
+     "Ворид шудан" in Tajik) "Log in" wrapped under the rest. The theme
+     switch stays in the app's top bar and Settings. */
+  .appbar {
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+  .appbar .theme-toggle { display: none; }
+  .appbar .btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+}
+
+/* Below 640 the hero's own "Create account" right under the bar is the
+   call to action. */
+@media (max-width: 640px) {
   .appbar-cta { display: none; }
+}
+
+@media (max-width: 480px) {
+  .brand-logo--bar {
+    --logo-h: 32px;
+  }
 }
 
 .scrollhint {

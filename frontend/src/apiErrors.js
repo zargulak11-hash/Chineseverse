@@ -5,6 +5,9 @@ import i18n from "./i18n.js";
 // Chinese learner got "Invalid username or password" or "This location isn't
 // unlocked yet" in English. The learner-facing ones are mapped to apiErrors.*
 // here; anything unmapped (admin tools, rare internals) keeps the server text.
+// 422 fields that have their own message (apiErrors.invalidField.*).
+const FIELD_ERRORS = ["email", "username", "password"];
+
 const EXACT = {
   "Invalid username or password": "invalidLogin",
   // services/login_throttle.py (429 after repeated failed sign-ins)
@@ -91,8 +94,13 @@ export function localizeApiError(detail, status) {
     if (status === 404 && / not found$/i.test(detail)) return i18n.t("apiErrors.notFound");
     return detail;
   }
-  // FastAPI's 422 validation body is a list, not a sentence.
-  if (status === 422) return i18n.t("apiErrors.invalidInput");
+  // FastAPI's 422 validation body is a list, not a sentence. For the fields
+  // a learner types by hand (sign-up, settings) name the field and its rule:
+  // "some of the data isn't valid" left a mistyped email with no next step.
+  if (status === 422) {
+    const field = Array.isArray(detail) ? detail.map((d) => d?.loc?.[d.loc.length - 1]).find((f) => FIELD_ERRORS.includes(f)) : null;
+    return field ? i18n.t(`apiErrors.invalidField.${field}`) : i18n.t("apiErrors.invalidInput");
+  }
   if (status >= 500) return i18n.t("apiErrors.server");
   return i18n.t("apiErrors.requestFailed", { status });
 }
