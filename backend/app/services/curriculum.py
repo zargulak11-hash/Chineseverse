@@ -131,7 +131,10 @@ def import_curriculum(db: Session, path: str = SNAPSHOT_PATH) -> dict[str, int]:
             models.ContentTranslation.field, models.ContentTranslation.locale,
         )
     }
-    for content_type, natural, field, locale, text in snap["translations"]:
+    # Rows are [type, natural key, field, locale, text] or, for a draft
+    # awaiting native review, the same plus a 6th element "draft".
+    for content_type, natural, field, locale, text, *rest in snap["translations"]:
+        source = rest[0] if rest else None
         mapping = idx.get(content_type)
         if mapping is None:
             key = natural  # already a stable code (quest_template, ui_string)
@@ -143,7 +146,7 @@ def import_curriculum(db: Session, path: str = SNAPSHOT_PATH) -> dict[str, int]:
         if (content_type, key, field, locale) in have:
             continue
         db.add(models.ContentTranslation(
-            content_type=content_type, content_key=key, field=field, locale=locale, text=text,
+            content_type=content_type, content_key=key, field=field, locale=locale, text=text, source=source,
         ))
         have.add((content_type, key, field, locale))
         counts["translations"] += 1

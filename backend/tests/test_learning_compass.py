@@ -18,7 +18,10 @@ BEFORE = "f3b8d1c6a274"  # the revision before the rename
 def texts(db):
     m = db.query(models.Mission).filter_by(slug="first-duel").one()
     a = db.query(models.Achievement).filter_by(code="duel_win").one()
-    tr = {(t.content_type, t.locale): t.text for t in db.query(models.ContentTranslation).filter(
+    # Named columns, not the entity: after a downgrade the table may lack
+    # columns a later migration adds (content_translations.source).
+    CT = models.ContentTranslation
+    tr = {(t.content_type, t.locale): t.text for t in db.query(CT.content_type, CT.locale, CT.text, CT.field).filter(
         ((models.ContentTranslation.content_type == "mission") & (models.ContentTranslation.content_key == str(m.id)))
         | ((models.ContentTranslation.content_type == "achievement") & (models.ContentTranslation.content_key == str(a.id))))
         if t.field in ("objective", "description")}
@@ -44,8 +47,9 @@ def test_the_migration_renames_old_seeded_texts_and_spares_an_admin_edit(client)
         assert m.objective == OLD and a.description == OLD, "downgrade restores the old text"
         assert tr[("mission", "ru")] == "Выиграйте свою первую ДНК-дуэль.", tr
         edited = (db.query(models.ContentTranslation)
-                  .filter_by(content_type="achievement", content_key=str(a.id), field="description", locale="tg").one())
-        edited.text = "Матни админ: ДНК-дуэл"
+                  .filter_by(content_type="achievement", content_key=str(a.id), field="description", locale="tg")
+                  .update({"text": "Матни админ: ДНК-дуэл"}))
+        assert edited == 1
         db.commit()
     command.upgrade(cfg, "head")
     with SessionLocal() as db:

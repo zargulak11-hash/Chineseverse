@@ -34,3 +34,6 @@ class ContentTranslation(Base):
     field = Column(String(40), nullable=False)                     # "title", "description", "meanings", ...
     locale = Column(String(5), nullable=False)                     # "ru" | "tg" | "zh"
     text = Column(Text, nullable=False)
+    # NULL = authored; "draft" = written to close a gap and awaiting native
+    # review (scripts/export_translation_review.py lists them).
+    source = Column(String(20), nullable=True)

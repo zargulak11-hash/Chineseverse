@@ -90,7 +90,10 @@ def main() -> None:
         if natural is None:
             skipped += 1  # translation of a row that no longer exists
             continue
-        translations.append([t.content_type, natural, t.field, t.locale, t.text])
+        row = [t.content_type, natural, t.field, t.locale, t.text]
+        if t.source:
+            row.append(t.source)  # "draft": awaiting native review
+        translations.append(row)
 
     snapshot = {"version": 1, "vocab": vocab, "grammar": grammar, "lessons": lessons, "translations": translations}
     os.makedirs(os.path.dirname(SNAPSHOT_PATH), exist_ok=True)

@@ -619,6 +619,11 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
             own = getattr(r, "simplified", None) or getattr(r, "character", None)
             if item_type != "grammar" and own and (label or "").strip() == own:
                 label = getattr(r, field)
+            elif locale == "zh" and item_type != "grammar" and own and own in (label or ""):
+                # A Chinese definition may use the word itself (饭: 煮熟的米饭);
+                # as a quiz label that points at the answer. Dictionaries write
+                # the headword as "～" inside its own definition.
+                label = label.replace(own, "～")
             if label != getattr(r, field):
                 translated[item_type].add(r.id)
             out[item_type][r.id] = label
