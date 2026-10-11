@@ -267,7 +267,11 @@ def test_reused_translations_match_reading_and_sense(client):
         gou = db.query(models.Hanzi).filter_by(character="狗").first()
         assert tr_[("hanzi", str(gou.id), "ru")] == "собака"
         dai = db.query(models.Hanzi).filter_by(character="带").first()
-        assert ("hanzi", str(dai.id), "ru") not in tr_, "带 'belt' must not take the word 带 'to carry'"
+        dai_word = tr_[("vocab_word", str(word(db, 3, "带").id), "ru")]
+        # The character's meaning was written for it (a draft that keeps the
+        # "belt" sense), never the word 带 "to carry" copied over.
+        assert tr_.get(("hanzi", str(dai.id), "ru")) != dai_word, "带 'belt' must not take the word 带 'to carry'"
+        assert "пояс" in tr_[("hanzi", str(dai.id), "ru")]
     # reused ru/tg meanings only where reading and sense match (半, 狗; not 带)
 
 

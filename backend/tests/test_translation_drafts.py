@@ -34,14 +34,17 @@ def test_drafts_keep_their_mark_through_the_snapshot_import(client):
         assert ru.text == "пить" and ru.source is None
 
 
-@pytest.mark.parametrize("level", [1, 2, 3])
-def test_every_beginner_word_has_a_meaning_in_every_language(client, level):
+@pytest.mark.parametrize("model,content_type,field", [
+    (models.VocabularyWord, "vocab_word", "meanings"), (models.Hanzi, "hanzi", "meaning")])
+@pytest.mark.parametrize("level", [1, 2, 3, 4, 5, 6, 7])
+def test_every_word_and_character_has_a_meaning_in_every_language(client, level, model, content_type, field):
     with SessionLocal() as db:
         level_id = db.query(models.HSKLevel.id).filter_by(level=level).scalar()
-        ids = {str(i) for (i,) in db.query(models.VocabularyWord.id).filter_by(hsk_level_id=level_id)}
+        ids = {str(i) for (i,) in db.query(model.id).filter_by(hsk_level_id=level_id)}
+        assert ids, level
         for locale in ("ru", "tg", "zh"):
             have = {k for (k,) in db.query(models.ContentTranslation.content_key).filter_by(
-                content_type="vocab_word", field="meanings", locale=locale)}
+                content_type=content_type, field=field, locale=locale)}
             assert not ids - have, (level, locale, len(ids - have))
 
 
