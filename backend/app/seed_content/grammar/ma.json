@@ -43,7 +43,7 @@
   "similar": [
     {"pattern": "……呢？", "topic": "呢 — follow-up question", "difference": {"en": "呢 asks \"and you?\" / \"what about…?\": 我很好，你呢？", "ru": "呢 спрашивает «а ты?» / «а как насчёт…?»: 我很好，你呢？", "tg": "呢 мепурсад «ту чӣ?» / «… чӣ?»: 我很好，你呢？", "zh": "“呢”用来追问：我很好，你呢？"}},
     {"pattern": "A 不 A", "topic": null, "difference": {"en": "去不去 / 是不是 asks the same yes/no question, slightly more direct, without 吗.", "ru": "去不去 / 是不是 задаёт тот же вопрос «да/нет», чуть прямее, без 吗.", "tg": "去不去 / 是不是 ҳамон саволи «ҳа/не»-ро бе 吗, каме мустақимтар медиҳад.", "zh": "“去不去”“是不是”也是是非问，不用“吗”。"}},
-    {"pattern": "Question words", "topic": "几/多少 — asking quantity", "difference": {"en": "什么, 谁, 哪儿, 几, 多少 ask for information, not yes/no — no 吗.", "ru": "什么, 谁, 哪儿, 几, 多少 спрашивают информацию, а не «да/нет» — без 吗.", "tg": "什么, 谁, 哪儿, 几, 多少 маълумот мепурсанд, на «ҳа/не» — бе 吗.", "zh": "疑问词问具体信息，不用“吗”。"}}
+    {"pattern": "谁/什么/哪儿……？", "topic": "几/多少 — asking quantity", "difference": {"en": "什么, 谁, 哪儿, 几, 多少 ask for information, not yes/no — no 吗.", "ru": "什么, 谁, 哪儿, 几, 多少 спрашивают информацию, а не «да/нет» — без 吗.", "tg": "什么, 谁, 哪儿, 几, 多少 маълумот мепурсанд, на «ҳа/не» — бе 吗.", "zh": "疑问词问具体信息，不用“吗”。"}}
   ],
   "dialogue": [
     {"speaker": "A", "zh": "你喝咖啡吗？", "tr": {"en": "Do you drink coffee?", "ru": "Ты пьёшь кофе?", "tg": "Ту қаҳва менӯшӣ?"}},

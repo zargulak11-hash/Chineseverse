@@ -60,3 +60,17 @@ def test_a_mistake_reads_in_the_language_the_learner_uses_now(client, locale):
     assert mistakes[0]["correct_answer"] == "我 wǒ"  # Chinese stays Chinese
     home = expect(client, "get", "/api/dashboard", 200, headers={**h, "X-Locale": locale})
     assert home["recent_mistakes"][0]["question_text"] == tr
+
+
+def test_grammar_patterns_carry_no_english_words(client):
+    # A pattern is the Chinese being taught and is not translated, so its
+    # slots use a notation every language reads: V, Adj, A/B, 主语, 量词.
+    # "不 + verb/adjective" showed English inside the formula on every screen.
+    from app.services import grammar_lesson as gl
+
+    allowed = {"Adj"}
+    with SessionLocal() as db:
+        patterns = [t.pattern or "" for t in db.query(models.GrammarTopic)]
+    patterns += [s["pattern"] for data in gl.authored().values() for s in data.get("similar") or []]
+    bad = [p for p in patterns if set(LATIN_WORDS.findall(p)) - allowed]
+    assert not bad, bad

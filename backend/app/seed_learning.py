@@ -569,7 +569,7 @@ GRAMMAR = [
     (1, "吗 — yes/no question", "……吗？",
      "Adding 吗 to the end of a statement turns it into a yes/no question.",
      "你好吗？ / 你是学生吗？", 2),
-    (1, "不 — negation", "不 + verb/adjective",
+    (1, "不 — negation", "不 + V/Adj",
      "不 negates a verb or adjective.",
      "我不去。 / 不好。", 3),
     (1, "的 — possession", "A 的 B",
@@ -599,15 +599,15 @@ GRAMMAR += [
     (1, "在 — location / progressive", "在 + 地点 / 在 + V", "在 marks where something is, or (before a verb) that an action is in progress.", "我在家。 / 我在吃饭。", 7),
     (1, "这/那 — this/that", "这 + 名词 / 那 + 名词", "这 points to something near the speaker, 那 to something farther away.", "这是我的书。 / 那是他的车。", 8),
     (1, "呢 — follow-up question", "……呢？", "呢 after a noun asks 'what about ...?' as a follow-up.", "我很好，你呢？", 9),
-    (1, "会/能 — ability, possibility", "会/能 + verb", "会 is for learned skills, 能 for general ability or permission.", "我会说中文。 / 我能来。", 10),
+    (1, "会/能 — ability, possibility", "会/能 + V", "会 is for learned skills, 能 for general ability or permission.", "我会说中文。 / 我能来。", 10),
     (1, "一点儿 — a little", "V/Adj + 一点儿", "一点儿 softens an adjective or adds a small amount to a verb.", "便宜一点儿。 / 喝一点儿水。", 11),
-    (1, "几/多少 — asking quantity", "几 + measure word (small numbers) / 多少 (any size)", "几 expects an answer under ~10 and needs a measure word; 多少 works for any number.", "你家有几口人？ / 多少钱？", 12),
+    (1, "几/多少 — asking quantity", "几 + 量词 (≤10) / 多少", "几 expects an answer under ~10 and needs a measure word; 多少 works for any number.", "你家有几口人？ / 多少钱？", 12),
 ]
 GRAMMAR += [
-    (2, "比 — comparison", "A 比 B + adjective", "比 compares two things directly along one quality.", "今天比昨天冷。", 4),
+    (2, "比 — comparison", "A 比 B + Adj", "比 compares two things directly along one quality.", "今天比昨天冷。", 4),
     (2, "正在/在 — progressive aspect", "正在/在 + V (+呢)", "Marks an action happening right now.", "他正在吃饭。 / 我在看书呢。", 5),
-    (2, "得 (děi) — must", "得 + verb", "得 expresses obligation, similar to 应该 but more colloquial.", "我得走了。", 6),
-    (2, "太……了 — excessively", "太 + adjective + 了", "Expresses that something is too much of a quality.", "太贵了！", 7),
+    (2, "得 (děi) — must", "得 + V", "得 expresses obligation, similar to 应该 but more colloquial.", "我得走了。", 6),
+    (2, "太……了 — excessively", "太 + Adj + 了", "Expresses that something is too much of a quality.", "太贵了！", 7),
     (2, "一下 — brief action", "V + 一下", "Softens a verb, suggesting a quick, casual action.", "你看一下。 / 等一下。", 8),
 ]
 GRAMMAR += [
@@ -615,7 +615,7 @@ GRAMMAR += [
     (3, "被字句 — the passive with 被", "受事 + 被 (+ 施事) + V", "被 marks the passive voice — the subject receives the action.", "杯子被他打破了。", 2),
     (3, "虽然……但是…… — although/but", "虽然 A，但是 B", "Concedes A, then contrasts it with B.", "虽然很累，但是很高兴。", 3),
     (3, "一边……一边…… — simultaneous actions", "一边 A，一边 B", "Describes two actions happening at the same time.", "他一边吃饭一边看电视。", 4),
-    (3, "越来越 — increasingly", "越来越 + adjective/verb", "Describes a quality that keeps increasing over time.", "天气越来越冷了。", 5),
+    (3, "越来越 — increasingly", "越来越 + Adj/V", "Describes a quality that keeps increasing over time.", "天气越来越冷了。", 5),
     (3, "除了……以外 — besides/except", "除了 A 以外，(还/都) B", "Excludes or adds to A when talking about B.", "除了咖啡以外，我什么都喝。", 6),
 ]
 GRAMMAR += [
