@@ -27,13 +27,13 @@ never blame.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app import models
 from app.services.companion_reaction import companion_of
-from app.services.gamification import activity_today, streak_snapshot
+from app.services.gamification import activity_today, local_date, local_day_start, streak_snapshot
 from app.services.localization import load_translations, tr
 
 RECENT_DAYS = 7
@@ -76,14 +76,11 @@ PRIORITY = [
 ]
 
 
-def _day_start(d) -> datetime:
-    return datetime.combine(d, time.min)
-
-
 def days_away(db: Session, user: models.User) -> int | None:
     """Whole days between the learner's last activity BEFORE today and today
-    (None for someone with no earlier activity at all)."""
-    today_start = _day_start(activity_today())
+    (None for someone with no earlier activity at all), in their calendar."""
+    today = activity_today(user)
+    today_start = local_day_start(user, today)
     last = (
         db.query(models.ActivityEvent.created_at)
         .filter(models.ActivityEvent.user_id == user.id, models.ActivityEvent.created_at < today_start)
@@ -92,7 +89,7 @@ def days_away(db: Session, user: models.User) -> int | None:
     )
     if last is None:
         return None
-    return (activity_today() - last[0].date()).days
+    return (today - local_date(user, last[0])).days
 
 
 def _recent_sessions(db: Session, user: models.User, days: int) -> list[models.PracticeSession]:
@@ -185,7 +182,7 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
     away = days_away(db, user)
     active_today = db.query(models.ActivityEvent.id).filter(
         models.ActivityEvent.user_id == user.id,
-        models.ActivityEvent.created_at >= _day_start(activity_today())).first() is not None
+        models.ActivityEvent.created_at >= local_day_start(user, activity_today(user))).first() is not None
     if away is not None and away >= AWAY_DAYS:
         out.append(_m("welcome_back", "excited", {"days": away, "active_today": active_today}))
 
@@ -201,7 +198,7 @@ def memories(db: Session, user: models.User, locale: str) -> dict:
     if crossed:
         out.append(_m("word_milestone", "celebrating", {"count": crossed[-1], "total": total}, n=crossed[-1]))
 
-    streak = streak_snapshot(user.streak)["current_streak"]
+    streak = streak_snapshot(user)["current_streak"]
     if streak >= 3:
         hit = max((m for m in STREAK_MILESTONES if m <= streak), default=None)
         out.append(_m("streak", "celebrating" if hit == streak else "excited",

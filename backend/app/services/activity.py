@@ -16,7 +16,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app import models
-from app.services.gamification import touch_streak
+from app.services.gamification import sync_streak
 
 # action_type -> (section, estimated minutes)
 ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
@@ -69,20 +69,24 @@ SECTION_LABELS: dict[str, str] = {
 }
 
 
-def log_activity(db: Session, user: models.User, action_type: str, when: datetime | None = None) -> None:
+def log_activity(db: Session, user: models.User, action_type: str, when: datetime | None = None) -> bool:
+    """Record one real learning action. Returns True when it was the first
+    of the learner's day (the day just started counting toward the streak)."""
     section, minutes = ACTION_WEIGHTS.get(action_type, ("other", 1.0))
+    at = when or datetime.utcnow()
     db.add(
         models.ActivityEvent(
             user_id=user.id,
             section=section,
             action_type=action_type,
             minutes=minutes,
-            created_at=when or datetime.utcnow(),
+            created_at=at,
         )
     )
-    # Every real learning action logs here, so this is also where the day
-    # counts toward the streak. Before, only practice answers and voice
-    # attempts touched the streak: days spent on Hanzi, vocabulary, grammar,
-    # lessons, duels, cases, Pet Teacher or quests filled the heatmap but
-    # never extended the streak. Idempotent within a day.
-    touch_streak(user)
+    # Every real learning action logs here, so this is also -- and the only
+    # place -- where a day counts toward the streak. Before, only practice
+    # answers and voice attempts touched the streak: days spent on Hanzi,
+    # vocabulary, grammar, lessons, duels, cases, Pet Teacher or quests
+    # filled the heatmap but never extended the streak. Opening the app,
+    # pinging it or choosing a companion is not learning and never counts.
+    return sync_streak(db, user, at)

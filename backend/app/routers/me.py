@@ -12,7 +12,7 @@ from app.deps import get_client_ip, get_current_user
 from app.security import create_access_token, hash_password, verify_password
 from app.services import login_throttle
 from app.services.avatars import AVATAR_DIR, UPLOAD_PREFIX, file_for
-from app.services.gamification import touch_streak
+from app.services.gamification import streak_snapshot
 from app.services.notifications import remember_locale
 
 router = APIRouter(prefix="/api/me", tags=["me"])
@@ -104,8 +104,10 @@ def get_me(
         db.add(streak)
     db.commit()
     db.refresh(profile)
-    db.refresh(streak)
-    return schemas.MeResponse(user=user, profile=profile, streak=streak)
+    db.refresh(user)
+    # As of the learner's today, like the dashboard: the stored run alone
+    # still showed a streak that missed days had already broken.
+    return schemas.MeResponse(user=user, profile=profile, streak=streak_snapshot(user))
 
 
 @router.post("/animal", response_model=schemas.UserAnimalResponse)
@@ -127,7 +129,9 @@ def choose_animal(
         link.interactions += 1
 
     user.animal_id = animal.id
-    touch_streak(user)
+    # Not a learning action, so it no longer counts the day toward the
+    # streak (it used to: a new account had a 1-day streak before learning
+    # anything).
     db.commit()
     db.refresh(link)
     return link
@@ -273,7 +277,9 @@ def remove_avatar(
 
 
 @router.post("/ping", response_model=PingResponse)
-def ping(user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    new_day = touch_streak(user)
-    db.commit()
-    return PingResponse(streak=user.streak, new_day=new_day)
+def ping(user: models.User = Depends(get_current_user)):
+    """The streak as it stands. Kept for old clients, but read-only now: it
+    used to count the day, so merely opening the app kept a streak alive.
+    Only a real learning action (services/activity.log_activity) counts, so
+    a ping never starts a day (`new_day` is always false)."""
+    return PingResponse(streak=streak_snapshot(user), new_day=False)

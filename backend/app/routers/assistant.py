@@ -13,7 +13,7 @@ from app.database import get_db
 from app.deps import get_current_user, get_locale
 from app.services import ai_client, lesson_path
 from app.services.dna import compute_dna
-from app.services.gamification import ensure_user_skills, user_rank
+from app.services.gamification import ensure_user_skills, streak_snapshot, user_rank
 from app.services.localization import load_translations, tr
 from app.services.practice import review_counts
 
@@ -112,7 +112,8 @@ def _learner_context(db: Session, user: models.User, locale: str) -> dict:
         "username": user.username,
         "hsk_level": level,
         "mastery": mastery,
-        "streak": user.streak.current_streak if user.streak else 0,
+        # The streak the header shows (a run missed days broke reads 0).
+        "streak": streak_snapshot(user)["current_streak"],
         # With every skill still at 0 there is no "weakest" -- naming two
         # arbitrary ones would hand the model a fact that isn't true.
         "weak_skills": [skill_name[s.id] for s in skills[:2]] if practised else [],

@@ -1,5 +1,3 @@
-from datetime import datetime, time
-
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -14,9 +12,11 @@ from app.services import achievements as achievements_svc
 from app.services.avatars import photo_url
 from app.services.dna import compute_dna, skill_status
 from app.services.gamification import (
+    activity_today,
     check_achievements,
     ensure_user_skills,
     generate_daily_quests,
+    local_day_start,
     streak_snapshot,
     user_rank,
 )
@@ -113,7 +113,7 @@ def dashboard(
     n_earned, n_unseen = len(earned), len(unseen)
 
     due = review_counts(db, user)
-    day_start = datetime.combine(datetime.utcnow().date(), time.min)
+    day_start = local_day_start(user, activity_today(user))  # the learner's own today
     minutes_today = (
         db.query(func.coalesce(func.sum(models.ActivityEvent.minutes), 0.0))
         .filter(models.ActivityEvent.user_id == user.id, models.ActivityEvent.created_at >= day_start)
@@ -144,7 +144,7 @@ def dashboard(
             weak_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and 0 < s.mastery <= 30],
             strong_areas=[skill_name(s.skill.code) for s in user.user_skills if s.skill and s.mastery >= 70],
         ),
-        streak=schemas.StreakResponse(**streak_snapshot(user.streak)),
+        streak=schemas.StreakResponse(**streak_snapshot(user)),
         daily_goal={
             "daily_goal_minutes": user.profile.daily_goal_minutes if user.profile else 10,
             # Today's logged learning activity (same per-action weights the

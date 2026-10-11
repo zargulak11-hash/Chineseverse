@@ -50,9 +50,25 @@ def get_client_ip(request: Request) -> str | None:
         return None
 
 
+def remember_timezone(db: Session, user: models.User, raw: str | None) -> None:
+    """Store the learner's IANA time zone (the browser sends it as
+    X-Timezone on every request, see api.js) so learning days and the streak
+    follow their own calendar. Written only when it changes -- a learner who
+    travels gets their new zone with the next request -- and before the
+    route runs, so the action this request logs already counts on the
+    learner's own date. Anything that isn't a real zone is ignored."""
+    from app.services.gamification import valid_timezone
+
+    tz = valid_timezone(raw)
+    if tz and user.timezone != tz:
+        user.timezone = tz
+        db.commit()
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
+    x_timezone: str | None = Header(default=None),
 ) -> models.User:
     if credentials is None:
         raise HTTPException(
@@ -76,6 +92,7 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )
+    remember_timezone(db, user, x_timezone)
     return user
 
 

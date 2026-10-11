@@ -71,11 +71,24 @@ async function send(url, options) {
 // missions, ...) the same way the UI chrome already follows i18n.language
 // — one header, every request, no per-call plumbing. "en" is the
 // fallback default anyway, so it's harmless to always send it.
+// X-Timezone is the browser's IANA zone ("Asia/Dushanbe"): the backend
+// counts learning days and the streak on the learner's own calendar with
+// it, not on UTC days.
+function browserTimezone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch {
+    return "";
+  }
+}
+
 function sessionHeaders(extra = {}) {
   const headers = { ...extra };
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
   if (i18n.language) headers["X-Locale"] = i18n.language;
+  const tz = browserTimezone();
+  if (tz) headers["X-Timezone"] = tz;
   return headers;
 }
 

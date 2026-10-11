@@ -32,7 +32,8 @@ def test_a_new_learner_signs_in_and_sets_up(client, booted):
     assert expect(client, "get", "/api/me", 200, headers=h)["user"]["username"] == "e2euser"
     fox = next(a for a in expect(client, "get", "/api/animals", 200) if a["slug"] == "fox")
     assert expect(client, "post", "/api/me/animal", 200, json={"animal_id": fox["id"]}, headers=h)["bond_level"] == 1
-    assert expect(client, "post", "/api/me/ping", 200, headers=h)["streak"]["current_streak"] == 1
+    # Signing in and choosing a companion is not learning: no streak yet.
+    assert expect(client, "post", "/api/me/ping", 200, headers=h)["streak"]["current_streak"] == 0
     assert expect(client, "post", "/api/auth/login", 200, json={"username": "e2euser", "password": "secret123"})["access_token"]
 
 

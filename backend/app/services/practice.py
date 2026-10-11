@@ -47,7 +47,6 @@ from app.services.gamification import (
     progress_quests,
     record_mistake,
     reinforce_mistake,
-    touch_streak,
 )
 from app.services.grammar_names import syllabus_names
 from app.services.hsk_band import resolve_level_filter
@@ -908,7 +907,6 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
             answer_given=given,
             correct_answer=" ".join(x for x in (card["hanzi"], card["pinyin"]) if x) or card["meaning"],
         )
-    touch_streak(user)
     log_activity(db, user, "practice_answer")
     return {
         "mastery": rec.mastery,
@@ -1003,7 +1001,6 @@ def _record_virtual(db: Session, user: models.User, session: models.PracticeSess
             question_text=(q.get("npc") or {}).get("zh") or q.get("sentence") or card["hanzi"],
             correct_answer=" ".join(x for x in (card["hanzi"], card["pinyin"]) if x),
         )
-    touch_streak(user)
     log_activity(db, user, "practice_answer")
     return {
         "mastery": rec.mastery if rec is not None else 0.0,

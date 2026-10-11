@@ -65,7 +65,7 @@ def test_first_ever_hanzi_self_check_starts_the_streak(client, today):
 
 
 def test_first_practice_answer_creates_exactly_one_streak_row(client):
-    # touch_streak runs twice in one request (practice + log_activity).
+    # The streak row is created inside the request that logs the action.
     uid, h = register(client, unique_name())
     drop_streak(uid)
     s0 = expect(client, "post", "/api/practice/sessions", 201, headers=h, json={"source": "vocab", "hsk_level": 1, "size": 4})

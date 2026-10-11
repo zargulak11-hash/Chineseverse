@@ -4,7 +4,8 @@ and small progression helpers shared between routers."""
 from __future__ import annotations
 
 import random
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta, timezone, tzinfo
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -95,48 +96,130 @@ def _pick_quest_templates(preferred_types: list[str], k: int = 3) -> list[tuple]
     return chosen
 
 
-def activity_today() -> date:
-    """The calendar day activity counts toward. ActivityEvent.created_at is
-    stored with datetime.utcnow(), so streak days and the Progress heatmap
-    must use the UTC date too -- date.today() is the server's LOCAL date,
-    which on a non-UTC host put today's events on a different day than the
-    streak/heatmap "today"."""
-    return datetime.utcnow().date()
+def valid_timezone(name: str | None) -> str | None:
+    """`name` when it is a real IANA zone ("Asia/Dushanbe"), else None. It
+    comes from a request header, so anything ZoneInfo refuses (unknown
+    names, paths, junk) is simply not used."""
+    if not name or len(name) > 64:
+        return None
+    try:
+        ZoneInfo(name)
+    except Exception:  # ZoneInfoNotFoundError, ValueError on malformed keys, ...
+        return None
+    return name
 
 
-def touch_streak(user: models.User) -> bool:
-    """Returns True when a new day just started (streak was bumped)."""
-    streak = user.streak
-    today = activity_today()
-    if streak is None:
-        # Attached through the relationship, in the caller's own session:
-        # log_activity now touches the streak on every learning action, so a
-        # second call in the same request must see this row instead of
-        # inserting a duplicate (user_id is unique). The caller commits.
-        user.streak = models.UserStreak(
-            user_id=user.id, last_active_date=today,
-            current_streak=1, longest_streak=1, total_active_days=1,
+def learner_tz(user: models.User | None) -> tzinfo:
+    """The learner's own time zone; UTC until the app has seen it."""
+    name = valid_timezone(getattr(user, "timezone", None))
+    return ZoneInfo(name) if name else timezone.utc
+
+
+def local_date(user: models.User | None, at: datetime) -> date:
+    """The learner's calendar day of `at`, a naive UTC timestamp as every
+    created_at column stores it (datetime.utcnow())."""
+    return at.replace(tzinfo=timezone.utc).astimezone(learner_tz(user)).date()
+
+
+def local_day_start(user: models.User | None, day: date) -> datetime:
+    """Midnight of the learner's `day`, as the naive UTC timestamp to
+    compare created_at columns against."""
+    start = datetime.combine(day, time.min, tzinfo=learner_tz(user))
+    return start.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def activity_today(user: models.User | None = None) -> date:
+    """The calendar day activity counts toward: the learner's own date.
+
+    It used to be the UTC date for everyone, so for a learner in Dushanbe
+    (UTC+5) everything between midnight and 05:00 landed on the previous
+    day -- studying on four consecutive evenings and nights read as a broken
+    streak. Without a known zone (or a user) this is still the UTC date,
+    never date.today(), the server's own local date."""
+    return local_date(user, datetime.utcnow())
+
+
+def learning_days(db: Session, user: models.User) -> set[date]:
+    """Every day the learner did something that logged an ActivityEvent --
+    the real learning actions (services/activity.py), never page views --
+    in their own calendar."""
+    rows = db.query(models.ActivityEvent.created_at).filter(models.ActivityEvent.user_id == user.id)
+    return {local_date(user, at) for (at,) in rows if at is not None}
+
+
+def _run_ending(days: set[date], last: date) -> int:
+    """Consecutive days in `days` ending on `last`."""
+    n = 0
+    while last - timedelta(days=n) in days:
+        n += 1
+    return n
+
+
+def _longest_run(days: set[date]) -> int:
+    # Every run is measured once, from its last day.
+    return max((_run_ending(days, d) for d in days if d + timedelta(days=1) not in days), default=0)
+
+
+def sync_streak(db: Session, user: models.User, at: datetime) -> bool:
+    """Bring user.streak up to date with the activity log after a learning
+    action at `at` (naive UTC) was added. Returns True when that action was
+    the first of its day, i.e. the day just started counting.
+
+    The streak row used to be a counter bumped in place by touch_streak:
+    days were UTC days, choosing a companion or a bare "ping" counted as a
+    learning day, and a day it got wrong stayed wrong forever. Now the log
+    is the record: once per learning day the run is recomputed from it in
+    the learner's own calendar. Stored history is never lowered --
+    longest/total keep whatever they held before (days from before the log
+    existed), and a run still going on from before the log began is kept."""
+    db.flush()  # the new event (autoflush is off)
+    day = local_date(user, at)
+    row = user.streak
+    if row is None:
+        # Attached through the relationship, in the caller's own session, so
+        # a second action in this request sees it (user_id is unique). The
+        # caller commits.
+        row = user.streak = models.UserStreak(
+            user_id=user.id, current_streak=0, longest_streak=0, total_active_days=0,
         )
-        return True
-    if streak.last_active_date == today:
-        return False
-    if streak.last_active_date == today - timedelta(days=1):
-        streak.current_streak += 1
-    else:
-        streak.current_streak = 1
-    streak.longest_streak = max(streak.longest_streak, streak.current_streak)
-    streak.total_active_days += 1
-    streak.last_active_date = today
-    return True
+    start = local_day_start(user, day)
+    same_day = (
+        db.query(models.ActivityEvent.id)
+        .filter(
+            models.ActivityEvent.user_id == user.id,
+            models.ActivityEvent.created_at >= start,
+            models.ActivityEvent.created_at < local_day_start(user, day + timedelta(days=1)),
+        )
+        .limit(2)
+        .count()
+    )
+    new_day = same_day <= 1
+    if not new_day and row.last_active_date == day:
+        return False  # already counted today: nothing changes until tomorrow
+
+    days = learning_days(db, user)
+    last = max(days)
+    current = _run_ending(days, last)
+    stored_alive = row.last_active_date is not None and row.last_active_date >= last - timedelta(days=current)
+    if current and last - timedelta(days=current - 1) == min(days) and stored_alive:
+        # The run reaches back to the first logged action: it may have begun
+        # before the activity log existed, which only the old counter knows.
+        current = max(current, row.current_streak or 0)
+    row.current_streak = current
+    row.longest_streak = max(row.longest_streak or 0, _longest_run(days), current)
+    row.total_active_days = max((row.total_active_days or 0) + (1 if new_day else 0), len(days))
+    row.last_active_date = last
+    return new_day
 
 
-def streak_snapshot(streak: models.UserStreak | None) -> dict:
-    """The streak as of today, for display (StreakResponse fields).
-    current_streak is only recomputed by touch_streak on the NEXT action, so
-    after missed days the stored value still showed the old run; a streak
-    whose last active day is before yesterday is already broken. Read-only --
-    nothing is written, longest/total are reported as stored."""
-    today = activity_today()
+def streak_snapshot(user: models.User) -> dict:
+    """The streak as of the learner's today, for display (StreakResponse).
+    The stored run only changes on the next learning action, so after missed
+    days it still held the old run; a streak whose last learning day is
+    before the learner's yesterday is already broken. Read-only -- nothing
+    is written, longest/total are reported as stored."""
+    streak = user.streak
+    today = activity_today(user)
     current = 0
     if streak is not None and streak.last_active_date and streak.last_active_date >= today - timedelta(days=1):
         current = streak.current_streak or 0

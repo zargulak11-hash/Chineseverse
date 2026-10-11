@@ -84,12 +84,14 @@ def test_choosing_and_changing_the_permanent_companion(client, learner):
         assert db.query(models.UserAnimal).filter_by(user_id=uid).count() == 1
 
 
-def test_the_daily_ping_counts_a_day_once(client, learner):
+def test_the_ping_reports_the_streak_but_never_counts_a_day(client, learner):
+    # It used to count the day: opening the app kept a streak alive without
+    # any learning. Only a learning action counts now (tests/test_streak.py).
     _, h, _ = learner
     first = expect(client, "post", "/api/me/ping", 200, headers=h)
     again = expect(client, "post", "/api/me/ping", 200, headers=h)
-    assert first["new_day"] is True and first["streak"]["current_streak"] == 1
-    assert again["new_day"] is False and again["streak"]["current_streak"] == 1
+    assert first["new_day"] is False and first["streak"]["current_streak"] == 0
+    assert again == first
     expect(client, "post", "/api/me/ping", 401)
 
 

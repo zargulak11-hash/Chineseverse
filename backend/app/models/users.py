@@ -61,8 +61,13 @@ class User(Base):
     # things sent while they're away (notification emails); null until the
     # app has seen them once, which means English.
     locale = Column(String(5), nullable=True)
+    # The learner's IANA time zone ("Asia/Dushanbe"), learned from the
+    # X-Timezone header the frontend sends (deps.get_current_user). Learning
+    # days and the streak follow the learner's own calendar with it; null
+    # until the app has seen them once, which means UTC days.
+    timezone = Column(String(64), nullable=True)
 
-    animal = relationship("Animal", back_populates="users")
+    animal =relationship("Animal", back_populates="users")
     profile = relationship(
         "UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )

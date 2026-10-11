@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -9,7 +9,7 @@ from app import models, schemas
 from app.database import get_db
 from app.deps import get_current_user
 from app.services.activity import SECTION_LABELS
-from app.services.gamification import activity_today, streak_snapshot
+from app.services.gamification import activity_today, local_date, local_day_start, streak_snapshot
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -22,31 +22,26 @@ def activity_analytics(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    today = activity_today()  # same UTC day ActivityEvent.created_at is stored in
+    # The learner's own calendar, the same days the streak counts: grouping
+    # by the stored (UTC) date put a Dushanbe learner's 01:00 session on the
+    # day before.
+    today = activity_today(user)
     window_start = today - timedelta(days=HEATMAP_DAYS - 1)
 
     rows = (
-        db.query(
-            func.date(models.ActivityEvent.created_at).label("day"),
-            models.ActivityEvent.section,
-            func.sum(models.ActivityEvent.minutes).label("minutes"),
-            func.count(models.ActivityEvent.id).label("actions"),
-        )
+        db.query(models.ActivityEvent.created_at, models.ActivityEvent.minutes)
         .filter(
             models.ActivityEvent.user_id == user.id,
-            func.date(models.ActivityEvent.created_at) >= window_start,
+            models.ActivityEvent.created_at >= local_day_start(user, window_start),
         )
-        .group_by(func.date(models.ActivityEvent.created_at), models.ActivityEvent.section)
         .all()
     )
 
     per_day: dict[date, dict[str, float | int]] = defaultdict(lambda: {"minutes": 0.0, "actions": 0})
-    per_section: dict[str, float] = defaultdict(float)
-    for row in rows:
-        day = row.day if isinstance(row.day, date) else datetime.strptime(row.day, "%Y-%m-%d").date()
-        per_day[day]["minutes"] += float(row.minutes or 0)
-        per_day[day]["actions"] += int(row.actions or 0)
-        per_section[row.section] += float(row.minutes or 0)
+    for at, minutes in rows:
+        day = local_date(user, at)
+        per_day[day]["minutes"] += float(minutes or 0)
+        per_day[day]["actions"] += 1
 
     # All-time total (not windowed) — the "Learning Rhythm" headline number.
     total_minutes = float(
@@ -104,7 +99,7 @@ def activity_analytics(
             run = 0
         d += timedelta(days=1)
 
-    streak = schemas.StreakResponse(**streak_snapshot(user.streak))
+    streak = schemas.StreakResponse(**streak_snapshot(user))
 
     return schemas.ActivityAnalyticsResponse(
         total_minutes=round(total_minutes, 1),

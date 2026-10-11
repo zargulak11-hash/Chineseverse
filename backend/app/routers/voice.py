@@ -19,7 +19,6 @@ from app.services.gamification import (
     record_mistake,
     reinforce_mistake,
     scenario_is_unlocked,
-    touch_streak,
     user_rank,
 )
 
@@ -166,8 +165,6 @@ def submit_attempt(
             progress_missions(db, user, "conversation", scenario_id=payload.scenario_id)
             progress_missions(db, user, "speak", scenario_id=payload.scenario_id)
     _track_mistake(db, user, payload.prompt_text, result)
-    if user.streak:
-        touch_streak(user)
     log_activity(db, user, "voice_attempt")
 
     db.commit()
@@ -246,8 +243,6 @@ def submit_companion_chat(
     progress_quests(db, user, "speaking", amount=1)
     progress_missions(db, user, "listening")
     _track_mistake(db, user, None, result)
-    if user.streak:
-        touch_streak(user)
     log_activity(db, user, "voice_attempt")
 
     hsk_level, _ = user_rank(db, user)

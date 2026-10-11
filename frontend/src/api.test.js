@@ -49,6 +49,16 @@ describe("every request", () => {
     expect(options.headers["X-Locale"]).toBe("ru");
   });
 
+  it("carries the browser's time zone, so learning days follow the learner's own calendar", async () => {
+    const zone = vi
+      .spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+      .mockReturnValue({ timeZone: "Asia/Dushanbe" });
+    fetch.mockResolvedValue(respond(200, {}));
+    await api.get("/dashboard");
+    expect(lastCall().options.headers["X-Timezone"]).toBe("Asia/Dushanbe");
+    zone.mockRestore();
+  });
+
   it("sends no Authorization header when signed out", async () => {
     fetch.mockResolvedValue(respond(200, []));
     await api.get("/animals");
