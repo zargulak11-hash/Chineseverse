@@ -29,6 +29,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app import models
+from app.services.grammar_names import titles as grammar_titles
 from app.services.localization import load_translations, tr
 
 _CJK = re.compile(r"[㐀-鿿]")
@@ -236,6 +237,7 @@ def analyze(db: Session, user: models.User, text: str, locale: str, *, translate
     vocab_tr = load_translations(db, "vocab_word", [str(i) for i in word_ids], locale)
     hanzi_tr = load_translations(db, "hanzi", [str(h.id) for h in hanzi.values()], locale)
     grammar_tr = load_translations(db, "grammar_topic", [str(g.id) for g in grammar], locale)
+    g_titles = grammar_titles(db, grammar, locale)
 
     def word_meaning(w):
         label = tr(vocab_tr, w.id, "meanings", w.meanings)
@@ -283,7 +285,7 @@ def analyze(db: Session, user: models.User, text: str, locale: str, *, translate
     for g in grammar:
         lvl = levels.get(g.hsk_level_id)
         grammar_out.append({
-            "id": g.id, "title": tr(grammar_tr, g.id, "title", g.title), "pattern": g.pattern,
+            "id": g.id, "title": g_titles[g.id], "pattern": g.pattern,
             "explanation": tr(grammar_tr, g.id, "explanation", g.explanation), "level": lvl,
             "status": _status(grammar_recs.get(g.id)), "above_level": bool(lvl and lvl > level),
         })

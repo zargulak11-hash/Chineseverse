@@ -41,6 +41,7 @@ from app import models
 from app.services import sentence as sent
 from app.services import sentence_check
 from app.services import story_slots as ss
+from app.services.grammar_names import syllabus_names
 from app.services.grammar_terms import category_label
 from app.services.localization import load_translations, tr
 
@@ -181,12 +182,13 @@ def related(db: Session, topic: models.GrammarTopic, locale: str, extra_titles: 
     rows += q.order_by(models.GrammarTopic.order_index, models.GrammarTopic.id).limit(6).all()
     seen, out = {topic.id}, []
     trs = load_translations(db, "grammar_topic", [str(r.id) for r in rows], locale)
+    named = syllabus_names(db, rows, locale)
     levels = sent._level_map(db)
     for r in rows:
         if r.id in seen:
             continue
         seen.add(r.id)
-        out.append({"id": r.id, "title": tr(trs, r.id, "title", r.title), "pattern": r.pattern,
+        out.append({"id": r.id, "title": named.get(r.id) or tr(trs, r.id, "title", r.title), "pattern": r.pattern,
                     "hsk_level": levels.get(r.hsk_level_id)})
     return out[:6]
 
@@ -244,10 +246,10 @@ def cached_lesson(db: Session, topic: models.GrammarTopic, locale: str) -> dict 
 
 
 def names(db: Session, topics: list[models.GrammarTopic], locale: str) -> dict[int, str]:
-    """Each topic's lesson name in `locale`, where a lesson exists -- the
-    authored ones, then cached AI lessons in one query. Syllabus titles
-    (动补式离合词...) have no RU/TG translation, so this is how the list can
-    say what a point is in the learner's language."""
+    """Each topic's name in `locale`: an authored lesson's, then a cached AI
+    lesson's (one query), then the syllabus name. Syllabus titles
+    (动补式离合词...) are Chinese, so this is how the list can say what a
+    point is in the learner's language."""
     out: dict[int, str] = {}
     keys = {}
     for t in topics:
@@ -261,6 +263,8 @@ def names(db: Session, topics: list[models.GrammarTopic], locale: str) -> dict[i
                 models.AIExplanation.key.in_(list(keys))):
             if isinstance(payload, dict) and payload.get("name"):
                 out[keys[key]] = payload["name"]
+    rest = [t for t in topics if t.id not in out]
+    out.update(syllabus_names(db, rest, locale))
     return out
 
 
@@ -324,6 +328,9 @@ def page(db: Session, user: models.User, topic_id: int, locale: str) -> dict:
     return {
         "id": topic.id,
         "title": tr(trs, topic.id, "title", topic.title),
+        # What the point is called in the learner's language when the title
+        # is Chinese grammar terminology; the page shows the title under it.
+        "name": syllabus_names(db, [topic], locale).get(topic.id),
         "syllabus_title": topic.title,
         "pattern": topic.pattern,
         "category": category_label(topic.category, trs, topic.id, locale),

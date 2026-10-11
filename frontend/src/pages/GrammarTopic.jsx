@@ -207,8 +207,8 @@ export default function GrammarTopic() {
             <Icon name="book" size={13} /> HSK {data.hsk_level === 7 ? "7–9" : data.hsk_level}
             {data.category ? ` · ${data.category}` : ""}
           </div>
-          <h1 className="h1 gt-title">{lesson?.name || data.title}</h1>
-          {lesson?.name && data.title !== lesson.name && <p className="sub" lang="zh-CN">{data.title}</p>}
+          <h1 className="h1 gt-title">{lesson?.name || data.name || data.title}</h1>
+          {(lesson?.name || data.name) && data.title !== (lesson?.name || data.name) && <p className="sub" lang="zh-CN">{data.title}</p>}
           {(lesson?.summary || data.explanation) && <p className="gt-summary">{lesson?.summary || data.explanation}</p>}
           {/* Some syllabus "patterns" are only labels (主谓句2); a lesson's own
               structure formula says more, so it wins when there is one. */}

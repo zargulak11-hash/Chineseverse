@@ -17,6 +17,7 @@ from app.services.gamification import (
 )
 from app.services import companion_reaction as cr
 from app.services import sentence_check
+from app.services.grammar_names import titles as grammar_titles
 from app.services.localization import load_translations, tr
 
 router = APIRouter(prefix="/api/pet-teacher", tags=["pet-teacher"])
@@ -202,7 +203,7 @@ def answer_lesson(
     unlocked = [a.title for a in newly]
 
     topic = _topic_for(db, case, check["issues"])
-    topic_tr = load_translations(db, "grammar_topic", [str(topic.id)], locale) if topic else {}
+    topic_title = grammar_titles(db, [topic], locale)[topic.id] if topic else None
 
     return schemas.PetTeacherResultResponse(
         correct_fix=correct_fix,
@@ -222,7 +223,7 @@ def answer_lesson(
         unlocked=unlocked,
         taught_count=taught_count,
         grammar_topic_id=topic.id if topic else None,
-        grammar_topic_title=tr(topic_tr, topic.id, "title", topic.title) if topic else None,
+        grammar_topic_title=topic_title,
         # The permanent companion reacts to the real outcome.
         reaction=cr.teach_reaction(user, outcome=outcome, first_time=first_time),
     )

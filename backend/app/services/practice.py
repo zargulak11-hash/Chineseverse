@@ -49,6 +49,7 @@ from app.services.gamification import (
     reinforce_mistake,
     touch_streak,
 )
+from app.services.grammar_names import syllabus_names
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
@@ -608,10 +609,13 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
     ):
         rows = db.query(_MODEL[item_type][0]).filter(_MODEL[item_type][0].id.in_(ids[item_type] or {0})).all()
         trs = load_translations(db, content_type, [str(r.id) for r in rows], locale)
+        # A syllabus point titled in Chinese grammar terms is named in the
+        # learner's language (grammar_names), like the grammar list does.
+        named = syllabus_names(db, rows, locale) if item_type == "grammar" else {}
         out[item_type] = {}
         translated[item_type] = set()
         for r in rows:
-            label = tr(trs, r.id, field, getattr(r, field))
+            label = named.get(r.id) or tr(trs, r.id, field, getattr(r, field))
             # The zh "meaning" of a word is the word itself (a mirror, see
             # scripts/seed_vocab_zh_mirror.py). As a quiz label it gives the
             # answer away -- "which word means 喝?" with 喝 among the options --

@@ -39,6 +39,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.services import sentence as sent
 from app.services import story_slots as ss
+from app.services.grammar_names import titles as grammar_titles
 from app.services.internet_content import ITEM_BY_SLUG, ITEMS, VERSIONS
 from app.services.localization import load_translations, tr
 
@@ -212,7 +213,8 @@ def item_view(db: Session, user: models.User, slug: str, version: str | None, lo
             seen_g.add(g.id)
             grammar.append((g, b["text"]))
     gtr = load_translations(db, "grammar_topic", [str(g.id) for g, _ in grammar], locale)
-    grammar_out = [{"id": g.id, "title": tr(gtr, g.id, "title", g.title), "pattern": g.pattern,
+    g_titles = grammar_titles(db, [g for g, _ in grammar], locale)
+    grammar_out = [{"id": g.id, "title": g_titles[g.id], "pattern": g.pattern,
                     "explanation": tr(gtr, g.id, "explanation", g.explanation), "level": levels.get(g.hsk_level_id),
                     "above": (levels.get(g.hsk_level_id) or 1) > prof["level"], "example": ex}
                    for g, ex in grammar][:5]

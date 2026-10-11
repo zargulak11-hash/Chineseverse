@@ -7,6 +7,7 @@ from app.crud import apply_updates, get_or_404
 from app.database import get_db
 from app.deps import get_current_user, get_locale, get_user_or_none, require_admin
 from app.services import lesson_path
+from app.services.grammar_names import titles as grammar_titles
 from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
 from app.services.practice import lesson_body, lesson_items
@@ -171,7 +172,7 @@ def get_lesson_items(
     items = lesson_items(db, lesson)
     words, topics = items["vocab"], items["grammar"]
     w_tr = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
-    g_tr = load_translations(db, "grammar_topic", [str(g.id) for g in topics], locale)
+    g_titles = grammar_titles(db, topics, locale)
     return {
         "vocab": [
             {"id": w.id, "simplified": w.simplified, "pinyin": w.pinyin,
@@ -179,7 +180,7 @@ def get_lesson_items(
             for w in words
         ],
         "grammar": [
-            {"id": g.id, "title": tr(g_tr, g.id, "title", g.title), "pattern": g.pattern}
+            {"id": g.id, "title": g_titles[g.id], "pattern": g.pattern}
             for g in topics
         ],
     }

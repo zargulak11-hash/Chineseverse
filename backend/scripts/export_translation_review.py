@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import models  # noqa: E402
 from app.database import SessionLocal  # noqa: E402
+from app.services.grammar_names import _en_names  # noqa: E402
 
 ORIGINALS = {
     # content type -> (model, Chinese column, pinyin column, {field: English column})
@@ -27,6 +28,7 @@ ORIGINALS = {
                                                            "category": "category", "difficulty": "difficulty"}),
     "lesson": (models.Lesson, "title", None, {"title": "title", "summary": "summary", "content": "content"}),
     "achievement": (models.Achievement, "code", None, {"title": "title", "description": "description"}),
+    "hsk_level": (models.HSKLevel, "level", None, {"title": "title", "description": "description"}),
 }
 
 
@@ -49,6 +51,9 @@ def main(locales):
         item = getattr(row, spec[1], "") if row is not None else t.content_key
         pinyin = getattr(row, spec[2], "") if row is not None and spec[2] else ""
         english = getattr(row, spec[3].get(t.field, ""), "") if row is not None else ""
+        if t.content_type == "grammar_topic" and t.field == "name" and row is not None:
+            # A syllabus name has no English column; its English is a static file.
+            english = _en_names().get(f"{level}|{row.title}", "")
         out.writerow([t.locale, level, t.content_type, t.field, item, pinyin, english, t.text])
 
 

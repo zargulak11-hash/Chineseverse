@@ -50,6 +50,7 @@ from app import models
 from app.services import books as lib
 from app.services import sentence as sent
 from app.services import story_slots as ss
+from app.services.grammar_names import titles as grammar_titles
 
 LOCALES = ("en", "ru", "tg")
 # Reading speed (Chinese characters per minute) a learner at each level can
@@ -743,7 +744,8 @@ def explain(db: Session, user: models.User, slug: str, n: int, text: str, focus:
                               "meaning": tr(hanzi_tr, h.id, "meaning", h.meaning) if h else "", "level": None})
     grammar_rows = sent.match_grammar(db, text)
     grammar_tr = load_translations(db, "grammar_topic", [str(g.id) for g in grammar_rows], locale)
-    grammar = [{"id": g.id, "title": tr(grammar_tr, g.id, "title", g.title), "pattern": g.pattern,
+    g_titles = grammar_titles(db, grammar_rows, locale)
+    grammar = [{"id": g.id, "title": g_titles[g.id], "pattern": g.pattern,
                 "explanation": tr(grammar_tr, g.id, "explanation", g.explanation),
                 "level": levels.get(g.hsk_level_id)} for g in grammar_rows]
 

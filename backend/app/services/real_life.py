@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.services import sentence as sent
+from app.services.grammar_names import titles as grammar_titles
 from app.services.real_life_content import SCENE_BY_SLUG, SCENES
 
 TIERS = ("beginner", "intermediate", "advanced")
@@ -217,7 +218,7 @@ def scene_preview(db: Session, user: models.User, slug: str, locale: str) -> dic
     levels = sent._level_map(db)
     trs = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
     grammar = [g for g in sent.match_grammar(db, tier_lines(scene, tier)) if levels.get(g.hsk_level_id, 1) <= level][:3]
-    gtr = load_translations(db, "grammar_topic", [str(g.id) for g in grammar], locale)
+    g_titles = grammar_titles(db, grammar, locale)
     h = _history(db, user).get(slug) or {"completed": 0, "best": 0.0}
     return {
         "slug": slug, "icon": scene["icon"], "title": scene_text(scene["title"], locale),
@@ -231,7 +232,7 @@ def scene_preview(db: Session, user: models.User, slug: str, locale: str) -> dic
              else tr(trs, w.id, "meanings", w.meanings)}
             for w in words
         ],
-        "grammar": [{"title": tr(gtr, g.id, "title", g.title), "pattern": g.pattern, "level": levels.get(g.hsk_level_id)}
+        "grammar": [{"title": g_titles[g.id], "pattern": g.pattern, "level": levels.get(g.hsk_level_id)}
                     for g in grammar],
         "completed": h["completed"], "best_score": h["best"],
     }

@@ -212,8 +212,14 @@ def test_an_ai_lesson_is_validated_cached_per_language_and_named_in_the_list(cli
     assert lst[adj]["name"].startswith("Прилагательное"), lst[adj]
     lst4 = {t["id"]: t for t in expect(client, "get", "/api/grammar", 200, headers={**h, "X-Locale": "ru"},
                                         params={"hsk_level": 4})}
-    assert lst4[other]["name"] == "借用量词", lst4[other]  # the cached AI lesson's name
-    assert sum(1 for t in lst4.values() if t["name"]) == 1, "no name is invented for topics without a lesson"
+    assert lst4[other]["name"] == "借用量词", lst4[other]  # the cached AI lesson's name wins
+    # Other names are only the syllabus names of points titled in Chinese
+    # grammar terms (grammar_names) -- none is invented for the rest.
+    with SessionLocal() as db:
+        syllabus = {int(k): v for k, v in db.query(models.ContentTranslation.content_key, models.ContentTranslation.text)
+                    .filter_by(content_type="grammar_topic", field="name", locale="ru")}
+    assert {i: t["name"] for i, t in lst4.items() if t["name"] and i != other} == \
+        {i: syllabus[i] for i in lst4 if i in syllabus and i != other}
 
 
 def test_try_it_checks_use_the_rules_and_never_touch_mastery(client, learner):

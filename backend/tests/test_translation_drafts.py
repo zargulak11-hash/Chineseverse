@@ -48,6 +48,39 @@ def test_every_word_and_character_has_a_meaning_in_every_language(client, level,
             assert not ids - have, (level, locale, len(ids - have))
 
 
+def test_grammar_titled_in_chinese_terms_is_named_in_the_learners_language(client):
+    _, h = register(client, unique_name("gname"))
+    rows = {}
+    for locale in ("en", "ru", "tg", "zh"):
+        items = expect(client, "get", "/api/grammar?hsk_level=1", 200, headers={**h, "X-Locale": locale})
+        rows[locale] = {t["title"]: t for t in items if t["title"].startswith("人称代词")}
+    (title, en), = rows["en"].items()
+    assert en["name"] == "Personal pronouns"
+    assert rows["ru"][title]["name"] == "Личные местоимения"
+    assert rows["tg"][title]["name"] == "Ҷонишинҳои шахсӣ"
+    # a Chinese screen keeps the Chinese title -- it is already the learner's language
+    assert rows["zh"][title]["name"] is None
+    page = expect(client, "get", f"/api/grammar/{en['id']}", 200, headers={**h, "X-Locale": "ru"})
+    assert page["name"] == "Личные местоимения" and page["syllabus_title"] == title
+    # a title that is the pattern being taught gets no name
+    items = expect(client, "get", "/api/grammar?hsk_level=1", 200, headers={**h, "X-Locale": "ru"})
+    assert next(t for t in items if t["title"] == "从")["name"] is None
+
+
+def test_core_grammar_and_the_advanced_band_read_in_chinese(client):
+    _, h = register(client, unique_name("gzh"))
+    zh = {**h, "X-Locale": "zh"}
+    items = expect(client, "get", "/api/grammar?hsk_level=1", 200, headers=zh)
+    shi = next(t for t in items if t["pattern"] == "A 是 B")
+    assert not LATIN.search(shi["title"]) and not LATIN.search(shi["explanation"]), shi
+    with SessionLocal() as db:
+        lvl = db.query(models.HSKLevel).filter_by(level=7).one()
+        CT = models.ContentTranslation
+        zh_rows = {r.field: r.text for r in db.query(CT).filter_by(
+            content_type="hsk_level", content_key=str(lvl.id), locale="zh")}
+    assert set(zh_rows) == {"title", "description"} and CJK.search(zh_rows["description"])
+
+
 def test_a_chinese_quiz_is_in_chinese_and_never_points_at_the_answer(client):
     _, h = register(client, unique_name("zhquiz"))
     zh = {**h, "X-Locale": "zh"}
