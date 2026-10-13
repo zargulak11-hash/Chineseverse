@@ -42,8 +42,8 @@ READING = {"word_to_meaning", "char_to_meaning", "example_to_point", "scene_repl
 LISTENING = {"listen_to_word", "scene_listen", "sentence_listen", "net_listen", "sound_identify", "sound_info",
              "sound_find", "sound_respond", "sound_conversation", "sound_memory"}
 GRAMMAR = {"example_to_point", "sentence_order"}
-CHARACTER = {"char_to_meaning", "char_to_pinyin"}
-VOCAB = {"meaning_to_word", "word_to_meaning", "listen_to_word"}
+CHARACTER = {"char_to_meaning", "char_to_pinyin", "type_pinyin"}
+VOCAB = {"meaning_to_word", "word_to_meaning", "listen_to_word", "type_word"}
 
 # Real-world capability -> the rounds that demonstrate it.
 WORLD = {

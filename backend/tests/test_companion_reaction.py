@@ -283,10 +283,20 @@ def test_writing_and_self_check_reactions(client, learner):
     early = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True})
     assert not early["counted"] and early["mastery"] == v["mastery"] and early["reaction"] is None, early
     for _ in range(10):
-        if v["status"] == "mastered":
+        if v["mastery"] >= 85:
             break
         make_due()
         v = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True})
+    # Self-checks alone only make it recognised: "mastered" needs a recall
+    # (services/srs.py, tests/test_recall.py).
+    assert v["mastery"] >= 85 and v["status"] == "reviewing", v
+    # Once its reading has been typed from memory, the next due self-check
+    # crosses into mastered -- and that milestone is celebrated.
+    with SessionLocal() as db:
+        db.query(models.UserHanzi).filter_by(user_id=uid, hanzi_id=hz_id).one().times_recalled = 1
+        db.commit()
+    make_due()
+    v = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": True})
     assert v["status"] == "mastered" and v["reaction"]["milestone"] == "mastered" and v["reaction"]["mood"] == "proud", v["reaction"]
     hr = expect(client, "post", f"/api/hanzi/{hz_id}/review", 200, headers=h, json={"correct": False})
     assert hr["counted"] and hr["reaction"]["mood"] in ("encouraging", "serious"), hr["reaction"]

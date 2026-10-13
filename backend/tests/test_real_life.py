@@ -277,6 +277,9 @@ def test_mastering_a_repeatedly_missed_word_is_celebrated_and_remembered(client,
     with SessionLocal() as db:
         rec = db.query(models.UserVocabulary).filter_by(user_id=cid, word_id=target).first()
         rec.mastery, rec.times_missed, rec.status = 80.0, 3, "reviewing"
+        # Recalled from memory before (services/recall.py), so this answer
+        # can make it mastered -- recognition alone never does (srs.py).
+        rec.times_recalled = 1
         db.commit()
     ms = start(client, ch, source="vocab", hsk_level=1, size=4)
     pin_first_question(ms["id"], qtype, target, wrong)

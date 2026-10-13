@@ -44,7 +44,10 @@ WORD_MILESTONES = (10, 25, 50, 100, 200, 300, 500, 1000, 2000)
 STREAK_MILESTONES = (3, 7, 14, 30, 60, 100, 200, 365)
 # Question types whose options are rows of the same table -- a wrong pick
 # there is a real "took A for B" confusion between two curriculum items.
-_CONFUSABLE = {"meaning_to_word", "word_to_meaning", "listen_to_word", "char_to_meaning", "char_to_pinyin"}
+# type_word: the learner typed exactly another word (services/recall.py
+# stores it as the choice).
+_CONFUSABLE = {"meaning_to_word", "word_to_meaning", "listen_to_word", "char_to_meaning", "char_to_pinyin",
+               "type_word"}
 LISTEN_TYPES = {"listen_to_word", "scene_listen", "sentence_listen"}
 _AREA_TYPES = {"vocab": "vocab", "hanzi": "hanzi", "grammar": "grammar"}
 

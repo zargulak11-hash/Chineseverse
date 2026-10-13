@@ -54,6 +54,9 @@ PRIMARY_SKILL = {
     "listen_to_word": "listening",
     "char_to_meaning": "reading",
     "char_to_pinyin": "tones",
+    # Typed from memory (services/recall.py)
+    "type_word": "vocabulary",
+    "type_pinyin": "tones",
     "example_to_point": "grammar",
     # Real Chinese / One Sentence (services/real_life.py, services/sentence.py)
     "scene_reply": "reading",

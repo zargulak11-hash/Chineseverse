@@ -85,6 +85,9 @@ class UserVocabulary(Base):
     mastery = Column(Float, default=0.0)
     times_seen = Column(Integer, default=0)
     times_missed = Column(Integer, default=0)
+    # Correct typed answers from memory (services/recall.py) -- the evidence
+    # "mastered" requires on top of recognition (services/srs.py).
+    times_recalled = Column(Integer, nullable=False, default=0, server_default="0")
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
 
@@ -144,6 +147,8 @@ class UserHanzi(Base):
     mastery = Column(Float, default=0.0)
     times_seen = Column(Integer, default=0)
     times_missed = Column(Integer, default=0)
+    # Readings typed correctly from memory (services/recall.py); see UserVocabulary.
+    times_recalled = Column(Integer, nullable=False, default=0, server_default="0")
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
     # Populated only by a completed HanziWriter stroke quiz (see hanzi.py's

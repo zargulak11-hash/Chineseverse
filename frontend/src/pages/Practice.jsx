@@ -9,6 +9,7 @@ import Layout from "../components/Layout.jsx";
 import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../components/RoundExtras.jsx";
 import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
 import NextStepBar from "../components/NextStep.jsx";
+import { CheckExplain, RecallForm } from "../components/RecallAnswer.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -67,6 +68,9 @@ export default function Practice({ forceSource }) {
   // xp_bonus is only the end-of-round bonus, so showing it alone read
   // "+0 XP" after a round that had earned XP answer by answer.
   const [earned, setEarned] = useState({});
+  // A typed answer with the right syllables but no tones is asked once more
+  // (the server stores nothing until then).
+  const [retry, setRetry] = useState(false);
   const shownAt = useRef(Date.now());
   // Language the current round was rendered in (see the effect below).
   const renderedLang = useRef(i18n.language);
@@ -79,6 +83,7 @@ export default function Practice({ forceSource }) {
     setIndex(0);
     setOutcomes({});
     setEarned({});
+    setRetry(false);
     setError("");
     const body = { source, size: source === "review" ? 12 : 10 };
     if (level) body.hsk_level = level;
@@ -130,7 +135,11 @@ export default function Practice({ forceSource }) {
         if (cancelled) return;
         renderedLang.current = lang;
         setSession(s);
-        setResult((r) => r && { ...r, card: s.questions[r.index]?.answer?.card || r.card });
+        setResult((r) => r && {
+          ...r,
+          card: s.questions[r.index]?.answer?.card || r.card,
+          check: s.questions[r.index]?.answer?.check ?? r.check,
+        });
         setSummary((sum) =>
           sum && {
             ...sum,
@@ -165,15 +174,21 @@ export default function Practice({ forceSource }) {
     shownAt.current = Date.now();
   }, [question, result]);
 
-  async function choose(optionId) {
+  async function choose(optionId, text) {
     if (busy || result) return;
     setBusy(true);
     try {
+      const typed = text !== undefined;
       const r = await api.post(`/practice/sessions/${session.id}/answer`, {
         index,
-        choice_id: optionId,
+        ...(typed ? { text } : { choice_id: optionId }),
         response_ms: Date.now() - shownAt.current,
       });
+      if (r.retry) {
+        setRetry(true);
+        return;
+      }
+      setRetry(false);
       setResult({ ...r, choice_id: optionId, index });
       setOutcomes((o) => ({ ...o, [index]: r.correct }));
       setEarned((x) => ({ ...x, [index]: r.xp_gained || 0 }));
@@ -193,6 +208,7 @@ export default function Practice({ forceSource }) {
     if (index + 1 < session.questions.length) {
       setIndex(index + 1);
       setResult(null);
+      setRetry(false);
       return;
     }
     setBusy(true);
@@ -397,7 +413,8 @@ export default function Practice({ forceSource }) {
   const total = session.questions.length;
   const answered = Object.keys(outcomes).length;
   const correctCount = Object.values(outcomes).filter(Boolean).length;
-  const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin"].includes(question.type);
+  const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin", "type_pinyin"].includes(question.type);
+  const typedQuestion = ["type_word", "type_pinyin"].includes(question.type);
   const qtype = question.type;
   const listenOnly = ["scene_listen", "sentence_listen", "net_listen", "story_listen"].includes(qtype);
   // Options written in Chinese (scene replies and the sentence activities).
@@ -514,6 +531,16 @@ export default function Practice({ forceSource }) {
               )}
             </div>
 
+            {typedQuestion ? (
+              <RecallForm
+                question={question}
+                busy={busy}
+                answered={!!result}
+                typed={result?.check?.typed}
+                retry={retry}
+                onSubmit={(text) => choose(null, text)}
+              />
+            ) : (
             <div className="practice-options">
               {question.options.map((o) => {
                 let cls = "btn practice-option";
@@ -533,12 +560,14 @@ export default function Practice({ forceSource }) {
                 );
               })}
             </div>
+            )}
 
             {result && (
               <div className="practice-feedback" style={{ marginTop: 14 }}>
                 <div className={`badge ${result.correct ? "good" : "bad"}`}>
                   {result.correct ? t("practice.correct") : t("practice.notQuite")}
                 </div>
+                <CheckExplain check={result.check} />
                 <div className="practice-answer-card">
                   <b style={{ fontSize: 22 }}>{result.card.hanzi}</b>{" "}
                   {result.card.pinyin && <span className="sub" style={{ color: "var(--accent2)" }}>{result.card.pinyin}</span>}

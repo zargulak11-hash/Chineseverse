@@ -1030,7 +1030,28 @@
       "net_comprehension": "Read and choose the right answer.",
       "net_listen": "Which line did you hear?",
       "story_q": "Answer the question about the story.",
-      "story_listen": "Which sentence from the story did you hear?"
+      "story_listen": "Which sentence from the story did you hear?",
+      "type_word": "Write the Chinese word for this meaning — in characters, or in pinyin with tones.",
+      "type_pinyin": "Write how this character is read, with its tone."
+    },
+    "recall": {
+      "badge": "From memory",
+      "why": "You already recognise this — now recall it yourself. A word counts as mastered only once you have produced it from memory.",
+      "label": "Your answer",
+      "check": "Check",
+      "dontKnow": "I don't know",
+      "toneHint": "Tones: tone marks (nǐ hǎo) or a number after each syllable (ni3 hao3). Spaces don't matter.",
+      "addTones": "The sounds are right — now add the tones. Which tone does each syllable have?",
+      "youTyped": "You wrote: {{text}}"
+    },
+    "why": {
+      "alternative": "Also right: {{word}} has this meaning too. The word this question had in mind is shown below.",
+      "tone": "The syllables are right, the tones are not: you wrote tones {{typed}}, the word has {{expected}}. In Chinese a different tone makes a different word.",
+      "missing_tones": "The syllables are right, but the tones are missing — and tones are part of the word.",
+      "other_word": "{{word}} ({{pinyin}}) is another word: it means “{{meaning}}”. Compare it with the answer below — the two will meet again in your practice.",
+      "picked": "The option you chose belongs to {{word}} ({{pinyin}}): “{{meaning}}”. Compare it with the answer below — the two will meet again in your practice.",
+      "wrong": "Not this time. Look at the answer below — it comes back soon in your review, so you can recall it again.",
+      "unknown": "That's fine — now you've seen it. It comes back in a few hours so you can try to recall it."
     },
     "questionLabel": "Question",
     "accuracy": "Accuracy",

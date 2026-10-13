@@ -27,6 +27,11 @@ stored question keeps the lines and the index of the right one, and the
 browser still only sends back an option id. Their answers count through
 the exchange's / sentence's real focus word (apply_srs on its
 UserVocabulary row), so they reach mastery and review like any other.
+
+A word or character the learner already recognises (reviewing/mastered) is
+asked from memory instead: the answer is typed and graded by
+services/recall.py, which also says what kind of mistake it was. That
+recall is what "mastered" requires (services/srs.py).
 """
 
 from __future__ import annotations
@@ -39,6 +44,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.services import companion_reaction as cr
+from app.services import recall
 from app.services.activity import log_activity
 from app.services.dna import bump_skill
 from app.services.gamification import (
@@ -383,6 +389,36 @@ def _question(db: Session, item_type: str, row, index: int, rng: random.Random,
     return q
 
 
+def _recall_ready(db: Session, user: models.User, picked: list[tuple[str, object]], locale: str) -> set[tuple[str, int]]:
+    """The picked words and characters to ask from memory: the ones the
+    learner already recognises (reviewing or mastered). A word's prompt is
+    its meaning, so outside English it must really exist in the learner's
+    language -- an English gloss on a Tajik screen would be no prompt at all
+    (those words stay multiple choice)."""
+    ids: dict[str, list[int]] = {"vocab": [], "hanzi": []}
+    for item_type, row in picked:
+        if item_type in ids:
+            ids[item_type].append(row.id)
+    ready = {
+        (item_type, rid)
+        for item_type, some in ids.items() if some
+        for rid, rec in _records(db, user, item_type, some).items()
+        if rec.status in ("reviewing", "mastered")
+    }
+    words = [rid for item_type, rid in ready if item_type == "vocab"]
+    if locale != "en" and words:
+        have = {
+            int(k) for (k,) in db.query(models.ContentTranslation.content_key).filter(
+                models.ContentTranslation.content_type == "vocab_word",
+                models.ContentTranslation.field == "meanings",
+                models.ContentTranslation.locale == locale,
+                models.ContentTranslation.content_key.in_([str(i) for i in words]),
+            )
+        }
+        ready = {k for k in ready if k[0] != "vocab" or k[1] in have}
+    return ready
+
+
 def build_session(
     db: Session, user: models.User, source: str, *, hsk_level: int | None = None,
     lesson_id: int | None = None, size: int = 10, locale: str = "en",
@@ -490,13 +526,19 @@ def build_session(
         from app.services import mixups
 
         partners = mixups.partners_by_item(db, user)
+    # The tones round and the mix-up drill are about telling options apart,
+    # so they stay multiple choice.
+    ready = _recall_ready(db, user, picked, locale) if picked and source not in ("tones", "mixups") else set()
     for i, (item_type, row) in enumerate(picked):
         forced, first = None, partners.get((item_type, row.id))
         if source == "tones":
             forced = "char_to_pinyin" if item_type == "hanzi" else "listen_to_word"
         elif source == "mixups":
             forced, first = mix_plan[i]
-        q = _question(db, item_type, row, i, rng, translated, qtype=forced, first=first)
+        if (item_type, row.id) in ready:
+            q = {"type": recall.RECALL_TYPE[item_type], "item_type": item_type, "item_id": row.id, "option_ids": []}
+        else:
+            q = _question(db, item_type, row, i, rng, translated, qtype=forced, first=first)
         if q:
             questions.append(q)
     if not questions:
@@ -600,6 +642,9 @@ def _labels(db: Session, questions: list[dict], locale: str) -> dict[str, dict[i
     for q in questions:
         if q["item_type"] in ids:
             ids[q["item_type"]].update(q["option_ids"])
+            # A typed question has no options; its target still needs a label.
+            if q.get("item_id") is not None:
+                ids[q["item_type"]].add(q["item_id"])
     out: dict[str, dict[int, str]] = {}
     # Ids whose label really is in the learner's language (not a fallback).
     translated: dict[str, set[int]] = {}
@@ -689,6 +734,11 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
                 prompt = {"speak": target.simplified, "pinyin": target.pinyin}
             elif qtype in ("char_to_meaning", "char_to_pinyin"):
                 prompt = {"text": target.character, "speak": target.character if qtype == "char_to_meaning" else None}
+            elif qtype == "type_word":
+                # Only the meaning: the sound or the reading would be the answer.
+                prompt = {"text": _short(labels["vocab"].get(target.id), 90)}
+            elif qtype == "type_pinyin":
+                prompt = {"text": target.character}
             else:
                 prompt = {"text": q.get("prompt") or "", "speak": q.get("prompt")}
         answer = session.answers[i]
@@ -697,7 +747,8 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
             # Detective Mode: an evidence note / grammar clue inside a case.
             item["tag"] = q["tag"]
         if answer is not None and target is not None:
-            item["answer"] = {**answer, "correct_id": q["item_id"], "card": _item_card(item_type, target, labels)}
+            item["answer"] = {**answer, "correct_id": q["item_id"], "card": _item_card(item_type, target, labels),
+                              "check": _check_out(db, q, answer, locale)}
         rendered.append(item)
     return {
         "id": session.id,
@@ -843,19 +894,68 @@ def _focus(item_type: str, row, labels: dict) -> dict:
     return card
 
 
+def _grade_typed(db: Session, q: dict, row, text: str) -> dict:
+    """A typed answer (services/recall.py). For a word, the learner may have
+    produced another real word: typed characters are looked up across the
+    curriculum, typed pinyin only within the word's level (beyond it nearly
+    every reading has homophones)."""
+    if q["type"] == "type_pinyin":
+        return recall.check_pinyin(text, row.pinyin)
+    W = models.VocabularyWord
+    if recall.is_chinese(text):
+        han = recall.hanzi_only(text)
+        candidates = db.query(W).filter((W.simplified == han) | (W.traditional == han)).order_by(W.id).all()
+    else:
+        candidates = db.query(W).filter(W.hsk_level_id == row.hsk_level_id).all()
+    return recall.check_word(text, row, [c for c in candidates if _usable("vocab", c)])
+
+
+def _card_for(db: Session, item_type: str, item_id: int | None, locale: str) -> dict | None:
+    row = _row(db, item_type, item_id) if item_id else None
+    if row is None:
+        return None
+    return _item_card(item_type, row, _labels(db, [{"item_type": item_type, "item_id": row.id, "option_ids": []}], locale))
+
+
+def _check_out(db: Session, q: dict, answer: dict, locale: str) -> dict | None:
+    """Why an answer was right or wrong, for the learner -- only what the
+    stored answer shows. A typed answer: its kind (services/recall.py), the
+    text typed and the other word it turned out to be. A wrong pick between
+    two words or characters: the picked one, with its meaning, so the two
+    can be compared."""
+    if q["item_type"] not in ("vocab", "hanzi"):
+        return None
+    if q["type"] in recall.TYPED_TYPES:
+        out = {"kind": answer.get("kind"), "typed": answer.get("typed") or ""}
+        for k in ("tones_typed", "tones_expected"):
+            if answer.get(k) is not None:
+                out[k] = answer[k]
+        other = answer.get("other_id") or answer.get("choice_id")
+        out["other"] = _card_for(db, q["item_type"], other, locale) if other else None
+        return out
+    if answer.get("correct") or answer.get("choice_id") in (None, q["item_id"]):
+        return None
+    return {"kind": "picked", "other": _card_for(db, q["item_type"], answer["choice_id"], locale)}
+
+
 def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int,
-            picked_row=None) -> dict:
+            picked_row=None, check: dict | None = None, typed: str | None = None) -> dict:
     """Applies one graded answer to mastery, DNA, mistakes, quests and XP.
     Returns what changed (status before/after, the primary DNA skill's value
-    before/after) so the companion can react to the real result."""
+    before/after) so the companion can react to the real result.
+
+    `check` is a typed answer's grading (services/recall.py): a correct one
+    is a recall, the evidence "mastered" needs."""
     item_type, qtype = q["item_type"], q["type"]
+    kind = (check or {}).get("kind")
     rec_model, fk = _USER_MODEL[item_type]
     rec = db.query(rec_model).filter(rec_model.user_id == user.id, getattr(rec_model, fk) == row.id).first()
     status_before = rec.status if rec is not None else None
     if rec is None:
         rec = rec_model(user_id=user.id, mastery=0.0, status="new", times_missed=0, **{fk: row.id})
         db.add(rec)
-    apply_srs(rec, correct, user, counter="times_practiced" if item_type == "grammar" else "times_seen")
+    apply_srs(rec, correct, user, counter="times_practiced" if item_type == "grammar" else "times_seen",
+              recall=check is not None)
 
     ensure_user_skills(db, user)
     primary = cr.PRIMARY_SKILL.get(qtype)
@@ -868,11 +968,15 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
             bump_skill(user, "tones", 0.5 if correct else 0.0)
         elif qtype == "word_to_meaning":
             bump_skill(user, "reading", 0.5 if correct else 0.0)
-        ref_type, ref = "word", row.simplified
+        elif qtype == "type_word" and kind == "tone":
+            bump_skill(user, "tones", minus)
+        # A wrong tone is a tone mistake (the word itself was recalled), so
+        # the notebook and Review can tell the two apart.
+        ref_type, ref = ("tone" if kind == "tone" else "word"), row.simplified
         quest = "vocab"
     elif item_type == "hanzi":
         bump_skill(user, "reading", plus if correct else minus)
-        if qtype == "char_to_pinyin":
+        if qtype in ("char_to_pinyin", "type_pinyin"):
             bump_skill(user, "tones", 1.5 if correct else minus)
         ref_type, ref = "hanzi", row.character
         quest = "hanzi"
@@ -881,14 +985,17 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
         bump_skill(user, "reading", 0.5 if correct else 0.0)
         ref_type, ref = "grammar", row.title
         quest = "grammar"
-    if session.source == "review":
-        # Recalling an item the schedule brought back is memory, literally.
+    if session.source == "review" or check is not None:
+        # Recalling an item the schedule brought back -- or producing one
+        # from memory -- is memory, literally.
         bump_skill(user, "memory", 1.5 if correct else minus)
     if correct and 0 < response_ms <= FAST_ANSWER_MS:
         bump_skill(user, "reaction_speed", 0.5)
 
     if correct:
         reinforce_mistake(db, user, ref_type, ref)
+        if item_type == "vocab":
+            reinforce_mistake(db, user, "tone", ref)
         progress_quests(db, user, quest, amount=1)
         progress_missions(db, user, quest)
         user.total_xp += XP_PER_CORRECT
@@ -897,7 +1004,7 @@ def _record(db: Session, user: models.User, session: models.PracticeSession, q: 
         card = _item_card(item_type, row, none)
         # What the learner actually chose: the mistake notebook's "you
         # answered" (it used to stay empty for every practice mistake).
-        given = None
+        given = typed or None
         if picked_row is not None:
             chose = _item_card(item_type, picked_row, none)
             given = " ".join(x for x in (chose["hanzi"], chose["pinyin"]) if x) or chose["meaning"]
@@ -1024,8 +1131,8 @@ def _focus_virtual(db: Session, q: dict, locale: str) -> dict | None:
 
 
 def answer_question(
-    db: Session, user: models.User, session: models.PracticeSession, index: int, choice_id: int,
-    response_ms: int, locale: str,
+    db: Session, user: models.User, session: models.PracticeSession, index: int, choice_id: int | None,
+    response_ms: int, locale: str, text: str | None = None,
 ) -> dict:
     if session.completed_at is not None:
         raise PracticeError(409, "This practice round is already finished")
@@ -1034,14 +1141,44 @@ def answer_question(
     if session.answers[index] is not None:
         raise PracticeError(409, "This question was already answered")
     q = session.questions[index]
-    if choice_id not in q["option_ids"]:
+    typed = q["type"] in recall.TYPED_TYPES
+    if typed:
+        if text is None:
+            raise PracticeError(422, "Type your answer for this question")
+        text = text.strip()[: recall.MAX_TYPED]
+        choice_id = None
+    elif choice_id is None or choice_id not in q["option_ids"]:
         raise PracticeError(422, "That option was not offered for this question")
     virtual = q["item_type"] in VIRTUAL
     row = None if virtual else _row(db, q["item_type"], q["item_id"])
     if row is None and not virtual:
         raise PracticeError(410, "This item no longer exists")
 
-    correct = choice_id == q["item_id"]
+    check = None
+    credit = row  # the item the answer counts for
+    if typed:
+        check = _grade_typed(db, q, row, text)
+        if check["kind"] == "missing_tones" and not q.get("retried"):
+            # The syllables were recalled; ask once for the tones before it
+            # counts (nothing is graded or stored as an answer yet).
+            questions = list(session.questions)
+            questions[index] = {**q, "retried": True}
+            session.questions = questions
+            db.commit()
+            return {"retry": "missing_tones", "typed": text}
+        correct = check["correct"]
+        other = check.get("other")
+        if check["kind"] == "other_word":
+            # Stored like a wrong pick, so the mix-up notebook and the
+            # companion's memory count it (services/mixups.py).
+            choice_id = other.id
+        elif check["kind"] == "alternative":
+            # Another right word: the learner recalled THAT word, which is
+            # what gets credited; the asked one is neither credited nor
+            # penalised.
+            credit = other
+    else:
+        correct = choice_id == q["item_id"]
     now = datetime.utcnow()
     seen = [datetime.fromisoformat(a["answered_at"]) for a in session.answers if a and a.get("answered_at")]
     since = max(seen) if seen else (session.created_at or now)
@@ -1051,7 +1188,7 @@ def answer_question(
     # A wrong pick between two curriculum items the learner has mixed up
     # before (counted from their own stored answers, before this one).
     confused = None
-    if not virtual and not correct and q["type"] in companion_memory_confusable():
+    if not virtual and not correct and choice_id is not None and q["type"] in companion_memory_confusable():
         from app.services import companion_memory
 
         prior = companion_memory.confusion_count(db, user, q["item_type"], q["item_id"], choice_id,
@@ -1066,15 +1203,23 @@ def answer_question(
     else:
         status_was = None
         if q["item_type"] == "vocab":
-            rec = db.query(models.UserVocabulary).filter_by(user_id=user.id, word_id=row.id).first()
+            rec = db.query(models.UserVocabulary).filter_by(user_id=user.id, word_id=credit.id).first()
             status_was = rec.status if rec else None
-        change = _record(db, user, session, q, row, correct, response_ms,
-                         picked_row=None if correct else _row(db, q["item_type"], choice_id))
+        change = _record(db, user, session, q, credit, correct, response_ms,
+                         picked_row=None if correct or typed else _row(db, q["item_type"], choice_id),
+                         check=check, typed=text)
         change["vocab_mastered"] = (q["item_type"] == "vocab" and change["status_after"] == "mastered"
                                     and status_was != "mastered")
     answers = list(session.answers)  # reassign so the JSON column is marked dirty
     answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms,
                       "answered_at": now.isoformat()}
+    if typed:
+        answers[index].update({"typed": text, "kind": check["kind"]})
+        if check.get("other") is not None:
+            answers[index]["other_id"] = check["other"].id
+        for k in ("tones_typed", "tones_expected"):
+            if k in check:
+                answers[index][k] = check[k]
     if change.get("vocab_mastered"):
         # Counted at completion for the mastered-words milestone.
         answers[index]["mastered_vocab"] = True
@@ -1100,6 +1245,8 @@ def answer_question(
             times_missed=change["times_missed"], skill=change["skill"], confused=confused,
         ),
     }
+    if not virtual:
+        out["check"] = _check_out(db, q, answers[index], locale)
     if virtual:
         out["say"] = (q.get("say") or {}).get("zh")
         # The question as it reads now that it's answered (a hidden line is

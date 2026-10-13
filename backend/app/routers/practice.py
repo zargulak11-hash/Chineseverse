@@ -47,7 +47,11 @@ class SpeakPayload(BaseModel):
 
 class AnswerPayload(BaseModel):
     index: int = Field(ge=0)
-    choice_id: int
+    # A multiple-choice question is answered with the option id; a typed
+    # (from-memory) question with the text -- "" means "I don't know". The
+    # service refuses the wrong one for the question's type.
+    choice_id: int | None = None
+    text: str | None = Field(default=None, max_length=80)
     response_ms: int = Field(default=0, ge=0, le=600_000)
 
 
@@ -117,7 +121,8 @@ def answer(
     locale: str = Depends(get_locale),
 ):
     session = _owned(db, session_id, user)
-    result = _run(svc.answer_question, db, user, session, payload.index, payload.choice_id, payload.response_ms, locale)
+    result = _run(svc.answer_question, db, user, session, payload.index, payload.choice_id, payload.response_ms, locale,
+                  text=payload.text)
     check_achievements(db, user)
     return result
 

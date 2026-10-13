@@ -37,6 +37,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app import models
+from app.services.recall import AS_CHOICE
 
 WINDOW_DAYS = 60
 # Told apart this many times (with both on screen) since the last mix-up:
@@ -49,8 +50,10 @@ RESOLVE_AFTER = 3
 NOTEBOOK_MIN = 2
 # Question types whose options are rows of the same table (the same set as
 # companion_memory._CONFUSABLE): only there is a wrong pick a confusion
-# between two curriculum items.
-CONFUSABLE = {"meaning_to_word", "word_to_meaning", "listen_to_word", "char_to_meaning", "char_to_pinyin"}
+# between two curriculum items -- and a typed word that was exactly another
+# word (services/recall.py stores that word as the choice).
+CONFUSABLE = {"meaning_to_word", "word_to_meaning", "listen_to_word", "char_to_meaning", "char_to_pinyin",
+              "type_word"}
 
 
 def _sessions(db: Session, user: models.User) -> list[models.PracticeSession]:
@@ -77,12 +80,15 @@ def _track(sessions: list[models.PracticeSession]) -> dict[tuple[str, int, int],
                 if picked is None or picked == target:
                     continue
                 lo, hi = sorted((target, picked))
+                # The drill puts both on screen, so a mix-up made while
+                # typing is drilled as the matching multiple-choice question.
+                qtype = AS_CHOICE.get(q["type"], q["type"])
                 p = pairs.setdefault((item_type, lo, hi), {"confused": 0, "told_apart": 0, "last": None,
-                                                          "qtype": q["type"]})
+                                                          "qtype": qtype})
                 p["confused"] += 1
                 p["told_apart"] = 0
                 p["last"] = a.get("answered_at")
-                p["qtype"] = q["type"]
+                p["qtype"] = qtype
                 continue
             for other in q.get("option_ids") or []:
                 if other == target:

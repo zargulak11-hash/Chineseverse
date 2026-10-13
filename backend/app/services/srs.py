@@ -5,6 +5,15 @@ Correct: mastery rises by `delta` and the next review roughly doubles the
 previous gap (capped at 30 days; the snake companion's memory multiplier is
 a flat bonus on top, never compounded). Wrong: mastery drops by half of
 `delta` and the item comes back in 6 hours.
+
+"Mastered" needs recall, not just recognition. Picking a word out of four
+options -- or pressing "I know it" -- can push mastery past 85, but a word
+or character (the records that have `times_recalled`) only becomes
+"mastered" once the learner has also produced it from memory in a typed
+question (services/recall.py, `recall=True`). Until then it stays
+"reviewing", and its rounds keep asking for it from memory. A record that
+was already mastered before this rule existed is not demoted by a correct
+answer; a wrong one lowers it as always.
 """
 
 from __future__ import annotations
@@ -15,9 +24,13 @@ from app import models
 from app.services.gamification import memory_multiplier
 
 
-def apply_srs(rec, correct: bool, user: models.User, delta: float = 10.0, counter: str = "times_seen") -> None:
+def apply_srs(rec, correct: bool, user: models.User, delta: float = 10.0, counter: str = "times_seen",
+              recall: bool = False) -> None:
     setattr(rec, counter, (getattr(rec, counter) or 0) + 1)
     now = datetime.utcnow()
+    gated = hasattr(rec, "times_recalled")
+    if correct and recall and gated:
+        rec.times_recalled = (rec.times_recalled or 0) + 1
     if correct:
         rec.mastery = min(100.0, (rec.mastery or 0.0) + delta)
         multiplier = memory_multiplier(user)
@@ -36,7 +49,9 @@ def apply_srs(rec, correct: bool, user: models.User, delta: float = 10.0, counte
         rec.mastery = max(0.0, (rec.mastery or 0.0) - delta * 0.5)
         rec.next_review_at = now + timedelta(hours=6)
 
-    if rec.mastery >= 85:
+    if rec.mastery >= 85 and gated and not (rec.times_recalled or 0) and rec.status != "mastered":
+        rec.status = "reviewing"  # recognised, not yet recalled
+    elif rec.mastery >= 85:
         rec.status = "mastered"
     elif rec.mastery >= 55:
         rec.status = "reviewing"
