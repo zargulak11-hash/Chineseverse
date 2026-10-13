@@ -599,7 +599,27 @@
         "internet": "中文网络",
         "foundation": "声音和声调",
         "stories": "中文故事"
-      }
+      },
+      "knowTitle": "你掌握了什么",
+      "knowSub": "根据你被批改过的答案统计。在选项中选出一个词，说明你认得它；凭记忆写出来，说明你能回想起来——只有这样才算掌握。",
+      "knowWords": "词语",
+      "knowChars": "汉字",
+      "knowMet": "学过：{{count}}",
+      "knowLearning": "在学",
+      "knowLearningWhat": "练习中见过，还没有稳定答对。",
+      "knowRecognised": "认得",
+      "knowRecognisedWhat": "能在选项中选出来，但还没有凭记忆写过。",
+      "knowRecalled": "能回想",
+      "knowRecalledWhat": "至少凭记忆写出过一次，还在巩固。",
+      "knowMastered": "已掌握",
+      "knowMasteredWhat": "稳定答对，并能凭记忆写出。",
+      "knowDue": "该复习：{{count}}",
+      "knowSlipping": "快忘了：{{count}}",
+      "knowRecallAcc": "最近{{days}}天凭记忆作答：{{total}}题中答对{{correct}}题。",
+      "knowRecallNone": "最近{{days}}天还没有凭记忆作答。",
+      "knowEmpty": "这里还是空的——练习一个级别，答题后你的词就会出现在这里。",
+      "knowGoRecall": "现在去回想",
+      "knowGoReview": "现在去复习"
     },
     "profile": {
       "title": "个人资料",
@@ -978,7 +998,8 @@
       "internet": "中文网络 · {{title}}",
       "tones": "声音和声调练习",
       "story": "故事 · {{title}}",
-      "mixups": "易混词练习"
+      "mixups": "易混词练习",
+      "recall": "凭记忆回想"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -1048,7 +1069,9 @@
     "toneRound": "声音和声调",
     "reviewWhat": "复习会在你快要忘记之前，把练过的内容带回来。你在课程、故事和练习中遇到的每个词，都会按自己的时间表回到这里。",
     "mixupsNothing": "暂时没有要练的——你弄混过的词都已经分清了。",
-    "mixupsWhat": "当你两次把一个词选成另一个词时，这对词会被记下来并排出现，直到你连续{{n}}次分清它们。"
+    "mixupsWhat": "当你两次把一个词选成另一个词时，这对词会被记下来并排出现，直到你连续{{n}}次分清它们。",
+    "recallNothing": "现在没有要回想的——你认识的每个词都至少凭记忆写出过一次。",
+    "recallWhat": "这里是你认识、但还没有自己写出来过的词和汉字。凭记忆写出来，才算真正掌握。"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",
@@ -2364,7 +2387,8 @@
       "stories": "读一个适合你水平的故事",
       "mixups": "分清“{{a}}”和“{{b}}”",
       "continue": "继续读《{{title}}》第{{chapter}}章",
-      "skill": "练习{{skill}}"
+      "skill": "练习{{skill}}",
+      "recall_other": "凭记忆写出{{count}}个你只认得的词"
     },
     "nextWhy": {
       "lesson": "课程是你 HSK 之路的主干：新词、语法和一轮简短练习。",
@@ -2374,7 +2398,8 @@
       "mixups_other": "你已经{{count}}次把它们选错了。把两个词放在一起做个小练习，就能分清。",
       "continue": "你正在读这本书——书签就在你上次停下的地方。",
       "skill": "这是你目前最弱的能力（{{mastery}}%），而前面的课程已经学完了。",
-      "reviewSlipping_other": "有{{count}}个学会的词快忘了——现在复习就能记住。"
+      "reviewSlipping_other": "有{{count}}个学会的词快忘了——现在复习就能记住。",
+      "recall": "你能在选项里认出它们，但还没有自己写出来过。能回忆起来的词，才是能用的词。"
     },
     "foundationTitle": "入门：你的第一步",
     "foundationSub": "按最容易掌握的顺序学习中文基础。每一步在你真正完成时就算完成。",

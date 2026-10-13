@@ -20,6 +20,8 @@ Sources:
   sound                    an immersive listening place (services/sound_world.py)
   internet                 a Chinese Internet item at the learner's version
                            (services/internet.py)
+  recall                   words and characters recognised but never yet
+                           produced from memory, all asked typed
 
 Scene and sentence rounds add question types whose options are lines of
 text rather than curriculum rows (item_type "line" / "sentence"): the
@@ -60,7 +62,7 @@ from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
-           "tones", "story", "pronunciation", "mixups")
+           "tones", "story", "pronunciation", "mixups", "recall")
 # The beginner's first round (services/journey.py, /foundation): tones on real
 # HSK 1 material -- a character's pinyin among the same syllable in other
 # tones, and a word picked by ear. Real items, so SRS and DNA move as usual.
@@ -419,6 +421,38 @@ def _recall_ready(db: Session, user: models.User, picked: list[tuple[str, object
     return ready
 
 
+def _unrecalled_queries(db: Session, user: models.User, locale: str):
+    """Records the learner recognises (reviewing/mastered) but has never
+    produced from memory -- per type, most-known first. A word whose meaning
+    doesn't exist in the learner's language can't be asked by meaning
+    (_recall_ready), so outside English it isn't counted either."""
+    from sqlalchemy import String, and_, cast
+
+    UV, UH, CT = models.UserVocabulary, models.UserHanzi, models.ContentTranslation
+    words = db.query(UV.word_id, UV.mastery).filter(
+        UV.user_id == user.id, UV.status.in_(("reviewing", "mastered")), UV.times_recalled == 0)
+    if locale != "en":
+        words = words.join(CT, and_(CT.content_type == "vocab_word", CT.field == "meanings", CT.locale == locale,
+                                    CT.content_key == cast(UV.word_id, String)))
+    chars = db.query(UH.hanzi_id, UH.mastery).filter(
+        UH.user_id == user.id, UH.status.in_(("reviewing", "mastered")), UH.times_recalled == 0)
+    return {"vocab": words.order_by(UV.mastery.desc(), UV.id), "hanzi": chars.order_by(UH.mastery.desc(), UH.id)}
+
+
+def _unrecalled(db: Session, user: models.User, locale: str, limit: int) -> list[tuple[str, int]]:
+    """(item_type, id) of the closest-to-mastered unrecalled items, words and
+    characters together."""
+    both = [(m or 0, t, i) for t, q in _unrecalled_queries(db, user, locale).items() for i, m in q.limit(limit)]
+    both.sort(key=lambda x: -x[0])
+    return [(t, i) for _m, t, i in both[:limit]]
+
+
+def recall_pending(db: Session, user: models.User, locale: str = "en") -> int:
+    """How many recognised words and characters wait for a first recall --
+    the "recall" round's queue (today's plan and the next step read it)."""
+    return sum(q.count() for q in _unrecalled_queries(db, user, locale).values())
+
+
 def build_session(
     db: Session, user: models.User, source: str, *, hsk_level: int | None = None,
     lesson_id: int | None = None, size: int = 10, locale: str = "en",
@@ -473,6 +507,15 @@ def build_session(
                 if row is not None and _usable(pair["item_type"], row):
                     picked.append((pair["item_type"], row))
                     mix_plan.append((pair["qtype"], [pair[other]]))
+        if not picked:
+            return None
+    elif source == "recall":
+        # Words and characters recognised but never produced from memory
+        # (services/recall.py): all asked typed. Nothing waiting -> "nothing due".
+        rows = [(t, _row(db, t, i)) for t, i in _unrecalled(db, user, locale, limit=size * 3)]
+        rows = [(t, r) for t, r in rows if r is not None and _usable(t, r)]
+        ready = _recall_ready(db, user, rows, locale)
+        picked = [(t, r) for t, r in rows if (t, r.id) in ready][:size]
         if not picked:
             return None
     elif source == "tones":

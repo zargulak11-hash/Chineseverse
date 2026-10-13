@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -10,6 +10,8 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.services.activity import SECTION_LABELS
 from app.services.gamification import activity_today, local_date, local_day_start, streak_snapshot
+from app.services.recall import TYPED_TYPES
+from app.services.srs import SLIP_AFTER
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -115,3 +117,65 @@ def activity_analytics(
         sections=sections,
         days=days,
     )
+
+
+RECALL_WINDOW_DAYS = 30
+
+
+def _stages(rows, now: datetime) -> dict:
+    """Each word/character the learner has met, in exactly one stage:
+
+      learning    met in practice, not yet answered reliably (status new/learning)
+      recognised  answered reliably, but only by choosing it -- never produced
+                  from memory (times_recalled 0; services/srs.py won't call
+                  it mastered)
+      recalled    produced from memory at least once, still being reinforced
+      mastered    status mastered AND recalled from memory
+
+    plus two readings of the schedule that overlap the stages: `due` (its
+    review time has come) and `slipping` (known, and days past it --
+    services/srs.is_slipping)."""
+    out = {"learning": 0, "recognised": 0, "recalled": 0, "mastered": 0, "due": 0, "slipping": 0}
+    for status, recalled, next_review_at in rows:
+        if status in ("reviewing", "mastered") and not recalled:
+            out["recognised"] += 1
+        elif status == "mastered":
+            out["mastered"] += 1
+        elif status == "reviewing":
+            out["recalled"] += 1
+        else:
+            out["learning"] += 1
+        if next_review_at is not None and next_review_at <= now:
+            out["due"] += 1
+            if status in ("reviewing", "mastered") and now - next_review_at >= SLIP_AFTER:
+                out["slipping"] += 1
+    out["met"] = out["learning"] + out["recognised"] + out["recalled"] + out["mastered"]
+    return out
+
+
+@router.get("/knowledge")
+def knowledge(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """What the learner knows, from their own graded records only: words
+    and characters by stage (see _stages), and how their answers from memory
+    went in the last RECALL_WINDOW_DAYS (correct of answered -- the
+    denominator is always sent, so a small sample reads as one)."""
+    now = datetime.utcnow()
+    out = {}
+    for key, model in (("vocab", models.UserVocabulary), ("hanzi", models.UserHanzi)):
+        rows = (db.query(model.status, model.times_recalled, model.next_review_at)
+                .filter(model.user_id == user.id).all())
+        out[key] = _stages(rows, now)
+    since = now - timedelta(days=RECALL_WINDOW_DAYS)
+    answered = correct = 0
+    sessions = (db.query(models.PracticeSession.questions, models.PracticeSession.answers)
+                .filter(models.PracticeSession.user_id == user.id, models.PracticeSession.created_at >= since).all())
+    for questions, answers in sessions:
+        for q, a in zip(questions or [], answers or []):
+            if a and q.get("type") in TYPED_TYPES:
+                answered += 1
+                correct += bool(a.get("correct"))
+    out["recall"] = {"answered": answered, "correct": correct, "days": RECALL_WINDOW_DAYS}
+    return out

@@ -15,6 +15,7 @@ export function nextTitle(t, next) {
   if (next.kind === "review") return t("journey.next.review", { count: next.count });
   if (next.kind === "exam") return t("journey.next.exam", { level: next.level });
   if (next.kind === "mixups") return t("journey.next.mixups", { a: next.a, b: next.b });
+  if (next.kind === "recall") return t("journey.next.recall", { count: next.count });
   if (next.kind === "continue") return t("journey.next.continue", { title: next.title, chapter: next.chapter });
   if (next.kind === "skill") return t("journey.next.skill", { skill: t(`companionReact.skill.${next.skill}`, { defaultValue: next.skill }) });
   return t("journey.next.stories");
@@ -84,6 +85,7 @@ export function TodayPlan({ today, next, skills = {} }) {
     if (task.key === "learn") return nextTitle(t, task.next || next);
     if (task.key === "weak") return t("today.weak", { skill: skills[task.skill] || task.skill });
     if (task.key === "mixups") return t("today.mixups", { count: task.count });
+    if (task.key === "recall") return t("journey.next.recall", { count: task.count });
     return task.book ? t("today.readBook", { title: task.book }) : t("today.read");
   };
   const why = (task) => {
@@ -91,6 +93,7 @@ export function TodayPlan({ today, next, skills = {} }) {
     if (task.key === "learn") return nextWhy(t, task.next || next);
     if (task.key === "weak") return t("today.weakWhy", { mastery: task.mastery });
     if (task.key === "mixups") return t("today.mixupsWhy");
+    if (task.key === "recall") return t("journey.nextWhy.recall");
     return t("today.readWhy");
   };
   return (

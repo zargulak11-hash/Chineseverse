@@ -4397,6 +4397,26 @@ table.data td {
 }
 
 /* ---------- Progress / activity analytics ---------- */
+/* "What you know": words and characters by stage (Progress.jsx). */
+.know-col { min-width: 0; }
+.know-bar {
+  display: flex;
+  height: 10px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.know-seg { min-width: 4px; }
+.know-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.know-list li { display: flex; gap: var(--space-2); align-items: baseline; }
+.know-what { display: block; font-size: var(--text-xs); }
+.know-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; transform: translateY(1px); }
+.know-seg.is-learning, .know-dot.is-learning { background: var(--border-strong); }
+.know-seg.is-recognised, .know-dot.is-recognised { background: var(--accent-soft); }
+.know-seg.is-recalled, .know-dot.is-recalled { background: var(--accent); }
+.know-seg.is-mastered, .know-dot.is-mastered { background: var(--good); }
+.know-due { margin-top: var(--space-3); }
 .rhythm-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;

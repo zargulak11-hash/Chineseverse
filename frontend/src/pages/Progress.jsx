@@ -1,10 +1,90 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import ActivityHeatmap from "../components/ActivityHeatmap.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
 import { api } from "../api.js";
+import { useApi } from "../hooks/useApi.js";
+
+// One stage per word/character (GET /api/analytics/knowledge): only a
+// recall from memory moves a word past "recognised".
+const STAGES = [
+  ["learning", "pages.progress.knowLearning", "pages.progress.knowLearningWhat"],
+  ["recognised", "pages.progress.knowRecognised", "pages.progress.knowRecognisedWhat"],
+  ["recalled", "pages.progress.knowRecalled", "pages.progress.knowRecalledWhat"],
+  ["mastered", "pages.progress.knowMastered", "pages.progress.knowMasteredWhat"],
+];
+
+function KnowledgeColumn({ title, stages }) {
+  const { t } = useTranslation();
+  return (
+    <div className="know-col">
+      <div className="row spread">
+        <h3 className="side-title" style={{ margin: 0 }}>{title}</h3>
+        <span className="sub">{t("pages.progress.knowMet", { count: stages.met })}</span>
+      </div>
+      {stages.met > 0 && (
+        <div className="know-bar" aria-hidden="true">
+          {STAGES.map(([k]) => stages[k] > 0 && <span key={k} className={`know-seg is-${k}`} style={{ flexGrow: stages[k] }} />)}
+        </div>
+      )}
+      <ul className="know-list">
+        {STAGES.map(([k, label, what]) => (
+          <li key={k}>
+            <span className={`know-dot is-${k}`} aria-hidden="true" />
+            <span><b>{stages[k]}</b> {t(label)}<span className="sub know-what">{t(what)}</span></span>
+          </li>
+        ))}
+      </ul>
+      {stages.due > 0 && (
+        <p className="sub know-due">
+          {t("pages.progress.knowDue", { count: stages.due })}
+          {stages.slipping > 0 && ` · ${t("pages.progress.knowSlipping", { count: stages.slipping })}`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function KnowledgeCard() {
+  const { t } = useTranslation();
+  const { data, error } = useApi("/analytics/knowledge");
+  if (error) return <div className="card" style={{ marginTop: 16 }}><Empty>{error}</Empty></div>;
+  if (!data) return <div className="card" style={{ marginTop: 16 }}><Loading /></div>;
+  const met = data.vocab.met + data.hanzi.met;
+  const recognised = data.vocab.recognised + data.hanzi.recognised;
+  const due = data.vocab.due + data.hanzi.due;
+  const r = data.recall;
+  return (
+    <section className="card" style={{ marginTop: 16 }} aria-labelledby="know-title">
+      <h2 className="h2" id="know-title">{t("pages.progress.knowTitle")}</h2>
+      <p className="sub">{t("pages.progress.knowSub")}</p>
+      {met === 0 ? (
+        <p className="sub empty-teach">{t("pages.progress.knowEmpty")}</p>
+      ) : (
+        <>
+          <div className="grid grid-2" style={{ marginTop: 16 }}>
+            <KnowledgeColumn title={t("pages.progress.knowWords")} stages={data.vocab} />
+            <KnowledgeColumn title={t("pages.progress.knowChars")} stages={data.hanzi} />
+          </div>
+          <p className="sub" style={{ marginTop: 16 }}>
+            {r.answered
+              ? t("pages.progress.knowRecallAcc", { days: r.days, correct: r.correct, total: r.answered })
+              : t("pages.progress.knowRecallNone", { days: r.days })}
+          </p>
+          {(recognised > 0 || due > 0) && (
+            <div className="row" style={{ flexWrap: "wrap", marginTop: 12 }}>
+              {recognised > 0 && <Link to="/practice?source=recall" className="btn primary">{t("pages.progress.knowGoRecall")}</Link>}
+              {due > 0 && <Link to="/review" className="btn">{t("pages.progress.knowGoReview")}</Link>}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
 
 const SECTION_COLORS = {
   world: "#4fc3f7",
@@ -79,6 +159,8 @@ export default function Progress() {
     <Layout>
       <h1 className="h1">{t("pages.progress.title")}</h1>
       <p className="sub">{t("pages.progress.subtitle")}</p>
+
+      <KnowledgeCard />
 
       <div className="rhythm-grid" style={{ marginTop: 16 }}>
         <div className="card">

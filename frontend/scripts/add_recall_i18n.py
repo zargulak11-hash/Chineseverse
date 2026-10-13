@@ -84,7 +84,111 @@ S = {
         "没关系——现在你看到了。几个小时后它会再出现，到时候试着回忆它。"),
 }
 
-KEYS = list(S)
+WHY = L(
+    "You pick these out of options, but have never produced them yourself. A word you can recall is a word you can use.",
+    "Вы узнаёте их среди вариантов, но ещё ни разу не воспроизвели сами. Слово, которое вы можете вспомнить, — слово, которым вы можете пользоваться.",
+    "Шумо онҳоро дар байни вариантҳо мешиносед, вале ҳанӯз худатон нанавиштаед. Калимае, ки ба ёд оварда метавонед, калимаест, ки истифода бурда метавонед.",
+    "你能在选项里认出它们，但还没有自己写出来过。能回忆起来的词，才是能用的词。")
+
+# The recall round ("/practice?source=recall") and the plan/next step that
+# send the learner there: added into objects that already exist.
+INTO = {
+    "practice.title.recall": L("Recall from memory", "Вспомнить по памяти", "Ба ёд овардан", "凭记忆回想"),
+    "practice.recallNothing": L(
+        "Nothing to recall right now — every word you recognise has been recalled from memory at least once.",
+        "Сейчас вспоминать нечего — каждое слово, которое вы узнаёте, вы уже хотя бы раз вспомнили по памяти.",
+        "Ҳоло чизе барои ба ёд овардан нест — ҳар калимаеро, ки мешиносед, шумо ақаллан як бор аз ёд навиштаед.",
+        "现在没有要回想的——你认识的每个词都至少凭记忆写出过一次。"),
+    "practice.recallWhat": L(
+        "Words and characters you recognise but have never produced yourself gather here. Recalling one from memory is what makes it mastered.",
+        "Здесь собираются слова и иероглифы, которые вы узнаёте, но ещё ни разу не воспроизвели сами. Выученным слово становится, когда вы вспоминаете его по памяти.",
+        "Дар ин ҷо калимаҳо ва иероглифҳое ҷамъ мешаванд, ки шумо мешиносед, вале ҳанӯз худатон нанавиштаед. Калима вақте азхуд мешавад, ки онро аз ёд нависед.",
+        "这里是你认识、但还没有自己写出来过的词和汉字。凭记忆写出来，才算真正掌握。"),
+    "journey.next.recall": {
+        "en": {"one": "Recall a word you only recognise", "other": "Recall {{count}} words you only recognise"},
+        "ru": {"one": "Вспомнить {{count}} слово, которое вы пока только узнаёте",
+               "few": "Вспомнить {{count}} слова, которые вы пока только узнаёте",
+               "many": "Вспомнить {{count}} слов, которые вы пока только узнаёте",
+               "other": "Вспомнить {{count}} слова, которые вы пока только узнаёте"},
+        "tg": {"one": "Калимаеро, ки ҳоло фақат мешиносед, аз ёд нависед",
+               "other": "{{count}} калимаеро, ки ҳоло фақат мешиносед, аз ёд нависед"},
+        "zh": {"other": "凭记忆写出{{count}}个你只认得的词"},
+    },
+    "journey.nextWhy.recall": WHY,
+    # Progress -> "What you know" (GET /api/analytics/knowledge)
+    "pages.progress.knowTitle": L("What you know", "Что вы знаете", "Он чи шумо медонед", "你掌握了什么"),
+    "pages.progress.knowSub": L(
+        "Counted from your graded answers. Choosing a word among options shows you recognise it; writing it from memory shows you can recall it — only that makes it mastered.",
+        "Подсчитано по вашим проверенным ответам. Выбрать слово среди вариантов — значит узнать его; написать по памяти — значит вспомнить. Только это делает слово выученным.",
+        "Аз рӯи ҷавобҳои санҷидашудаи шумо ҳисоб шудааст. Интихоби калима аз байни вариантҳо нишон медиҳад, ки шумо онро мешиносед; навиштани он аз ёд нишон медиҳад, ки онро ба ёд оварда метавонед — танҳо ҳамин онро азхудшуда мекунад.",
+        "根据你被批改过的答案统计。在选项中选出一个词，说明你认得它；凭记忆写出来，说明你能回想起来——只有这样才算掌握。"),
+    "pages.progress.knowWords": L("Words", "Слова", "Калимаҳо", "词语"),
+    "pages.progress.knowChars": L("Characters", "Иероглифы", "Иероглифҳо", "汉字"),
+    "pages.progress.knowMet": L("Met: {{count}}", "Встречено: {{count}}", "Дидаед: {{count}}", "学过：{{count}}"),
+    "pages.progress.knowLearning": L("Learning", "Изучаете", "Меомӯзед", "在学"),
+    "pages.progress.knowLearningWhat": L(
+        "Met in practice, not yet answered reliably.", "Встречались в практике, но пока без уверенных ответов.",
+        "Дар машқ дида шудааст, вале ҳанӯз бо боварӣ ҷавоб дода нашудааст.", "练习中见过，还没有稳定答对。"),
+    "pages.progress.knowRecognised": L("Recognised", "Узнаёте", "Мешиносед", "认得"),
+    "pages.progress.knowRecognisedWhat": L(
+        "You pick it out of options, but haven't written it from memory yet.",
+        "Вы выбираете их среди вариантов, но ещё не писали по памяти.",
+        "Шумо онро аз байни вариантҳо интихоб мекунед, вале ҳанӯз аз ёд нанавиштаед.",
+        "能在选项中选出来，但还没有凭记忆写过。"),
+    "pages.progress.knowRecalled": L("Recalled", "Вспоминаете", "Ба ёд меоред", "能回想"),
+    "pages.progress.knowRecalledWhat": L(
+        "Written from memory at least once; still being reinforced.", "Хотя бы раз написаны по памяти; ещё закрепляются.",
+        "Ақаллан як бор аз ёд навишта шудааст; ҳоло мустаҳкам мешавад.", "至少凭记忆写出过一次，还在巩固。"),
+    "pages.progress.knowMastered": L("Mastered", "Выучены", "Азхуд шудааст", "已掌握"),
+    "pages.progress.knowMasteredWhat": L(
+        "Answered reliably and recalled from memory.", "Уверенные ответы и воспроизведение по памяти.",
+        "Ҷавобҳои боэътимод ва аз ёд навиштан.", "稳定答对，并能凭记忆写出。"),
+    "pages.progress.knowDue": L("Due for review: {{count}}", "Пора повторить: {{count}}", "Барои такрор: {{count}}",
+                                "该复习：{{count}}"),
+    "pages.progress.knowSlipping": L("Fading: {{count}}", "Забываются: {{count}}", "Фаромӯш мешаванд: {{count}}",
+                                     "快忘了：{{count}}"),
+    "pages.progress.knowRecallAcc": L(
+        "From memory in the last {{days}} days: {{correct}} of {{total}} correct.",
+        "По памяти за последние {{days}} дней: верно {{correct}} из {{total}}.",
+        "Аз ёд дар {{days}} рӯзи охир: {{correct}} аз {{total}} дуруст.",
+        "最近{{days}}天凭记忆作答：{{total}}题中答对{{correct}}题。"),
+    "pages.progress.knowRecallNone": L(
+        "No answers from memory in the last {{days}} days yet.", "За последние {{days}} дней ответов по памяти пока нет.",
+        "Дар {{days}} рӯзи охир ҳанӯз ҷавоби аз ёд нест.", "最近{{days}}天还没有凭记忆作答。"),
+    "pages.progress.knowEmpty": L(
+        "Nothing here yet — practise a level, and your words appear here as you answer.",
+        "Пока пусто — потренируйте уровень, и слова появятся здесь по мере ваших ответов.",
+        "Ҳоло холист — як сатҳро машқ кунед, ва калимаҳо ҳангоми ҷавоб додан дар ин ҷо пайдо мешаванд.",
+        "这里还是空的——练习一个级别，答题后你的词就会出现在这里。"),
+    "pages.progress.knowGoRecall": L("Recall them now", "Вспомнить сейчас", "Ҳозир ба ёд оред", "现在去回想"),
+    "pages.progress.knowGoReview": L("Review now", "Повторить сейчас", "Ҳозир такрор кунед", "现在去复习"),
+}
+
+KEYS = list(S) + list(INTO)  # a plural key is checked through its _other form
+
+
+def _object(lines, path):
+    """(first line inside, closing line) of the multi-line object at
+    `path` ("journey.next"), found by its two-space indentation."""
+    lo, hi = 0, len(lines)
+    for depth, part in enumerate(path.split("."), start=1):
+        pad = " " * (2 * depth)
+        lo = next(i for i in range(lo, hi) if lines[i] == f'{pad}"{part}": {{')
+        hi = next(i for i in range(lo + 1, hi) if lines[i] in (f"{pad}}}", f"{pad}}},"))
+        lo += 1
+    return lo, hi
+
+
+def put(lines, dotted, value):
+    parent, leaf = dotted.rsplit(".", 1)
+    lo, hi = _object(lines, parent)
+    pad = " " * (2 * (parent.count(".") + 2))
+    entries = [(leaf, value)] if isinstance(value, str) else [(f"{leaf}_{form}", v) for form, v in value.items()]
+    entries = [(k, v) for k, v in entries if not any(lines[i].startswith(f'{pad}"{k}":') for i in range(lo, hi))]
+    if not entries:
+        return
+    lines[hi - 1] = lines[hi - 1].rstrip(",") + ","
+    lines[hi:hi] = [_line(len(pad), k, v, i < len(entries) - 1) for i, (k, v) in enumerate(entries)]
 
 
 def _line(indent, key, value, comma):
@@ -129,6 +233,8 @@ if __name__ == "__main__":
         with open(path, encoding="utf-8", newline="") as f:
             lines = f.read().split("\r\n")
         lines = insert(lines, lang)
+        for dotted, value in INTO.items():
+            put(lines, dotted, value[lang])
         text = "\r\n".join(lines)
         json.loads(text)  # still valid JSON
         with open(path, "w", encoding="utf-8", newline="") as f:

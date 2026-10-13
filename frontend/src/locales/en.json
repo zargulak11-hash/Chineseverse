@@ -611,7 +611,27 @@
         "internet": "Chinese Internet",
         "foundation": "Sounds & tones",
         "stories": "Chinese Stories"
-      }
+      },
+      "knowTitle": "What you know",
+      "knowSub": "Counted from your graded answers. Choosing a word among options shows you recognise it; writing it from memory shows you can recall it — only that makes it mastered.",
+      "knowWords": "Words",
+      "knowChars": "Characters",
+      "knowMet": "Met: {{count}}",
+      "knowLearning": "Learning",
+      "knowLearningWhat": "Met in practice, not yet answered reliably.",
+      "knowRecognised": "Recognised",
+      "knowRecognisedWhat": "You pick it out of options, but haven't written it from memory yet.",
+      "knowRecalled": "Recalled",
+      "knowRecalledWhat": "Written from memory at least once; still being reinforced.",
+      "knowMastered": "Mastered",
+      "knowMasteredWhat": "Answered reliably and recalled from memory.",
+      "knowDue": "Due for review: {{count}}",
+      "knowSlipping": "Fading: {{count}}",
+      "knowRecallAcc": "From memory in the last {{days}} days: {{correct}} of {{total}} correct.",
+      "knowRecallNone": "No answers from memory in the last {{days}} days yet.",
+      "knowEmpty": "Nothing here yet — practise a level, and your words appear here as you answer.",
+      "knowGoRecall": "Recall them now",
+      "knowGoReview": "Review now"
     },
     "profile": {
       "title": "Profile",
@@ -990,7 +1010,8 @@
       "internet": "Chinese Internet · {{title}}",
       "tones": "Sounds & tones round",
       "story": "Story · {{title}}",
-      "mixups": "Mix-up drill"
+      "mixups": "Mix-up drill",
+      "recall": "Recall from memory"
     },
     "retry": "Try again",
     "back": "Back",
@@ -1060,7 +1081,9 @@
     "toneRound": "Sounds & tones",
     "reviewWhat": "Review brings back what you've practised just before you would forget it. Every word you meet in lessons, stories and rounds comes back here on its own schedule.",
     "mixupsNothing": "Nothing to drill — every pair you mixed up has been told apart.",
-    "mixupsWhat": "When you choose one word for another twice, the pair is saved and keeps coming back side by side until you tell them apart {{n}} times in a row."
+    "mixupsWhat": "When you choose one word for another twice, the pair is saved and keeps coming back side by side until you tell them apart {{n}} times in a row.",
+    "recallNothing": "Nothing to recall right now — every word you recognise has been recalled from memory at least once.",
+    "recallWhat": "Words and characters you recognise but have never produced yourself gather here. Recalling one from memory is what makes it mastered."
   },
   "companionReact": {
     "fallbackName": "Your companion",
@@ -2422,7 +2445,9 @@
       "stories": "Read a story at your level",
       "mixups": "Tell {{a}} and {{b}} apart",
       "continue": "Continue “{{title}}” — chapter {{chapter}}",
-      "skill": "Practise {{skill}}"
+      "skill": "Practise {{skill}}",
+      "recall_one": "Recall a word you only recognise",
+      "recall_other": "Recall {{count}} words you only recognise"
     },
     "nextWhy": {
       "lesson": "Lessons are the backbone of your HSK path: new words, grammar and a short practice round.",
@@ -2434,7 +2459,8 @@
       "continue": "You were reading this — your bookmark is waiting where you stopped.",
       "skill": "It is your weakest skill right now ({{mastery}}%), and the lessons ahead are done.",
       "reviewSlipping_one": "{{count}} word you knew is slipping — reviewing it now keeps it.",
-      "reviewSlipping_other": "{{count}} words you knew are slipping — reviewing them now keeps them."
+      "reviewSlipping_other": "{{count}} words you knew are slipping — reviewing them now keeps them.",
+      "recall": "You pick these out of options, but have never produced them yourself. A word you can recall is a word you can use."
     },
     "foundationTitle": "Foundation: your first steps",
     "foundationSub": "The basics of Chinese, in the order that makes them easy. Each step opens the moment you really do it.",

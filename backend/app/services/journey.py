@@ -11,7 +11,9 @@ read stories -- and answers three questions without inventing anything:
   next        the one action recommended now: the first foundation step not
               done (while they are at HSK 1), then -- once the foundation is
               behind them or their level is past it -- due reviews when many
-              are waiting, the current lesson on the HSK path, its exam when
+              are waiting, the pair they keep confusing, the words they
+              recognise but have never recalled (a large backlog of them),
+              the current lesson on the HSK path, its exam when
               the level's lessons are all done, or a story at their level.
   roadmap     HSK 1-9 as stages a beginner understands (Foundation,
               Beginner, Growing, Intermediate, Advanced), each with its real
@@ -31,6 +33,12 @@ PASS = 60.0  # a foundation round counts at this score (percent)
 REVIEW_FIRST_AT = 8  # due reviews that take priority over new material
 SLIPPING_FIRST_AT = 3  # ... or this many words/characters they KNEW fading (srs.is_slipping)
 MIXUP_FIRST_AT = 3  # a pair confused this often comes before new material (services/mixups.py)
+# Words/characters recognised but never recalled from memory (practice
+# source "recall", services/recall.py): this many make a task in today's
+# plan, and a backlog this large comes before new material -- recognising
+# more and more words that can't be produced is not progress.
+RECALL_TASK_AT = 5
+RECALL_FIRST_AT = 20
 FRESH_READING_DAYS = 2  # a book opened this recently is "continue reading" before the next lesson
 WEAK_SKILL_BELOW = 50.0  # a practised Learning Compass skill this low is worth a step of its own
 
@@ -145,7 +153,7 @@ SKILL_PRACTICE = {
 NEXT_SOURCE = {"tones": "tones", "characters": "hanzi", "first_lesson": "lesson", "sentence": "sentence",
                "listen": "sound", "speak": "voice", "story": "story", "review": "review",
                "lesson": "lesson", "stories": "story", "exam": "exam", "mixups": "mixups",
-               "continue": "story", "skill": ""}
+               "continue": "story", "skill": "", "recall": "recall"}
 
 
 def _reading(db: Session, user: models.User, level: int, locale: str) -> dict | None:
@@ -173,7 +181,7 @@ def _reading(db: Session, user: models.User, level: int, locale: str) -> dict | 
 
 
 def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool,
-          mixed: list[dict] | None = None, reading: dict | None = None) -> dict:
+          mixed: list[dict] | None = None, reading: dict | None = None, unrecalled: int = 0) -> dict:
     """Today's plan: at most four real tasks, each with why it is suggested,
     ticked off only by what the learner really did today (UTC day, the same
     day the dashboard's minutes use). A brand-new learner gets the one next
@@ -214,6 +222,10 @@ def today(db: Session, user: models.User, level: int, nxt: dict, due: int, found
     if (mixed or "mixups" in did) and nxt.get("kind") != "mixups":
         tasks.append({"key": "mixups", "to": "/practice?source=mixups", "count": len(mixed),
                       "done": "mixups" in did})
+    # Words they pick out of options but have never produced themselves.
+    if (unrecalled >= RECALL_TASK_AT or "recall" in did) and nxt.get("kind") != "recall":
+        tasks.append({"key": "recall", "to": "/practice?source=recall", "count": unrecalled,
+                      "done": "recall" in did})
     practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
     weakest = min(practised, key=lambda s: s.mastery) if practised else None
     if weakest is not None and weakest.mastery < 70 and weakest.skill.code in SKILL_PRACTICE:
@@ -276,6 +288,7 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     from app.services import mixups
 
     mixed = [p for p in mixups.pairs(db, user, locale) if p["status"] == "active"]
+    unrecalled = practice.recall_pending(db, user, locale)
     reading = _reading(db, user, level, locale)
     practised = [s for s in user.user_skills if s.skill and (s.mastery or 0) > 0]
     weakest = min(practised, key=lambda s: s.mastery) if practised else None
@@ -291,6 +304,8 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         top = mixed[0]
         nxt = {"kind": "mixups", "key": "mixups", "to": "/practice?source=mixups",
                "a": top["a"]["hanzi"], "b": top["b"]["hanzi"], "count": top["confused"], "pairs": len(mixed)}
+    elif unrecalled >= RECALL_FIRST_AT:
+        nxt = {"kind": "recall", "key": "recall", "to": "/practice?source=recall", "count": unrecalled}
     elif state.exam_level is not None:
         nxt = {"kind": "exam", "key": "exam", "to": f"/exam/{state.exam_level}", "level": state.exam_level}
     elif reading is not None and reading["days"] < FRESH_READING_DAYS:
@@ -339,5 +354,6 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         "level": level, "stage": "foundation" if (not foundation["complete"] and not past) else STAGE_OF[level],
         "foundation": foundation, "next": nxt, "levels": levels, "features": features,
         "due_reviews": due, "slipping": slipping, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
-        "today": today(db, user, level, nxt, due, foundation["complete"] or past, mixed, reading),
+        "unrecalled": unrecalled,
+        "today": today(db, user, level, nxt, due, foundation["complete"] or past, mixed, reading, unrecalled),
     }

@@ -122,13 +122,13 @@ def level1_word(simplified):
         return db.query(models.VocabularyWord).filter_by(hsk_level_id=lvl.id, simplified=simplified).one().id
 
 
-def recognise(uid, word_id, mastery=60.0, recalled=0):
-    """The learner already recognises this word, and it is due."""
+def recognise(uid, word_id, mastery=60.0, recalled=0, due=True):
+    """The learner already recognises this word (due for review, or not yet)."""
     with SessionLocal() as db:
         db.add(models.UserVocabulary(user_id=uid, word_id=word_id, status="reviewing", mastery=mastery, times_seen=6,
                                      times_missed=0, times_recalled=recalled,
                                      last_reviewed_at=datetime.utcnow() - timedelta(days=3),
-                                     next_review_at=datetime.utcnow() - timedelta(hours=1)))
+                                     next_review_at=datetime.utcnow() + timedelta(hours=-1 if due else 48)))
         db.commit()
 
 
@@ -308,3 +308,117 @@ def test_self_checks_alone_never_master_a_character(client, learner):
                 db.commit()
         v = expect(client, "post", f"/api/hanzi/{cid}/review", 200, headers=h, json={"correct": True})
     assert v["mastery"] >= 85 and v["status"] == "reviewing", v
+
+
+# --------------------------------------------------------------------------- the recall round and the plan
+
+def level1_words(n, skip=()):
+    with SessionLocal() as db:
+        lvl = db.query(models.HSKLevel).filter_by(level=1).one()
+        rows = (db.query(models.VocabularyWord).filter_by(hsk_level_id=lvl.id).order_by(models.VocabularyWord.id).all())
+        from app.services.practice import _usable
+
+        return [r.id for r in rows if _usable("vocab", r) and r.simplified not in skip][:n]
+
+
+def test_nothing_to_recall_is_a_real_empty_state(client, learner):
+    _, h = learner
+    s = expect(client, "post", ROUNDS, 200, headers=h, json={"source": "recall"})
+    assert s["empty"] == "nothing_due" and s["questions"] == []
+
+
+def test_the_recall_round_asks_only_what_was_never_recalled(client, learner):
+    uid, h = learner
+    eat, drink = level1_word("吃"), level1_word("喝")
+    recognise(uid, eat, mastery=90.0, due=False)  # recognised, never recalled
+    recognise(uid, drink, recalled=2, due=False)  # already recalled
+    s = expect(client, "post", ROUNDS, 201, headers=h, json={"source": "recall"})
+    assert [(q["type"], q["options"]) for q in s["questions"]] == [("type_word", [])], s["questions"]
+    assert stored(s["id"])[0][0]["item_id"] == eat
+    r = say(client, h, s["id"], 0, "吃")
+    assert r["correct"]
+    # Recalled now: the queue is empty again.
+    assert expect(client, "post", ROUNDS, 200, headers=h, json={"source": "recall"})["empty"] == "nothing_due"
+
+
+def test_a_tajik_learner_is_not_asked_by_an_english_meaning(client, learner):
+    uid, h = learner
+    eat = level1_word("吃")
+    recognise(uid, eat, due=False)
+    with SessionLocal() as db:
+        db.query(models.ContentTranslation).filter_by(content_type="vocab_word", content_key=str(eat),
+                                                      locale="tg").delete()
+        db.commit()
+    s = expect(client, "post", ROUNDS, 200, headers={**h, "X-Locale": "tg"}, json={"source": "recall"})
+    assert s["empty"] == "nothing_due"
+    assert expect(client, "get", "/api/journey", 200, headers={**h, "X-Locale": "tg"})["unrecalled"] == 0
+    assert expect(client, "get", "/api/journey", 200, headers=h)["unrecalled"] == 1
+
+
+@pytest.fixture
+def placed(client):
+    """A learner past the beginner foundation (HSK 2), as in test_next_action."""
+    uid, h = register(client, unique_name("recallnext"))
+    expect(client, "get", "/api/journey", 200, headers=h)
+    with SessionLocal() as db:
+        for s in db.get(models.User, uid).user_skills:
+            s.mastery = 20.0
+        db.commit()
+    return uid, h
+
+
+def test_a_few_unrecalled_words_are_a_task_for_today(client, placed):
+    uid, h = placed
+    for wid in level1_words(5):
+        recognise(uid, wid, due=False)
+    j = expect(client, "get", "/api/journey", 200, headers=h)
+    assert j["unrecalled"] == 5 and j["next"]["kind"] != "recall", j["next"]
+    task = next(t for t in j["today"]["tasks"] if t["key"] == "recall")
+    assert task == {"key": "recall", "to": "/practice?source=recall", "count": 5, "done": False}
+
+
+def test_a_large_backlog_of_unrecalled_words_comes_before_new_material(client, placed):
+    uid, h = placed
+    for wid in level1_words(20):
+        recognise(uid, wid, due=False)
+    nxt = expect(client, "get", "/api/journey", 200, headers=h)["next"]
+    assert nxt == {"kind": "recall", "key": "recall", "to": "/practice?source=recall", "count": 20}, nxt
+
+
+# --------------------------------------------------------------------------- what the learner knows
+
+def test_knowledge_puts_each_word_in_one_honest_stage(client, learner):
+    uid, h = learner
+    w = level1_words(6)
+    with SessionLocal() as db:
+        for wid, status, mastery, recalled in ((w[0], "learning", 20.0, 0), (w[1], "reviewing", 60.0, 0),
+                                               (w[2], "reviewing", 70.0, 1), (w[3], "mastered", 95.0, 2),
+                                               # mastered before recall existed: recognised, not mastered
+                                               (w[4], "mastered", 90.0, 0)):
+            db.add(models.UserVocabulary(user_id=uid, word_id=wid, status=status, mastery=mastery, times_seen=5,
+                                         times_missed=0, times_recalled=recalled,
+                                         next_review_at=datetime.utcnow() + timedelta(days=2)))
+        # Known and five days past its review: due, and fading.
+        db.add(models.UserVocabulary(user_id=uid, word_id=w[5], status="reviewing", mastery=60.0, times_seen=5,
+                                     times_missed=0, times_recalled=1,
+                                     next_review_at=datetime.utcnow() - timedelta(days=5)))
+        db.commit()
+    k = expect(client, "get", "/api/analytics/knowledge", 200, headers=h)
+    assert k["vocab"] == {"learning": 1, "recognised": 2, "recalled": 2, "mastered": 1, "due": 1, "slipping": 1,
+                          "met": 6}, k["vocab"]
+    assert k["hanzi"]["met"] == 0 and k["recall"] == {"answered": 0, "correct": 0, "days": 30}
+
+
+def test_knowledge_counts_answers_from_memory(client, learner):
+    uid, h = learner
+    eat = level1_word("吃")
+    recognise(uid, eat)
+    s, i = round_for(client, h, eat)
+    say(client, h, s["id"], i, "chi1")
+    k = expect(client, "get", "/api/analytics/knowledge", 200, headers=h)
+    assert k["recall"]["answered"] == 1 and k["recall"]["correct"] == 1, k["recall"]
+    assert k["vocab"]["mastered"] + k["vocab"]["recalled"] >= 1
+
+
+def test_knowledge_is_private(client):
+    expect(client, "get", "/api/analytics/knowledge", 401)
