@@ -7,6 +7,7 @@ import AnimalAvatar from "../components/AnimalAvatar.jsx";
 import Art, { placeArt } from "../components/Art.jsx";
 import CompanionMemory from "../components/CompanionMemory.jsx";
 import Icon from "../components/Icon.jsx";
+import InkBrush from "../components/InkBrush.jsx";
 import Layout from "../components/Layout.jsx";
 import { NextStepHero, TodayPlan } from "../components/NextStep.jsx";
 import { Bar, Badge, Empty, Loading } from "../components/ui.jsx";
@@ -55,18 +56,72 @@ const LOCATION_PLACE = {
   hospital: "hospital", "train-station": "train_station", hotel: "hotel", airport: "airport",
 };
 
-// The Dashboard answers, in this order: what to do now (the next step and
-// today's plan), what to fix, what has been built, then everything else.
-// It used to open with a greeting banner, four gradient shortcut tiles and
-// two rows of the same stats (streak and coins twice each) before any of
-// that -- twelve blocks of equal weight. Every number here is read from the
-// learner's own records (GET /api/dashboard, /api/journey, the mix-ups).
+// The four shortcut cards under the greeting: Real Chinese (the core loop)
+// is the large featured card with its globe motif; the other three are a
+// smaller, hand-placed stack beside it, each a few degrees off-square and
+// straightening on hover. Their colours are the brand's own -- jade, gold,
+// cinnabar -- mixed from theme tokens in index.css (.qa-*), so both Ink and
+// Paper keep readable white text.
+const QUICK_ACTIONS = [
+  { to: "/real-chinese", labelKey: "nav.realChinese", icon: "mapPin", tone: "jade", featured: true },
+  { to: "/dna", labelKey: "dashboard.viewDna", icon: "dna", tone: "pine" },
+  { to: "/duels", labelKey: "dashboard.startDuel", icon: "swords", tone: "cinnabar" },
+  { to: "/missions", labelKey: "dashboard.pickMission", icon: "flag", tone: "gold" },
+];
+
+// The greeting: 你好 in large brush-like type with its pinyin, the
+// learner's name, and the day at a glance -- every number from their own
+// records. The only h1 on the page.
+function GreetingHero({ d, today }) {
+  const { t } = useTranslation();
+  return (
+    <header className="dash-hero">
+      <InkBrush variant="hero" />
+      <span className="dash-hero-seal" aria-hidden="true" lang="zh-CN">学</span>
+      <span className="dash-hero-kicker">{t("landing.kicker")}</span>
+      <h1 className="dash-hero-title">
+        <ruby className="dash-hero-zh" lang="zh-CN">你<rt>nǐ</rt>好<rt>hǎo</rt></ruby>
+        <span className="dash-hero-name">{d.user.username}</span>
+      </h1>
+      <ul className="dash-hero-pills">
+        <li className="dash-hero-pill">
+          <span className="ic"><Icon name="trending" size={15} /></span>
+          <span><b>HSK {d.hsk_level}</b><small>{t("dashboard.level")}</small></span>
+        </li>
+        <li className="dash-hero-pill">
+          <span className="ic"><Icon name="clock" size={15} /></span>
+          <span>
+            <b>{today
+              ? t("dashboard.built.minutes", { minutes: today.minutes, goal: today.goal_minutes })
+              : t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}</b>
+            <small>{t("dashboard.built.today")}</small>
+          </span>
+        </li>
+        <li className="dash-hero-pill">
+          <span className="ic"><Icon name="flame" size={15} /></span>
+          <span><b>{d.streak.current_streak}</b><small>{t("dashboard.dayStreak")}</small></span>
+        </li>
+        <li className="dash-hero-pill">
+          <span className="ic"><Icon name="coin" size={15} /></span>
+          <span><b>{d.user.coins}</b><small>{t("dashboard.coins")}</small></span>
+        </li>
+      </ul>
+    </header>
+  );
+}
+
+// The Dashboard opens with the greeting and the four shortcut cards, then
+// answers, in this order: what to do now (the next step and today's plan),
+// what to fix, what has been built, then everything else. Every number here
+// is read from the learner's own records (GET /api/dashboard, /api/journey,
+// the mix-ups).
 export default function Dashboard() {
   const { t } = useTranslation();
   const { dashboard: d, error } = useDashboard();
   const { data: journey } = useApi("/journey");
   const { data: mix } = useApi("/mistakes/mixups");
 
+  const quickActionsRef = useCardStagger([]);
   const questsListRef = useCardStagger([d?.quests_today?.length ?? 0]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
@@ -82,11 +137,35 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <header className="dash-greeting">
-        {/* The top bar already greets the learner by name on every page. */}
-        <h1 className="h1">{t("nav.groupToday")}</h1>
-        <p className="sub">HSK {d.hsk_level} · {t("dashboard.goal", { minutes: d.daily_goal.daily_goal_minutes })}</p>
-      </header>
+      <GreetingHero d={d} today={today} />
+
+      <nav className="quick-actions" ref={quickActionsRef} data-self-animate="true" aria-label={t("nav.groupToday")}>
+        {QUICK_ACTIONS.map(({ to, labelKey, icon, tone, featured }) => (
+          <Link to={to} key={to} className={`quick-action qa-${tone}${featured ? " featured" : ""}`}>
+            {featured && (
+              <svg className="qa-globe" viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="46" />
+                <ellipse cx="60" cy="60" rx="46" ry="17" />
+                <ellipse cx="60" cy="60" rx="17" ry="46" />
+                <line x1="14" y1="60" x2="106" y2="60" />
+              </svg>
+            )}
+            {featured && <Art name={placeArt(placeSlug || "street")} size={128} className="qa-art" />}
+            <span className="qa-top">
+              <span className="ic"><Icon name={icon} size={featured ? 25 : 18} /></span>
+              <Icon name="arrowRight" size={featured ? 19 : 15} className="arrow" />
+            </span>
+            <span className="qa-text">
+              <span className="label">{t(labelKey)}</span>
+              {/* The place the learner's world opens next (the same as the
+                  "Next location" card below), when there is one. */}
+              {featured && d.next_location && (
+                <span className="qa-sub">{t("dashboard.nextLocation")} · {d.next_location.name}</span>
+              )}
+            </span>
+          </Link>
+        ))}
+      </nav>
 
       <NextStepHero journey={journey} />
       <TodayPlan

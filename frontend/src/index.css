@@ -167,6 +167,9 @@
   --accent-dim: rgba(201, 151, 74, 0.15);
   --accent-border: rgba(201, 151, 74, 0.45);
   --on-accent: #1c1409;
+  /* Light text on the deep jade / gold / cinnabar cards (Dashboard
+     shortcuts): the same in both themes, as those cards are. */
+  --on-color: #fffaf0;
   --accent-glow: 0 0 2px rgba(232, 195, 115, 0.8), 0 0 36px -4px rgba(201, 151, 74, 0.6);
 
   /* ---- Semantic feedback: jade (success) and cinnabar/seal-ink (error) —
@@ -4153,8 +4156,282 @@ table.data td {
    two cards side by side -- what to fix, what has been built -- then the
    companion, the compass and the secondary things. The old greeting
    banner, gradient shortcut tiles and duplicated stat rows are gone. */
-.dash-greeting { margin-bottom: var(--space-4); }
-.dash-greeting .sub { margin-top: var(--space-1); }
+/* ---------- Dashboard greeting: 你好 + the learner's name ----------
+   Restored from the original hero banner (before e849fd9), rebuilt on
+   theme tokens: the old one mixed its gradient into --bg and set cream
+   text, which vanished on Paper. Two drifting glows (jade, gold), the ink
+   brush strokes, and a faint 学 watermark behind the words. */
+.dash-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: var(--space-7) var(--space-6) var(--space-6);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  background:
+    radial-gradient(90% 130% at 0% 0%, color-mix(in srgb, var(--good) 26%, transparent), transparent 62%),
+    radial-gradient(80% 130% at 100% 100%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 64%),
+    linear-gradient(120deg, color-mix(in srgb, var(--good) 10%, var(--surface-1)), var(--surface-1) 52%,
+      color-mix(in srgb, var(--seal) 8%, var(--surface-1)));
+  box-shadow: var(--shadow-md);
+}
+.dash-hero::before,
+.dash-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.32;
+  animation: floatGlow 14s ease-in-out infinite;
+  pointer-events: none;
+}
+.dash-hero::before { top: -140px; left: -60px; background: var(--good); }
+.dash-hero::after { bottom: -160px; right: -40px; background: var(--accent); animation-delay: -7s; }
+[data-theme="paper"] .dash-hero::before,
+[data-theme="paper"] .dash-hero::after { opacity: 0.22; }
+.dash-hero .ink-brush { color: var(--accent); }
+.dash-hero-seal {
+  position: absolute;
+  z-index: -1;
+  right: var(--space-6);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: calc(var(--text-hero) * 2.3);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--seal);
+  opacity: 0.09;
+  pointer-events: none;
+  user-select: none;
+}
+.dash-hero-kicker {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-full);
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dash-hero-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  margin: var(--space-5) 0 0;
+  min-width: 0;
+}
+.dash-hero-zh {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  ruby-position: over;
+  background: linear-gradient(120deg, var(--good) 0%, var(--accent) 52%, var(--seal) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.dash-hero-zh rt {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  -webkit-text-fill-color: var(--text-dim);
+}
+.dash-hero-name {
+  min-width: 0;
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.dash-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dash-hero-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
+  backdrop-filter: blur(6px);
+}
+.dash-hero-pill .ic {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+}
+.dash-hero-pill b {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.dash-hero-pill small {
+  display: block;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ---------- Dashboard shortcut cards ----------
+   Restored from the original: Real Chinese (the core loop) is a large
+   featured card with a sketched globe and a folded ticket corner; the
+   other three are a smaller stack, each a few degrees off-square like
+   hand-placed cards, straightening on hover. Colours are the brand's
+   jade / pine / cinnabar / gold, deepened with --on-accent so the light
+   --on-color text stays readable in both themes. */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  grid-template-rows: repeat(3, auto);
+  /* The tilted cards' edges move by width x sin(angle): the row gap grows
+     with the screen so neighbours never collide on wide displays. */
+  gap: clamp(var(--space-3), 2.2vw, 80px) var(--space-5);
+  margin: var(--space-5) 0;
+}
+.quick-action {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 84px;
+  padding: var(--space-4) var(--space-5);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--on-color) 14%, transparent);
+  border-radius: var(--radius-lg);
+  color: var(--on-color);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-spring), box-shadow var(--dur-base) ease;
+}
+.qa-jade { background: linear-gradient(140deg, color-mix(in srgb, var(--good) 52%, var(--on-accent)), color-mix(in srgb, var(--good) 72%, var(--on-accent))); }
+.qa-pine { background: linear-gradient(140deg, color-mix(in srgb, var(--good) 34%, var(--on-accent)), color-mix(in srgb, var(--good) 58%, var(--on-accent))); }
+.qa-cinnabar { background: linear-gradient(140deg, color-mix(in srgb, var(--seal) 62%, var(--on-accent)), color-mix(in srgb, var(--seal) 86%, var(--on-accent))); }
+.qa-gold { background: linear-gradient(140deg, color-mix(in srgb, var(--accent-fill) 40%, var(--on-accent)), color-mix(in srgb, var(--accent-fill) 60%, var(--on-accent))); }
+/* A soft light bloom in the top corner of every card. */
+.quick-action::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--on-color) 16%, transparent), transparent 55%);
+  pointer-events: none;
+}
+.quick-action:nth-of-type(2) { grid-column: 2; grid-row: 1; transform: rotate(-3deg); }
+.quick-action:nth-of-type(3) { grid-column: 2; grid-row: 2; transform: rotate(3.4deg) translateX(6px); }
+.quick-action:nth-of-type(4) { grid-column: 2; grid-row: 3; transform: rotate(-2.4deg); }
+.quick-action:hover { z-index: 2; transform: translateY(-3px) rotate(0deg); box-shadow: var(--shadow-md); }
+.quick-action:focus-visible { z-index: 2; transform: rotate(0deg); outline: 2px solid var(--accent); outline-offset: 3px; }
+.quick-action.featured {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  gap: var(--space-7);
+  min-height: 0;
+  padding: var(--space-5);
+}
+.quick-action.featured:hover { transform: translateY(-3px); }
+.qa-globe {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  width: 160px;
+  height: 160px;
+  fill: none;
+  stroke: var(--on-color);
+  stroke-width: 1.1;
+  opacity: 0.18;
+  pointer-events: none;
+}
+.quick-action.featured::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  background: color-mix(in srgb, var(--on-color) 18%, transparent);
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+.quick-action .qa-top { position: relative; display: flex; align-items: center; justify-content: space-between; }
+.quick-action .ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--on-color) 20%, transparent);
+}
+.quick-action.featured .ic { width: 48px; height: 48px; }
+.quick-action .arrow { opacity: 0.85; transition: transform var(--dur-base) var(--ease-spring); }
+.quick-action:hover .arrow { transform: translateX(4px); }
+.quick-action .qa-text { position: relative; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.quick-action .label { font-size: var(--text-sm); font-weight: 800; overflow-wrap: anywhere; }
+.quick-action.featured .label { font-size: var(--text-xl); line-height: 1.2; }
+.quick-action .qa-sub { font-size: var(--text-sm); color: color-mix(in srgb, var(--on-color) 82%, transparent); }
+/* The illustrated place in the featured card's lower corner, a little
+   tilted like a postcard tucked into it; it straightens with the card. */
+.quick-action .qa-art {
+  position: absolute;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  transform: rotate(6deg);
+  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--on-accent) 45%, transparent));
+  transition: transform var(--dur-base) var(--ease-spring);
+  pointer-events: none;
+}
+.quick-action.featured:hover .qa-art { transform: rotate(0deg) translateY(-3px); }
+.quick-action.featured .qa-text { padding-right: 140px; }
+
+@media (max-width: 720px) {
+  .dash-hero { padding: var(--space-6) var(--space-5) var(--space-5); }
+  .dash-hero-seal { right: var(--space-3); }
+  .dash-hero-name { font-size: var(--text-xl); }
+  .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
+  .quick-action,
+  .quick-action:nth-of-type(2),
+  .quick-action:nth-of-type(3),
+  .quick-action:nth-of-type(4) { grid-column: auto; grid-row: auto; transform: none; min-height: 96px; }
+  .quick-action.featured { grid-column: 1 / -1; grid-row: auto; gap: var(--space-6); }
+  /* Three small cards in two columns: the last one takes the full row
+     instead of sitting alone in half of it. */
+  .quick-action:nth-of-type(4) { grid-column: 1 / -1; min-height: 0; }
+  .quick-action .qa-art { width: 76px; height: 76px; right: var(--space-4); bottom: var(--space-4); }
+  .quick-action.featured .qa-text { padding-right: 88px; }
+}
+@media (max-width: 480px) {
+  .dash-hero-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-hero-pill { padding-right: var(--space-2); }
+}
 .dash-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
