@@ -632,7 +632,9 @@
       "knowRecallNone": "No answers from memory in the last {{days}} days yet.",
       "knowEmpty": "Nothing here yet — practise a level, and your words appear here as you answer.",
       "knowGoRecall": "Recall them now",
-      "knowGoReview": "Review now"
+      "knowGoReview": "Review now",
+      "knowMemory": "Predicted recall now: {{pct}}% (spaced-repetition model, {{count}} items)",
+      "knowAtRisk": "Likely to fade soon: {{count}}"
     },
     "profile": {
       "title": "Profile",

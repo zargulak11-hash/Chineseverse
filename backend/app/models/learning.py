@@ -90,6 +90,11 @@ class UserVocabulary(Base):
     times_recalled = Column(Integer, nullable=False, default=0, server_default="0")
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
+    # FSRS memory state (services/srs.py): stability in days, difficulty 1-10.
+    # Null until the first review since FSRS, which seeds them from the old
+    # schedule.
+    stability = Column(Float, nullable=True)
+    difficulty = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="user_vocabulary")
     word = relationship("VocabularyWord", back_populates="user_records")
@@ -151,6 +156,11 @@ class UserHanzi(Base):
     times_recalled = Column(Integer, nullable=False, default=0, server_default="0")
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
+    # FSRS memory state (services/srs.py): stability in days, difficulty 1-10.
+    # Null until the first review since FSRS, which seeds them from the old
+    # schedule.
+    stability = Column(Float, nullable=True)
+    difficulty = Column(Float, nullable=True)
     # Populated only by a completed HanziWriter stroke quiz (see hanzi.py's
     # /write endpoint) -- never by a recognition review.
     writing_status = Column(String(20), default="not_practiced")
@@ -196,6 +206,11 @@ class UserGrammar(Base):
     times_missed = Column(Integer, default=0)
     last_reviewed_at = Column(DateTime, nullable=True)
     next_review_at = Column(DateTime, nullable=True)
+    # FSRS memory state (services/srs.py): stability in days, difficulty 1-10.
+    # Null until the first review since FSRS, which seeds them from the old
+    # schedule.
+    stability = Column(Float, nullable=True)
+    difficulty = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="user_grammar")
     topic = relationship("GrammarTopic", back_populates="user_records")

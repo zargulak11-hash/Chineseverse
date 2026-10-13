@@ -404,8 +404,10 @@ def test_knowledge_puts_each_word_in_one_honest_stage(client, learner):
                                      next_review_at=datetime.utcnow() - timedelta(days=5)))
         db.commit()
     k = expect(client, "get", "/api/analytics/knowledge", 200, headers=h)
+    # None of these has an FSRS memory yet (never reviewed since FSRS), so
+    # no prediction is made about them.
     assert k["vocab"] == {"learning": 1, "recognised": 2, "recalled": 2, "mastered": 1, "due": 1, "slipping": 1,
-                          "met": 6}, k["vocab"]
+                          "met": 6, "memory": {"tracked": 0, "predicted_recall": None, "at_risk": 0}}, k["vocab"]
     assert k["hanzi"]["met"] == 0 and k["recall"] == {"answered": 0, "correct": 0, "days": 30}
 
 
@@ -450,3 +452,36 @@ def test_the_word_list_says_whether_a_word_was_recalled(client, learner):
     words = {w["id"]: w for w in expect(client, "get", "/api/vocab?hsk_level=1", 200, headers=h)}
     assert words[eat]["recalled"] is False and words[drink]["recalled"] is True
     assert all(w["recalled"] is False for i, w in words.items() if i not in (eat, drink))
+
+
+def test_review_puts_what_fsrs_expects_forgotten_first_and_knowledge_reports_it(client, learner):
+    uid, h = learner
+    a, b = level1_words(2)
+    now = datetime.utcnow()
+    with SessionLocal() as db:
+        # Both due; a is far past its stability (low predicted recall), b just due.
+        for wid, s, ago in ((a, 2.0, 20), (b, 10.0, 10)):
+            db.add(models.UserVocabulary(user_id=uid, word_id=wid, status="reviewing", mastery=60.0, times_seen=5,
+                                         times_missed=0, times_recalled=1, stability=s, difficulty=5.0,
+                                         last_reviewed_at=now - timedelta(days=ago),
+                                         next_review_at=now - timedelta(hours=1)))
+        db.commit()
+    s = expect(client, "post", ROUNDS, 201, headers=h, json={"source": "review", "size": 4})
+    order = [q["item_id"] for q in stored(s["id"])[0]]
+    assert order.index(a) < order.index(b), order
+    mem = expect(client, "get", "/api/analytics/knowledge", 200, headers=h)["vocab"]["memory"]
+    # R(20, 2) = 0.54 and R(10, 10) = 0.90 -> mean 72%, one at risk (< 80%).
+    assert mem == {"tracked": 2, "predicted_recall": 72, "at_risk": 1}, mem
+
+
+def test_a_practice_answer_gives_the_word_an_fsrs_memory(client, learner):
+    uid, h = learner
+    eat = level1_word("吃")
+    recognise(uid, eat, mastery=60.0)
+    s, i = round_for(client, h, eat)
+    say(client, h, s["id"], i, "chi1")
+    rec_ = user_word(uid, eat)
+    # Seeded from the schedule recognise() gave it (reviewed 3 days ago, due
+    # an hour ago), then grown by the recall.
+    assert rec_.stability is not None and rec_.stability > 0 and 1.0 <= rec_.difficulty <= 10.0
+    assert rec_.next_review_at - rec_.last_reviewed_at >= timedelta(days=1)

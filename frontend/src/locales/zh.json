@@ -620,7 +620,9 @@
       "knowRecallNone": "最近{{days}}天还没有凭记忆作答。",
       "knowEmpty": "这里还是空的——练习一个级别，答题后你的词就会出现在这里。",
       "knowGoRecall": "现在去回想",
-      "knowGoReview": "现在去复习"
+      "knowGoReview": "现在去复习",
+      "knowMemory": "当前预计记得：{{pct}}%（间隔重复模型，共{{count}}项）",
+      "knowAtRisk": "快要忘记：{{count}}"
     },
     "profile": {
       "title": "个人资料",

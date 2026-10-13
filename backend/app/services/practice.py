@@ -59,7 +59,7 @@ from app.services.gamification import (
 from app.services.grammar_names import syllabus_names
 from app.services.hsk_band import resolve_level_filter
 from app.services.localization import load_translations, tr
-from app.services.srs import apply_srs
+from app.services.srs import apply_srs, recall_probability
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
            "tones", "story", "pronunciation", "mixups", "recall")
@@ -616,6 +616,13 @@ def _review_items(db: Session, user: models.User, size: int, now: datetime) -> l
             .all()
         )
         for rec in due:
+            # The item FSRS expects to be forgotten soonest comes first (its
+            # predicted recall, services/srs.py); a record without an FSRS
+            # memory yet falls back to how overdue and how weak it is.
+            p = recall_probability(rec, now)
+            if p is not None:
+                add(item_type, getattr(rec, rel), 1.0 + 2.0 * (1.0 - p))
+                continue
             overdue_h = (now - rec.next_review_at).total_seconds() / 3600
             add(item_type, getattr(rec, rel), 1.0 + min(overdue_h, 72) / 72 + (100 - (rec.mastery or 0)) / 100)
 

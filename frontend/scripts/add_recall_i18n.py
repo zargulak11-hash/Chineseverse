@@ -121,6 +121,14 @@ INTO = {
         "Вы выбрали «{{meaning}}», но в этом предложении используется правило ниже. Откройте любое, чтобы увидеть, как используется каждое.",
         "Шумо «{{meaning}}»-ро интихоб кардед, вале дар ин ҷумла қоидаи поён истифода шудааст. Ҳар якеро кушоед, то бинед, ки ҳар кадом чӣ тавр истифода мешавад.",
         "你选的是“{{meaning}}”，但这个句子用的是下面的语法点。打开看看它们各自怎么用。"),
+    # FSRS prediction on Progress (services/srs.py; colon form avoids plurals)
+    "pages.progress.knowMemory": L(
+        "Predicted recall now: {{pct}}% (spaced-repetition model, {{count}} items)",
+        "Прогноз вспоминания сейчас: {{pct}}% (модель интервальных повторений, элементов: {{count}})",
+        "Пешгӯии ба ёд овардан ҳозир: {{pct}}% (модели такрори фосиладор, унсурҳо: {{count}})",
+        "当前预计记得：{{pct}}%（间隔重复模型，共{{count}}项）"),
+    "pages.progress.knowAtRisk": L("Likely to fade soon: {{count}}", "Скоро могут забыться: {{count}}",
+                                   "Ба наздикӣ метавонанд фаромӯш шаванд: {{count}}", "快要忘记：{{count}}"),
     "pages.vocabulary.recallPending": L(
         "Recognised — not yet recalled from memory", "Узнаёте — по памяти ещё не вспоминали",
         "Мешиносед — ҳанӯз аз ёд нанавиштаед", "认得——还没凭记忆写出过"),

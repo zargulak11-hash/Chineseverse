@@ -38,6 +38,14 @@ function KnowledgeColumn({ title, stages }) {
           </li>
         ))}
       </ul>
+      {/* FSRS's own prediction (services/srs.py), only over the items it
+          models, and named as a prediction. */}
+      {stages.memory?.tracked > 0 && (
+        <p className="sub know-due">
+          {t("pages.progress.knowMemory", { pct: stages.memory.predicted_recall, count: stages.memory.tracked })}
+          {stages.memory.at_risk > 0 && ` · ${t("pages.progress.knowAtRisk", { count: stages.memory.at_risk })}`}
+        </p>
+      )}
       {stages.due > 0 && (
         <p className="sub know-due">
           {t("pages.progress.knowDue", { count: stages.due })}

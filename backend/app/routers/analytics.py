@@ -11,7 +11,7 @@ from app.deps import get_current_user
 from app.services.activity import SECTION_LABELS
 from app.services.gamification import activity_today, local_date, local_day_start, streak_snapshot
 from app.services.recall import TYPED_TYPES
-from app.services.srs import SLIP_AFTER
+from app.services.srs import SLIP_AFTER, retrievability
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -120,6 +120,7 @@ def activity_analytics(
 
 
 RECALL_WINDOW_DAYS = 30
+AT_RISK_BELOW = 0.8  # FSRS-predicted recall under this: likely to be forgotten soon
 
 
 def _stages(rows, now: datetime) -> dict:
@@ -136,7 +137,13 @@ def _stages(rows, now: datetime) -> dict:
     review time has come) and `slipping` (known, and days past it --
     services/srs.is_slipping)."""
     out = {"learning": 0, "recognised": 0, "recalled": 0, "mastered": 0, "due": 0, "slipping": 0}
-    for status, recalled, next_review_at in rows:
+    # FSRS's own prediction (services/srs.py), only over items that have an
+    # FSRS memory -- `tracked` says how many that is, so the average is
+    # never read as covering words the scheduler hasn't modelled yet.
+    probs: list[float] = []
+    for status, recalled, next_review_at, stability, last_reviewed_at in rows:
+        if stability is not None and last_reviewed_at is not None:
+            probs.append(retrievability((now - last_reviewed_at).total_seconds() / 86400, stability))
         if status in ("reviewing", "mastered") and not recalled:
             out["recognised"] += 1
         elif status == "mastered":
@@ -150,6 +157,11 @@ def _stages(rows, now: datetime) -> dict:
             if status in ("reviewing", "mastered") and now - next_review_at >= SLIP_AFTER:
                 out["slipping"] += 1
     out["met"] = out["learning"] + out["recognised"] + out["recalled"] + out["mastered"]
+    out["memory"] = {
+        "tracked": len(probs),
+        "predicted_recall": round(sum(probs) / len(probs) * 100) if probs else None,
+        "at_risk": sum(1 for p in probs if p < AT_RISK_BELOW),
+    }
     return out
 
 
@@ -165,7 +177,8 @@ def knowledge(
     now = datetime.utcnow()
     out = {}
     for key, model in (("vocab", models.UserVocabulary), ("hanzi", models.UserHanzi)):
-        rows = (db.query(model.status, model.times_recalled, model.next_review_at)
+        rows = (db.query(model.status, model.times_recalled, model.next_review_at, model.stability,
+                         model.last_reviewed_at)
                 .filter(model.user_id == user.id).all())
         out[key] = _stages(rows, now)
     since = now - timedelta(days=RECALL_WINDOW_DAYS)
