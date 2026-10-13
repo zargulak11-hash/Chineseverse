@@ -45,6 +45,7 @@ const GROUPS = [
     labelKey: "nav.groupUse",
     links: [
       ["/real-chinese", "nav.realChinese", "mapPin"],
+      ["/roleplay", "nav.roleplay", "chat"],
       ["/sentence", "nav.sentence", "sparkles"],
       ["/internet", "nav.internet", "eye"],
       ["/detective", "nav.detective", "search"],

@@ -40,6 +40,8 @@ const PetTeacher = lazy(() => import("./pages/PetTeacher.jsx"));
 const Mistakes = lazy(() => import("./pages/Mistakes.jsx"));
 const Practice = lazy(() => import("./pages/Practice.jsx"));
 const RealChinese = lazy(() => import("./pages/RealChinese.jsx"));
+const RoleplayHub = lazy(() => import("./pages/Roleplay.jsx"));
+const RoleplayChat = lazy(() => import("./pages/Roleplay.jsx").then((m) => ({ default: m.RoleplayChat })));
 const RealChineseScene = lazy(() => import("./pages/RealChinese.jsx").then((m) => ({ default: m.RealChineseScene })));
 const SentenceLesson = lazy(() => import("./pages/SentenceLesson.jsx"));
 const Detective = lazy(() => import("./pages/Detective.jsx"));
@@ -309,6 +311,22 @@ export default function App() {
             element={
               <RequireAuth>
                 <RealChineseScene />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/roleplay"
+            element={
+              <RequireAuth>
+                <RoleplayHub />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/roleplay/:sessionId"
+            element={
+              <RequireAuth>
+                <RoleplayChat />
               </RequireAuth>
             }
           />

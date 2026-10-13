@@ -46,6 +46,9 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     "story_listen": ("stories", 0.5),
     "story_explain": ("stories", 0.3),
     "word_saved": ("vocabulary", 0.2),
+    # AI roleplay (services/roleplay.py): a message sent, a scenario finished.
+    "roleplay_turn": ("roleplay", 1.0),
+    "roleplay_finish": ("roleplay", 0.5),
 }
 
 SECTION_LABELS: dict[str, str] = {
@@ -66,6 +69,7 @@ SECTION_LABELS: dict[str, str] = {
     "internet": "Chinese Internet",
     "foundation": "Sounds & tones",
     "stories": "Chinese Stories",
+    "roleplay": "AI Roleplay",
 }
 
 

@@ -4507,6 +4507,58 @@ table.data td {
   font-size: var(--text-sm);
 }
 .dash-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+
+/* ---------- AI roleplay (Roleplay.jsx) ---------- */
+.rp-unavailable { border-color: var(--accent-border); }
+.rp-scenario { display: flex; flex-direction: column; gap: var(--space-2); }
+.rp-scenario .btn { align-self: flex-start; margin-top: auto; }
+.rp-scenario.is-locked { opacity: 0.72; }
+.rp-scenario .badge { margin-top: var(--space-1); }
+.rp-played { display: block; margin-top: var(--space-1); font-size: var(--text-xs); }
+.rp-goals { margin: 0 0 var(--space-3); padding-left: var(--space-5); line-height: 1.6; }
+.rp-recent { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.rp-thread { display: flex; flex-direction: column; gap: var(--space-3); }
+.rp-line {
+  max-width: min(560px, 92%);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow-wrap: anywhere;
+}
+.rp-line.is-partner { align-self: flex-start; background: var(--surface-2); border-top-left-radius: var(--radius-sm); }
+.rp-line.is-learner {
+  align-self: flex-end;
+  background: var(--accent-dim);
+  border-color: var(--accent-border);
+  border-top-right-radius: var(--radius-sm);
+}
+.rp-who { font-size: var(--text-2xs); font-weight: 800; color: var(--text-faint); letter-spacing: 0.05em; }
+.rp-zh { margin: var(--space-1) 0 0; font-size: var(--text-md); font-weight: 700; line-height: 1.45; }
+.rp-pinyin { margin: var(--space-1) 0 0; color: var(--text-dim); }
+.rp-line .sub { margin: var(--space-1) 0 0; }
+.rp-tools { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.rp-ok { margin-top: var(--space-2); }
+.rp-thinking { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.rp-thinking .spinner { width: 16px; height: 16px; border-width: 2px; }
+.rp-slow { flex-basis: 100%; font-size: var(--text-xs); }
+.rp-compose { margin-top: var(--space-4); }
+.rp-compose-row { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.rp-compose-row .input { flex: 1 1 auto; min-width: 0; }
+.rp-note { margin-top: var(--space-3); font-size: var(--text-xs); }
+.rp-checklist, .rp-words { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.rp-checklist li { display: flex; gap: var(--space-2); align-items: flex-start; color: var(--text-dim); }
+.rp-checklist li.is-met { color: var(--good); font-weight: 700; }
+.rp-word { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.rp-word > span { min-width: 0; }
+.rp-word-meaning { display: block; font-size: var(--text-xs); }
+.rp-corrections { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.rp-corrections .sub { display: block; }
+.rp-summary { margin-bottom: var(--space-4); border-color: var(--accent-border); }
+@media (max-width: 640px) {
+  .rp-compose-row { flex-wrap: wrap; }
+  .rp-compose-row .input { flex-basis: 100%; }
+  .rp-line { max-width: 100%; }
+}
 .dash-goal { margin-top: var(--space-4); }
 .hbar-link { color: inherit; text-decoration: none; border-radius: var(--radius-sm); }
 .hbar-link:hover .hbar-name { color: var(--text); }

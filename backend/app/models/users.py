@@ -93,6 +93,7 @@ class User(Base):
     exam_attempts = relationship("HSKExamAttempt", back_populates="user", cascade="all, delete-orphan")
     trace_attempts = relationship("HanziTraceAttempt", back_populates="user", cascade="all, delete-orphan")
     story_progress = relationship("StoryProgress", back_populates="user", cascade="all, delete-orphan")
+    roleplay_sessions = relationship("RoleplaySession", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def onboarding_completed(self) -> bool:

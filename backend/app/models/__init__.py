@@ -43,6 +43,7 @@ from app.models.practice import (
 from app.models.duels import Duel, DuelParticipant, DuelAnswer
 from app.models.gamification import Achievement, UserAchievement, DailyQuest
 from app.models.localization import ContentTranslation
+from app.models.roleplay import RoleplaySession
 
 __all__ = [
     "Base",
@@ -91,4 +92,5 @@ __all__ = [
     "UserAchievement",
     "DailyQuest",
     "ContentTranslation",
+    "RoleplaySession",
 ]

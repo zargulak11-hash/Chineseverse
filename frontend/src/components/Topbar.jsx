@@ -12,6 +12,7 @@ const NAV_INDEX = [
   ["/journey", "nav.journey", "route"],
   ["/dashboard", "nav.home", "home"],
   ["/real-chinese", "nav.realChinese", "mapPin"],
+  ["/roleplay", "nav.roleplay", "chat"],
   ["/sound-world", "nav.soundWorld", "ear"],
   ["/detective", "nav.detective", "search"],
   ["/passport", "nav.passport", "award"],
