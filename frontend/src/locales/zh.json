@@ -267,7 +267,8 @@
       "empty": "该级别暂无词语。",
       "tapToHear": "点一下卡片就能听发音。",
       "slipping": "快忘了",
-      "slippingCount_other": "{{count}}个学会的词快忘了"
+      "slippingCount_other": "{{count}}个学会的词快忘了",
+      "recallPending": "认得——还没凭记忆写出过"
     },
     "dna": {
       "title": "你的学习指南针",
@@ -1060,7 +1061,9 @@
       "other_word": "{{word}}（{{pinyin}}）是另一个词，意思是“{{meaning}}”。和下面的答案比较一下——这两个词以后还会在练习里一起出现。",
       "picked": "你选的选项属于{{word}}（{{pinyin}}）：“{{meaning}}”。和下面的答案比较一下——它们以后还会在练习里一起出现。",
       "wrong": "这次不对。看看下面的答案——它很快会回到复习里，你可以再回忆一次。",
-      "unknown": "没关系——现在你看到了。几个小时后它会再出现，到时候试着回忆它。"
+      "unknown": "没关系——现在你看到了。几个小时后它会再出现，到时候试着回忆它。",
+      "picked_grammar": "你选的是“{{meaning}}”，但这个句子用的是下面的语法点。打开看看它们各自怎么用。",
+      "openPoint": "打开“{{title}}”"
     },
     "questionLabel": "题目",
     "accuracy": "正确率",

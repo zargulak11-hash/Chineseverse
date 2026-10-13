@@ -396,6 +396,9 @@ class WordWithStatus(WordResponse):
     # Known (reviewing/mastered) but well past its review date
     # (services/srs.is_slipping) -- read from the schedule, never stored.
     slipping: bool = False
+    # Produced from memory at least once (times_recalled > 0) -- what
+    # "mastered" needs on top of recognition (services/srs.py).
+    recalled: bool = False
 
 
 class GrammarTopicResponse(BaseModel):

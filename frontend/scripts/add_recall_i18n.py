@@ -115,6 +115,16 @@ INTO = {
         "zh": {"other": "凭记忆写出{{count}}个你只认得的词"},
     },
     "journey.nextWhy.recall": WHY,
+    # A wrong grammar point picked in a round (practice._check_out)
+    "practice.why.picked_grammar": L(
+        "You chose “{{meaning}}”, but this sentence uses the point shown below. Open either to see how each one is used.",
+        "Вы выбрали «{{meaning}}», но в этом предложении используется правило ниже. Откройте любое, чтобы увидеть, как используется каждое.",
+        "Шумо «{{meaning}}»-ро интихоб кардед, вале дар ин ҷумла қоидаи поён истифода шудааст. Ҳар якеро кушоед, то бинед, ки ҳар кадом чӣ тавр истифода мешавад.",
+        "你选的是“{{meaning}}”，但这个句子用的是下面的语法点。打开看看它们各自怎么用。"),
+    "pages.vocabulary.recallPending": L(
+        "Recognised — not yet recalled from memory", "Узнаёте — по памяти ещё не вспоминали",
+        "Мешиносед — ҳанӯз аз ёд нанавиштаед", "认得——还没凭记忆写出过"),
+    "practice.why.openPoint": L("Open “{{title}}”", "Открыть «{{title}}»", "«{{title}}»-ро кушоед", "打开“{{title}}”"),
     # Progress -> "What you know" (GET /api/analytics/knowledge)
     "pages.progress.knowTitle": L("What you know", "Что вы знаете", "Он чи шумо медонед", "你掌握了什么"),
     "pages.progress.knowSub": L(

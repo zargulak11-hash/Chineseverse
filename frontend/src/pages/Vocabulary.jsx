@@ -97,6 +97,11 @@ export default function Vocabulary() {
             <div style={{ marginTop: 8, width: "100%" }}>
               <Bar value={w.mastery ?? 0} alt />
             </div>
+            {/* A full bar from choosing alone: it isn't mastered until it is
+                produced from memory (services/srs.py). */}
+            {(w.status === "reviewing" || w.status === "mastered") && !w.recalled && (
+              <span className="sub word-recall-pending">{t("pages.vocabulary.recallPending")}</span>
+            )}
           </button>
         ))}
       </div>

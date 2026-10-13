@@ -575,7 +575,7 @@ export default function Practice({ forceSource }) {
                 <div className={`badge ${result.correct ? "good" : "bad"}`}>
                   {result.correct ? t("practice.correct") : t("practice.notQuite")}
                 </div>
-                <CheckExplain check={result.check} />
+                <CheckExplain check={result.check} card={result.card} />
                 <div className="practice-answer-card">
                   <b style={{ fontSize: 22 }}>{result.card.hanzi}</b>{" "}
                   {result.card.pinyin && <span className="sub" style={{ color: "var(--accent2)" }}>{result.card.pinyin}</span>}

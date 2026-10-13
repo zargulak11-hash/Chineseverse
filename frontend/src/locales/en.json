@@ -275,7 +275,8 @@
       "tapToHear": "Tap a card to hear it.",
       "slipping": "slipping",
       "slippingCount_one": "{{count}} word you knew is slipping",
-      "slippingCount_other": "{{count}} words you knew are slipping"
+      "slippingCount_other": "{{count}} words you knew are slipping",
+      "recallPending": "Recognised — not yet recalled from memory"
     },
     "dna": {
       "title": "Your Learning Compass",
@@ -1072,7 +1073,9 @@
       "other_word": "{{word}} ({{pinyin}}) is another word: it means “{{meaning}}”. Compare it with the answer below — the two will meet again in your practice.",
       "picked": "The option you chose belongs to {{word}} ({{pinyin}}): “{{meaning}}”. Compare it with the answer below — the two will meet again in your practice.",
       "wrong": "Not this time. Look at the answer below — it comes back soon in your review, so you can recall it again.",
-      "unknown": "That's fine — now you've seen it. It comes back in a few hours so you can try to recall it."
+      "unknown": "That's fine — now you've seen it. It comes back in a few hours so you can try to recall it.",
+      "picked_grammar": "You chose “{{meaning}}”, but this sentence uses the point shown below. Open either to see how each one is used.",
+      "openPoint": "Open “{{title}}”"
     },
     "questionLabel": "Question",
     "accuracy": "Accuracy",

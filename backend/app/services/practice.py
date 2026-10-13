@@ -965,7 +965,13 @@ def _check_out(db: Session, q: dict, answer: dict, locale: str) -> dict | None:
     stored answer shows. A typed answer: its kind (services/recall.py), the
     text typed and the other word it turned out to be. A wrong pick between
     two words or characters: the picked one, with its meaning, so the two
-    can be compared."""
+    can be compared. A wrong grammar point: the one picked, and both ids,
+    so the learner can open the two explanations side by side."""
+    if q["item_type"] == "grammar":
+        if answer.get("correct") or answer.get("choice_id") in (None, q["item_id"]):
+            return None
+        return {"kind": "picked_grammar", "other": _card_for(db, "grammar", answer["choice_id"], locale),
+                "other_id": answer["choice_id"], "target_id": q["item_id"]}
     if q["item_type"] not in ("vocab", "hanzi"):
         return None
     if q["type"] in recall.TYPED_TYPES:

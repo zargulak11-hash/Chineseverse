@@ -50,6 +50,7 @@ def list_words(
         item.mastery = rec.mastery if rec else 0.0
         item.due_for_review = bool(rec and rec.next_review_at and rec.next_review_at <= now)
         item.slipping = is_slipping(rec, now)
+        item.recalled = bool(rec and rec.times_recalled)
         out.append(item)
     # Resurface what's actually due first, instead of a fixed id order —
     # this is the "Memory of the World" reading the schedule it writes.

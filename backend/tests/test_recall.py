@@ -422,3 +422,31 @@ def test_knowledge_counts_answers_from_memory(client, learner):
 
 def test_knowledge_is_private(client):
     expect(client, "get", "/api/analytics/knowledge", 401)
+
+
+def test_a_wrong_grammar_point_links_both_explanations(client, learner):
+    _, h = learner
+    s = expect(client, "post", ROUNDS, 201, headers=h, json={"source": "grammar", "hsk_level": 1, "size": 4})
+    qs, _ = stored(s["id"])
+    q = qs[0]
+    wrong = next(o for o in q["option_ids"] if o != q["item_id"])
+    r = expect(client, "post", f"{ROUNDS}/{s['id']}/answer", 200, headers={**h, "X-Locale": "ru"},
+               json={"index": 0, "choice_id": wrong})
+    c = r["check"]
+    assert c["kind"] == "picked_grammar" and c["other_id"] == wrong and c["target_id"] == q["item_id"], c
+    assert c["other"]["meaning"] and not c["other"]["meaning"].isascii(), c  # named in Russian
+    right = expect(client, "post", ROUNDS, 201, headers=h, json={"source": "grammar", "hsk_level": 1, "size": 4})
+    rq = stored(right["id"])[0][0]
+    ok = expect(client, "post", f"{ROUNDS}/{right['id']}/answer", 200, headers=h,
+                json={"index": 0, "choice_id": rq["item_id"]})
+    assert ok["check"] is None
+
+
+def test_the_word_list_says_whether_a_word_was_recalled(client, learner):
+    uid, h = learner
+    eat, drink = level1_word("吃"), level1_word("喝")
+    recognise(uid, eat, mastery=90.0)
+    recognise(uid, drink, recalled=1)
+    words = {w["id"]: w for w in expect(client, "get", "/api/vocab?hsk_level=1", 200, headers=h)}
+    assert words[eat]["recalled"] is False and words[drink]["recalled"] is True
+    assert all(w["recalled"] is False for i, w in words.items() if i not in (eat, drink))

@@ -1302,6 +1302,7 @@ select.input.lang-select {
 /* Vocabulary: a word due for review (pages/Vocabulary.jsx). */
 .animal.is-due { border-color: var(--accent-border); }
 .word-due-badge { position: absolute; top: var(--space-2); right: var(--space-2); font-size: var(--text-2xs); }
+.word-recall-pending { display: block; margin-top: var(--space-1); font-size: var(--text-2xs); }
 
 .animal.picked {
   border-color: var(--accent-border);

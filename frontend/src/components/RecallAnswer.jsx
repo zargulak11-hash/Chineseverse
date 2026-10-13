@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 // A question answered from memory (type_word / type_pinyin): the learner
 // types the word or the reading, and the server grades it
@@ -65,9 +66,28 @@ export function RecallForm({ question, busy, answered, typed, retry, onSubmit })
 // Why an answer was right or wrong -- only what the server's grading shows
 // (the `check` of /practice/sessions/{id}/answer): the kind of mistake, the
 // word that was typed or picked instead, and the tones written vs needed.
-export function CheckExplain({ check }) {
+export function CheckExplain({ check, card }) {
   const { t } = useTranslation();
   if (!check || !check.kind || check.kind === "exact") return null;
+  if (check.kind === "picked_grammar") {
+    // Two grammar points: the one chosen and the one the sentence uses,
+    // each a link to its own explanation.
+    if (!check.other) return null;
+    const plain = { interpolation: { escapeValue: false } };
+    return (
+      <div className="practice-why" aria-live="polite">
+        <p>{t("practice.why.picked_grammar", { meaning: check.other.meaning, ...plain })}</p>
+        <div className="row" style={{ flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+          <Link to={`/grammar/${check.target_id}`} className="btn small">
+            {t("practice.why.openPoint", { title: card?.meaning || "", ...plain })}
+          </Link>
+          <Link to={`/grammar/${check.other_id}`} className="btn small ghost">
+            {t("practice.why.openPoint", { title: check.other.meaning, ...plain })}
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const other = check.other;
   const vars = {
     word: other?.hanzi || "",
