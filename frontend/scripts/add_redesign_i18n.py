@@ -47,6 +47,38 @@ S = {
         "Совет: нажмите 1–{{n}}, чтобы ответить, и Enter — к следующему вопросу.",
         "Маслиҳат: барои ҷавоб 1–{{n}}-ро пахш кунед, барои саволи навбатӣ Enter.",
         "小提示：按 1–{{n}} 作答，按 Enter 进入下一题。"),
+    # ---- Vocabulary as a dictionary (pages/Vocabulary.jsx) ----
+    "pages.vocabulary.kpiWords": L("Words in this level", "Слов на уровне", "Калимаҳои сатҳ", "本级词数"),
+    "pages.vocabulary.kpiKnown": L("You know", "Вы знаете", "Шумо медонед", "已掌握"),
+    "pages.vocabulary.searchPlaceholder": L(
+        "Search: 你好, nihao or a meaning", "Поиск: 你好, nihao или значение",
+        "Ҷустуҷӯ: 你好, nihao ё маъно", "搜索：汉字、拼音或释义"),
+    "pages.vocabulary.searchLabel": L("Search the words of HSK {{level}}", "Поиск по словам HSK {{level}}",
+                                      "Ҷустуҷӯ дар калимаҳои HSK {{level}}", "搜索 HSK {{level}} 的词语"),
+    "pages.vocabulary.levelLabel": L("HSK level", "Уровень HSK", "Сатҳи HSK", "HSK 等级"),
+    "pages.vocabulary.listLabel": L("Words", "Слова", "Калимаҳо", "词语"),
+    "pages.vocabulary.found": L(
+        {"one": "{{count}} word found", "other": "{{count}} words found"},
+        {"one": "Найдено {{count}} слово", "few": "Найдено {{count}} слова", "many": "Найдено {{count}} слов", "other": "Найдено {{count}} слова"},
+        {"one": "{{count}} калима ёфт шуд", "other": "{{count}} калима ёфт шуд"},
+        {"other": "找到 {{count}} 个词"}),
+    "pages.vocabulary.noMatch": L(
+        "Nothing at this level matches. Try another spelling or another HSK level.",
+        "На этом уровне ничего не найдено. Попробуйте другое написание или другой уровень HSK.",
+        "Дар ин сатҳ чизе ёфт нашуд. Навишти дигар ё сатҳи дигари HSK-ро санҷед.",
+        "本级没有匹配的词。换个写法或换个 HSK 等级试试。"),
+    "pages.vocabulary.traditional": L("Traditional", "Традиционное", "Анъанавӣ", "繁体"),
+    "pages.vocabulary.example": L("In a sentence", "В предложении", "Дар ҷумла", "例句"),
+    "pages.vocabulary.characters": L("Written with", "Пишется иероглифами", "Бо иероглифҳо навишта мешавад", "组成的汉字"),
+    "pages.vocabulary.openChar": L("Open the character {{char}}", "Открыть иероглиф {{char}}", "Кушодани иероглифи {{char}}", "查看汉字 {{char}}"),
+    "pages.vocabulary.related": L("Words that share a character", "Слова с тем же иероглифом", "Калимаҳо бо ҳамон иероглиф", "含相同汉字的词"),
+    "pages.vocabulary.yourMastery": L("Your mastery", "Ваше освоение", "Азхудкунии шумо", "你的掌握度"),
+    "pages.vocabulary.st_new": L("new", "новое", "нав", "未学"),
+    "pages.vocabulary.st_learning": L("learning", "изучается", "дар омӯзиш", "学习中"),
+    "pages.vocabulary.st_reviewing": L("reviewing", "на повторении", "дар такрор", "复习中"),
+    "pages.vocabulary.st_mastered": L("mastered", "освоено", "азхудшуда", "已掌握"),
+    "pages.vocabulary.st_due": L("due", "пора повторить", "вақти такрор", "待复习"),
+    "pages.vocabulary.st_slipping": L("slipping", "забывается", "фаромӯш мешавад", "快忘了"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(
