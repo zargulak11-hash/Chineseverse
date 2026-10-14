@@ -272,6 +272,7 @@ def generate_daily_quests(db: Session, user: models.User, force: bool = False) -
         return existing
 
     if not existing:
+        pending = bool(db.new or db.dirty or db.deleted)
         chosen = _pick_quest_templates(animal_bias(user)["quests"], k=3)
         for qtype, title, desc, target, xp, coins, flavor in chosen:
             db.add(
@@ -281,7 +282,17 @@ def generate_daily_quests(db: Session, user: models.User, force: bool = False) -
                     reward_xp=xp, reward_coins=coins, flavor=flavor,
                 )
             )
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # The same first-load race as ensure_user_skills: two requests of
+            # a learner's first visit of the day both found no quests and
+            # both inserted them; the loser hit uq(user, date, type) and
+            # answered 500 (seen in a browser test). The winner's quests are
+            # today's quests, so the loser reads those.
+            db.rollback()
+            if pending:
+                raise
         existing = (
             db.query(models.DailyQuest)
             .filter(models.DailyQuest.user_id == user.id, models.DailyQuest.quest_date == today)
