@@ -5451,20 +5451,22 @@ table.data td {
 .know-due { margin-top: var(--space-3); }
 .rhythm-grid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  /* minmax(0, ...): a plain fr track can't shrink below its content, and
+     the three stats and the donut pushed the page 27px past a phone. */
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
 }
 
 @media (max-width: 900px) {
   .rhythm-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .rhythm-stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
   margin-top: 16px;
 }
@@ -5529,6 +5531,7 @@ table.data td {
 
 .donut-wrap {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 18px;
   margin-top: 14px;
