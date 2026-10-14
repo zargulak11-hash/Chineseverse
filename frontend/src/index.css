@@ -4272,14 +4272,122 @@ table.data td {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+/* Fine 回纹 (fret) corners: top-left and, turned, bottom-right. */
+.dash-hero-fret {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: square;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.dash-hero-fret.is-tl { top: var(--space-3); left: var(--space-3); }
+.dash-hero-fret.is-br { right: var(--space-3); bottom: var(--space-3); transform: rotate(180deg); }
+/* 你好 | the greeting and the learner's name: one line of type joined by a
+   brush stroke, not two separate labels. */
 .dash-hero-title {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
   margin: var(--space-5) 0 0;
   min-width: 0;
 }
+.dash-hero-stroke {
+  align-self: stretch;
+  width: 3px;
+  margin: var(--space-4) 0 var(--space-1);
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, transparent, var(--accent) 18%, var(--good) 82%, transparent);
+  opacity: 0.75;
+  transform: skewX(-8deg);
+}
+.dash-hero-who {
+  display: flex;
+  /* Stays beside 你好 and wraps inside itself, rather than dropping below
+     and leaving the stroke alone. */
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  padding-top: var(--space-4);
+}
+.dash-hero-hello {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent-strong);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.dash-hero-hello::before {
+  content: "";
+  width: var(--space-5);
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+}
+.dash-hero-name {
+  position: relative;
+  align-self: flex-start;
+  max-width: 100%;
+  padding-bottom: var(--space-3);
+  font-family: var(--font-display);
+  /* Scales with 你好 so the two keep their proportion at every width. */
+  font-size: clamp(var(--text-xl), calc(var(--text-hero) * 0.56), var(--text-3xl));
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word; /* only when even one piece of the name can't fit */
+  background: linear-gradient(100deg, var(--text) 35%, var(--accent-strong) 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* A long account name: a step smaller, so its pieces fit whole. */
+.dash-hero-name.is-long { font-size: clamp(var(--text-lg), calc(var(--text-hero) * 0.4), var(--text-2xl)); }
+/* An ink-brush underline that draws itself in once. */
+.dash-hero-swash {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 14px;
+  overflow: visible;
+}
+.dash-hero-swash path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  /* pathLength="1": the draw-in covers the whole stroke at any width (a
+     fixed dash length left a gap under long names). */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: swashDraw calc(var(--dur-slow) * 2) var(--ease-out) var(--dur-slow) both;
+}
+@keyframes swashDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+/* 今天也要加油！ -- a line of Chinese to read, its pinyin and its meaning. */
+.dash-hero-cheer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-base);
+}
+.dash-hero-cheer > span:first-child { font-weight: 700; color: var(--text); }
+.dash-hero-cheer-py { color: var(--accent-strong); font-size: var(--text-sm); font-weight: 600; }
+.dash-hero-cheer-tr { color: var(--text-dim); font-size: var(--text-sm); }
+.dash-hero-cheer-tr::before { content: "— "; color: var(--text-faint); }
 .dash-hero-zh {
   font-family: var(--font-display);
   font-size: var(--text-hero);
@@ -4299,13 +4407,6 @@ table.data td {
   letter-spacing: 0.06em;
   color: var(--text-dim);
   -webkit-text-fill-color: var(--text-dim);
-}
-.dash-hero-name {
-  min-width: 0;
-  font-size: var(--text-2xl);
-  font-weight: 800;
-  line-height: 1.15;
-  overflow-wrap: anywhere;
 }
 .dash-hero-pills {
   display: flex;
@@ -4466,7 +4567,11 @@ table.data td {
 @media (max-width: 720px) {
   .dash-hero { padding: var(--space-6) var(--space-5) var(--space-5); }
   .dash-hero-seal { right: var(--space-3); }
-  .dash-hero-name { font-size: var(--text-xl); }
+  /* Stacked: the name sits under 你好, so the vertical stroke and the
+     corner that would touch the kicker give way. */
+  .dash-hero-stroke, .dash-hero-fret.is-tl { display: none; }
+  .dash-hero-who { padding-top: 0; }
+  .dash-hero-fret { width: 24px; height: 24px; }
   .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
   .quick-action,
   .quick-action:nth-of-type(2),
@@ -4482,15 +4587,34 @@ table.data td {
 @media (max-width: 480px) {
   .dash-hero-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash-hero-pill { padding-right: var(--space-2); }
+  .dash-hero-pill b { font-size: var(--text-sm); }
 }
 .dash-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   margin-top: var(--space-4);
-  align-items: start;
+  /* Cards side by side end on the same line. */
+  align-items: stretch;
 }
 .dash-section { margin-top: var(--space-4); }
+/* The cards under the greeting share its finish: a faint warm sheen at the
+   top and the same brush mark before each title as the stroke beside 你好. */
+.dash-row > .card,
+.dash-section {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, var(--surface-1)), var(--surface-1) 140px);
+}
+.dash-row > .card > .h2::before,
+.dash-card-head .h2::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 0.95em;
+  margin-right: var(--space-2);
+  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, var(--accent), var(--good));
+  vertical-align: -0.12em;
+}
 .dash-card-head { align-items: center; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-3); }
 .fix-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .fix-row {

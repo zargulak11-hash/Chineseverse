@@ -229,7 +229,11 @@
       "streak_other": "连续学习天数",
       "today": "今天",
       "minutes": "{{minutes}}/{{goal}} 分钟"
-    }
+    },
+    "helloMorning": "早上好",
+    "helloAfternoon": "下午好",
+    "helloEvening": "晚上好",
+    "helloCheer": ""
   },
   "pages": {
     "lessons": {

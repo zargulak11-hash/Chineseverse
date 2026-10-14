@@ -236,7 +236,11 @@
       "streak_other": "days in a row",
       "today": "Today",
       "minutes": "{{minutes}} of {{goal}} min"
-    }
+    },
+    "helloMorning": "Good morning",
+    "helloAfternoon": "Good afternoon",
+    "helloEvening": "Good evening",
+    "helloCheer": "Let's keep going today too!"
   },
   "pages": {
     "lessons": {

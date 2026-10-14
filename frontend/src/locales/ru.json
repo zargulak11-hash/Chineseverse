@@ -250,7 +250,11 @@
       "streak_other": "дня подряд",
       "today": "Сегодня",
       "minutes": "{{minutes}} из {{goal}} мин"
-    }
+    },
+    "helloMorning": "Доброе утро",
+    "helloAfternoon": "Добрый день",
+    "helloEvening": "Добрый вечер",
+    "helloCheer": "И сегодня — вперёд!"
   },
   "pages": {
     "lessons": {

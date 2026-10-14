@@ -94,6 +94,7 @@ DYNAMIC = (
     + list(__import__("add_roleplay_i18n").KEYS)
     + list(__import__("add_tone_i18n").KEYS)
     + list(__import__("add_memory_write_i18n").KEYS)
+    + list(__import__("add_hello_i18n").KEYS)
     + [f"companionReact.voice.{s}" for s in ("fox", "wolf", "snake", "cat", "dog", "tiger", "rabbit", "bird",
                                              "capybara", "panther", "sheep", "panda", "red-panda", "phoenix",
                                              "monkey", "koala", "elephant", "cow", "penguin", "owl")]

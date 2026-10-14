@@ -236,7 +236,11 @@
       "streak_other": "рӯз пай дар пай",
       "today": "Имрӯз",
       "minutes": "{{minutes}} аз {{goal}} дақ"
-    }
+    },
+    "helloMorning": "Субҳ ба хайр",
+    "helloAfternoon": "Рӯз ба хайр",
+    "helloEvening": "Шом ба хайр",
+    "helloCheer": "Имрӯз ҳам пеш меравем!"
   },
   "pages": {
     "lessons": {

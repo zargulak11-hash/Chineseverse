@@ -1,5 +1,5 @@
 import { animate, stagger } from "animejs";
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
@@ -69,20 +69,65 @@ const QUICK_ACTIONS = [
   { to: "/missions", labelKey: "dashboard.pickMission", icon: "flag", tone: "gold" },
 ];
 
-// The greeting: 你好 in large brush-like type with its pinyin, the
-// learner's name, and the day at a glance -- every number from their own
-// records. The only h1 on the page.
+// The greeting by the learner's own clock (it is their morning, not the
+// server's).
+function helloKey(hour) {
+  if (hour >= 5 && hour < 12) return "dashboard.helloMorning";
+  if (hour >= 12 && hour < 18) return "dashboard.helloAfternoon";
+  return "dashboard.helloEvening";
+}
+
+// A fine Chinese fret (回纹) corner, drawn in the accent: one top-left, one
+// bottom-right (mirrored in CSS). Decorative only.
+function FretCorner({ className }) {
+  return (
+    <svg className={`dash-hero-fret ${className}`} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <path d="M2 62V2h60M10 62V10h44v20H26V22h16" />
+    </svg>
+  );
+}
+
+// The greeting: 你好 in large brush-like type with its pinyin, joined by an
+// ink stroke to the learner's own name (their account's name -- never a
+// placeholder; without one the line is simply left out) under a greeting
+// for their time of day, with a small Chinese encouragement to read. Then
+// the day at a glance -- every number from their own records. The only h1
+// on the page.
 function GreetingHero({ d, today }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const name = (d.user?.username || "").trim();
+  const hello = t(helloKey(new Date().getHours()));
   return (
     <header className="dash-hero">
       <InkBrush variant="hero" />
+      <FretCorner className="is-tl" />
+      <FretCorner className="is-br" />
       <span className="dash-hero-seal" aria-hidden="true" lang="zh-CN">学</span>
       <span className="dash-hero-kicker">{t("landing.kicker")}</span>
       <h1 className="dash-hero-title">
         <ruby className="dash-hero-zh" lang="zh-CN">你<rt>nǐ</rt>好<rt>hǎo</rt></ruby>
-        <span className="dash-hero-name">{d.user.username}</span>
+        <span className="dash-hero-stroke" aria-hidden="true" />
+        <span className="dash-hero-who">
+          <span className="dash-hero-hello">{hello}{name ? (i18n.language === "zh" ? "，" : ",") : ""}</span>
+          {name && (
+            <span className={`dash-hero-name${name.length > 16 ? " is-long" : ""}`}>
+              {/* A long account name breaks after _ . - @ before anywhere else
+                  (a plain split: regex lookbehind breaks older Safari). */}
+              {name.split(/([_.\-@])/).map((part, i) => (
+                <Fragment key={i}>{part}{/^[_.\-@]$/.test(part) && <wbr />}</Fragment>
+              ))}
+              <svg className="dash-hero-swash" viewBox="0 0 220 18" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                <path d="M3 12 C 40 4, 92 3, 140 7 S 198 13, 217 6" pathLength="1" />
+              </svg>
+            </span>
+          )}
+        </span>
       </h1>
+      <p className="dash-hero-cheer">
+        <span lang="zh-CN">今天也要加油！</span>
+        <span className="dash-hero-cheer-py">Jīntiān yě yào jiāyóu!</span>
+        {i18n.language !== "zh" && <span className="dash-hero-cheer-tr">{t("dashboard.helloCheer")}</span>}
+      </p>
       <ul className="dash-hero-pills">
         <li className="dash-hero-pill">
           <span className="ic"><Icon name="trending" size={15} /></span>
