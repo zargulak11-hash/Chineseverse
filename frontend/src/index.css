@@ -2263,15 +2263,17 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
   text-transform: uppercase;
   white-space: nowrap;
 }
-/* Below the map: the companion, how the city adapts and how it grows. */
+/* Below the map: the companion on the left, how the city adapts and how it
+   grows stacked beside it (auto-fit used to leave the last card alone on a
+   row of its own at desktop widths). */
 .lw-below {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: var(--space-4);
   margin-top: var(--space-5);
   align-items: start;
 }
-.lw-below-wide { grid-column: span 2; }
+.lw-below-wide { grid-column: 1; grid-row: span 2; }
 /* Phone: the chosen place as a bottom sheet over the map (z 50: over the
    topbar's 40, under popovers' 60). A peek shows the name, state and main
    action; .is-full opens it to most of the screen. */
@@ -2317,7 +2319,8 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
    element, not :has() -- older Firefox has no :has()). */
 .lw-sheet-spacer { height: 280px; }
 @media (max-width: 1080px) {
-  .lw-below-wide { grid-column: auto; }
+  .lw-below { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .lw-below-wide { grid-column: 1 / -1; grid-row: auto; }
 }
 @media (max-width: 720px) {
   .page.page-world { padding: var(--space-3) var(--space-3) var(--space-7); }
