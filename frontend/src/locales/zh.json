@@ -1670,7 +1670,14 @@
       "where_seen": "{{time}}的时候，有人在哪儿看见了{{who}}？",
       "when_gave": "{{who}}是什么时候把东西交出去的？",
       "deduce": "破案——回答这个中文问题："
-    }
+    },
+    "culpritStamp": "真凶",
+    "filePin": "钉到笔记",
+    "fileUnpin": "从笔记移除",
+    "exhibit": "证物 {{n}}",
+    "notesTitle": "你的笔记",
+    "notesEmpty": "把说不通的证词、证物和时间钉起来——阅读时它们会汇集在这里。",
+    "notesNote": "只保存在这个浏览器里，仅限本案。破案要在练习回合中完成。"
   },
   "soundWorld": {
     "title": "中文声音世界",

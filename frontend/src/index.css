@@ -6100,25 +6100,73 @@ table.data td {
 .case-clues { margin: var(--space-3) 0 0; padding-left: var(--space-5); line-height: 1.8; overflow-wrap: anywhere; }
 .case-clues li.is-missed { color: var(--text-dim); }
 .case-clue { margin-bottom: var(--space-3); }
-/* Detective case file (DetectiveFile.jsx): a dossier of Chinese lines. */
+/* Detective case file (DetectiveFile.jsx): a dossier of Chinese lines,
+   laid out like a case board -- suspects as ID cards with their statement
+   quoted, numbered exhibit tags, a timeline rail, the verdict sealed until
+   solved (then the culprit's card is stamped), and a notes board of the
+   lines the learner pinned while reading. */
+.dossier-head .dossier-title-zh { margin: var(--space-1) 0 var(--space-2); font-size: var(--text-lg); font-weight: 800; color: var(--accent-strong); }
+.dossier-brief { border-left: 4px solid var(--seal); }
 .dossier-lines { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
-.dossier-line { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
+.dossier-line { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; border-radius: var(--radius-sm); transition: background var(--dur-fast) var(--ease-out); }
+.dossier-line.is-pinned { background: var(--accent-dim); box-shadow: 0 0 0 4px var(--accent-dim); }
+.dossier-line-tools { display: flex; flex: 0 0 auto; gap: var(--space-1); }
+.dossier-line-tools .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.dossier-line-tools .icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.icon-btn.dossier-pin.is-on { color: var(--accent-strong); background: var(--accent-dim); border-color: var(--accent-border); }
 .dossier-zh { font-weight: 700; }
 .dossier-zh.is-big { font-size: var(--text-md); }
 .dossier-tr { margin-top: var(--space-1); }
 .dossier-suspects { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: var(--space-4); }
-.dossier-suspect { padding: 18px; min-width: 0; }
+.dossier-suspect { padding: 18px; min-width: 0; position: relative; overflow: hidden; border-top: 3px solid var(--border-strong); }
+.dossier-suspect.is-culprit { border-color: var(--seal); }
+.dossier-culprit-stamp {
+  position: absolute; top: var(--space-3); right: var(--space-3); transform: rotate(8deg);
+  padding: var(--space-1) var(--space-2); border: 2px solid var(--seal); border-radius: var(--radius-sm);
+  color: var(--seal); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+}
 .dossier-suspect-head { display: flex; align-items: center; gap: var(--space-3); }
 .dossier-avatar {
-  display: inline-grid; place-items: center; width: 40px; height: 40px; flex: none;
-  border-radius: 50%; background: var(--accent-dim); color: var(--accent-strong); font-weight: 800;
+  display: inline-grid; place-items: center; width: 48px; height: 56px; flex: none;
+  border-radius: var(--radius-sm); background: var(--surface-3); color: var(--accent-strong); font-weight: 800; font-size: var(--text-lg);
+  border: 1px solid var(--border-strong);
 }
 .dossier-role { margin: var(--space-2) 0 var(--space-3); }
+.dossier-quote { padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); border-left: 3px solid var(--accent-border); }
+.dossier-exhibits { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.dossier-exhibits li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+.dossier-tag {
+  display: inline-flex; align-items: center; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm);
+  background: var(--accent-dim); border: 1px dashed var(--accent-border); color: var(--accent-strong);
+  font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.04em; white-space: nowrap;
+}
 .dossier-list { margin: var(--space-3) 0 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
-.dossier-timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.dossier-timeline li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+.dossier-timeline { list-style: none; margin: var(--space-3) 0 0; padding: 0 0 0 var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); border-left: 2px solid var(--border-strong); }
+.dossier-timeline li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-3); align-items: start; position: relative; }
+.dossier-timeline li::before { content: ""; position: absolute; left: calc(-1 * var(--space-4) - 6px); top: 8px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--surface-1); }
 .dossier-verdict.is-solved { border-color: var(--accent-border); }
 .dossier-verdict .h2 { display: flex; align-items: center; gap: var(--space-2); }
+.dossier-sealed { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-4); border-radius: var(--radius-md); border: 1px dashed var(--border-strong); background: var(--surface-2); }
+.dossier-seal { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--bad-dim); color: var(--seal); }
+.dossier-ask { border-color: var(--accent-border); }
+.dossier-notes-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); counter-reset: note; }
+.dossier-notes-list li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-2); align-items: start;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--accent-dim); border-left: 3px solid var(--accent);
+  overflow-wrap: anywhere; animation: fadeInUp var(--dur-base) var(--ease-out);
+}
+.dossier-notes-list li > span[lang="zh-CN"]:not(.dossier-note-from) { grid-column: 1; font-weight: 700; }
+.dossier-notes-list .icon-btn { grid-column: 2; grid-row: 1 / span 2; }
+.dossier-note-from { font-size: var(--text-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); }
+.dossier-notes-note { margin: var(--space-3) 0 0; font-size: var(--text-xs); }
+/* The Detective hub: cases and case files as folders with a tab. */
+.case-folder { position: relative; margin-top: var(--space-3); border-top-left-radius: 0; }
+.case-folder::before {
+  content: ""; position: absolute; left: -1px; top: calc(-1 * var(--space-3)); width: 40%; height: var(--space-3);
+  border: 1px solid var(--border); border-bottom: 0; border-radius: var(--radius-sm) var(--radius-md) 0 0; background: var(--surface-1);
+}
+.case-folder.is-generated::before { background: var(--accent-dim); border-color: var(--accent-border); }
+.case-folder.hover:hover::before { border-color: var(--border-strong); }
 .case-file-levels { flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4); }
 .case-clue-text {
   margin-top: var(--space-2);

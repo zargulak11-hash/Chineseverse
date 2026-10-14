@@ -36,8 +36,8 @@ function FileCard({ f }) {
     </>
   );
   return f.locked
-    ? <div className="card scene-card is-locked">{body}</div>
-    : <Link to={`/detective/file/${f.slug}`} className="card hover scene-card">{body}</Link>;
+    ? <div className="card scene-card case-folder is-locked">{body}</div>
+    : <Link to={`/detective/file/${f.slug}`} className="card hover scene-card case-folder">{body}</Link>;
 }
 
 export default function Detective() {
@@ -82,7 +82,7 @@ export default function Detective() {
           <h2 className="h2 section-title">{t("detective.cases")}</h2>
           <div className="grid cards">
             {data.cases.map((c) => (
-              <Link key={c.key} to={`/practice?source=detective&case=${c.key}`} className="card hover scene-card">
+              <Link key={c.key} to={`/practice?source=detective&case=${c.key}`} className="card hover scene-card case-folder is-generated">
                 <div className="row spread" style={{ margin: 0 }}>
                   <Art name={caseArt(c.key)} size={64} />
                   {c.played > 0 && (

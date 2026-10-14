@@ -85,6 +85,22 @@ S = {
     "sentenceLesson.legend": L(
         "What the underline under a word means", "Что значит подчёркивание под словом",
         "Хати зери калима чӣ маъно дорад", "词语下划线的含义"),
+    # ---- Detective case file (pages/DetectiveFile.jsx) ----
+    "detective.culpritStamp": L("Culprit", "Виновник", "Гунаҳкор", "真凶"),
+    "detective.filePin": L("Pin to your notes", "Закрепить в заметках", "Ба қайдҳо часпондан", "钉到笔记"),
+    "detective.fileUnpin": L("Remove from your notes", "Убрать из заметок", "Аз қайдҳо гирифтан", "从笔记移除"),
+    "detective.exhibit": L("Exhibit {{n}}", "Улика {{n}}", "Далели {{n}}", "证物 {{n}}"),
+    "detective.notesTitle": L("Your notes", "Ваши заметки", "Қайдҳои шумо", "你的笔记"),
+    "detective.notesEmpty": L(
+        "Pin the statements, evidence and times that don't add up — they gather here while you read.",
+        "Закрепляйте показания, улики и время, которые не сходятся, — они соберутся здесь, пока вы читаете.",
+        "Шаҳодатҳо, далелҳо ва вақтҳоеро, ки мувофиқ намеоянд, часпонед — ҳангоми хондан онҳо дар ин ҷо ҷамъ мешаванд.",
+        "把说不通的证词、证物和时间钉起来——阅读时它们会汇集在这里。"),
+    "detective.notesNote": L(
+        "Kept in this browser for this case only. The case is solved in the round.",
+        "Хранятся только в этом браузере и только для этого дела. Дело раскрывается в раунде.",
+        "Танҳо дар ҳамин браузер ва барои ҳамин парванда нигоҳ дошта мешаванд. Парванда дар давр кушода мешавад.",
+        "只保存在这个浏览器里，仅限本案。破案要在练习回合中完成。"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

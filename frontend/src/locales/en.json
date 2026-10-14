@@ -1705,7 +1705,14 @@
       "where_seen": "Where was the {{who}} really seen at {{time}}?",
       "when_gave": "When did the {{who}} hand it on?",
       "deduce": "Solve the case — answer the question in Chinese:"
-    }
+    },
+    "culpritStamp": "Culprit",
+    "filePin": "Pin to your notes",
+    "fileUnpin": "Remove from your notes",
+    "exhibit": "Exhibit {{n}}",
+    "notesTitle": "Your notes",
+    "notesEmpty": "Pin the statements, evidence and times that don't add up — they gather here while you read.",
+    "notesNote": "Kept in this browser for this case only. The case is solved in the round."
   },
   "soundWorld": {
     "title": "Chinese Sound World",
