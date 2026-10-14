@@ -1794,7 +1794,8 @@
       "sound_tonepair": "Which tone pattern do you hear?",
       "sound_dialogue": "Listen to the dialogue and answer.",
       "sound_memory": "What did speaker {{order}} ({{speaker}}) mention?"
-    }
+    },
+    "enter": "Listen · {{stage}}"
   },
   "charDna": {
     "eyebrow": "Character DNA",

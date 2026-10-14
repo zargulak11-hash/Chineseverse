@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Art, { pronArt, soundArt } from "../components/Art.jsx";
+import { AmbientToggle } from "../components/CaseAndSound.jsx";
 import Icon from "../components/Icon.jsx";
 import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
@@ -15,37 +16,69 @@ import { speakChinese } from "../zhSpeech.js";
 // (/practice?source=sound&env=...&stage=...). The pronunciation course
 // (services/pronunciation.py) is played the same way with
 // source=pronunciation; its sounds are the browser's Chinese voice reading
-// real text, never recordings.
-function PronunciationLesson({ lesson, next }) {
+// real text, never recordings. Each place can be heard before entering it:
+// the same ambient noise its round plays (CaseAndSound AmbientToggle).
+
+// A speed drawn as sound: the faster the stage, the denser the bars.
+function SpeedGlyph({ stage }) {
+  const n = 3 + stage * 2;
+  const heights = [10, 18, 12, 22, 14, 20, 9, 16, 21, 11, 17];
+  return (
+    <svg className="sw-glyph" viewBox="0 0 64 28" aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => {
+        const h = heights[i % heights.length];
+        const x = 4 + (i * 56) / Math.max(n - 1, 1);
+        return <line key={i} x1={x} x2={x} y1={14 - h / 2} y2={14 + h / 2} />;
+      })}
+    </svg>
+  );
+}
+
+function ExampleChip({ e, playing, onPlay }) {
   const { t } = useTranslation();
   return (
-    <article className={`card pron-lesson${next ? " is-next" : ""}`}>
-      <div className="row spread" style={{ margin: 0 }}>
-        <Art name={pronArt(lesson.key)} size={64} />
-        {lesson.passed ? (
-          <span className="badge good"><Icon name="check" size={11} /> {t("realLife.best", { score: Math.round(lesson.best) })}</span>
-        ) : lesson.played > 0 ? (
-          <span className="badge">{t("realLife.best", { score: Math.round(lesson.best) })}</span>
-        ) : next ? (
-          <span className="badge accent">{t("soundWorld.pron.next")}</span>
-        ) : null}
+    <button type="button" className={`sw-example${playing ? " is-playing" : ""}`} onClick={onPlay}
+            aria-label={t("soundWorld.pron.hear", { text: e.zh })}>
+      <span className="sw-eq" aria-hidden="true"><i /><i /><i /></span>
+      <span lang="zh-CN" className="sw-example-zh">{e.zh}</span>
+      <span className="sub">{e.py}{e.note ? ` · ${e.note}` : ""}</span>
+    </button>
+  );
+}
+
+function PronunciationLesson({ lesson, next, playing, play }) {
+  const { t } = useTranslation();
+  return (
+    <li className={`sw-track${next ? " is-next" : ""}${lesson.passed ? " is-passed" : ""}`}>
+      <span className="sw-track-n" aria-hidden="true">{lesson.passed ? <Icon name="check" size={14} /> : lesson.n}</span>
+      <div className="sw-track-body">
+        <div className="sw-track-head">
+          <Art name={pronArt(lesson.key)} size={44} />
+          <div style={{ minWidth: 0 }}>
+            <h3 className="sw-track-title">{lesson.n}. {lesson.title}</h3>
+            <p className="sub" lang="zh-CN" style={{ margin: 0 }}>{lesson.title_zh}</p>
+          </div>
+          {lesson.passed ? (
+            <span className="badge good"><Icon name="check" size={11} /> {t("realLife.best", { score: Math.round(lesson.best) })}</span>
+          ) : lesson.played > 0 ? (
+            <span className="badge">{t("realLife.best", { score: Math.round(lesson.best) })}</span>
+          ) : next ? (
+            <span className="badge accent">{t("soundWorld.pron.next")}</span>
+          ) : null}
+        </div>
+        <p className="sub sw-track-how">{lesson.how}</p>
+        <div className="sw-examples" role="group" aria-label={t("soundWorld.pron.listen")}>
+          {lesson.examples.map((e, i) => {
+            const id = `${lesson.key}-${i}`;
+            return <ExampleChip key={i} e={e} playing={playing === id} onPlay={() => play(e.zh, id)} />;
+          })}
+        </div>
+        <Link to={`/practice?source=pronunciation&env=${lesson.key}`} className={`btn small ${next ? "primary" : ""}`}
+              style={{ marginTop: 12, alignSelf: "flex-start" }}>
+          <Icon name="play" size={13} /> {t(lesson.played ? "soundWorld.pron.again" : "soundWorld.pron.start")}
+        </Link>
       </div>
-      <h3 className="h2" style={{ marginTop: 12 }}>{lesson.n}. {lesson.title}</h3>
-      <p className="sub" lang="zh-CN">{lesson.title_zh}</p>
-      <p className="sub">{lesson.how}</p>
-      <div className="pron-examples" role="group" aria-label={t("soundWorld.pron.listen")}>
-        {lesson.examples.map((e, i) => (
-          <button key={i} type="button" className="btn small ghost" onClick={() => speakChinese(e.zh)}
-                  aria-label={t("soundWorld.pron.hear", { text: e.zh })}>
-            <span lang="zh-CN">{e.zh}</span> <span className="sub">{e.py}{e.note ? ` · ${e.note}` : ""}</span>
-          </button>
-        ))}
-      </div>
-      <Link to={`/practice?source=pronunciation&env=${lesson.key}`} className={`btn small ${next ? "primary" : ""}`}
-            style={{ marginTop: 12, alignSelf: "flex-start" }}>
-        <Icon name="play" size={13} /> {t(lesson.played ? "soundWorld.pron.again" : "soundWorld.pron.start")}
-      </Link>
-    </article>
+    </li>
   );
 }
 
@@ -54,10 +87,15 @@ export default function SoundWorld() {
   const { data, error } = useApi("/sound-world/places");
   const { data: pron } = useApi("/sound-world/pronunciation");
   const [stage, setStage] = useState(null);
+  const [playing, setPlaying] = useState(null);
 
   useEffect(() => {
     if (data && stage === null) setStage(data.recommended);
   }, [data, stage]);
+
+  function play(text, id) {
+    speakChinese(text, { onStart: () => setPlaying(id), onEnd: () => setPlaying(null) });
+  }
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading /></Layout>;
@@ -86,52 +124,58 @@ export default function SoundWorld() {
 
       <div className="ws">
         <div className="ws-main">
-          <div className="card">
-            <p className="side-title">{t("soundWorld.speed")}</p>
-            <div className="row" style={{ gap: 8, flexWrap: "wrap", margin: 0 }} role="group" aria-label={t("soundWorld.speed")}>
+          <section className="card sw-desk" aria-labelledby="sw-speed">
+            <p className="side-title" id="sw-speed">{t("soundWorld.speed")}</p>
+            <div className="sw-speeds" role="group" aria-labelledby="sw-speed">
               {data.stages.map((s) => (
                 <button
                   key={s.stage}
                   type="button"
-                  className={`btn small ${chosen === s.stage ? "primary" : "ghost"}`}
+                  className={`sw-speed${chosen === s.stage ? " is-on" : ""}${s.unlocked ? "" : " is-locked"}`}
                   disabled={!s.unlocked}
                   aria-pressed={chosen === s.stage}
                   onClick={() => setStage(s.stage)}
                 >
-                  {!s.unlocked && <Icon name="lock" size={12} />} {t(`soundWorld.stage.${s.stage}`)}
+                  <SpeedGlyph stage={s.stage} />
+                  <span className="sw-speed-name">
+                    {!s.unlocked && <Icon name="lock" size={12} />} {t(`soundWorld.stage.${s.stage}`)}
+                  </span>
+                  <span className="sw-speed-state">
+                    {s.unlocked
+                      ? s.rounds > 0
+                        ? t("soundWorld.stageBest", { best: Math.round(s.best), count: s.rounds })
+                        : t("soundWorld.stageOpen")
+                      : s.locked_reason === "level"
+                        ? t("soundWorld.needLevel", { level: s.min_level })
+                        : t("soundWorld.needPass", { score: Math.round(data.pass_score), prev: s.stage - 1 })}
+                  </span>
                 </button>
               ))}
             </div>
-            <ul className="scene-rules">
-              {data.stages.map((s) => (
-                <li key={s.stage}>
-                  <b>{t(`soundWorld.stage.${s.stage}`)}</b>{" "}
-                  {s.unlocked
-                    ? s.rounds > 0
-                      ? t("soundWorld.stageBest", { best: Math.round(s.best), count: s.rounds })
-                      : t("soundWorld.stageOpen")
-                    : s.locked_reason === "level"
-                      ? t("soundWorld.needLevel", { level: s.min_level })
-                      : t("soundWorld.needPass", { score: Math.round(data.pass_score), prev: s.stage - 1 })}
-                </li>
-              ))}
-            </ul>
-          </div>
+          </section>
 
           <h2 className="h2 section-title">{t("soundWorld.places")}</h2>
-          <div className="grid cards">
+          <div className="sw-places">
             {data.envs.map((e) => (
-              <Link key={e.key} to={`/practice?source=sound&env=${e.key}&stage=${chosen}`} className="card hover scene-card">
-                <div className="row spread" style={{ margin: 0 }}>
-                  <Art name={soundArt(e.key)} size={64} />
-                  {e.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(e.best) })}</span>}
+              <article key={e.key} className="card sw-place">
+                <div className="sw-place-art"><Art name={soundArt(e.key)} size={72} /></div>
+                <div className="sw-place-body">
+                  <div className="row spread" style={{ margin: 0, gap: 8 }}>
+                    <h3 className="h2" style={{ margin: 0 }}>{t(`soundWorld.env.${e.key}`)}</h3>
+                    {e.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(e.best) })}</span>}
+                  </div>
+                  <p className="sub" lang="zh-CN" style={{ margin: 0 }}>{e.zh}</p>
+                  <p className="sw-speakers">
+                    <Icon name="users" size={13} /> {e.speakers.map((s) => t(`soundWorld.speaker.${s}`)).join(" · ")}
+                  </p>
+                  <div className="sw-place-actions">
+                    <AmbientToggle env={e.key} />
+                    <Link to={`/practice?source=sound&env=${e.key}&stage=${chosen}`} className="btn small primary">
+                      <Icon name="ear" size={13} /> {t("soundWorld.enter", { stage: t(`soundWorld.stage.${chosen}`) })}
+                    </Link>
+                  </div>
                 </div>
-                <h3 className="h2" style={{ marginTop: 12 }}>{t(`soundWorld.env.${e.key}`)}</h3>
-                <p className="sub" lang="zh-CN">{e.zh}</p>
-                <p className="sub">
-                  {e.speakers.map((s) => t(`soundWorld.speaker.${s}`)).join(" · ")}
-                </p>
-              </Link>
+              </article>
             ))}
           </div>
 
@@ -141,9 +185,11 @@ export default function SoundWorld() {
             {pron && <> · {t("soundWorld.pron.progress", { passed: pron.passed, total: pron.lessons.length })}</>}
           </p>
           {pron ? (
-            <div className="pron-grid">
-              {pron.lessons.map((l) => <PronunciationLesson key={l.key} lesson={l} next={l.key === pron.next} />)}
-            </div>
+            <ol className="sw-tracks">
+              {pron.lessons.map((l) => (
+                <PronunciationLesson key={l.key} lesson={l} next={l.key === pron.next} playing={playing} play={play} />
+              ))}
+            </ol>
           ) : <Loading />}
         </div>
         <aside className="ws-side">

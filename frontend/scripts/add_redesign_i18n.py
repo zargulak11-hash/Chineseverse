@@ -101,6 +101,8 @@ S = {
         "Хранятся только в этом браузере и только для этого дела. Дело раскрывается в раунде.",
         "Танҳо дар ҳамин браузер ва барои ҳамин парванда нигоҳ дошта мешаванд. Парванда дар давр кушода мешавад.",
         "只保存在这个浏览器里，仅限本案。破案要在练习回合中完成。"),
+    # ---- Sound World (pages/SoundWorld.jsx) ----
+    "soundWorld.enter": L("Listen · {{stage}}", "Слушать · {{stage}}", "Гӯш кардан · {{stage}}", "进去听 · {{stage}}"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

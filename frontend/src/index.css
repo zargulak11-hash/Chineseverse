@@ -6179,12 +6179,74 @@ table.data td {
   overflow-wrap: anywhere;
 }
 .sound-stage { margin-bottom: var(--space-3); }
-/* Sound World pronunciation course (SoundWorld.jsx). */
-.pron-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: var(--space-4); }
-.pron-lesson { display: flex; flex-direction: column; min-width: 0; }
-.pron-lesson.is-next { border-color: var(--accent-border); }
-.pron-examples { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
-.pron-examples .btn { overflow-wrap: anywhere; }
+/* Sound World (SoundWorld.jsx): a listening room. The speeds are tiles on
+   a desk, each drawn as denser sound; every place can be heard (its
+   ambient murmur) before it is entered; the pronunciation course is a
+   numbered track list whose example chips show an equaliser while the
+   Chinese voice is reading them. */
+.sw-desk { background: radial-gradient(90% 120% at 0% 0%, var(--accent-dim), transparent 60%), var(--surface-1); }
+.sw-speeds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: var(--space-3); margin-top: var(--space-2); }
+.sw-speed {
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); text-align: left; min-width: 0;
+  padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text); font: inherit; cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.sw-speed:hover:not(:disabled) { border-color: var(--accent-border); transform: translateY(-2px); }
+.sw-speed.is-on { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-dim); }
+.sw-speed.is-locked { opacity: 0.6; cursor: not-allowed; }
+.sw-speed:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw-glyph { width: 64px; height: 28px; }
+.sw-glyph line { stroke: var(--text-faint); stroke-width: 3; stroke-linecap: round; }
+.sw-speed.is-on .sw-glyph line { stroke: var(--accent); }
+.sw-speed-name { font-weight: 800; display: inline-flex; align-items: center; gap: var(--space-1); }
+.sw-speed-state { font-size: var(--text-xs); color: var(--text-dim); overflow-wrap: anywhere; }
+.sw-places { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--space-4); }
+.sw-place { display: flex; gap: var(--space-4); padding: 18px; min-width: 0; }
+.sw-place-art { flex: 0 0 auto; padding: var(--space-2); border-radius: var(--radius-md); background: var(--surface-2); align-self: flex-start; }
+.sw-place-body { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; flex: 1 1 auto; }
+.sw-speakers { margin: 0; display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: var(--text-xs); color: var(--text-dim); }
+.sw-place-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
+.sw-tracks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.sw-track {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); padding: 18px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-1); box-shadow: var(--shadow-sm);
+}
+.sw-track.is-next { border-color: var(--accent-border); box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-sm); }
+.sw-track-n {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border-strong); font-weight: 800; color: var(--text-dim);
+}
+.sw-track.is-next .sw-track-n { background: var(--accent-gradient); border-color: transparent; color: var(--on-accent); }
+.sw-track.is-passed .sw-track-n { background: var(--good-dim); border-color: var(--good); color: var(--good); }
+.sw-track-body { display: flex; flex-direction: column; min-width: 0; }
+.sw-track-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.sw-track-head > div { flex: 1 1 160px; }
+.sw-track-title { margin: 0; font-size: var(--text-md); font-weight: 800; }
+.sw-track-how { margin: var(--space-2) 0 0; }
+.sw-examples { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.sw-example {
+  display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full); border: 1px solid var(--border-strong); background: var(--surface-2);
+  color: var(--text); font: inherit; cursor: pointer; overflow-wrap: anywhere; text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.sw-example:hover { border-color: var(--accent-border); }
+.sw-example.is-playing { border-color: var(--accent); background: var(--accent-dim); }
+.sw-example:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw-example-zh { font-weight: 800; font-size: var(--text-md); }
+.sw-example .sub { font-size: var(--text-xs); }
+.sw-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.sw-eq i { width: 3px; height: 5px; border-radius: var(--radius-full); background: var(--accent); }
+.sw-example.is-playing .sw-eq i { animation: swEq 0.8s infinite ease-in-out; }
+.sw-example.is-playing .sw-eq i:nth-child(2) { animation-delay: 0.2s; }
+.sw-example.is-playing .sw-eq i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes swEq { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+@media (max-width: 640px) {
+  .sw-place { flex-direction: column; }
+  .sw-place-art { align-self: stretch; display: flex; justify-content: center; }
+  .sw-track { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+}
 .sound-lines { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .sound-line {
   display: grid;

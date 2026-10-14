@@ -1758,7 +1758,8 @@
       "sound_tonepair": "你听到的是哪种声调组合？",
       "sound_dialogue": "听对话，回答问题。",
       "sound_memory": "第{{order}}个说话的人（{{speaker}}）提到了什么？"
-    }
+    },
+    "enter": "进去听 · {{stage}}"
   },
   "charDna": {
     "eyebrow": "汉字DNA",
