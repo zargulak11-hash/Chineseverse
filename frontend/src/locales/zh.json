@@ -932,7 +932,21 @@
       "memoryStart": "开始写",
       "memoryHint": "没有描红。一笔错三次后会出现提示，错误也会被记录。",
       "memoryCount": "凭记忆写过：{{count}}次",
-      "memoryWhy": "凭记忆写出来以后，书写才算掌握。"
+      "memoryWhy": "凭记忆写出来以后，书写才算掌握。",
+      "kpiChars": "本级汉字",
+      "searchPlaceholder": "搜索：汉字、拼音或释义",
+      "searchLabel": "搜索 HSK {{level}} 的汉字",
+      "filterLabel": "显示",
+      "filter_all": "全部",
+      "filter_due": "待复习",
+      "filter_writing": "需手写",
+      "filter_new": "未开始",
+      "shownCount": "{{count}} / {{total}}",
+      "pickOne": "选一个汉字：听读音、自我检测、看词语、练习书写。",
+      "step_watch": "看",
+      "step_write": "写",
+      "step_save": "保存",
+      "strokesDone": "笔画 {{done}} / {{total}}"
     },
     "adminUsers": {
       "authGithub": "GitHub",

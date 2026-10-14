@@ -117,6 +117,27 @@ S = {
     "foundation.earWrong": L("It was {{zh}}", "Это было {{zh}}", "Ин {{zh}} буд", "是 {{zh}}"),
     # ---- Chinese Internet (pages/ChineseInternet.jsx) ----
     "internet.kindsLabel": L("Show one kind of page", "Показать один вид страниц", "Нишон додани як навъи саҳифа", "按页面类型查看"),
+    # ---- Characters (pages/Hanzi.jsx, HanziTrace.jsx) ----
+    "pages.hanzi.kpiChars": L("Characters in this level", "Иероглифов на уровне", "Иероглифҳои сатҳ", "本级汉字"),
+    "pages.hanzi.searchPlaceholder": L("Search: 好, hao or a meaning", "Поиск: 好, hao или значение",
+                                       "Ҷустуҷӯ: 好, hao ё маъно", "搜索：汉字、拼音或释义"),
+    "pages.hanzi.searchLabel": L("Search the characters of HSK {{level}}", "Поиск по иероглифам HSK {{level}}",
+                                 "Ҷустуҷӯ дар иероглифҳои HSK {{level}}", "搜索 HSK {{level}} 的汉字"),
+    "pages.hanzi.filterLabel": L("Show", "Показать", "Нишон додан", "显示"),
+    "pages.hanzi.filter_all": L("All", "Все", "Ҳама", "全部"),
+    "pages.hanzi.filter_due": L("Due", "К повтору", "Барои такрор", "待复习"),
+    "pages.hanzi.filter_writing": L("To write by hand", "Писать от руки", "Бо даст навиштан", "需手写"),
+    "pages.hanzi.filter_new": L("Not started", "Не начаты", "Оғознашуда", "未开始"),
+    "pages.hanzi.shownCount": L("{{count}} of {{total}}", "{{count}} из {{total}}", "{{count}} аз {{total}}", "{{count}} / {{total}}"),
+    "pages.hanzi.pickOne": L(
+        "Pick a character to hear it, check yourself, see its words and practise writing it.",
+        "Выберите иероглиф, чтобы услышать его, проверить себя, увидеть слова с ним и потренироваться писать.",
+        "Иероглиферо интихоб кунед, то онро шунавед, худро санҷед, калимаҳоро бинед ва навиштанро машқ кунед.",
+        "选一个汉字：听读音、自我检测、看词语、练习书写。"),
+    "pages.hanzi.step_watch": L("Watch", "Смотрите", "Тамошо кунед", "看"),
+    "pages.hanzi.step_write": L("Write", "Пишите", "Нависед", "写"),
+    "pages.hanzi.step_save": L("Save", "Сохраните", "Сабт кунед", "保存"),
+    "pages.hanzi.strokesDone": L("{{done}} of {{total}} strokes", "Черт: {{done}} из {{total}}", "Хат: {{done}} аз {{total}}", "笔画 {{done}} / {{total}}"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

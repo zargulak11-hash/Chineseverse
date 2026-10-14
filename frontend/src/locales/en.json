@@ -946,7 +946,21 @@
       "memoryStart": "Start writing",
       "memoryHint": "No outline to follow. A stroke's hint appears after 3 misses — and counts as mistakes.",
       "memoryCount": "Written from memory: {{count}}",
-      "memoryWhy": "Writing counts as mastered once you have written it from memory."
+      "memoryWhy": "Writing counts as mastered once you have written it from memory.",
+      "kpiChars": "Characters in this level",
+      "searchPlaceholder": "Search: 好, hao or a meaning",
+      "searchLabel": "Search the characters of HSK {{level}}",
+      "filterLabel": "Show",
+      "filter_all": "All",
+      "filter_due": "Due",
+      "filter_writing": "To write by hand",
+      "filter_new": "Not started",
+      "shownCount": "{{count}} of {{total}}",
+      "pickOne": "Pick a character to hear it, check yourself, see its words and practise writing it.",
+      "step_watch": "Watch",
+      "step_write": "Write",
+      "step_save": "Save",
+      "strokesDone": "{{done}} of {{total}} strokes"
     },
     "adminUsers": {
       "authGithub": "GitHub",

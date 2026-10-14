@@ -1,7 +1,9 @@
 import HanziWriter from "hanzi-writer";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
+import Icon from "./Icon.jsx";
 
 // Real stroke-order practice: HanziWriter validates every drawn stroke
 // against the character's actual stroke path/median data (fetched from
@@ -38,6 +40,10 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   const strokesRef = useRef([]); // [{points: [[x, y], ...], matched}] in drawing order
   const [phase, setPhase] = useState("loading"); // loading | watch | quiz | done
   const [mistakes, setMistakes] = useState(0);
+  const [strokesOk, setStrokesOk] = useState(0);
+  // A writing surface as large as the screen allows (strokes are matched in
+  // character space, so the drawing size changes nothing in the checking).
+  const [size] = useState(() => Math.min(340, Math.max(220, (typeof window !== "undefined" ? window.innerWidth : 400) - 96)));
   const [done, setDone] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -47,6 +53,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
     setPhase("loading");
     setDone(null);
     setMistakes(0);
+    setStrokesOk(0);
     setError(null);
 
     api
@@ -59,8 +66,8 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
         }
         mountRef.current.innerHTML = "";
         const writer = HanziWriter.create(mountRef.current, hanzi.character, {
-          width: 260,
-          height: 260,
+          width: size,
+          height: size,
           padding: 12,
           showOutline: !memory,
           showCharacter: false,
@@ -101,6 +108,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
     setError(null);
     setDone(null);
     setMistakes(0);
+    setStrokesOk(0);
     strokesRef.current = [];
     attemptRef.current = null;
     try {
@@ -116,7 +124,10 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
         record(s, false);
         setMistakes((m) => m + 1);
       },
-      onCorrectStroke: (s) => record(s, true),
+      onCorrectStroke: (s) => {
+        record(s, true);
+        setStrokesOk((n) => n + 1);
+      },
       onComplete: (summary) => setDone({ totalMistakes: summary.totalMistakes }),
     });
   }
@@ -137,9 +148,24 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
     }
   }
 
-  return (
+  // Portalled to <body>: opened from a docked panel whose entrance animation
+  // uses a transform, a fixed overlay inside it would be positioned (and
+  // clipped) relative to that panel instead of the screen.
+  return createPortal(
     <div className={`modal modal-backdrop${memory ? " trace-memory-backdrop" : ""}`} onClick={onClose}>
-      <div className="card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 340, textAlign: "center" }}>
+      <div className="card hz-write" onClick={(e) => e.stopPropagation()}>
+        {/* watch -> write -> save, lit by where the attempt really is. From
+            memory there is nothing to watch. */}
+        <ol className="tc-steps hz-write-steps" aria-label={t("toneCoach.stepsLabel")}>
+          {(memory ? ["write", "save"] : ["watch", "write", "save"]).map((s, i, all) => {
+            const at = done ? all.length - 1 : phase === "quiz" ? all.indexOf("write") : 0;
+            return (
+              <li key={s} className={i === at ? "is-now" : i < at ? "is-done" : ""} aria-current={i === at ? "step" : undefined}>
+                <span className="tc-step-n">{i < at ? <Icon name="check" size={12} /> : i + 1}</span>{t(`pages.hanzi.step_${s}`)}
+              </li>
+            );
+          })}
+        </ol>
         {memory && !done ? (
           <>
             <p className="side-title">{t("pages.hanzi.memoryPrompt")}</p>
@@ -152,7 +178,22 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
 
         {error && <p className="sub" style={{ color: "var(--bad, #e55)" }}>{error}</p>}
 
-        <div ref={mountRef} style={{ width: 260, height: 260, margin: "12px auto", border: "1px solid var(--border, #333)" }} />
+        {/* The practice square: a 米字格 grid under HanziWriter's own drawing. */}
+        <div className="hz-canvas" style={{ width: size, height: size }}>
+          <svg className="hz-grid" viewBox="0 0 100 100" aria-hidden="true" preserveAspectRatio="none">
+            <line x1="50" y1="0" x2="50" y2="100" /><line x1="0" y1="50" x2="100" y2="50" />
+            <line x1="0" y1="0" x2="100" y2="100" /><line x1="100" y1="0" x2="0" y2="100" />
+          </svg>
+          <div ref={mountRef} className="hz-mount" />
+        </div>
+        {phase === "quiz" && hanzi.stroke_count > 0 && (
+          <div className="hz-strokes" aria-live="polite">
+            <span className="hz-strokes-bar" aria-hidden="true">
+              <span style={{ width: `${Math.min(100, (strokesOk / hanzi.stroke_count) * 100)}%` }} />
+            </span>
+            <span className="sub">{t("pages.hanzi.strokesDone", { done: Math.min(strokesOk, hanzi.stroke_count), total: hanzi.stroke_count })}</span>
+          </div>
+        )}
 
         {phase === "loading" && <p className="sub">{t("pages.hanzi.watchingStrokeOrder")}</p>}
 
@@ -194,6 +235,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
 
         <button className="btn small ghost" onClick={onClose} style={{ marginTop: 10 }}>{t("pages.hanzi.cancel")}</button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

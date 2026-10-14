@@ -16,7 +16,10 @@ import { formatDate } from "../dates.js";
 // component (HanziTrace) since it already owns that whole flow end to end
 // -- this view is the overview/reference screen around it, not a second
 // writing implementation.
-export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
+//
+// `inline` (the Hanzi page) renders the same card docked in the page beside
+// the character table instead of over a backdrop; everything in it is the same.
+export default function HanziDetail({ hanzi, level, onClose, onUpdated, inline = false }) {
   const { t, i18n } = useTranslation();
   const [current, setCurrent] = useState(hanzi);
   const [examples, setExamples] = useState(null);
@@ -69,20 +72,12 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
     }
   }
 
+  const Wrap = inline ? InlineWrap : ModalWrap;
   return (
-    <div
-      className="modal-backdrop"
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}
-    >
-      <div
-        className="card"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 420, width: "100%", maxHeight: "90vh", overflowY: "auto" }}
-      >
+    <Wrap onClose={onClose}>
         {/* SEE + PRONUNCIATION + HEAR */}
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 56, fontWeight: 800, lineHeight: 1 }}>{current.character}</div>
+          <div className="hz-detail-char" lang="zh-CN">{current.character}</div>
           <div className="row" style={{ justifyContent: "center", gap: 8, marginTop: 6 }}>
             <span className="sub" style={{ color: "var(--accent2)", fontSize: 18 }}>{current.pinyin}</span>
             <button
@@ -93,7 +88,7 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
               aria-label={t("pages.hanzi.hear")}
               title={t("pages.hanzi.hear")}
             >
-              <Icon name="mic" size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
+              <Icon name="volume" size={14} style={{ verticalAlign: -2, marginRight: 4 }} />
               {t("pages.hanzi.hear")}
             </button>
           </div>
@@ -197,7 +192,6 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
         <button className="btn small ghost" onClick={onClose} style={{ marginTop: 16, width: "100%" }}>
           {t("pages.hanzi.close")}
         </button>
-      </div>
 
       {tracing && (
         <HanziTrace
@@ -216,6 +210,26 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
           }}
         />
       )}
+    </Wrap>
+  );
+}
+
+// The trace dialog renders inside the card too; it is a fixed overlay of its
+// own and stops its own clicks.
+function ModalWrap({ onClose, children }) {
+  return (
+    <div className="modal modal-backdrop" onClick={onClose}>
+      <div
+        className="card"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 420, width: "100%", maxHeight: "90vh", overflowY: "auto" }}
+      >
+        {children}
+      </div>
     </div>
   );
+}
+
+function InlineWrap({ children }) {
+  return <article className="card hz-detail">{children}</article>;
 }

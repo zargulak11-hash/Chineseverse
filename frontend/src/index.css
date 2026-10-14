@@ -1285,7 +1285,8 @@ select.input.lang-select {
   font-weight: 600;
 }
 
-.animal .statsrow {
+.animal .statsrow,
+.hz-detail .statsrow {
   display: flex;
   gap: 8px;
   margin-top: 10px;
@@ -1293,7 +1294,8 @@ select.input.lang-select {
   justify-content: center;
 }
 
-.animal .statpill {
+.animal .statpill,
+.hz-detail .statpill {
   font-size: var(--text-2xs);
   padding: 3px 8px;
   border-radius: var(--radius-full);
@@ -1391,6 +1393,52 @@ select.input.lang-select {
 @media (max-width: 640px) {
   .dict-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .dict-row-meaning { grid-column: 1 / -1; grid-row: 2; white-space: normal; }
+}
+/* ---------- Characters (Hanzi.jsx, HanziDetail inline, HanziTrace) ----------
+   The level's characters as a table of tiles beside one open character,
+   and the writing dialog as a practice square on a 米字格 grid. */
+.hz-filters { flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.hz { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-4); margin-top: var(--space-4); align-items: start; }
+.hz-table-card { padding: 0; overflow: hidden; }
+.hz-table {
+  list-style: none; margin: 0; padding: var(--space-3); display: grid; gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); max-height: min(72vh, 820px); overflow-y: auto; overscroll-behavior: contain;
+}
+.hz-tile {
+  position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--space-2) var(--space-1) var(--space-3); border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; cursor: pointer; overflow: hidden;
+  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.hz-tile:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.hz-tile.is-open { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-dim); }
+.hz-tile.is-due { border-color: var(--accent-border); }
+.hz-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hz-char { font-size: var(--text-xl); font-weight: 800; line-height: 1.15; }
+.hz-py { font-size: var(--text-2xs); color: var(--accent-strong); font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hz-fill { position: absolute; left: 0; right: 0; bottom: 0; display: grid; gap: 1px; }
+.hz-fill > span { display: block; height: 3px; background: var(--good); }
+.hz-fill > span.is-writing { background: var(--accent); }
+.hz-due { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+.hz-pen { position: absolute; top: 3px; left: 4px; color: var(--text-faint); }
+.hz-panel { position: sticky; top: calc(var(--space-8) + var(--space-4)); scroll-margin-top: var(--space-8); }
+.hz-detail { animation: fadeInUp var(--dur-base) var(--ease-out); }
+.hz-detail-char { font-size: var(--text-hero); font-weight: 800; line-height: 1; }
+.hz-empty { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-7) var(--space-5); }
+.hz-empty-char { font-size: var(--text-3xl); font-weight: 800; color: var(--text-faint); opacity: 0.5; }
+.hz-write { max-width: 440px; width: 100%; text-align: center; }
+.hz-write-steps { margin: 0 0 var(--space-4); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); justify-content: center; }
+.hz-canvas { position: relative; margin: var(--space-3) auto; border-radius: var(--radius-md); border: 2px solid var(--bad-dim); background: var(--surface-2); max-width: 100%; }
+.hz-grid { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.hz-grid line { stroke: var(--bad); stroke-opacity: 0.35; stroke-width: 0.6; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
+.hz-mount { position: relative; width: 100%; height: 100%; }
+.hz-strokes { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.hz-strokes-bar { display: block; width: 120px; height: 6px; border-radius: var(--radius-full); background: var(--surface-3); overflow: hidden; }
+.hz-strokes-bar > span { display: block; height: 100%; background: var(--good); transition: width var(--dur-base) var(--ease-out); }
+@media (max-width: 1080px) {
+  .hz { grid-template-columns: minmax(0, 1fr); }
+  .hz-panel { position: static; order: -1; }
+  .hz-table { max-height: 60vh; }
 }
 .word-recall-pending { display: block; margin-top: var(--space-1); font-size: var(--text-2xs); }
 
