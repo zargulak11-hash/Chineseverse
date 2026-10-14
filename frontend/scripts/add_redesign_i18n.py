@@ -138,6 +138,12 @@ S = {
     "pages.hanzi.step_write": L("Write", "Пишите", "Нависед", "写"),
     "pages.hanzi.step_save": L("Save", "Сохраните", "Сабт кунед", "保存"),
     "pages.hanzi.strokesDone": L("{{done}} of {{total}} strokes", "Черт: {{done}} из {{total}}", "Хат: {{done}} аз {{total}}", "笔画 {{done}} / {{total}}"),
+    # ---- Lesson (pages/LessonDetail.jsx) ----
+    "pages.lessonDetail.level": L("Level", "Уровень", "Сатҳ", "等级"),
+    "pages.lessonDetail.stepLearn": L("Learn", "Изучите", "Омӯзед", "学习"),
+    "pages.lessonDetail.stepPractise": L("Practise to complete the lesson", "Практика, чтобы пройти урок",
+                                         "Машқ барои анҷоми дарс", "练习以完成本课"),
+    "pages.lessonDetail.yourLesson": L("This lesson", "Этот урок", "Ин дарс", "本课"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

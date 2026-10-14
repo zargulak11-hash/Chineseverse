@@ -838,7 +838,11 @@
       "passHint": "在本课练习中得分达到 70% 及以上即完成本课。",
       "lockedTitle": "本课尚未解锁",
       "lockedText": "请先完成上一课——学习路径会告诉你接下来学什么。",
-      "backToPath": "返回学习路径"
+      "backToPath": "返回学习路径",
+      "level": "等级",
+      "stepLearn": "学习",
+      "stepPractise": "练习以完成本课",
+      "yourLesson": "本课"
     },
     "conversation": {
       "entering": "正在进入对话…",
