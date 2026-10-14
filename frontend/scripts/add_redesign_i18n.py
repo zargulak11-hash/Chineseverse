@@ -41,6 +41,12 @@ S = {
     "toneCoach.stepCompare": L("Compare", "Сравните", "Муқоиса кунед", "对比"),
     "toneCoach.legendTarget": L("The tone's shape", "Форма тона", "Шакли оҳанг", "声调的形状"),
     "toneCoach.legendVoice": L("Your voice", "Ваш голос", "Овози шумо", "你的声音"),
+    # ---- Practice / Review (pages/Practice.jsx) ----
+    "practice.keysHint": L(
+        "Tip: press 1–{{n}} to answer, Enter for the next question.",
+        "Совет: нажмите 1–{{n}}, чтобы ответить, и Enter — к следующему вопросу.",
+        "Маслиҳат: барои ҷавоб 1–{{n}}-ро пахш кунед, барои саволи навбатӣ Enter.",
+        "小提示：按 1–{{n}} 作答，按 Enter 进入下一题。"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

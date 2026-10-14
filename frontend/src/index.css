@@ -5718,6 +5718,47 @@ table.data td {
   color: var(--bad);
 }
 
+/* The question as a stage (the prompt on a soft wash), numbered options
+   that answer to keys 1-9, the round as a segmented track in the header,
+   and the verdict as a panel tinted by how it was graded. */
+.practice-card .practice-prompt {
+  min-height: 132px; padding: var(--space-5) var(--space-4); border-radius: var(--radius-md);
+  background: radial-gradient(70% 90% at 50% 0%, var(--accent-dim), transparent 75%), var(--surface-2);
+  border: 1px solid var(--border);
+}
+.practice-option { position: relative; padding-inline: var(--space-6); }
+.practice-key {
+  position: absolute; top: var(--space-2); left: var(--space-2);
+  display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 var(--space-1);
+  border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface-1);
+  font-size: var(--text-2xs); font-weight: 800; color: var(--text-faint); line-height: 1;
+}
+/* After grading every option is disabled; the two that carry the verdict
+   stay at full strength, the rest step back. */
+.practice-option.is-correct:disabled, .practice-option.is-wrong:disabled { opacity: 1; }
+.practice-option.is-correct { box-shadow: 0 0 0 3px var(--good-dim); }
+.practice-option.is-correct .practice-key { border-color: var(--good); color: var(--good); }
+.practice-option.is-wrong .practice-key { border-color: var(--bad); color: var(--bad); }
+.practice-keys-hint { margin: var(--space-3) 0 0; text-align: center; font-size: var(--text-xs); color: var(--text-faint); }
+.round-track { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; gap: var(--space-1); max-width: 520px; }
+.round-track li { flex: 1 1 0; height: 6px; border-radius: var(--radius-full); background: var(--surface-3); transition: background var(--dur-base) var(--ease-out); }
+.round-track li.is-now { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.round-track li.is-right { background: var(--good); }
+.round-track li.is-wrong { background: var(--bad); }
+.practice-feedback {
+  margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--radius-md);
+  border: 1px solid var(--border); border-left-width: 4px; background: var(--surface-2);
+  animation: fadeInUp var(--dur-base) var(--ease-out);
+}
+.practice-feedback.is-good { border-left-color: var(--good); }
+.practice-feedback.is-bad { border-left-color: var(--bad); }
+.practice-verdict { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); }
+.practice-verdict-icon { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; }
+.is-good .practice-verdict-icon { background: var(--good-dim); color: var(--good); }
+.is-bad .practice-verdict-icon { background: var(--bad-dim); color: var(--bad); }
+.is-good .practice-verdict b { color: var(--good); }
+.is-bad .practice-verdict b { color: var(--bad); }
+
 /* ---------- HSK final exam (pages/Exam.jsx) ----------
    Reuses the practice card; an answer is only "chosen" here -- correctness
    is never shown during an exam. */

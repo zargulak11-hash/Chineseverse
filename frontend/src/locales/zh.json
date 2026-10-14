@@ -1108,7 +1108,8 @@
     "recallWhat": "这里是你认识、但还没有自己写出来过的词和汉字。凭记忆写出来，才算真正掌握。",
     "explainBtn": "解释我的答案",
     "explainLoading": "正在写解释…",
-    "explainNote": "由 AI 写成，偶尔可能有错误。"
+    "explainNote": "由 AI 写成，偶尔可能有错误。",
+    "keysHint": "小提示：按 1–{{n}} 作答，按 Enter 进入下一题。"
   },
   "companionReact": {
     "fallbackName": "你的伙伴",

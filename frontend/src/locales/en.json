@@ -1121,7 +1121,8 @@
     "recallWhat": "Words and characters you recognise but have never produced yourself gather here. Recalling one from memory is what makes it mastered.",
     "explainBtn": "Explain my answer",
     "explainLoading": "Writing an explanation…",
-    "explainNote": "Written by AI — it can occasionally be wrong."
+    "explainNote": "Written by AI — it can occasionally be wrong.",
+    "keysHint": "Tip: press 1–{{n}} to answer, Enter for the next question."
   },
   "companionReact": {
     "fallbackName": "Your companion",

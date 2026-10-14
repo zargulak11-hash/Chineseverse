@@ -10,7 +10,7 @@ import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../c
 import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
 import NextStepBar from "../components/NextStep.jsx";
 import { CheckExplain, ExplainAnswer, RecallForm } from "../components/RecallAnswer.jsx";
-import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
+import { Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 
@@ -173,6 +173,26 @@ export default function Practice({ forceSource }) {
     }
     shownAt.current = Date.now();
   }, [question, result]);
+
+  // Keys 1-9 pick the option with that number (the Next button already takes
+  // Enter: it is focused when the answer comes back). Never while typing --
+  // the recall box and every other field keep their digits.
+  useEffect(() => {
+    if (!question || summary || result || busy) return undefined;
+    if (["type_word", "type_pinyin"].includes(question.type) || !question.options?.length) return undefined;
+    function onKey(e) {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      const el = e.target;
+      if (el?.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el?.tagName)) return;
+      if (!/^[1-9]$/.test(e.key)) return;
+      const o = question.options[Number(e.key) - 1];
+      if (!o) return;
+      e.preventDefault();
+      choose(o.id);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   async function choose(optionId, text) {
     if (busy || result) return;
@@ -450,9 +470,13 @@ export default function Practice({ forceSource }) {
             <Icon name="target" size={13} /> {eyebrow}
           </div>
           <h1 className="h1">{title}</h1>
-          <div style={{ marginTop: 10, maxWidth: 520 }}>
-            <Bar value={(answered / total) * 100} />
-          </div>
+          {/* The round as a track: one segment per question, lit by how
+              the server graded it (the same outcomes as the side dots). */}
+          <ol className="round-track" aria-label={t("practice.roundProgress")}>
+            {session.questions.map((q, i) => (
+              <li key={i} className={i in outcomes ? (outcomes[i] ? "is-right" : "is-wrong") : i === index ? "is-now" : ""} />
+            ))}
+          </ol>
         </div>
         <div className="kpi-row">
           <div className="kpi">
@@ -550,7 +574,7 @@ export default function Practice({ forceSource }) {
               />
             ) : (
             <div className="practice-options">
-              {question.options.map((o) => {
+              {question.options.map((o, oi) => {
                 let cls = "btn practice-option";
                 if (result) {
                   if (o.id === result.correct_id) cls += " is-correct";
@@ -559,7 +583,9 @@ export default function Practice({ forceSource }) {
                 const cjk = cjkOptions;
                 const long = cjk && o.label.length > 6;
                 return (
-                  <button key={o.id} type="button" className={cls} disabled={busy || !!result} onClick={() => choose(o.id)}>
+                  <button key={o.id} type="button" className={cls} disabled={busy || !!result} onClick={() => choose(o.id)}
+                          aria-keyshortcuts={oi < 9 ? String(oi + 1) : undefined}>
+                    {oi < 9 && <span className="practice-key" aria-hidden="true">{oi + 1}</span>}
                     <span className={cjk ? (long ? "practice-option-line" : "practice-option-hanzi") : ""} lang={cjk ? "zh-CN" : undefined}>
                       {o.label}
                     </span>
@@ -569,11 +595,15 @@ export default function Practice({ forceSource }) {
               })}
             </div>
             )}
+            {!typedQuestion && !result && question.options?.length > 1 && (
+              <p className="practice-keys-hint only-wide">{t("practice.keysHint", { n: Math.min(question.options.length, 9) })}</p>
+            )}
 
             {result && (
-              <div className="practice-feedback" style={{ marginTop: 14 }}>
-                <div className={`badge ${result.correct ? "good" : "bad"}`}>
-                  {result.correct ? t("practice.correct") : t("practice.notQuite")}
+              <div className={`practice-feedback ${result.correct ? "is-good" : "is-bad"}`}>
+                <div className="practice-verdict">
+                  <span className="practice-verdict-icon" aria-hidden="true"><Icon name={result.correct ? "check" : "x"} size={16} /></span>
+                  <b>{result.correct ? t("practice.correct") : t("practice.notQuite")}</b>
                 </div>
                 <CheckExplain check={result.check} card={result.card} />
                 {!result.correct && ["vocab", "hanzi", "grammar"].includes(question.item_type) && (
