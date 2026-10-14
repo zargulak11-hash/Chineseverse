@@ -72,7 +72,8 @@
     "groupUse": "用中文",
     "groupYou": "我的",
     "groupPlay": "游戏与更多",
-    "roleplay": "AI 情景对话"
+    "roleplay": "AI 情景对话",
+    "toneCoach": "声调教练"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -3181,5 +3182,43 @@
     "all": "全部场景",
     "aiNote": "回答、纠正和总结由 AI 生成，偶尔可能有错误。",
     "speakOrType": "说或者写"
+  },
+  "toneCoach": {
+    "title": "声调教练",
+    "subtitle": "说一个词，看看你的音高和每个声调应有的形状对比。练习会集中在你常说错的声调上。",
+    "modeLabel": "练习内容",
+    "modeSingle": "单字",
+    "modePair": "双音节词",
+    "expected": "要说的声调",
+    "sandhi": "变调：这里读作 {{tones}}",
+    "how": "先听一听，然后按“录音”，清楚地说一遍。",
+    "listen": "听一听",
+    "record": "录音",
+    "recording": "正在录音——请说",
+    "analysing": "正在分析…",
+    "playMine": "播放我的录音",
+    "next": "下一个",
+    "verdict_correct": "声调正确！",
+    "verdict_wrong": "还不太对——比较一下两条线",
+    "verdict_unclear": "没听清音高——请大声一点，在安静的地方再试一次",
+    "verdict_silent": "什么也没听到——请检查麦克风",
+    "syllableLine": "应为{{expected}} · 听到{{heard}}",
+    "heardUnclear": "不清楚",
+    "notJudged": "轻声（不评判）",
+    "tone1": "一声",
+    "tone2": "二声",
+    "tone3": "三声",
+    "tone4": "四声",
+    "chartLabel": "你的音高（实线）和每个声调的形状（虚线）",
+    "statsTitle": "你的声调（最近{{days}}天）",
+    "statsNone": "练习还不够——先说几个词吧。",
+    "statsTone": "{{judged}}次中对{{correct}}次",
+    "confusion": "{{expected}}声说成{{heard}}声：{{count}}次",
+    "focus": "练习{{tone}}声——这是你现在最弱的声调",
+    "privacy": "在你的浏览器里分析：只发送音高数据，不会上传你的声音。",
+    "honest": "这里只检查你声音的音高（声调），不检查声母和韵母。这是估计：周围的噪音可能让结果不准确。",
+    "unsupported": "这个浏览器不能录音。请在有麦克风的设备上使用新版 Chrome、Edge、Safari 或 Firefox。",
+    "listenCourseWhy": "先听清声调，再说准声调。",
+    "listenCourse": "发音课程（听力）"
   }
 }

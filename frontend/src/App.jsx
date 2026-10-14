@@ -41,6 +41,7 @@ const Mistakes = lazy(() => import("./pages/Mistakes.jsx"));
 const Practice = lazy(() => import("./pages/Practice.jsx"));
 const RealChinese = lazy(() => import("./pages/RealChinese.jsx"));
 const RoleplayHub = lazy(() => import("./pages/Roleplay.jsx"));
+const ToneCoach = lazy(() => import("./pages/ToneCoach.jsx"));
 const RoleplayChat = lazy(() => import("./pages/Roleplay.jsx").then((m) => ({ default: m.RoleplayChat })));
 const RealChineseScene = lazy(() => import("./pages/RealChinese.jsx").then((m) => ({ default: m.RealChineseScene })));
 const SentenceLesson = lazy(() => import("./pages/SentenceLesson.jsx"));
@@ -311,6 +312,14 @@ export default function App() {
             element={
               <RequireAuth>
                 <RealChineseScene />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/tone-coach"
+            element={
+              <RequireAuth>
+                <ToneCoach />
               </RequireAuth>
             }
           />

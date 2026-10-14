@@ -72,7 +72,8 @@
     "groupUse": "Use Chinese",
     "groupYou": "You",
     "groupPlay": "Play & extras",
-    "roleplay": "AI Roleplay"
+    "roleplay": "AI Roleplay",
+    "toneCoach": "Tone Coach"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -3266,5 +3267,43 @@
     "all": "All scenarios",
     "aiNote": "Replies, corrections and summaries are written by AI and can occasionally be wrong.",
     "speakOrType": "Speak or type"
+  },
+  "toneCoach": {
+    "title": "Tone Coach",
+    "subtitle": "Say a word and see the pitch of your voice next to the shape each tone should have. Practice moves to the tones you miss.",
+    "modeLabel": "What to practise",
+    "modeSingle": "Characters",
+    "modePair": "Two-syllable words",
+    "expected": "Tones to say",
+    "sandhi": "tone change: here it is said {{tones}}",
+    "how": "Listen first, then press Record and say the word once, clearly.",
+    "listen": "Listen",
+    "record": "Record",
+    "recording": "Recording — say it now",
+    "analysing": "Analysing…",
+    "playMine": "Play my recording",
+    "next": "Next",
+    "verdict_correct": "Right tones!",
+    "verdict_wrong": "Not quite — compare the curves",
+    "verdict_unclear": "Couldn't hear the pitch clearly — try again a little louder, somewhere quieter",
+    "verdict_silent": "Nothing was heard — check your microphone",
+    "syllableLine": "expected {{expected}} · heard {{heard}}",
+    "heardUnclear": "unclear",
+    "notJudged": "neutral tone (not judged)",
+    "tone1": "1st tone",
+    "tone2": "2nd tone",
+    "tone3": "3rd tone",
+    "tone4": "4th tone",
+    "chartLabel": "Your pitch (solid line) and the shape of each tone (dashed)",
+    "statsTitle": "Your tones (last {{days}} days)",
+    "statsNone": "Not enough attempts yet — say a few words.",
+    "statsTone": "{{correct}} of {{judged}} right",
+    "confusion": "Tone {{expected}} said as tone {{heard}}: {{count}}",
+    "focus": "Practising tone {{tone}} — your weakest right now",
+    "privacy": "Analysed in your browser: only the pitch numbers are sent — never your voice.",
+    "honest": "This checks the pitch of your voice (the tones), not consonants or vowels. It is an estimate: background noise can make it unsure.",
+    "unsupported": "Recording isn't available in this browser. Use a current Chrome, Edge, Safari or Firefox on a device with a microphone.",
+    "listenCourseWhy": "Hearing the tones comes before saying them.",
+    "listenCourse": "Pronunciation course (listening)"
   }
 }

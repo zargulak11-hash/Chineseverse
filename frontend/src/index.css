@@ -4508,6 +4508,31 @@ table.data td {
 }
 .dash-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
+/* ---------- Tone Coach (ToneCoach.jsx) ---------- */
+.tc-card { display: flex; flex-direction: column; align-items: flex-start; }
+.tc-word { margin-top: var(--space-3); font-size: var(--text-3xl); font-weight: 800; line-height: 1.1; }
+.tc-pinyin { font-size: var(--text-lg); font-weight: 700; color: var(--accent-strong); }
+.tc-expected { margin-top: var(--space-2); }
+.tc-sandhi { color: var(--text-dim); }
+.tc-result { width: 100%; margin-top: var(--space-4); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.tc-syllables { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+.tc-syllables li.is-ok { color: var(--good); }
+.tc-syllables li.is-off { color: var(--bad); }
+.tc-chart { width: 100%; margin: var(--space-2) 0 0; }
+.tc-chart svg {
+  width: 100%;
+  height: 180px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.tc-axis { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 2 6; }
+.tc-target { fill: none; stroke: var(--text-faint); stroke-width: 3; stroke-dasharray: 8 7; stroke-linecap: round; }
+.tc-voice { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
+.tc-note { margin-top: var(--space-3); font-size: var(--text-xs); }
+.tc-stats, .tc-confusions { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.tc-confusions { gap: var(--space-1); margin-top: var(--space-4); }
+
 /* ---------- AI roleplay (Roleplay.jsx) ---------- */
 .rp-unavailable { border-color: var(--accent-border); }
 .rp-scenario { display: flex; flex-direction: column; gap: var(--space-2); }

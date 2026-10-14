@@ -49,6 +49,8 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     # AI roleplay (services/roleplay.py): a message sent, a scenario finished.
     "roleplay_turn": ("roleplay", 1.0),
     "roleplay_finish": ("roleplay", 0.5),
+    # Tone Coach (services/tone_coach.py): one word said and judged.
+    "tone_attempt": ("foundation", 0.3),
 }
 
 SECTION_LABELS: dict[str, str] = {

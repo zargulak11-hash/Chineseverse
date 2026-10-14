@@ -14,6 +14,7 @@ const NAV_INDEX = [
   ["/real-chinese", "nav.realChinese", "mapPin"],
   ["/roleplay", "nav.roleplay", "chat"],
   ["/sound-world", "nav.soundWorld", "ear"],
+  ["/tone-coach", "nav.toneCoach", "mic"],
   ["/detective", "nav.detective", "search"],
   ["/passport", "nav.passport", "award"],
   ["/dna", "nav.dna", "dna"],

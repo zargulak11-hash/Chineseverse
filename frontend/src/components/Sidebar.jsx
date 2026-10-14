@@ -37,6 +37,7 @@ const GROUPS = [
       ["/hanzi", "nav.hanzi", "pen"],
       ["/grammar", "nav.grammar", "seal"],
       ["/sound-world", "nav.soundWorld", "ear"],
+      ["/tone-coach", "nav.toneCoach", "mic"],
       ["/stories", "nav.stories", "bookOpen"],
       ["/roadmap", "nav.roadmap", "trending"],
     ],
