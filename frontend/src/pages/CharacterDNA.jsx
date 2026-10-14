@@ -166,16 +166,18 @@ export default function CharacterDNA() {
 
           <div className="card">
             <h2 className="h2">{t("charDna.related")}</h2>
-            {[["partners", "charDna.partners"], ["same_radical", "charDna.sameRadical"], ["shared_component", "charDna.sharedComponent"]].map(
+            {[["look_alike", "charDna.lookAlike"], ["partners", "charDna.partners"], ["same_radical", "charDna.sameRadical"],
+              ["shared_component", "charDna.sharedComponent"]].map(
               ([key, label]) =>
-                data.related[key].length > 0 && (
+                data.related[key]?.length > 0 && (
                   <div key={key} style={{ marginTop: 12 }}>
                     <p className="side-title">{t(label)}</p>
                     <div className="chip-row">{data.related[key].map((c) => <CharChip key={c.char} c={c} />)}</div>
                   </div>
                 )
             )}
-            {!data.related.partners.length && !data.related.same_radical.length && !data.related.shared_component.length && (
+            {!data.related.partners.length && !data.related.same_radical.length && !data.related.shared_component.length
+              && !data.related.look_alike?.length && (
               <p className="sub">{t("charDna.noRelated")}</p>
             )}
           </div>

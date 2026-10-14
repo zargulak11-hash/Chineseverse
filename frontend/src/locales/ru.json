@@ -1874,7 +1874,8 @@
     "mistake": "{{ref}} — ошибок: {{count}}",
     "mistakeFixed": "{{ref}} — исправлено (ошибок: {{count}})",
     "confusion": "Путали {{a}} с {{b}}: {{count}} раз(а)",
-    "practiceLevel": "Тренировать иероглифы HSK {{level}}"
+    "practiceLevel": "Тренировать иероглифы HSK {{level}}",
+    "lookAlike": "Похожи по виду — не перепутайте"
   },
   "ecosystem": {
     "title": "Экосистема слов",

@@ -30,6 +30,9 @@ S = {
                                "Навиштан вақте азхудшуда ҳисоб мешавад, ки иероглифро аз ёд навиштед.",
                                "凭记忆写出来以后，书写才算掌握。"),
 }
+# Character DNA: characters that look alike (backend services/lookalikes.py)
+S["charDna.lookAlike"] = L("Looks like — don't mix them up", "Похожи по виду — не перепутайте",
+                           "Ба намуд монанданд — омехта накунед", "形近字——别弄混")
 KEYS = list(S)
 
 if __name__ == "__main__":

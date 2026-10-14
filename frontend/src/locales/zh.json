@@ -1763,7 +1763,8 @@
     "mistake": "{{ref}}——错了{{count}}次",
     "mistakeFixed": "{{ref}}——已掌握（曾错{{count}}次）",
     "confusion": "把“{{a}}”和“{{b}}”弄混了{{count}}次",
-    "practiceLevel": "练习HSK {{level}}汉字"
+    "practiceLevel": "练习HSK {{level}}汉字",
+    "lookAlike": "形近字——别弄混"
   },
   "ecosystem": {
     "title": "词汇生态",

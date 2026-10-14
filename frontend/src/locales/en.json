@@ -1800,7 +1800,8 @@
     "mistake": "{{ref}} — missed {{count}}×",
     "mistakeFixed": "{{ref}} — fixed (missed {{count}}×)",
     "confusion": "Mixed {{a}} up with {{b}} {{count}}×",
-    "practiceLevel": "Practise HSK {{level}} characters"
+    "practiceLevel": "Practise HSK {{level}} characters",
+    "lookAlike": "Looks like — don't mix them up"
   },
   "ecosystem": {
     "title": "Vocabulary Ecosystem",

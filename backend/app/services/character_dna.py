@@ -143,7 +143,13 @@ def character_dna(db: Session, user: models.User, char: str, locale: str) -> dic
     }
     partner_counts = Counter(c for w in words if len(w.simplified) > 1 for c in w.simplified if c != char and _CJK.match(c))
     partner_rows = _hanzi(db, [c for c, _n in partner_counts.most_common(12)], levels)
-    all_hanzi = list(comp_rows.values()) + same_radical + shared + list(partner_rows.values()) + ([h] if h else [])
+    # Characters that LOOK like this one (形近字, services/lookalikes.py).
+    from app.services.lookalikes import lookalikes
+
+    look_rows = _hanzi(db, lookalikes(char), levels)
+    look_alike = [look_rows[c] for c in lookalikes(char) if c in look_rows]
+    all_hanzi = (list(comp_rows.values()) + same_radical + shared + list(partner_rows.values()) + look_alike
+                 + ([h] if h else []))
     hm = _hanzi_meanings(db, all_hanzi, locale)
 
     def hcard(r: models.Hanzi, **extra) -> dict:
@@ -229,6 +235,7 @@ def character_dna(db: Session, user: models.User, char: str, locale: str) -> dic
             "same_radical": [hcard(r) for r in same_radical],
             "shared_component": [hcard(r) for r in shared],
             "partners": [hcard(partner_rows[c], count=n) for c, n in partner_counts.most_common(12) if c in partner_rows],
+            "look_alike": [hcard(r) for r in look_alike],
         },
         "examples": examples,
         "mine": {

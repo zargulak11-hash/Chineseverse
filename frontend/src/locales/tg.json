@@ -1800,7 +1800,8 @@
     "mistake": "{{ref}} — {{count}} бор хато",
     "mistakeFixed": "{{ref}} — ислоҳ шуд ({{count}} бор хато)",
     "confusion": "{{a}}-ро бо {{b}} {{count}} бор омехта кардед",
-    "practiceLevel": "Машқи иероглифҳои HSK {{level}}"
+    "practiceLevel": "Машқи иероглифҳои HSK {{level}}",
+    "lookAlike": "Ба намуд монанданд — омехта накунед"
   },
   "ecosystem": {
     "title": "Экосистемаи калимаҳо",

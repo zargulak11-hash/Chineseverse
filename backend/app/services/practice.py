@@ -569,6 +569,17 @@ def build_session(
         from app.services import mixups
 
         partners = mixups.partners_by_item(db, user)
+    # A character also meets the characters that LOOK like it (己 / 已, 未 / 末)
+    # among its options -- after the learner's own mix-up partners
+    # (services/lookalikes.py).
+    if picked and source not in ("tones", "mixups"):
+        from app.services import lookalikes
+
+        looks = lookalikes.partner_ids(db, {row.character for t, row in picked if t == "hanzi"})
+        for t, row in picked:
+            if t == "hanzi" and looks.get(row.character):
+                own = partners.get(("hanzi", row.id), [])
+                partners[("hanzi", row.id)] = own + [i for i in looks[row.character] if i not in own]
     # The tones round and the mix-up drill are about telling options apart,
     # so they stay multiple choice.
     ready = _recall_ready(db, user, picked, locale) if picked and source not in ("tones", "mixups") else set()
