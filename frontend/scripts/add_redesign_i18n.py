@@ -103,6 +103,18 @@ S = {
         "只保存在这个浏览器里，仅限本案。破案要在练习回合中完成。"),
     # ---- Sound World (pages/SoundWorld.jsx) ----
     "soundWorld.enter": L("Listen · {{stage}}", "Слушать · {{stage}}", "Гӯш кардан · {{stage}}", "进去听 · {{stage}}"),
+    # ---- Foundation: sounds and tones (pages/Foundation.jsx) ----
+    "foundation.earTitle": L("Test your ear", "Проверьте слух", "Гӯши худро санҷед", "听力小测"),
+    "foundation.earBody": L(
+        "Play one of the pair and pick the one you heard. A warm-up: nothing here is graded or saved.",
+        "Включите одно слово из пары и выберите, какое услышали. Это разминка: здесь ничего не оценивается и не сохраняется.",
+        "Яке аз ҷуфтро гӯш кунед ва он чиро, ки шунидед, интихоб кунед. Ин гармкунӣ аст: дар ин ҷо чизе баҳо дода ва сабт намешавад.",
+        "播放一对中的一个，选出你听到的那个。这只是热身：这里不评分，也不保存。"),
+    "foundation.earPlay": L("Play one", "Включить", "Пахш кардан", "播放一个"),
+    "foundation.earAgain": L("Another one", "Ещё раз", "Боз як бор", "再来一个"),
+    "foundation.earWhich": L("Which did you hear?", "Что вы услышали?", "Чиро шунидед?", "你听到的是哪个？"),
+    "foundation.earRight": L("Right!", "Верно!", "Дуруст!", "对了！"),
+    "foundation.earWrong": L("It was {{zh}}", "Это было {{zh}}", "Ин {{zh}} буд", "是 {{zh}}"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

@@ -1701,6 +1701,57 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .tone-pairs li { display: flex; align-items: center; gap: var(--space-2); }
 .tone-pairs .tone-say { flex-direction: row; gap: 6px; padding: var(--space-2) var(--space-3); font-size: var(--text-lg); }
 .tone-pairs small { color: var(--accent-strong); font-size: var(--text-sm); }
+/* Foundation as a short lesson (Foundation.jsx): numbered steps down a
+   rail, the tone in focus drawn large, and an ear test on the pairs. */
+.fd-path { position: relative; }
+.fd-step { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); position: relative; }
+.fd-step + .fd-step::before {
+  content: ""; position: absolute; left: calc(26px + 17px); top: calc(-1 * var(--space-4) - 1px); height: var(--space-4);
+  border-left: 2px dashed var(--border-strong);
+}
+.fd-step-n {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent-gradient); color: var(--on-accent); font-weight: 800;
+}
+.fd-step.is-done .fd-step-n { background: var(--good); color: var(--on-color); }
+.fd-step-body { min-width: 0; }
+.fd-step-body > .h2 { margin-top: var(--space-1); }
+.fd-focus {
+  display: grid; justify-items: center; gap: var(--space-1); margin-top: var(--space-4); padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-md); text-align: center;
+  background: radial-gradient(60% 90% at 50% 20%, var(--accent-dim), transparent 70%), var(--surface-2); border: 1px solid var(--border);
+}
+.fd-focus-contour { width: 120px; height: 72px; }
+.fd-focus-contour path { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; }
+.fd-focus-contour circle { fill: var(--accent); }
+.fd-focus-zh { font-size: var(--text-hero); font-weight: 800; line-height: 1; }
+.fd-focus-py { font-size: var(--text-xl); font-weight: 800; color: var(--accent-strong); }
+.fd-focus-name { font-weight: 800; }
+.fd-focus .btn { margin-top: var(--space-2); }
+.tone-say.is-on { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px var(--accent-dim); }
+.fd-ear-test { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px dashed var(--border-strong); }
+.fd-ear-test .side-title { margin: 0 0 var(--space-1); }
+.fd-ears { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.fd-ear { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.fd-ear-choices { display: flex; gap: var(--space-2); }
+.fd-ear-choice {
+  display: inline-flex; align-items: baseline; gap: var(--space-2); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text);
+  font: inherit; font-size: var(--text-lg); cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.fd-ear-choice small { color: var(--accent-strong); font-size: var(--text-sm); }
+.fd-ear-choice:hover:not(:disabled) { border-color: var(--accent); }
+.fd-ear-choice:disabled { cursor: default; }
+.fd-ear-choice:disabled:not(.is-right):not(.is-wrong) { opacity: 0.6; }
+.fd-ear-choice.is-right { border-color: var(--good); background: var(--good-dim); }
+.fd-ear-choice.is-wrong { border-color: var(--bad); background: var(--bad-dim); }
+.fd-ear-choice:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fd-ear-result { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); font-weight: 700; }
+@media (max-width: 640px) {
+  .fd-step { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .fd-step + .fd-step::before { display: none; }
+}
 .foundation-round { border-color: var(--accent-border); }
 .foundation-round .btn { margin-top: var(--space-2); }
 .practice-translation { margin-top: 4px; font-style: italic; }

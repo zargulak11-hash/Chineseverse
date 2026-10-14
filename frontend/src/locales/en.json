@@ -2647,7 +2647,14 @@
     "startRound": "Start the tones round",
     "bestScore": "Your best: {{score}}%",
     "alsoTitle": "Keep your ears busy",
-    "alsoBody": "Sound World lets you hear Chinese in real places, slowly at first."
+    "alsoBody": "Sound World lets you hear Chinese in real places, slowly at first.",
+    "earTitle": "Test your ear",
+    "earBody": "Play one of the pair and pick the one you heard. A warm-up: nothing here is graded or saved.",
+    "earPlay": "Play one",
+    "earAgain": "Another one",
+    "earWhich": "Which did you hear?",
+    "earRight": "Right!",
+    "earWrong": "It was {{zh}}"
   },
   "stories": {
     "eyebrow": "Chinese Stories",
