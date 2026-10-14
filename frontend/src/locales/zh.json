@@ -3260,6 +3260,12 @@
     "honest": "这里只检查你声音的音高（声调），不检查声母和韵母。这是估计：周围的噪音可能让结果不准确。",
     "unsupported": "这个浏览器不能录音。请在有麦克风的设备上使用新版 Chrome、Edge、Safari 或 Firefox。",
     "listenCourseWhy": "先听清声调，再说准声调。",
-    "listenCourse": "发音课程（听力）"
+    "listenCourse": "发音课程（听力）",
+    "stepsLabel": "步骤",
+    "stepListen": "听",
+    "stepSay": "说",
+    "stepCompare": "对比",
+    "legendTarget": "声调的形状",
+    "legendVoice": "你的声音"
   }
 }

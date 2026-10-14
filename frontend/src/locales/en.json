@@ -3345,6 +3345,12 @@
     "honest": "This checks the pitch of your voice (the tones), not consonants or vowels. It is an estimate: background noise can make it unsure.",
     "unsupported": "Recording isn't available in this browser. Use a current Chrome, Edge, Safari or Firefox on a device with a microphone.",
     "listenCourseWhy": "Hearing the tones comes before saying them.",
-    "listenCourse": "Pronunciation course (listening)"
+    "listenCourse": "Pronunciation course (listening)",
+    "stepsLabel": "Steps",
+    "stepListen": "Listen",
+    "stepSay": "Say it",
+    "stepCompare": "Compare",
+    "legendTarget": "The tone's shape",
+    "legendVoice": "Your voice"
   }
 }

@@ -34,6 +34,13 @@ S = {
         "Ин ҷавобро ба майдон гузоштан — пеш аз фиристодан тағйир додан мумкин аст",
         "把这句话放进输入框——发送前还可以修改"),
     "roleplay.hinting": L("Thinking…", "Подбираю…", "Фикр мекунам…", "正在想…"),
+    # ---- Tone Coach (pages/ToneCoach.jsx) ----
+    "toneCoach.stepsLabel": L("Steps", "Шаги", "Қадамҳо", "步骤"),
+    "toneCoach.stepListen": L("Listen", "Послушайте", "Гӯш кунед", "听"),
+    "toneCoach.stepSay": L("Say it", "Произнесите", "Талаффуз кунед", "说"),
+    "toneCoach.stepCompare": L("Compare", "Сравните", "Муқоиса кунед", "对比"),
+    "toneCoach.legendTarget": L("The tone's shape", "Форма тона", "Шакли оҳанг", "声调的形状"),
+    "toneCoach.legendVoice": L("Your voice", "Ваш голос", "Овози шумо", "你的声音"),
 }
 KEYS = list(S)
 
