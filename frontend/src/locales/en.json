@@ -1575,7 +1575,9 @@
     "start": "Start the lesson",
     "reviewNote": "Every answer is graded and scheduled for review, like any lesson.",
     "howTitle": "How it works",
-    "how": "The sentence is split into HSK words and characters you can study, its grammar is matched to your curriculum, and a practice round is built for your level."
+    "how": "The sentence is split into HSK words and characters you can study, its grammar is matched to your curriculum, and a practice round is built for your level.",
+    "readTitle": "Read it — tap a word",
+    "legend": "What the underline under a word means"
   },
   "companionMemory": {
     "title": "{{name}} remembers",

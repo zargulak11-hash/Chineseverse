@@ -6003,6 +6003,55 @@ table.data td {
 .sentence-token.is-stretch { border-color: var(--accent-border); }
 .sentence-token-meaning { font-size: var(--text-sm); overflow-wrap: anywhere; }
 .sentence-char-glyph { font-size: var(--text-2xl); font-weight: 800; }
+/* One Sentence: the sentence as a reading line (SentenceLesson.jsx
+   SentenceReader). Words carry their pinyin above them and an underline in
+   the learner's status for that word; the open word's details sit right
+   under the line. */
+.sr { border-color: var(--accent-border); background: radial-gradient(80% 100% at 50% 0%, var(--accent-dim), transparent 70%), var(--surface-1); }
+.sr-tools { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.sr-toggles { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.sr-line { margin: var(--space-6) 0 var(--space-3); display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: var(--space-2) var(--space-1); }
+.sr-word {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-1) var(--space-2) var(--space-2);
+  border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: inherit; cursor: pointer; position: relative;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.sr-word::after { content: ""; position: absolute; left: var(--space-2); right: var(--space-2); bottom: 2px; height: 3px; border-radius: var(--radius-full); background: var(--border-strong); }
+.sr-word.is-new::after { background: var(--accent); }
+.sr-word.is-learning::after { background: var(--accent-border); }
+.sr-word.is-reviewing::after { background: var(--accent-soft); }
+.sr-word.is-mastered::after { background: var(--good); }
+.sr-word:hover { background: var(--surface-2); }
+.sr-word.is-open { background: var(--accent-dim); }
+.sr-word:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-py { font-size: var(--text-xs); color: var(--accent-strong); font-weight: 600; min-height: 1em; }
+.sr-zh { font-size: var(--text-2xl); font-weight: 800; line-height: 1.1; }
+.sr-punct { font-size: var(--text-2xl); font-weight: 700; color: var(--text-dim); padding-bottom: var(--space-2); }
+.sr-full-py { text-align: center; }
+.sr-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2) var(--space-4); font-size: var(--text-xs); color: var(--text-dim); }
+.sr-legend li { display: inline-flex; align-items: center; gap: var(--space-2); }
+.sr-key { display: inline-block; width: 18px; height: 3px; border-radius: var(--radius-full); background: var(--border-strong); }
+.sr-key.is-new { background: var(--accent); }
+.sr-key.is-learning { background: var(--accent-border); }
+.sr-key.is-reviewing { background: var(--accent-soft); }
+.sr-key.is-mastered { background: var(--good); }
+.sr-detail {
+  margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--radius-md);
+  background: var(--surface-1); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);
+  animation: fadeInUp var(--dur-base) var(--ease-out);
+}
+.sr-detail-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.sr-detail-zh { font-size: var(--text-xl); }
+.sr-detail-py { color: var(--accent-strong); font-weight: 700; flex: 1 1 auto; }
+.sr-detail-meaning { margin: var(--space-2) 0 var(--space-3); overflow-wrap: anywhere; }
+.sr-char-py { font-size: var(--text-xs); font-weight: 600; }
+.sr-translation { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px dashed var(--border-strong); }
+.sr-translation p:last-child { margin: 0; font-size: var(--text-md); }
+.sentence-compose.is-compact { margin-top: var(--space-4); }
+@media (max-width: 640px) {
+  .sr-zh, .sr-punct { font-size: var(--text-xl); }
+  .sr-line { margin-top: var(--space-5); }
+}
 .flashcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
 .flashcard {
   min-height: 110px;

@@ -79,6 +79,12 @@ S = {
     "pages.vocabulary.st_mastered": L("mastered", "освоено", "азхудшуда", "已掌握"),
     "pages.vocabulary.st_due": L("due", "пора повторить", "вақти такрор", "待复习"),
     "pages.vocabulary.st_slipping": L("slipping", "забывается", "фаромӯш мешавад", "快忘了"),
+    # ---- One Sentence (pages/SentenceLesson.jsx) ----
+    "sentenceLesson.readTitle": L(
+        "Read it — tap a word", "Прочитайте — нажмите на слово", "Хонед — ба калима пахш кунед", "读一读——点击词语"),
+    "sentenceLesson.legend": L(
+        "What the underline under a word means", "Что значит подчёркивание под словом",
+        "Хати зери калима чӣ маъно дорад", "词语下划线的含义"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

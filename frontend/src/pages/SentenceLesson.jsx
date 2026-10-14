@@ -52,6 +52,135 @@ function FlashCard({ token }) {
   );
 }
 
+// The sentence as something to read, not a label: each word sits with its
+// pinyin above it and an underline for where the learner stands with it
+// (new / learning / mastered, from the analysis); tapping a word says it
+// and opens what is known about it right under the line -- its meaning,
+// level, the characters it is written with, and "save to review".
+function SentenceReader({ analysis, gloss }) {
+  const { t } = useTranslation();
+  const [sel, setSel] = useState(null);
+  const [showPy, setShowPy] = useState(true);
+  const [showTr, setShowTr] = useState(true);
+  const [saved, setSaved] = useState({});
+  const [saveError, setSaveError] = useState("");
+  const [playing, setPlaying] = useState(false);
+  const tk = sel !== null ? analysis.tokens[sel] : null;
+  const charInfo = Object.fromEntries(analysis.characters.map((c) => [c.char, c]));
+  const tkChars = tk ? Array.from(tk.text).filter((c) => charInfo[c]) : [];
+
+  function pick(i) {
+    setSel(i === sel ? null : i);
+    setSaveError("");
+    if (i !== sel) speakChinese(analysis.tokens[i].text);
+  }
+
+  async function save(id) {
+    setSaveError("");
+    try {
+      await api.post(`/vocab/${id}/track`);
+    } catch (err) {
+      // 409: already being reviewed or mastered -- it IS in their review.
+      if (!/409|already/i.test(err.message)) return setSaveError(err.message);
+    }
+    setSaved((s) => ({ ...s, [id]: true }));
+  }
+
+  const inReview = tk?.word_id && (saved[tk.word_id] || ["learning", "reviewing", "mastered"].includes(tk.status));
+  return (
+    <section className="card sentence-hero sr" aria-labelledby="sr-title">
+      <div className="sr-tools">
+        <h2 className="side-title" id="sr-title" style={{ margin: 0 }}>{t("sentenceLesson.readTitle")}</h2>
+        <div className="sr-toggles">
+          <button type="button" className={`rp-chip${showPy ? " is-on" : ""}`} aria-pressed={showPy} onClick={() => setShowPy((v) => !v)}>
+            {t("roleplay.showPinyin")}
+          </button>
+          <button type="button" className={`rp-chip${showTr ? " is-on" : ""}`} aria-pressed={showTr} onClick={() => setShowTr((v) => !v)}>
+            {t("roleplay.showTranslation")}
+          </button>
+          <button type="button" className={`icon-btn rp-speak${playing ? " is-playing" : ""}`} aria-label={t("companionReact.hear")}
+                  title={t("companionReact.hear")}
+                  onClick={() => speakChinese(analysis.text, { onStart: () => setPlaying(true), onEnd: () => setPlaying(false) })}>
+            <Icon name="volume" size={16} />
+          </button>
+        </div>
+      </div>
+
+      <p className="sr-line" lang="zh-CN">
+        {analysis.tokens.map((x, i) =>
+          x.kind === "other" ? (
+            <span key={i} className="sr-punct">{x.text}</span>
+          ) : (
+            <button key={i} type="button" className={`sr-word is-${x.status || "unknown"}${sel === i ? " is-open" : ""}${x.above_level ? " is-stretch" : ""}`}
+                    onClick={() => pick(i)} aria-pressed={sel === i} aria-label={`${x.text} ${x.pinyin || ""}`}>
+              {showPy && <span className="sr-py" aria-hidden="true">{x.pinyin}</span>}
+              <span className="sr-zh" aria-hidden="true">{x.text}</span>
+            </button>
+          )
+        )}
+      </p>
+      {!showPy && <p className="sub sentence-pinyin sr-full-py">{analysis.pinyin}</p>}
+
+      <ul className="sr-legend" aria-label={t("sentenceLesson.legend")}>
+        {["new", "learning", "reviewing", "mastered"].map((s) => (
+          <li key={s}><i className={`sr-key is-${s}`} aria-hidden="true" /> {t(`sentenceLesson.status.${s}`)}</li>
+        ))}
+      </ul>
+
+      {tk && (
+        <div className="sr-detail" aria-live="polite">
+          <div className="sr-detail-head">
+            <b className="sr-detail-zh" lang="zh-CN">{tk.text}</b>
+            <span className="sr-detail-py">{tk.pinyin}</span>
+            <button type="button" className="icon-btn rp-speak" onClick={() => speakChinese(tk.text)} aria-label={t("companionReact.hear")}>
+              <Icon name="volume" size={15} />
+            </button>
+            <button type="button" className="icon-btn nb-close" onClick={() => setSel(null)} aria-label={t("pages.mistakes.focusClose")}>
+              <Icon name="x" size={15} />
+            </button>
+          </div>
+          {tk.meaning && <p className="sr-detail-meaning">{tk.meaning}</p>}
+          <div className="row" style={{ gap: 6, margin: 0, flexWrap: "wrap" }}>
+            {tk.level && <span className="badge">HSK {tk.level}</span>}
+            <StatusBadge status={tk.status} />
+            {tk.above_level && <span className="badge accent">{t("sentenceLesson.stretch")}</span>}
+          </div>
+          {tkChars.length > 0 && (
+            <div className="dict-chars" style={{ marginTop: 12 }}>
+              {tkChars.map((c) => (
+                <Link key={c} to={`/hanzi/${encodeURIComponent(c)}`} className="dict-char" lang="zh-CN"
+                      aria-label={t("charDna.openFor", { char: c })}>
+                  {c} <span className="sub sr-char-py">{charInfo[c].pinyin}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+          {tk.word_id && (
+            <button type="button" className="btn small" style={{ marginTop: 12 }} disabled={inReview} onClick={() => save(tk.word_id)}>
+              <Icon name={inReview ? "check" : "bookmark"} size={13} /> {inReview ? t("roleplay.saved") : t("roleplay.save")}
+            </button>
+          )}
+          {saveError && <p className="formerr" role="alert">{saveError}</p>}
+        </div>
+      )}
+
+      {showTr && (
+        <div className="sr-translation">
+          <p className="side-title">{t("sentenceLesson.translation")}</p>
+          {analysis.translation ? (
+            <p>{analysis.translation}</p>
+          ) : (
+            <p>
+              <span className="sub">{t("sentenceLesson.wordByWord")} </span>
+              {gloss.join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function SentenceLesson() {
   const { t, i18n } = useTranslation();
   const [params, setParams] = useSearchParams();
@@ -118,8 +247,11 @@ export default function SentenceLesson() {
 
       <div className="ws">
         <div className="ws-main">
+          {/* Once there is a sentence it leads the page; the box to change it follows. */}
+          {analysis && <SentenceReader key={`${analysis.text}-${i18n.language}`} analysis={analysis} gloss={gloss} />}
+
           <form
-            className="card"
+            className={`card sentence-compose${analysis ? " is-compact" : ""}`}
             onSubmit={(e) => {
               e.preventDefault();
               analyze(text);
@@ -174,23 +306,6 @@ export default function SentenceLesson() {
 
           {analysis && (
             <>
-              <div className="card sentence-hero">
-                <div className="row" style={{ margin: 0, gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="sentence-text" lang="zh-CN">{analysis.text}</span>
-                  <Hear text={analysis.text} label={t("companionReact.hear")} />
-                </div>
-                <div className="sub sentence-pinyin">{analysis.pinyin}</div>
-                <h2 className="h2" style={{ marginTop: 16 }}>{t("sentenceLesson.translation")}</h2>
-                {analysis.translation ? (
-                  <p>{analysis.translation}</p>
-                ) : (
-                  <p>
-                    <span className="sub">{t("sentenceLesson.wordByWord")} </span>
-                    {gloss.join(" · ")}
-                  </p>
-                )}
-              </div>
-
               <h2 className="h2 section-title">{t("sentenceLesson.vocabulary")}</h2>
               <div className="card">
                 <div className="sentence-tokens">
