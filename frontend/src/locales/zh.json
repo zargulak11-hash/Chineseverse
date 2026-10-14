@@ -2679,6 +2679,25 @@
       "sentence": "所在的句子",
       "explainSentence": "讲解这句话",
       "askAssistant": "问问助手"
+    },
+    "line": {
+      "mode": "逐句",
+      "of": "第{{n}}句，共{{total}}句",
+      "prev": "上一句",
+      "next": "下一句",
+      "replay": "再听一遍",
+      "slow": "慢一点",
+      "listenFirst": "先听后看",
+      "listenFirstWhy": "听过之前句子是隐藏的。点一下隐藏的句子就能显示。",
+      "translation": "翻译",
+      "save": "收藏句子",
+      "saved": "已收藏",
+      "keys": "提示：用 ← 和 → 切换句子。",
+      "savedTitle": "收藏的句子",
+      "savedSub": "阅读时收藏的句子。可以再听一遍、看翻译，或者把一句变成小课来练习。",
+      "practise": "练习",
+      "remove": "删除",
+      "chapter": "第{{n}}章"
     }
   },
   "intro": {

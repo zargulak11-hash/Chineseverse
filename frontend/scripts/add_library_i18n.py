@@ -237,6 +237,37 @@ EXTRA_PLURAL = {
                                    "{{count}} китоб хонда шуд", "已经读完 {{count}} 本书"),
 }
 
+# The reader's line-by-line mode and saved sentences (StoryReader, Stories).
+# Added to the locale files as new lines by scripts/add_line_i18n.py; kept
+# here too so a rerun of this script (which rebuilds "stories") keeps them.
+S["line"] = {
+    "mode": L("Line by line", "Построчно", "Сатр ба сатр", "逐句"),
+    "of": L("Line {{n}} of {{total}}", "Строка {{n}} из {{total}}", "Сатри {{n}} аз {{total}}", "第{{n}}句，共{{total}}句"),
+    "prev": L("Previous line", "Предыдущая строка", "Сатри қаблӣ", "上一句"),
+    "next": L("Next line", "Следующая строка", "Сатри навбатӣ", "下一句"),
+    "replay": L("Play again", "Ещё раз", "Боз гӯш кардан", "再听一遍"),
+    "slow": L("Slower", "Медленнее", "Сусттар", "慢一点"),
+    "listenFirst": L("Listen first", "Сначала на слух", "Аввал гӯш кунед", "先听后看"),
+    "listenFirstWhy": L("Lines stay hidden until you have heard them. Tap a hidden line to show it.",
+                        "Строки скрыты, пока вы их не услышите. Нажмите на скрытую строку, чтобы показать её.",
+                        "Сатрҳо то он даме ки онҳоро нашунавед, пинҳонанд. Барои нишон додан ба сатри пинҳон пахш кунед.",
+                        "听过之前句子是隐藏的。点一下隐藏的句子就能显示。"),
+    "translation": L("Translation", "Перевод", "Тарҷума", "翻译"),
+    "save": L("Save sentence", "Сохранить фразу", "Ҷумларо нигоҳ доред", "收藏句子"),
+    "saved": L("Saved", "Сохранено", "Нигоҳ дошта шуд", "已收藏"),
+    "keys": L("Tip: ← and → move between lines.", "Совет: ← и → — переход между строками.",
+              "Маслиҳат: ← ва → байни сатрҳо мегузаронанд.", "提示：用 ← 和 → 切换句子。"),
+    "savedTitle": L("Saved sentences", "Сохранённые фразы", "Ҷумлаҳои нигоҳдошта", "收藏的句子"),
+    "savedSub": L(
+        "Sentences you saved while reading. Hear them again, check the translation, or practise one as a short lesson.",
+        "Фразы, которые вы сохранили при чтении. Послушайте их снова, посмотрите перевод или отработайте одну как короткий урок.",
+        "Ҷумлаҳое, ки ҳангоми хондан нигоҳ доштед. Онҳоро боз гӯш кунед, тарҷумаро бинед ё якеро ҳамчун дарси кӯтоҳ машқ кунед.",
+        "阅读时收藏的句子。可以再听一遍、看翻译，或者把一句变成小课来练习。"),
+    "practise": L("Practise", "Отработать", "Машқ", "练习"),
+    "remove": L("Remove", "Удалить", "Нест кардан", "删除"),
+    "chapter": L("Chapter {{n}}", "Глава {{n}}", "Боби {{n}}", "第{{n}}章"),
+}
+
 FORMS = {"en": ("one", "other"), "ru": ("one", "few", "many"), "tg": ("one", "other"), "zh": ("other",)}
 
 

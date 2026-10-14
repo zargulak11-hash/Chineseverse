@@ -64,6 +64,36 @@ def list_stories(
                        q=q, offset=offset, limit=limit)
 
 
+@router.get("/saved/sentences")
+def saved_sentences(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """Sentences the learner saved while reading (line-by-line mode)."""
+    return svc.saved_sentences(db, user, locale)
+
+
+@router.delete("/saved/sentences/{sentence_id}", status_code=204)
+def unsave_sentence(
+    sentence_id: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _run(svc.unsave_sentence, db, user, sentence_id)
+
+
+@router.post("/{slug}/chapters/{n}/sentences/{i}/save")
+def save_sentence(
+    slug: str,
+    n: int,
+    i: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return _run(svc.save_sentence, db, user, slug, n, i)
+
+
 @router.get("/{slug}")
 def read_book(
     slug: str,

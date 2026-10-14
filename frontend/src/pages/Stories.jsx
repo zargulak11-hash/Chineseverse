@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router-dom";
+import { api } from "../api.js";
 import Art from "../components/Art.jsx";
 import BookCover from "../components/BookCover.jsx";
 import Icon from "../components/Icon.jsx";
@@ -8,6 +9,7 @@ import Layout from "../components/Layout.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { PAGE, libraryPath } from "../storiesQuery.js";
+import { speakChinese } from "../zhSpeech.js";
 
 // Chinese Stories (/stories): the reading library, HSK 1 to 9. Everything
 // on a card comes from the server (services/stories.py): chapters, an
@@ -243,7 +245,60 @@ export default function Stories() {
           </div>
         </>
       )}
+      <SavedSentences />
       <p className="sub book-library-note">{t("stories.why")}</p>
     </Layout>
+  );
+}
+
+// Sentences saved in a reader's line-by-line mode (services/stories.py):
+// hear one again, see the book's translation, practise it as a One Sentence
+// lesson, go back to it in the book, or remove it. Shown only when there
+// are some.
+function SavedSentences() {
+  const { t } = useTranslation();
+  const { data, setData, error } = useApi("/stories/saved/sentences");
+  const [open, setOpen] = useState({});
+  if (error || !data?.length) return null;
+
+  async function remove(id) {
+    try {
+      await api.del(`/stories/saved/sentences/${id}`);
+      setData((rows) => rows.filter((r) => r.id !== id));
+    } catch {
+      // Left in the list; it can be removed again.
+    }
+  }
+
+  return (
+    <section className="card saved-sentences" aria-labelledby="saved-sentences-title">
+      <h2 className="h2" id="saved-sentences-title"><Icon name="bookmark" size={16} /> {t("stories.line.savedTitle")}</h2>
+      <p className="sub">{t("stories.line.savedSub")}</p>
+      <ul className="saved-list">
+        {data.map((s) => (
+          <li key={s.id} className="saved-item">
+            <button type="button" className="saved-zh" lang="zh-CN" onClick={() => speakChinese(s.zh, { whole: true })}
+                    aria-label={`${t("stories.line.replay")}: ${s.zh}`}>
+              <Icon name="ear" size={14} /> {s.zh}
+            </button>
+            <span className="sub saved-py">{s.pinyin}</span>
+            {s.translation && (
+              open[s.id] ? <span className="saved-tr">{s.translation}</span> : (
+                <button type="button" className="btn small ghost" onClick={() => setOpen((o) => ({ ...o, [s.id]: true }))}>
+                  {t("stories.line.translation")}
+                </button>
+              )
+            )}
+            <div className="row saved-actions">
+              <Link to={`/sentence?text=${encodeURIComponent(s.zh)}`} className="btn small">{t("stories.line.practise")}</Link>
+              <Link to={`/stories/${s.slug}/read/${s.chapter}`} className="btn small ghost">
+                <span lang="zh-CN">《{s.title_zh}》</span> · {t("stories.line.chapter", { n: s.chapter })}
+              </Link>
+              <button type="button" className="btn small ghost" onClick={() => remove(s.id)}>{t("stories.line.remove")}</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

@@ -39,6 +39,7 @@ from app.models.practice import (
     AIExplanation,
     HanziTraceAttempt,
     LearningMistake,
+    SavedSentence,
 )
 from app.models.duels import Duel, DuelParticipant, DuelAnswer
 from app.models.gamification import Achievement, UserAchievement, DailyQuest
@@ -85,6 +86,7 @@ __all__ = [
     "AIExplanation",
     "HanziTraceAttempt",
     "LearningMistake",
+    "SavedSentence",
     "Duel",
     "DuelParticipant",
     "DuelAnswer",

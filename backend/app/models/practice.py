@@ -208,3 +208,23 @@ class LearningMistake(Base):
     last_seen_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="learning_mistakes")
+
+
+class SavedSentence(Base):
+    """A sentence a learner saved while reading a Chinese Stories book
+    (services/stories.save_sentence): kept by its place in the book (slug,
+    chapter, sentence index) -- the text itself is the book's, read from the
+    content file, never sent by the client."""
+
+    __tablename__ = "saved_sentences"
+    __table_args__ = (UniqueConstraint("user_id", "slug", "chapter", "position", name="uq_saved_sentence"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    slug = Column(String(60), nullable=False)
+    chapter = Column(Integer, nullable=False)   # 1-based, as in the reader's URL
+    position = Column(Integer, nullable=False)  # sentence index inside the chapter
+    zh = Column(String(300), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="saved_sentences")

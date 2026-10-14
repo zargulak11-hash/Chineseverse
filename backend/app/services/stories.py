@@ -560,7 +560,63 @@ def chapter_view(db: Session, user: models.User, slug: str, n: int, locale: str)
         "position": p.position if p is not None and p.chapter == n - 1 else 0,
         "done": (n - 1) in done, "questions": len(ch["questions"]),
         "percent": _percent(book, p, done),
+        # Sentences of this chapter the learner saved (line-by-line mode).
+        "saved": sorted(r.position for r in db.query(models.SavedSentence.position).filter_by(
+            user_id=user.id, slug=slug, chapter=n)),
     }
+
+
+# --------------------------------------------------------------------------- saved sentences
+MAX_SAVED = 500
+
+
+def save_sentence(db: Session, user: models.User, slug: str, n: int, i: int) -> dict:
+    """Keep one sentence of a chapter to hear and practise again. The text
+    is the book's (never the client's); saving twice changes nothing."""
+    from app.services.activity import log_activity
+
+    book, _level = _open(db, user, slug)
+    ch = _chapter(book, n)
+    if not 0 <= i < len(ch["sentences"]):
+        raise StoryError(404, "Sentence not found")
+    row = db.query(models.SavedSentence).filter_by(user_id=user.id, slug=slug, chapter=n, position=i).first()
+    if row is None:
+        if db.query(models.SavedSentence).filter_by(user_id=user.id).count() >= MAX_SAVED:
+            raise StoryError(409, f"You can keep up to {MAX_SAVED} sentences -- remove some first")
+        row = models.SavedSentence(user_id=user.id, slug=slug, chapter=n, position=i, zh=ch["sentences"][i]["zh"])
+        db.add(row)
+        log_activity(db, user, "sentence_saved")
+        db.commit()
+    return {"id": row.id, "saved": True}
+
+
+def unsave_sentence(db: Session, user: models.User, sentence_id: int) -> None:
+    row = db.get(models.SavedSentence, sentence_id)
+    if row is None or row.user_id != user.id:
+        raise StoryError(404, "Saved sentence not found")
+    db.delete(row)
+    db.commit()
+
+
+def saved_sentences(db: Session, user: models.User, locale: str) -> list[dict]:
+    """The learner's saved sentences, newest first, each with its pinyin,
+    the book's own translation (none on a Chinese screen) and where it is."""
+    rows = (db.query(models.SavedSentence).filter_by(user_id=user.id)
+            .order_by(models.SavedSentence.created_at.desc(), models.SavedSentence.id.desc()).all())
+    out = []
+    for r in rows:
+        book = lib.get(r.slug)
+        if book is None or not 1 <= r.chapter <= len(book["chapters"]):
+            continue  # the book was withdrawn; nothing to show it in
+        sentences = book["chapters"][r.chapter - 1]["sentences"]
+        s = sentences[r.position] if r.position < len(sentences) and sentences[r.position]["zh"] == r.zh else None
+        out.append({
+            "id": r.id, "zh": r.zh, "pinyin": pinyin_of(db, book, r.zh),
+            "translation": "" if locale == "zh" or s is None else _text(s, locale),
+            "slug": r.slug, "title": _text(book["title"], locale), "title_zh": book["title"]["zh"],
+            "chapter": r.chapter, "position": r.position, "created_at": r.created_at.isoformat(),
+        })
+    return out
 
 
 # --------------------------------------------------------------------------- progress

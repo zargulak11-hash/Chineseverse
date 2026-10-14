@@ -19,6 +19,12 @@ import { BookStats } from "./StoryBook.jsx";
 // Text stays selectable (words are spans, not buttons; a tap that ends a
 // drag-selection is ignored). The bookmark follows the sentence being read
 // and is saved on the server, so "Continue reading" returns here.
+//
+// Line by line (like Language Reactor's auto-pause): one sentence is played
+// and the reader waits; previous / replay / next (also the arrow keys), a
+// slower voice, "listen first" (a line stays veiled until it has been
+// heard), the book's own translation of the line on request, and saving a
+// hard sentence to hear and practise again (Stories -> saved sentences).
 
 const CJK = /[㐀-鿿]/;
 const KEEP = /[㐀-鿿　-〿＀-￯“”‘’…—·]/g;
@@ -29,7 +35,7 @@ function selectedChinese(sel) {
 }
 
 export default function StoryReader() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug, n } = useParams();
   const chapter = Number(n) || 1;
   const navigate = useNavigate();
@@ -46,12 +52,26 @@ export default function StoryReader() {
   const stopRef = useRef(false);
   const saved = useRef({ chapter: null, position: null });
   const pending = useRef(null);
+  // Line by line
+  const [lineMode, setLineMode] = useState(false);
+  const [cur, setCur] = useState(0);
+  const [slow, setSlow] = useState(false);
+  const [veil, setVeil] = useState(false);
+  const [heard, setHeard] = useState(() => new Set());
+  const [trOn, setTrOn] = useState(false);
+  const [lineTr, setLineTr] = useState({});
+  const [kept, setKept] = useState(() => new Set());
+  const [lineError, setLineError] = useState("");
 
   useEffect(() => {
     if (!data) return;
     setPinyin(data.support.pinyin === "on");
     setHelp(null);
     setFinish(null);
+    setKept(new Set(data.saved || []));
+    setHeard(new Set());
+    setLineTr({});
+    setCur(Math.max(0, data.position || 0));
     saved.current = { chapter, position: data.position };
     // Resume at the bookmark.
     if (data.position > 0) {
@@ -125,6 +145,21 @@ export default function StoryReader() {
     window.speechSynthesis?.cancel();
   }, []);
 
+  // Arrow keys move between lines in line-by-line mode (not while typing).
+  const lineKeys = useRef(null);
+  useEffect(() => {
+    if (!lineMode) return undefined;
+    function onKey(e) {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName || "")) return;
+      if (e.key === "ArrowRight") lineKeys.current?.(1);
+      else if (e.key === "ArrowLeft") lineKeys.current?.(-1);
+      else return;
+      e.preventDefault();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lineMode]);
+
   if (error) {
     return (
       <Layout>
@@ -161,6 +196,49 @@ export default function StoryReader() {
     stopRef.current = false;
     api.post(`/stories/${slug}/listen`, { chapter }).catch(() => {});
     playFrom(Math.max(0, pending.current ?? 0));
+  }
+
+  // --- line by line
+  function fetchTr(k) {
+    if (k in lineTr) return;
+    api.post(`/stories/${slug}/explain`, { chapter, text: sentences[k].zh, focus: "translate" })
+      .then((r) => setLineTr((m) => ({ ...m, [k]: r.translation?.text || "" })))
+      .catch((e) => setLineError(e.message));
+  }
+  function playLine(i) {
+    const k = Math.max(0, Math.min(sentences.length - 1, i));
+    stopRef.current = true; // a continuous reading stops
+    window.speechSynthesis?.cancel();
+    setPlaying(-1);
+    setCur(k);
+    setLineError("");
+    sentRefs.current[k]?.scrollIntoView({ block: "center", behavior: "smooth" });
+    speakChinese(sentences[k].zh, {
+      profile: { rate: rate * (slow ? 0.7 : 1), pitch: 1, volume: 1 },
+      whole: true,
+      onEnd: () => setHeard((h) => new Set(h).add(k)),
+    });
+    if (trOn) fetchTr(k);
+  }
+  lineKeys.current = (d) => playLine(cur + d);
+  function toggleLineMode() {
+    if (lineMode) {
+      window.speechSynthesis?.cancel();
+      setLineMode(false);
+      return;
+    }
+    setLineMode(true);
+    playLine(Math.max(0, pending.current ?? cur));
+  }
+  function toggleTr() {
+    const on = !trOn;
+    setTrOn(on);
+    if (on) fetchTr(cur);
+  }
+  function saveLine() {
+    api.post(`/stories/${slug}/chapters/${chapter}/sentences/${cur}/save`)
+      .then(() => setKept((s) => new Set(s).add(cur)))
+      .catch((e) => setLineError(e.message));
   }
 
   function openWord(tk, s) {
@@ -238,6 +316,9 @@ export default function StoryReader() {
               <button type="button" className={`btn small${pinyin ? "" : " ghost"}`} aria-pressed={pinyin} onClick={() => setPinyin((v) => !v)}>
                 {t("stories.reader.pinyin")}
               </button>
+              <button type="button" className={`btn small${lineMode ? " primary" : " ghost"}`} aria-pressed={lineMode} onClick={toggleLineMode}>
+                <Icon name="ear" size={13} /> {t("stories.line.mode")}
+              </button>
             </div>
             <p className="sub reader-hint"><Icon name="sparkles" size={13} /> {t("stories.reader.hint")}</p>
           </header>
@@ -247,7 +328,15 @@ export default function StoryReader() {
               <p key={pi} className="reader-para">
                 {para.map((s) => (
                   <span key={s.i} ref={(el) => (sentRefs.current[s.i] = el)}
-                        className={`reader-sentence${playing === s.i ? " is-playing" : ""}`}>
+                        className={`reader-sentence${playing === s.i || (lineMode && cur === s.i) ? " is-playing" : ""}${
+                          lineMode && veil && !heard.has(s.i) ? " is-veiled" : ""}`}
+                        onClickCapture={(e) => {
+                          // A veiled line opens on a tap (the learner chose to read it).
+                          if (lineMode && veil && !heard.has(s.i)) {
+                            e.stopPropagation();
+                            setHeard((h) => new Set(h).add(s.i));
+                          }
+                        }}>
                     <span className="reader-zh">
                       {s.tokens.map((tk, j) => tk.word_id ? (
                         <span key={j} role="button" tabIndex={0}
@@ -271,6 +360,46 @@ export default function StoryReader() {
               </p>
             ))}
           </div>
+
+          {lineMode && (
+            <div className="reader-linebar" role="group" aria-label={t("stories.line.mode")}>
+              <div className="reader-linebar-row">
+                <span className="sub">{t("stories.line.of", { n: cur + 1, total: sentences.length })}</span>
+                <button type="button" className="btn small ghost" onClick={() => playLine(cur - 1)} disabled={cur === 0}
+                        aria-label={t("stories.line.prev")}>
+                  <Icon name="arrowLeft" size={14} />
+                </button>
+                <button type="button" className="btn small primary" onClick={() => playLine(cur)}>
+                  <Icon name="play" size={13} /> {t("stories.line.replay")}
+                </button>
+                <button type="button" className="btn small ghost" onClick={() => playLine(cur + 1)}
+                        disabled={cur >= sentences.length - 1} aria-label={t("stories.line.next")}>
+                  <Icon name="arrowRight" size={14} />
+                </button>
+                <button type="button" className={`btn small${slow ? " primary" : " ghost"}`} aria-pressed={slow}
+                        onClick={() => setSlow((v) => !v)}>
+                  {t("stories.line.slow")}
+                </button>
+                <button type="button" className={`btn small${veil ? " primary" : " ghost"}`} aria-pressed={veil}
+                        onClick={() => setVeil((v) => !v)} title={t("stories.line.listenFirstWhy")}>
+                  {t("stories.line.listenFirst")}
+                </button>
+                {i18n.language !== "zh" && (
+                  <button type="button" className={`btn small${trOn ? " primary" : " ghost"}`} aria-pressed={trOn} onClick={toggleTr}>
+                    {t("stories.line.translation")}
+                  </button>
+                )}
+                <button type="button" className="btn small" onClick={saveLine} disabled={kept.has(cur)}>
+                  <Icon name={kept.has(cur) ? "check" : "bookmark"} size={13} /> {kept.has(cur) ? t("stories.line.saved") : t("stories.line.save")}
+                </button>
+              </div>
+              {trOn && i18n.language !== "zh" && (
+                <p className="reader-linebar-tr" aria-live="polite">{cur in lineTr ? lineTr[cur] || "—" : "…"}</p>
+              )}
+              {lineError && <p className="formerr" role="alert">{lineError}</p>}
+              <p className="sub reader-linebar-keys">{t("stories.line.keys")}</p>
+            </div>
+          )}
 
           <ul className="tale-legend sub" aria-label={t("stories.reader.legend")}>
             {["new", "review", "learning", "known"].map((k) => (

@@ -95,6 +95,7 @@ class User(Base):
     story_progress = relationship("StoryProgress", back_populates="user", cascade="all, delete-orphan")
     roleplay_sessions = relationship("RoleplaySession", back_populates="user", cascade="all, delete-orphan")
     tone_attempts = relationship("ToneAttempt", back_populates="user", cascade="all, delete-orphan")
+    saved_sentences = relationship("SavedSentence", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def onboarding_completed(self) -> bool:

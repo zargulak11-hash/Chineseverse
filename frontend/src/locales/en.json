@@ -2745,6 +2745,25 @@
       "sentence": "Its sentence",
       "explainSentence": "Explain this sentence",
       "askAssistant": "Ask the assistant"
+    },
+    "line": {
+      "mode": "Line by line",
+      "of": "Line {{n}} of {{total}}",
+      "prev": "Previous line",
+      "next": "Next line",
+      "replay": "Play again",
+      "slow": "Slower",
+      "listenFirst": "Listen first",
+      "listenFirstWhy": "Lines stay hidden until you have heard them. Tap a hidden line to show it.",
+      "translation": "Translation",
+      "save": "Save sentence",
+      "saved": "Saved",
+      "keys": "Tip: ← and → move between lines.",
+      "savedTitle": "Saved sentences",
+      "savedSub": "Sentences you saved while reading. Hear them again, check the translation, or practise one as a short lesson.",
+      "practise": "Practise",
+      "remove": "Remove",
+      "chapter": "Chapter {{n}}"
     }
   },
   "intro": {
