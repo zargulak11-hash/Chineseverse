@@ -569,7 +569,23 @@
         "grammar": "语法",
         "other": "其他"
       },
-      "youChose": "你选了"
+      "youChose": "你选了",
+      "listen": "听",
+      "missedTimes_other": "错了 {{count}} 次",
+      "tabAll": "全部",
+      "filterLabel": "按类型查看",
+      "focusStart": "自我检测",
+      "focusTitle": "自我检测",
+      "focusCount": "第 {{n}} / {{total}} 个",
+      "focusPrompt": "先自己说出或写出答案，再看答案。",
+      "reveal": "显示答案",
+      "lastTime": "上次你的回答",
+      "focusNext": "下一个",
+      "focusClose": "返回错题本",
+      "focusDone": "全部看完了。现在去复习里真正把它们赢回来吧。",
+      "focusNote": "这是自我检测：这里不保存任何结果。只有在练习中答对，错题才会被清除。",
+      "progressTitle": "已攻克",
+      "progressLine": "之后在练习中答对了的错题和易混词。"
     },
     "progress": {
       "title": "你的进度",

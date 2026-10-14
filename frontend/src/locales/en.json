@@ -579,7 +579,24 @@
         "grammar": "Grammar",
         "other": "Other"
       },
-      "youChose": "you chose"
+      "youChose": "you chose",
+      "listen": "Listen",
+      "missedTimes_one": "Missed {{count}} time",
+      "missedTimes_other": "Missed {{count}} times",
+      "tabAll": "All",
+      "filterLabel": "Show mistakes of one kind",
+      "focusStart": "Test yourself",
+      "focusTitle": "Test yourself",
+      "focusCount": "{{n}} of {{total}}",
+      "focusPrompt": "Say or write the answer to yourself, then check.",
+      "reveal": "Show the answer",
+      "lastTime": "Last time you answered",
+      "focusNext": "Next",
+      "focusClose": "Back to the notebook",
+      "focusDone": "That's all of them. Now earn them back where it counts — in Review.",
+      "focusNote": "A self-check: nothing here is saved. A mistake is cleared only by answering it correctly in practice.",
+      "progressTitle": "Earned back",
+      "progressLine": "Mistakes and mix-ups you have since answered right in practice."
     },
     "progress": {
       "title": "Your progress",

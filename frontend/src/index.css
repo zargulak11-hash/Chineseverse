@@ -1666,10 +1666,67 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .mixup-meaning { font-size: var(--text-xs); color: var(--text-dim); overflow-wrap: anywhere; }
 .mixup-vs { align-self: center; color: var(--text-faint); font-size: var(--text-lg); }
 .mixup-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
-.notebook-item { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: 18px; }
-.notebook-item-text { min-width: 0; overflow-wrap: anywhere; }
-.notebook-item-text .sub { margin-top: var(--space-1); font-size: var(--text-xs); }
-.notebook-item-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); flex-shrink: 0; }
+/* The notebook itself: ruled lines on one sheet rather than a card per
+   mistake -- the thing missed, the answer given struck through beside the
+   right one, how often (pips), and where to earn it back. */
+.nb-tabs { flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-2); }
+.nb-count { font-weight: 800; opacity: 0.7; margin-left: var(--space-1); }
+.nb-group .notebook-label { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-5); }
+.nb-list {
+  list-style: none; margin: 0; padding: 0; border-radius: var(--radius-lg); overflow: hidden;
+  border: 1px solid var(--border); background: var(--surface-1); box-shadow: var(--shadow-sm);
+}
+.nb-entry {
+  display: grid; grid-template-columns: minmax(120px, 28%) minmax(0, 1fr) auto; align-items: center; gap: var(--space-4);
+  padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); position: relative;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.nb-entry:last-child { border-bottom: 0; }
+.nb-entry:hover { background: var(--surface-2); }
+.nb-entry.is-due::before { content: ""; position: absolute; left: 0; top: var(--space-3); bottom: var(--space-3); width: 3px; border-radius: var(--radius-full); background: var(--accent); }
+.nb-lead { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.nb-zh { font-size: var(--text-xl); font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.nb-text { font-weight: 700; overflow-wrap: anywhere; }
+.icon-btn.nb-say { flex: 0 0 auto; border-radius: 50%; color: var(--accent); }
+.icon-btn.nb-say:hover { background: var(--accent-dim); border-color: var(--accent-border); }
+.icon-btn.nb-say:focus-visible, .nb-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nb-body { min-width: 0; }
+.nb-gloss { margin: 0; color: var(--text-dim); overflow-wrap: anywhere; }
+.nb-compare { margin: var(--space-1) 0 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--text-sm); }
+.nb-wrong, .nb-right { display: inline-flex; align-items: baseline; gap: var(--space-2); min-width: 0; overflow-wrap: anywhere; }
+.nb-wrong s { color: var(--bad); text-decoration-thickness: 2px; }
+.nb-right b { color: var(--good); }
+.nb-tag { font-size: var(--text-2xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); }
+.nb-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+.nb-pips { display: inline-flex; align-items: center; gap: 3px; font-size: var(--text-2xs); font-weight: 700; color: var(--bad); }
+.nb-pips i { width: 7px; height: 7px; border-radius: 50%; background: var(--bad); opacity: 0.85; }
+.nb-progress-num { margin: var(--space-1) 0 var(--space-2); font-size: var(--text-lg); }
+.nb-progress-num b { font-size: var(--text-xl); font-weight: 800; color: var(--good); }
+.nb-progress-line { margin: var(--space-2) 0 0; font-size: var(--text-xs); }
+
+/* "Test yourself": one entry at a time, the answer behind a reveal. */
+.nb-focus { padding: 0; overflow: hidden; border-color: var(--accent-border); animation: fadeInUp var(--dur-base) var(--ease-out); }
+.nb-focus-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
+.nb-focus-head .h2 { margin: 0; flex: 1 1 auto; }
+.nb-close { border-color: var(--border); color: var(--text-dim); }
+.nb-focus-bar { height: 4px; background: var(--surface-3); }
+.nb-focus-bar > span { display: block; height: 100%; background: var(--accent-gradient); transition: width var(--dur-slow) var(--ease-out); }
+.nb-focus-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3);
+  padding: var(--space-6) var(--space-5); background: radial-gradient(60% 80% at 50% 0%, var(--accent-dim), transparent 70%);
+}
+.nb-focus-ask { margin: 0; font-size: var(--text-xl); font-weight: 800; max-width: 32ch; overflow-wrap: anywhere; }
+.nb-focus-answer { display: flex; align-items: center; gap: var(--space-2); animation: scaleIn var(--dur-base) var(--ease-out); }
+.nb-focus-answer b { font-size: var(--text-3xl); color: var(--good); line-height: 1.1; overflow-wrap: anywhere; }
+.nb-focus-done { margin: 0; font-size: var(--text-md); font-weight: 700; }
+.nb-focus-note { margin: 0; padding: var(--space-3) var(--space-5); border-top: 1px solid var(--border); font-size: var(--text-xs); display: flex; gap: var(--space-2); align-items: flex-start; }
+.nb-focus + .notebook-section { margin-top: var(--space-5); }
+.ws-main > .notebook-section:first-child { margin-top: 0; }
+@media (max-width: 640px) {
+  .nb-entry { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding: var(--space-4); }
+  .nb-side { flex-direction: row; align-items: center; justify-content: space-between; }
+  .nb-focus-card { padding: var(--space-5) var(--space-4); }
+}
 .notebook-resolved { list-style: none; margin: 0; padding: 0; }
 .notebook-resolved li {
   display: flex;
@@ -1682,10 +1739,6 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
   overflow-wrap: anywhere;
 }
 .notebook-resolved li svg { color: var(--good); flex-shrink: 0; }
-@media (max-width: 640px) {
-  .notebook-item { flex-direction: column; align-items: stretch; }
-  .notebook-item-side { flex-direction: row; align-items: center; justify-content: space-between; }
-}
 @media (max-width: 640px) {
   .next-hero { padding: var(--space-4); }
   .next-hero-title { font-size: var(--text-lg); }
@@ -4671,7 +4724,6 @@ table.data td {
   .grammar-jump { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--space-2); scrollbar-width: thin; }
   .grammar-jump .btn { flex-shrink: 0; }
 }
-.notebook-zh { font-size: var(--text-lg); }
 .fix-mistake {
   display: flex;
   align-items: center;

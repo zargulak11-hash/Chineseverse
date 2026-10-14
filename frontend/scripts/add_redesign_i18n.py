@@ -41,6 +41,43 @@ S = {
     "toneCoach.stepCompare": L("Compare", "Сравните", "Муқоиса кунед", "对比"),
     "toneCoach.legendTarget": L("The tone's shape", "Форма тона", "Шакли оҳанг", "声调的形状"),
     "toneCoach.legendVoice": L("Your voice", "Ваш голос", "Овози шумо", "你的声音"),
+    # ---- Mistake notebook (pages/Mistakes.jsx) ----
+    "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
+    "pages.mistakes.missedTimes": L(
+        {"one": "Missed {{count}} time", "other": "Missed {{count}} times"},
+        {"one": "Ошибка {{count}} раз", "few": "Ошибка {{count}} раза", "many": "Ошибка {{count}} раз", "other": "Ошибка {{count}} раза"},
+        {"one": "{{count}} бор хато", "other": "{{count}} бор хато"},
+        {"other": "错了 {{count}} 次"}),
+    "pages.mistakes.tabAll": L("All", "Все", "Ҳама", "全部"),
+    "pages.mistakes.filterLabel": L("Show mistakes of one kind", "Показать ошибки одного вида", "Нишон додани хатоҳои як навъ", "按类型查看"),
+    "pages.mistakes.focusStart": L("Test yourself", "Проверить себя", "Худро санҷед", "自我检测"),
+    "pages.mistakes.focusTitle": L("Test yourself", "Проверьте себя", "Худро санҷед", "自我检测"),
+    "pages.mistakes.focusCount": L("{{n}} of {{total}}", "{{n}} из {{total}}", "{{n}} аз {{total}}", "第 {{n}} / {{total}} 个"),
+    "pages.mistakes.focusPrompt": L(
+        "Say or write the answer to yourself, then check.",
+        "Ответьте про себя или запишите, затем проверьте.",
+        "Ҷавобро дар дил гӯед ё нависед, баъд санҷед.",
+        "先自己说出或写出答案，再看答案。"),
+    "pages.mistakes.reveal": L("Show the answer", "Показать ответ", "Ҷавобро нишон диҳед", "显示答案"),
+    "pages.mistakes.lastTime": L("Last time you answered", "В прошлый раз вы ответили", "Дафъаи гузашта шумо ҷавоб додед", "上次你的回答"),
+    "pages.mistakes.focusNext": L("Next", "Дальше", "Минбаъда", "下一个"),
+    "pages.mistakes.focusClose": L("Back to the notebook", "Вернуться к тетради", "Бозгашт ба дафтар", "返回错题本"),
+    "pages.mistakes.focusDone": L(
+        "That's all of them. Now earn them back where it counts — in Review.",
+        "Это все. Теперь закрепите их там, где это засчитывается, — в повторении.",
+        "Ҳамааш ҳамин. Акнун онҳоро дар ҷое баргардонед, ки ҳисоб мешавад — дар такрор.",
+        "全部看完了。现在去复习里真正把它们赢回来吧。"),
+    "pages.mistakes.focusNote": L(
+        "A self-check: nothing here is saved. A mistake is cleared only by answering it correctly in practice.",
+        "Это самопроверка: здесь ничего не сохраняется. Ошибка исчезает, только когда вы правильно ответите в практике.",
+        "Ин худсанҷӣ аст: дар ин ҷо чизе сабт намешавад. Хато танҳо вақте пок мешавад, ки шумо дар машқ дуруст ҷавоб диҳед.",
+        "这是自我检测：这里不保存任何结果。只有在练习中答对，错题才会被清除。"),
+    "pages.mistakes.progressTitle": L("Earned back", "Исправлено", "Ислоҳшуда", "已攻克"),
+    "pages.mistakes.progressLine": L(
+        "Mistakes and mix-ups you have since answered right in practice.",
+        "Ошибки и путаницы, на которые вы с тех пор правильно ответили в практике.",
+        "Хатоҳо ва омехтагиҳое, ки шумо баъдан дар машқ дуруст ҷавоб додед.",
+        "之后在练习中答对了的错题和易混词。"),
 }
 KEYS = list(S)
 
