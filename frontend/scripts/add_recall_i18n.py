@@ -121,6 +121,11 @@ INTO = {
         "Вы выбрали «{{meaning}}», но в этом предложении используется правило ниже. Откройте любое, чтобы увидеть, как используется каждое.",
         "Шумо «{{meaning}}»-ро интихоб кардед, вале дар ин ҷумла қоидаи поён истифода шудааст. Ҳар якеро кушоед, то бинед, ки ҳар кадом чӣ тавр истифода мешавад.",
         "你选的是“{{meaning}}”，但这个句子用的是下面的语法点。打开看看它们各自怎么用。"),
+    # "Explain my answer" (RecallAnswer.ExplainAnswer)
+    "practice.explainBtn": L("Explain my answer", "Объясните мой ответ", "Ҷавоби маро шарҳ диҳед", "解释我的答案"),
+    "practice.explainLoading": L("Writing an explanation…", "Пишем объяснение…", "Шарҳ навишта мешавад…", "正在写解释…"),
+    "practice.explainNote": L("Written by AI — it can occasionally be wrong.", "Написано ИИ — иногда он может ошибаться.",
+                              "Аз ҷониби ИИ навишта шудааст — баъзан метавонад хато кунад.", "由 AI 写成，偶尔可能有错误。"),
     # FSRS prediction on Progress (services/srs.py; colon form avoids plurals)
     "pages.progress.knowMemory": L(
         "Predicted recall now: {{pct}}% (spaced-repetition model, {{count}} items)",

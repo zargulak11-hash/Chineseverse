@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { api } from "../api.js";
+import { speakChinese } from "../zhSpeech.js";
+import Icon from "./Icon.jsx";
 
 // A question answered from memory (type_word / type_pinyin): the learner
 // types the word or the reading, and the server grades it
@@ -60,6 +63,48 @@ export function RecallForm({ question, busy, answered, typed, retry, onSubmit })
         !answered && <p className="sub recall-hint">{t("practice.recall.toneHint")}</p>
       )}
     </form>
+  );
+}
+
+// "Explain my answer" (like Duolingo Max): on a wrong answer the learner can
+// ask for an AI explanation, written by the server from the stored question
+// and their stored answer (POST /practice/sessions/{id}/questions/{i}/explain),
+// with one example sentence. Unavailable AI is said plainly.
+export function ExplainAnswer({ sessionId, index }) {
+  const { t } = useTranslation();
+  const [state, setState] = useState(null); // null | "loading" | {data} | {error}
+  async function ask() {
+    setState("loading");
+    try {
+      setState({ data: await api.post(`/practice/sessions/${sessionId}/questions/${index}/explain`) });
+    } catch (e) {
+      setState({ error: e.message });
+    }
+  }
+  if (state === null) {
+    return (
+      <button type="button" className="btn small" style={{ marginTop: 8 }} onClick={ask}>
+        <Icon name="sparkles" size={13} /> {t("practice.explainBtn")}
+      </button>
+    );
+  }
+  if (state === "loading") return <p className="sub" role="status" style={{ marginTop: 8 }}>{t("practice.explainLoading")}</p>;
+  if (state.error) return <p className="sub" role="alert" style={{ marginTop: 8 }}>{state.error}</p>;
+  const { explanation, example } = state.data;
+  return (
+    <div className="practice-why" aria-live="polite">
+      <p>{explanation}</p>
+      {example?.zh && (
+        <p>
+          <button type="button" className="btn small ghost" onClick={() => speakChinese(example.zh)} aria-label={t("pages.hanzi.hear")}>
+            <Icon name="ear" size={13} />
+          </button>{" "}
+          <b lang="zh-CN">{example.zh}</b> <span className="sub">{example.pinyin}</span>
+          {example.translation && <span className="sub"> — {example.translation}</span>}
+        </p>
+      )}
+      <p className="sub" style={{ fontSize: "var(--text-xs)" }}>{t("practice.explainNote")}</p>
+    </div>
   );
 }
 

@@ -1311,6 +1311,106 @@ def answer_question(
     return out
 
 
+# --------------------------------------------------------------------------- explain my answer
+
+_QUESTION_TASK = {
+    "meaning_to_word": "saw the meaning and had to choose the Chinese word",
+    "word_to_meaning": "saw the Chinese word and had to choose its meaning",
+    "listen_to_word": "heard the Chinese word and had to choose its meaning",
+    "char_to_meaning": "saw the character and had to choose its meaning",
+    "char_to_pinyin": "saw the character and had to choose its pronunciation",
+    "type_word": "saw the meaning and had to type the Chinese word from memory",
+    "type_pinyin": "saw the character and had to type its pinyin with tones from memory",
+    "example_to_point": "read a Chinese example sentence and had to choose which grammar point it uses",
+}
+_EXPLAIN_LANG = {"en": "English", "ru": "Russian", "tg": "Tajik (Cyrillic script only)", "zh": "very simple Simplified Chinese"}
+
+
+def explain_answer(db: Session, user: models.User, session: models.PracticeSession, index: int, locale: str) -> dict:
+    """"Explain my answer" (like Duolingo Max): an AI explanation of why a
+    wrong answer was wrong, written in the learner's language at their
+    level, from the stored question and THEIR stored answer -- never from
+    anything the browser sends -- plus one example sentence. Cached on the
+    answer per language, so asking again costs nothing. Without a model
+    (or past the hourly budget) it says so (503); the deterministic
+    explanation shown with the answer stays."""
+    import json as _json
+
+    import httpx
+
+    from app.services import ai_budget, ai_client
+    from app.services.gamification import user_rank
+
+    if not 0 <= index < len(session.questions):
+        raise PracticeError(422, "No such question")
+    q, answer = session.questions[index], session.answers[index]
+    if answer is None:
+        raise PracticeError(409, "Answer the question first")
+    if answer.get("correct"):
+        raise PracticeError(409, "This answer was right -- there is nothing to explain")
+    if q["item_type"] not in ("vocab", "hanzi", "grammar") or q["type"] not in _QUESTION_TASK:
+        raise PracticeError(422, "This kind of question can't be explained here")
+    cached = (answer.get("ai_explain") or {}).get(locale)
+    if cached:
+        return cached
+    if ai_client._active_provider() != "gemini" or not ai_budget.spend(user.id):
+        raise PracticeError(503, "AI explanations are not available right now")
+
+    row = _row(db, q["item_type"], q["item_id"])
+    if row is None:
+        raise PracticeError(410, "This item no longer exists")
+    none = {"vocab": {}, "hanzi": {}, "grammar": {}}
+    right = _item_card(q["item_type"], row, none)
+    check = _check_out(db, q, answer, "en") or {}
+    other = check.get("other") or {}
+    given = answer.get("typed") if answer.get("typed") is not None else (
+        " ".join(x for x in (other.get("hanzi"), other.get("pinyin"), other.get("meaning")) if x) or "(unknown)")
+    level, _ = user_rank(db, user)
+    lang = _EXPLAIN_LANG.get(locale, "English")
+    facts = (
+        f"Question: the learner {_QUESTION_TASK[q['type']]}.\n"
+        + (f"Example sentence shown: {q.get('prompt')}\n" if q.get("prompt") else "")
+        + f"Correct answer: {right['hanzi']} {right['pinyin']} -- {right['meaning']}\n"
+        + f"The learner answered: {given or '(nothing -- they said they did not know)'}\n"
+        + (f"What the answer was: another word, {other.get('hanzi')} ({other.get('meaning')})\n"
+           if other.get("hanzi") else "")
+        + (f"Tones typed {answer.get('tones_typed')}, correct tones {answer.get('tones_expected')}\n"
+           if answer.get("tones_expected") else "")
+    )
+    messages = [
+        {"role": "system", "content": (
+            f"You are a patient Mandarin teacher for a learner at HSK {max(1, min(level, 9))}. In {lang}, explain in "
+            "2-4 short sentences why the learner's answer was wrong and how to tell the right one apart (meaning, "
+            "usage, tone or form -- whatever actually differs). Base it only on the facts given. Then give ONE "
+            "short, natural example sentence in Simplified Chinese that uses the correct answer, with its pinyin "
+            f"and a translation into {lang}{' (translation: empty string)' if locale == 'zh' else ''}. Return JSON "
+            "only: {\"explanation\": str, \"example_zh\": str, \"example_pinyin\": str, \"example_translation\": str}")},
+        {"role": "user", "content": facts},
+    ]
+    try:
+        data = _json.loads(ai_client._gemini_chat(messages, max_tokens=500, temperature=0.4, json_mode=True))
+        explanation = re.sub(r"\s+", " ", str(data.get("explanation") or "")).strip()[:700]
+        example = re.sub(r"\s+", "", str(data.get("example_zh") or ""))[:80]
+        # The example must really use the word/character it is about (a
+        # grammar point's "answer" is a pattern, not literal text).
+        uses_it = q["item_type"] == "grammar" or right["hanzi"] in example
+        if not explanation or not _CJK.search(example) or not uses_it:
+            raise ValueError("unusable explanation")
+        out = {
+            "explanation": ai_client._tg_clean_mixed_script(explanation) if locale == "tg" else explanation,
+            "example": {"zh": example, "pinyin": str(data.get("example_pinyin") or "").strip()[:160],
+                        "translation": "" if locale == "zh" else str(data.get("example_translation") or "").strip()[:240]},
+            "source": "ai",
+        }
+    except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        raise PracticeError(503, "The explanation couldn't be written right now. Try again in a moment.") from exc
+    answers = list(session.answers)  # reassign so the JSON column is marked dirty
+    answers[index] = {**answer, "ai_explain": {**(answer.get("ai_explain") or {}), locale: out}}
+    session.answers = answers
+    db.commit()
+    return out
+
+
 def companion_memory_confusable() -> set[str]:
     from app.services.companion_memory import _CONFUSABLE
 

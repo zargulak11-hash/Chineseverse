@@ -9,7 +9,7 @@ import Layout from "../components/Layout.jsx";
 import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../components/RoundExtras.jsx";
 import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
 import NextStepBar from "../components/NextStep.jsx";
-import { CheckExplain, RecallForm } from "../components/RecallAnswer.jsx";
+import { CheckExplain, ExplainAnswer, RecallForm } from "../components/RecallAnswer.jsx";
 import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -576,6 +576,9 @@ export default function Practice({ forceSource }) {
                   {result.correct ? t("practice.correct") : t("practice.notQuite")}
                 </div>
                 <CheckExplain check={result.check} card={result.card} />
+                {!result.correct && ["vocab", "hanzi", "grammar"].includes(question.item_type) && (
+                  <ExplainAnswer key={`${session.id}-${index}`} sessionId={session.id} index={index} />
+                )}
                 <div className="practice-answer-card">
                   <b style={{ fontSize: 22 }}>{result.card.hanzi}</b>{" "}
                   {result.card.pinyin && <span className="sub" style={{ color: "var(--accent2)" }}>{result.card.pinyin}</span>}

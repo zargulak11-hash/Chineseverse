@@ -4,6 +4,7 @@ and the reason for a wrong one is named only when the text shows it, and
 "mastered" needs a recall -- picking an option or pressing "I know it" is
 no longer enough (services/srs.py)."""
 
+import json
 from datetime import datetime, timedelta
 from types import SimpleNamespace
 
@@ -485,3 +486,86 @@ def test_a_practice_answer_gives_the_word_an_fsrs_memory(client, learner):
     # an hour ago), then grown by the recall.
     assert rec_.stability is not None and rec_.stability > 0 and 1.0 <= rec_.difficulty <= 10.0
     assert rec_.next_review_at - rec_.last_reviewed_at >= timedelta(days=1)
+
+
+# --------------------------------------------------------------------------- explain my answer
+
+class _Model:
+    def __init__(self, reply):
+        self.reply, self.calls = reply, 0
+
+    def __call__(self, messages, **kw):
+        self.calls += 1
+        self.messages = messages
+        if isinstance(self.reply, Exception):
+            raise self.reply
+        return json.dumps(self.reply)
+
+
+@pytest.fixture
+def model(monkeypatch):
+    from app.services import ai_client
+
+    m = _Model({"explanation": "吃 means to eat; 喝 means to drink.", "example_zh": "我们去吃饭吧。",
+                "example_pinyin": "Wǒmen qù chīfàn ba.", "example_translation": "Let's go and eat."})
+    monkeypatch.setattr(ai_client.settings, "gemini_api_key", "test-key")
+    monkeypatch.setattr(ai_client.settings, "ai_provider", "auto")
+    monkeypatch.setattr(ai_client, "_gemini_chat", m)
+    return m
+
+
+def _wrong_typed(client, h, uid):
+    eat = level1_word("吃")
+    recognise(uid, eat)
+    s, i = round_for(client, h, eat)
+    say(client, h, s["id"], i, "喝")
+    return s["id"], i
+
+
+def test_explain_my_answer_uses_the_stored_answer_and_is_cached(client, learner, model):
+    uid, h = learner
+    sid, i = _wrong_typed(client, h, uid)
+    url = f"{ROUNDS}/{sid}/questions/{i}/explain"
+    r = expect(client, "post", url, 200, headers=h)
+    assert r["explanation"].startswith("吃 means") and r["example"]["zh"] == "我们去吃饭吧。" and r["source"] == "ai"
+    facts = model.messages[1]["content"]
+    assert "吃" in facts and "喝" in facts and "type the Chinese word" in facts
+    again = expect(client, "post", url, 200, headers=h)
+    assert again == r and model.calls == 1  # cached on the answer
+    expect(client, "post", url, 200, headers={**h, "X-Locale": "ru"})
+    assert model.calls == 2 and "Russian" in model.messages[0]["content"]  # per language
+
+
+def test_only_a_wrong_answer_of_ones_own_round_can_be_explained(client, learner, model):
+    uid, h = learner
+    sid, i = _wrong_typed(client, h, uid)
+    _, other = register(client, unique_name("peeker"))
+    expect(client, "post", f"{ROUNDS}/{sid}/questions/{i}/explain", 404, headers=other)
+    s = expect(client, "post", ROUNDS, 201, headers=h, json={"source": "vocab", "hsk_level": 1, "size": 4})
+    qs, _ = stored(s["id"])
+    expect(client, "post", f"{ROUNDS}/{s['id']}/questions/0/explain", 409, headers=h)  # not answered yet
+    if qs[0]["option_ids"]:
+        expect(client, "post", f"{ROUNDS}/{s['id']}/answer", 200, headers=h,
+               json={"index": 0, "choice_id": qs[0]["item_id"]})
+        expect(client, "post", f"{ROUNDS}/{s['id']}/questions/0/explain", 409, headers=h)  # it was right
+
+
+@pytest.mark.parametrize("reply", [
+    ValueError("model down"),
+    {"explanation": "", "example_zh": "我们吃饭吧。"},
+    {"explanation": "Because.", "example_zh": "Let's eat."},
+    {"explanation": "Because.", "example_zh": "我们去喝水吧。"},  # doesn't use 吃
+])
+def test_an_unusable_or_missing_explanation_is_an_honest_503(client, learner, model, reply):
+    uid, h = learner
+    sid, i = _wrong_typed(client, h, uid)
+    model.reply = reply
+    r = expect(client, "post", f"{ROUNDS}/{sid}/questions/{i}/explain", 503, headers=h)
+    assert "explanation" in r["detail"].lower()
+
+
+def test_without_ai_explain_says_so(client, learner):
+    uid, h = learner
+    sid, i = _wrong_typed(client, h, uid)
+    r = expect(client, "post", f"{ROUNDS}/{sid}/questions/{i}/explain", 503, headers=h)
+    assert "not available" in r["detail"]

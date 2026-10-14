@@ -127,6 +127,19 @@ def answer(
     return result
 
 
+@router.post("/sessions/{session_id}/questions/{index}/explain")
+def explain_answer(
+    session_id: int,
+    index: int,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """"Explain my answer": an AI explanation of a wrong answer, from the
+    stored question and the learner's stored answer (services/practice.py)."""
+    return _run(svc.explain_answer, db, user, _owned(db, session_id, user), index, locale)
+
+
 @router.post("/sessions/{session_id}/speak")
 def speak(
     session_id: int,

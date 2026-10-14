@@ -1097,7 +1097,10 @@
     "mixupsNothing": "Nothing to drill — every pair you mixed up has been told apart.",
     "mixupsWhat": "When you choose one word for another twice, the pair is saved and keeps coming back side by side until you tell them apart {{n}} times in a row.",
     "recallNothing": "Nothing to recall right now — every word you recognise has been recalled from memory at least once.",
-    "recallWhat": "Words and characters you recognise but have never produced yourself gather here. Recalling one from memory is what makes it mastered."
+    "recallWhat": "Words and characters you recognise but have never produced yourself gather here. Recalling one from memory is what makes it mastered.",
+    "explainBtn": "Explain my answer",
+    "explainLoading": "Writing an explanation…",
+    "explainNote": "Written by AI — it can occasionally be wrong."
   },
   "companionReact": {
     "fallbackName": "Your companion",
