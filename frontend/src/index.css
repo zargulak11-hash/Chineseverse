@@ -6418,14 +6418,54 @@ table.data td {
   .char-glyph { font-size: var(--text-2xl); }
 }
 
-/* ---- Chinese Internet (ChineseInternet.jsx, WordHelper.jsx) ----------- */
-.net-card { gap: var(--space-2); }
-.net-preview {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--text);
+/* ---- Chinese Internet (ChineseInternet.jsx, WordHelper.jsx) -----------
+   The hub is a feed, each entry shaped like what it is (a chat as a
+   bubble, news as a headline over its lede); the reader frames the text as
+   a page in a window with its source and time. */
+.net-kinds { flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4); }
+.net-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); max-width: 760px; }
+.net-item {
+  display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface-1); box-shadow: var(--shadow-sm);
+  color: inherit; text-decoration: none; position: relative;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+.net-item:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.net-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.net-item-top { display: flex; align-items: center; gap: var(--space-2); }
+.net-item-app { display: inline-flex; }
+.net-item-kind { flex: 1 1 auto; font-size: var(--text-xs); font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.net-item-title { margin: 0; font-size: var(--text-lg); font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.net-item-lede, .net-item-bubble { margin: 0; font-size: var(--text-base); line-height: 1.7; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.net-item-bubble {
+  align-self: flex-start; max-width: 90%; padding: var(--space-2) var(--space-3); border-radius: var(--radius-lg); border-top-left-radius: var(--radius-sm);
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.net-item.is-news .net-item-title, .net-item.is-notice .net-item-title { font-size: var(--text-xl); }
+.net-item.is-notice { border-left: 4px solid var(--seal); }
+.net-item.is-product .net-item-lede, .net-item.is-shopping .net-item-lede, .net-item.is-travel .net-item-lede {
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); border: 1px dashed var(--border-strong);
+}
+.net-item-gist { margin: 0; font-size: var(--text-sm); }
+.net-item-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-1); }
+.net-item-cover { display: inline-flex; align-items: center; gap: var(--space-2); flex: 1 1 180px; min-width: 0; }
+.net-item-cover .sub { font-size: var(--text-xs); }
+.net-item-meter { display: block; width: 72px; height: 6px; border-radius: var(--radius-full); background: var(--surface-3); overflow: hidden; flex: none; }
+.net-item-meter > span { display: block; height: 100%; background: var(--good); border-radius: inherit; }
+.net-item-go { color: var(--text-faint); transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out); }
+.net-item:hover .net-item-go { color: var(--accent); transform: translateX(3px); }
+.net-window {
+  display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-4);
+  padding: var(--space-2) var(--space-3); border: 1px solid var(--border); background: var(--surface-2);
+  border-radius: var(--radius-md); min-width: 0;
+}
+.net-window-dots { display: inline-flex; gap: var(--space-1); }
+.net-window-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+.net-window-title { font-size: var(--text-xs); font-weight: 800; }
+.net-window-src { margin-left: auto; font-size: var(--text-xs); color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+@media (max-width: 640px) {
+  .net-item { padding: var(--space-4); }
 }
 .net-fit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 .net-gist { margin: var(--space-3) 0 0; padding: var(--space-3); border-radius: var(--radius-md); background: var(--surface-2); }

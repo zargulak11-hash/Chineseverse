@@ -1901,7 +1901,8 @@
       "context": "在这段文字里",
       "related": "相关词",
       "dna": "学习指南针——词汇{{vocabulary}}，阅读{{reading}}。"
-    }
+    },
+    "kindsLabel": "按页面类型查看"
   },
   "passport": {
     "title": "我的中文之旅",

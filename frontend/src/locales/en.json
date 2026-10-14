@@ -1942,7 +1942,8 @@
       "context": "In this text",
       "related": "Related words",
       "dna": "Learning Compass — vocabulary {{vocabulary}}, reading {{reading}}."
-    }
+    },
+    "kindsLabel": "Show one kind of page"
   },
   "passport": {
     "title": "My Chinese Journey",

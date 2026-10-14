@@ -6,7 +6,7 @@ import Icon from "../components/Icon.jsx";
 import FeatureIntro from "../components/FeatureIntro.jsx";
 import Layout from "../components/Layout.jsx";
 import WordHelper from "../components/WordHelper.jsx";
-import { Bar, Empty, Loading } from "../components/ui.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
 
@@ -19,14 +19,52 @@ import { speakChinese } from "../zhSpeech.js";
 const VERSIONS = ["beginner", "intermediate", "original"];
 const CHATTY = new Set(["social", "comments", "messages", "chat", "review"]);
 
+// One feed entry, drawn in the shape of what it is: a chat or a comment
+// thread previews as a message bubble, news and notices as a headline over
+// their lede, a shop or travel page as a listing. The texts are the
+// curated items' own; the platform is never named or imitated.
+function FeedItem({ i }) {
+  const { t } = useTranslation();
+  const chatty = CHATTY.has(i.kind);
+  return (
+    <li>
+      <Link to={`/internet/${i.slug}`} className={`net-item is-${i.kind}`}>
+        <div className="net-item-top">
+          <span className="net-item-app"><Art name={netArt(i.kind)} size={36} shape="round" flat /></span>
+          <span className="net-item-kind">{t(`internet.kind.${i.kind}`)}</span>
+          {i.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(i.best) })}</span>}
+        </div>
+        <h3 className="net-item-title" lang="zh-CN">{i.title}</h3>
+        {chatty ? (
+          <p className="net-item-bubble" lang="zh-CN">{i.preview}</p>
+        ) : (
+          <p className="net-item-lede" lang="zh-CN">{i.preview}</p>
+        )}
+        <p className="sub net-item-gist">{i.summary}</p>
+        <div className="net-item-foot">
+          <span className="badge accent">{t(`internet.version.${i.recommended}`)}</span>
+          <span className="net-item-cover" aria-label={t("internet.coverage", { pct: Math.round(i.coverage.ratio * 100) })}>
+            <span className="net-item-meter" aria-hidden="true"><span style={{ width: `${Math.round(i.coverage.ratio * 100)}%` }} /></span>
+            <span className="sub">{t("internet.coverage", { pct: Math.round(i.coverage.ratio * 100) })}</span>
+          </span>
+          <span className="net-item-go" aria-hidden="true"><Icon name="arrowRight" size={16} /></span>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
 export default function ChineseInternet() {
   const { t } = useTranslation();
   const { data, error } = useApi("/internet/feed");
+  const [kind, setKind] = useState("all");
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
   if (!data) return <Layout><Loading /></Layout>;
 
   const read = data.items.filter((i) => i.rounds > 0).length;
+  const kinds = [...new Set(data.items.map((i) => i.kind))];
+  const shown = kind === "all" ? data.items : data.items.filter((i) => i.kind === kind);
   return (
     <Layout>
       <header className="page-head">
@@ -50,27 +88,19 @@ export default function ChineseInternet() {
 
       <div className="ws">
         <div className="ws-main">
-          <div className="grid cards">
-            {data.items.map((i) => (
-              <Link key={i.slug} to={`/internet/${i.slug}`} className="card hover scene-card net-card">
-                <div className="row spread" style={{ margin: 0, gap: 8, alignItems: "flex-start" }}>
-                  <Art name={netArt(i.kind)} size={64} />
-                  <span className="row" style={{ margin: 0, gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    <span className="badge">{t(`internet.kind.${i.kind}`)}</span>
-                    {i.rounds > 0 && <span className="badge good">{t("realLife.best", { score: Math.round(i.best) })}</span>}
-                  </span>
-                </div>
-                <h3 className="h2" style={{ marginTop: 12 }} lang="zh-CN">{i.title}</h3>
-                <p className="sub net-preview" lang="zh-CN">{i.preview}</p>
-                <p className="sub">{i.summary}</p>
-                <div className="net-fit">
-                  <span className="badge accent">{t(`internet.version.${i.recommended}`)}</span>
-                  <span className="sub">{t("internet.coverage", { pct: Math.round(i.coverage.ratio * 100) })}</span>
-                </div>
-                <Bar value={i.coverage.ratio * 100} />
-              </Link>
-            ))}
-          </div>
+          {kinds.length > 1 && (
+            <div className="row net-kinds" role="group" aria-label={t("internet.kindsLabel")}>
+              {["all", ...kinds].map((k) => (
+                <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}
+                        className={`btn small ${kind === k ? "primary" : "ghost"}`}>
+                  {k === "all" ? t("pages.mistakes.tabAll") : t(`internet.kind.${k}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          <ul className="net-feed">
+            {shown.map((i) => <FeedItem key={i.slug} i={i} />)}
+          </ul>
         </div>
         <aside className="ws-side">
           <div className="card side-card">
@@ -184,6 +214,13 @@ export function InternetItem() {
           </div>
 
           <article className={`card net-article is-${data.kind}`}>
+            {/* The page as a window: what kind of page it is, where it is from. */}
+            <div className="net-window" aria-hidden="true">
+              <span className="net-window-dots"><i /><i /><i /></span>
+              <Art name={netArt(data.kind)} size={22} shape="round" flat />
+              <span className="net-window-title">{t(`internet.kind.${data.kind}`)}</span>
+              <span className="net-window-src" lang="zh-CN">{data.source}{data.time && ` · ${data.time}`}</span>
+            </div>
             <div className="row spread" style={{ margin: 0, flexWrap: "wrap", gap: 8 }}>
               <button type="button" className="btn small" onClick={() => speakChinese(data.blocks.map((b) => b.text).join(""))}>
                 <Icon name="ear" size={13} /> {t("internet.listenAll")}

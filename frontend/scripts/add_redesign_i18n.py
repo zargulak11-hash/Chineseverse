@@ -115,6 +115,8 @@ S = {
     "foundation.earWhich": L("Which did you hear?", "Что вы услышали?", "Чиро шунидед?", "你听到的是哪个？"),
     "foundation.earRight": L("Right!", "Верно!", "Дуруст!", "对了！"),
     "foundation.earWrong": L("It was {{zh}}", "Это было {{zh}}", "Ин {{zh}} буд", "是 {{zh}}"),
+    # ---- Chinese Internet (pages/ChineseInternet.jsx) ----
+    "internet.kindsLabel": L("Show one kind of page", "Показать один вид страниц", "Нишон додани як навъи саҳифа", "按页面类型查看"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(
