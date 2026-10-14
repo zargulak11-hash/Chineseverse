@@ -86,6 +86,8 @@ def test_scenarios_are_localized_and_gated_by_level(client, learner, ai):
     lst = expect(client, "get", f"{BASE}/scenarios", 200, headers={**h, "X-Locale": "tg"})
     rest = next(s for s in lst["scenarios"] if s["slug"] == "restaurant")
     assert rest["title"] == "Дар тарабхона" and rest["unlocked"] and len(rest["goals"]) == 3
+    # The partner's name is Chinese on every screen -- never translated.
+    assert rest["role"] == "服务员"
     bank = next(s for s in lst["scenarios"] if s["slug"] == "bank")
     assert bank["unlocked"] is False
     assert "HSK 3" in start(client, h, "bank", status=403)["detail"]

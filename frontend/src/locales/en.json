@@ -3299,7 +3299,15 @@
     "again": "Play again",
     "all": "All scenarios",
     "aiNote": "Replies, corrections and summaries are written by AI and can occasionally be wrong.",
-    "speakOrType": "Speak or type"
+    "speakOrType": "Speak or type",
+    "statOpen": "Scenes open",
+    "statPlayed": "Conversations finished",
+    "pickScene": "Choose where to talk",
+    "youMeet": "You'll talk to",
+    "noRecent": "No conversations yet — pick a scene to start your first.",
+    "goalsMet": "{{met}}/{{total}} goals",
+    "useSuggestion": "Put this reply in the box — you can change it before sending",
+    "hinting": "Thinking…"
   },
   "toneCoach": {
     "title": "Tone Coach",

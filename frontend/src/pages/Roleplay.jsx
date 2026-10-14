@@ -6,7 +6,9 @@ import Art, { placeArt } from "../components/Art.jsx";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import { Empty, Loading } from "../components/ui.jsx";
+import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { speakChinese } from "../zhSpeech.js";
@@ -40,7 +42,9 @@ export default function RoleplayHub() {
     }
   }
 
-  const titleOf = Object.fromEntries(data.scenarios.map((s) => [s.slug, s.title]));
+  const bySlug = Object.fromEntries(data.scenarios.map((s) => [s.slug, s]));
+  const unlocked = data.scenarios.filter((s) => s.unlocked).length;
+  const finished = data.scenarios.reduce((n, s) => n + s.played, 0);
   return (
     <Layout>
       <header className="page-head">
@@ -49,111 +53,176 @@ export default function RoleplayHub() {
           <h1 className="h1">{t("roleplay.title")}</h1>
           <p className="sub">{t("roleplay.subtitle")}</p>
         </div>
+        <div className="kpi-row">
+          <div className="kpi"><span className="kpi-value">{unlocked}/{data.scenarios.length}</span><span className="kpi-label">{t("roleplay.statOpen")}</span></div>
+          <div className="kpi"><span className="kpi-value">{finished}</span><span className="kpi-label">{t("roleplay.statPlayed")}</span></div>
+        </div>
       </header>
 
-      {!data.ai_available && (
-        <div className="card rp-unavailable" style={{ marginTop: 16 }}>
-          <h2 className="h2">{t("roleplay.unavailableTitle")}</h2>
-          <p className="sub">{t("roleplay.unavailableText")}</p>
-          <Link to="/real-chinese" className="btn" style={{ marginTop: 12 }}>{t("roleplay.toScenes")}</Link>
-        </div>
-      )}
       {startError && <p className="formerr" role="alert">{startError}</p>}
 
-      <div className="grid cards" style={{ marginTop: 16 }}>
-        {data.scenarios.map((s) => (
-          <article key={s.slug} className={`card rp-scenario${s.unlocked ? "" : " is-locked"}`}>
-            <div className="row" style={{ margin: 0, gap: 12, alignItems: "center" }}>
-              <Art name={placeArt(s.icon)} size={52} />
-              <div style={{ minWidth: 0 }}>
-                <h2 className="h2" style={{ margin: 0 }}>{s.title}</h2>
-                <span className="badge">HSK {s.level}</span>
-                {s.played > 0 && <span className="sub rp-played">{t("roleplay.played", { count: s.played })}</span>}
-              </div>
+      <div className="ws">
+        <div className="ws-main">
+          {!data.ai_available && (
+            <div className="card rp-unavailable">
+              <h2 className="h2">{t("roleplay.unavailableTitle")}</h2>
+              <p className="sub">{t("roleplay.unavailableText")}</p>
+              <Link to="/real-chinese" className="btn" style={{ marginTop: 12 }}>{t("roleplay.toScenes")}</Link>
             </div>
-            <p className="side-title" style={{ marginTop: 14 }}>{t("roleplay.goals")}</p>
-            <ul className="rp-goals">
-              {s.goals.map((g, i) => <li key={i}>{g}</li>)}
-            </ul>
-            {s.unlocked ? (
-              <button type="button" className="btn primary" disabled={!data.ai_available || starting !== null}
-                      onClick={() => start(s.slug)}>
-                {starting === s.slug ? t("roleplay.starting") : t("roleplay.start")}
-              </button>
-            ) : (
-              <span className="sub"><Icon name="lock" size={13} /> {t("roleplay.locked", { level: s.level })}</span>
-            )}
-          </article>
-        ))}
-      </div>
-
-      {recent?.length > 0 && (
-        <section className="card" style={{ marginTop: 24 }} aria-labelledby="rp-recent">
-          <h2 className="h2" id="rp-recent">{t("roleplay.recent")}</h2>
-          <ul className="rp-recent">
-            {recent.map((r) => (
-              <li key={r.id}>
-                <Link to={`/roleplay/${r.id}`} className="fix-row">
-                  <span className="fix-text">
-                    <b>{titleOf[r.scenario] || r.scenario}</b>
-                    <span className="sub">{t("roleplay.messages", { count: r.messages })}</span>
-                  </span>
-                  <span className="badge">{r.status === "finished" ? t("roleplay.seeSummary") : t("roleplay.continue")}</span>
-                </Link>
-              </li>
+          )}
+          <h2 className="h2 section-title">{t("roleplay.pickScene")}</h2>
+          <div className="rp-doors">
+            {data.scenarios.map((s) => (
+              <article key={s.slug} className={`card rp-door${s.unlocked ? "" : " is-locked"}`}>
+                <div className="rp-door-art">
+                  <Art name={placeArt(s.icon)} size={84} />
+                  <span className="badge">HSK {s.level}</span>
+                </div>
+                <div className="rp-door-body">
+                  <h3 className="h2 rp-door-title">{s.title}</h3>
+                  {s.role && (
+                    <p className="rp-door-who">
+                      <Icon name="chat" size={13} /> {t("roleplay.youMeet")} <b lang="zh-CN">{s.role}</b>
+                    </p>
+                  )}
+                  <ul className="rp-door-goals" aria-label={t("roleplay.goals")}>
+                    {s.goals.map((g, i) => <li key={i}><Icon name="target" size={13} /> <span>{g}</span></li>)}
+                  </ul>
+                  <div className="rp-door-foot">
+                    {s.played > 0 && <span className="sub rp-played">{t("roleplay.played", { count: s.played })}</span>}
+                    {s.unlocked ? (
+                      <button type="button" className="btn primary small" disabled={!data.ai_available || starting !== null}
+                              onClick={() => start(s.slug)}>
+                        {starting === s.slug ? t("roleplay.starting") : t("roleplay.start")}
+                      </button>
+                    ) : (
+                      <span className="sub"><Icon name="lock" size={13} /> {t("roleplay.locked", { level: s.level })}</span>
+                    )}
+                  </div>
+                </div>
+              </article>
             ))}
-          </ul>
-        </section>
-      )}
+          </div>
+        </div>
+
+        <aside className="ws-side">
+          <section className="card side-card" aria-labelledby="rp-recent">
+            <p className="side-title" id="rp-recent">{t("roleplay.recent")}</p>
+            {recent?.length > 0 ? (
+              <ul className="rp-inbox">
+                {recent.map((r) => (
+                  <li key={r.id}>
+                    <Link to={`/roleplay/${r.id}`} className="rp-inbox-row">
+                      <Art name={placeArt(bySlug[r.scenario]?.icon || "street")} size={40} shape="round" flat />
+                      <span className="rp-inbox-text">
+                        <b>{bySlug[r.scenario]?.title || r.scenario}</b>
+                        <span className="sub">{t("roleplay.messages", { count: r.messages })}</span>
+                      </span>
+                      <span className={`badge${r.status === "finished" ? "" : " accent"}`}>
+                        {r.status === "finished" ? t("roleplay.seeSummary") : t("roleplay.continue")}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : recent ? (
+              <p className="sub">{t("roleplay.noRecent")}</p>
+            ) : null}
+          </section>
+        </aside>
+      </div>
     </Layout>
   );
 }
 
-function PartnerLine({ turn, role }) {
+// The partner's face in the thread: the painting of the place they work in
+// (the same art the map and the scene list use) -- a character, not a stock
+// photo, and never the learner's companion.
+function PartnerAvatar({ icon, size = 40 }) {
+  return (
+    <span className="rp-avatar" aria-hidden="true">
+      <Art name={placeArt(icon)} size={size} shape="round" flat />
+    </span>
+  );
+}
+
+// One "listen" button with a visible playing state, for any Chinese line.
+function SpeakButton({ text, label }) {
+  const [playing, setPlaying] = useState(false);
+  return (
+    <button
+      type="button"
+      className={`icon-btn rp-speak${playing ? " is-playing" : ""}`}
+      aria-label={label}
+      title={label}
+      onClick={() => speakChinese(text, { onStart: () => setPlaying(true), onEnd: () => setPlaying(false) })}
+    >
+      <Icon name="volume" size={16} />
+    </button>
+  );
+}
+
+function PartnerLine({ turn, role, icon }) {
   const { t } = useTranslation();
   const [pinyin, setPinyin] = useState(false);
   const [translation, setTranslation] = useState(false);
   return (
-    <div className="rp-line is-partner">
-      <span className="rp-who" lang="zh-CN">{role}</span>
-      <p className="rp-zh" lang="zh-CN">{turn.zh}</p>
-      {pinyin && turn.pinyin && <p className="sub rp-pinyin">{turn.pinyin}</p>}
-      {translation && turn.translation && <p className="sub">{turn.translation}</p>}
-      <div className="rp-tools">
-        <button type="button" className="btn small ghost" onClick={() => speakChinese(turn.zh)}>
-          <Icon name="ear" size={13} /> {t("roleplay.listen")}
-        </button>
-        {turn.pinyin && (
-          <button type="button" className={`btn small${pinyin ? " primary" : " ghost"}`} aria-pressed={pinyin}
-                  onClick={() => setPinyin((v) => !v)}>
-            {t("roleplay.showPinyin")}
-          </button>
-        )}
-        {turn.translation && (
-          <button type="button" className={`btn small${translation ? " primary" : " ghost"}`} aria-pressed={translation}
-                  onClick={() => setTranslation((v) => !v)}>
-            {t("roleplay.showTranslation")}
-          </button>
+    <div className="rp-msg is-partner">
+      <PartnerAvatar icon={icon} />
+      <div className="rp-line is-partner">
+        <span className="rp-who" lang="zh-CN">{role}</span>
+        <div className="rp-line-main">
+          <p className="rp-zh" lang="zh-CN">{turn.zh}</p>
+          <SpeakButton text={turn.zh} label={t("roleplay.listen")} />
+        </div>
+        {pinyin && turn.pinyin && <p className="rp-pinyin">{turn.pinyin}</p>}
+        {translation && turn.translation && <p className="rp-gloss">{turn.translation}</p>}
+        {(turn.pinyin || turn.translation) && (
+          <div className="rp-tools">
+            {turn.pinyin && (
+              <button type="button" className={`rp-chip${pinyin ? " is-on" : ""}`} aria-pressed={pinyin}
+                      onClick={() => setPinyin((v) => !v)}>
+                {t("roleplay.showPinyin")}
+              </button>
+            )}
+            {turn.translation && (
+              <button type="button" className={`rp-chip${translation ? " is-on" : ""}`} aria-pressed={translation}
+                      onClick={() => setTranslation((v) => !v)}>
+                {t("roleplay.showTranslation")}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function LearnerLine({ turn }) {
+function LearnerLine({ turn, me }) {
   const { t } = useTranslation();
   const fb = turn.feedback;
   return (
-    <div className="rp-line is-learner">
-      <p className="rp-zh" lang="zh-CN">{turn.text}</p>
-      {fb ? (
-        <div className="practice-why">
-          <p><b>{t("roleplay.corrected")}</b> <span lang="zh-CN">{fb.corrected}</span></p>
-          <p>{fb.explanation}</p>
+    <div className="rp-msg is-learner">
+      <div className="rp-line-stack">
+        <div className="rp-line is-learner">
+          <p className="rp-zh" lang="zh-CN">{turn.text}</p>
         </div>
-      ) : (
-        <span className="badge good rp-ok">{t("roleplay.wellSaid")}</span>
-      )}
+        {fb ? (
+          <div className="rp-fix">
+            <p className="rp-fix-head">
+              <Icon name="pen" size={13} /> <b>{t("roleplay.corrected")}</b>
+            </p>
+            <div className="rp-line-main">
+              <p className="rp-fix-zh" lang="zh-CN">{fb.corrected}</p>
+              {fb.corrected && <SpeakButton text={fb.corrected} label={t("roleplay.listen")} />}
+            </div>
+            <p className="rp-fix-why">{fb.explanation}</p>
+          </div>
+        ) : (
+          <span className="rp-ok"><Icon name="check" size={13} /> {t("roleplay.wellSaid")}</span>
+        )}
+      </div>
+      <UserAvatar url={me.avatar} name={me.name} size={36} className="rp-me" />
     </div>
   );
 }
@@ -165,15 +234,19 @@ function WordChip({ word, saved, onSave }) {
   const { t } = useTranslation();
   return (
     <li className="rp-word">
-      <span>
-        <b lang="zh-CN">{word.zh}</b> <span className="sub">{word.pinyin}</span>
-        {word.meaning && <span className="sub rp-word-meaning">{word.meaning}</span>}
+      <button type="button" className="rp-word-say" onClick={() => speakChinese(word.zh)}
+              aria-label={`${t("roleplay.listen")}: ${word.zh}`}>
+        <b lang="zh-CN">{word.zh}</b>
+        <span className="sub">{word.pinyin}</span>
+      </button>
+      <span className="rp-word-rest">
+        {word.meaning && <span className="rp-word-meaning">{word.meaning}</span>}
+        {word.word_id && (
+          <button type="button" className={`btn small${saved ? " ghost" : ""}`} disabled={saved} onClick={() => onSave(word)}>
+            {saved ? <><Icon name="check" size={13} /> {t("roleplay.saved")}</> : <><Icon name="bookmark" size={13} /> {t("roleplay.save")}</>}
+          </button>
+        )}
       </span>
-      {word.word_id && (
-        <button type="button" className={`btn small${saved ? " ghost" : ""}`} disabled={saved} onClick={() => onSave(word)}>
-          {saved ? t("roleplay.saved") : t("roleplay.save")}
-        </button>
-      )}
     </li>
   );
 }
@@ -182,7 +255,8 @@ export function RoleplayChat() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { sessionId } = useParams();
-  const { refresh } = useDashboard();
+  const { user } = useAuth();
+  const { dashboard, refresh } = useDashboard();
   const { data, setData, error } = useApi(`/roleplay/sessions/${sessionId}`);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(null); // "turn" | "hint" | "finish"
@@ -191,6 +265,7 @@ export function RoleplayChat() {
   const [hint, setHint] = useState(null);
   const [saved, setSaved] = useState({});
   const threadEnd = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     threadEnd.current?.scrollIntoView?.({ block: "nearest" });
@@ -267,30 +342,51 @@ export function RoleplayChat() {
     setSaved((s) => ({ ...s, [word.word_id]: true }));
   }
 
+  // The suggested line goes into the box, not straight to the partner: the
+  // learner still sends it (and can change it) themselves.
+  function takeSuggestion(zh) {
+    setText(zh);
+    inputRef.current?.focus();
+  }
+
   const finished = data.status === "finished";
   const sm = data.summary;
   const words = [...(data.words || []), ...data.turns.flatMap((x) => x.words || [])]
     .filter((w, i, all) => all.findIndex((o) => o.zh === w.zh) === i);
+  const goalsMet = data.goals.filter((g) => g.met).length;
+  const me = { avatar: dashboard?.avatar_url, name: user?.username };
+  const totalTurns = data.learner_turns + data.turns_left;
 
   return (
     <Layout>
-      <header className="page-head">
-        <div>
+      <header className="card rp-room-head">
+        <Link to="/roleplay" className="icon-btn" aria-label={t("roleplay.all")} title={t("roleplay.all")}>
+          <Icon name="arrowLeft" size={18} />
+        </Link>
+        <PartnerAvatar icon={data.icon} size={56} />
+        <div className="rp-room-id">
           <div className="page-eyebrow"><Icon name="chat" size={13} /> {t("roleplay.title")}</div>
-          <h1 className="h1">{data.title}</h1>
-          <p className="sub"><span lang="zh-CN">{data.role}</span> · HSK {data.level}</p>
+          <h1 className="h1 rp-room-title">{data.title}</h1>
+          <p className="sub"><b lang="zh-CN">{data.role}</b> · HSK {data.level}</p>
         </div>
-        {!finished && (
-          <div className="kpi-row">
-            <div className="kpi">
-              <span className="kpi-value">{data.turns_left}</span>
-              <span className="kpi-label">{t("roleplay.turnsLeft")}</span>
+        <div className="rp-room-meta">
+          {data.goals.length > 0 && (
+            <span className={`badge${goalsMet === data.goals.length ? " good" : ""}`}>
+              <Icon name="target" size={13} /> {t("roleplay.goalsMet", { met: goalsMet, total: data.goals.length })}
+            </span>
+          )}
+          {!finished && (
+            <div className="rp-turns" aria-label={`${t("roleplay.turnsLeft")}: ${data.turns_left}`}>
+              <span className="rp-turns-label">{t("roleplay.turnsLeft")} <b>{data.turns_left}</b></span>
+              <span className="rp-turns-bar" aria-hidden="true">
+                <span style={{ width: `${totalTurns ? (data.turns_left / totalTurns) * 100 : 0}%` }} />
+              </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
-      <div className="ws">
+      <div className="ws rp-ws">
         <div className="ws-main">
           {finished && sm && (
             <section className="card rp-summary" aria-labelledby="rp-sum">
@@ -338,66 +434,80 @@ export function RoleplayChat() {
             </section>
           )}
 
-          <div className="card rp-thread" aria-live="polite">
-            {data.turns.map((turn, i) =>
-              turn.role === "partner"
-                ? <PartnerLine key={i} turn={turn} role={data.role} />
-                : <LearnerLine key={i} turn={turn} />
-            )}
-            {busy === "turn" && (
-              <p className="sub rp-thinking" role="status">
-                <span className="spinner" aria-hidden="true" /> {t("roleplay.thinking")}
-                {slow && <span className="rp-slow">{t("roleplay.slow")}</span>}
-              </p>
-            )}
-            <div ref={threadEnd} />
-          </div>
-
-          {!finished && (
-            <form className="card rp-compose" onSubmit={send}>
-              <label className="side-title" htmlFor="rp-input">{t("roleplay.inputLabel")}</label>
-              <div className="rp-compose-row">
-                <input
-                  id="rp-input"
-                  className="input"
-                  lang="zh-CN"
-                  value={text}
-                  maxLength={200}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={t("roleplay.placeholder")}
-                  autoComplete="off"
-                  disabled={busy === "turn" || data.turns_left === 0}
-                />
-                <MicRecorder onTranscript={(heard) => setText((cur) => (cur ? `${cur} ${heard}` : heard))}
-                             disabled={busy !== null} />
-                <button type="submit" className="btn primary" disabled={!text.trim() || busy !== null || data.turns_left === 0}>
-                  {t("roleplay.send")}
-                </button>
-              </div>
-              {sendError && <p className="formerr" role="alert">{sendError}</p>}
-              <div className="row" style={{ flexWrap: "wrap", marginTop: 12, gap: 8 }}>
-                <button type="button" className="btn small" onClick={askHint} disabled={busy !== null}>
-                  <Icon name="sparkles" size={13} /> {t("roleplay.hint")}
-                </button>
-                <button type="button" className="btn small ghost" onClick={finish} disabled={busy !== null || data.learner_turns === 0}>
-                  {busy === "finish" ? t("roleplay.finishing") : t("roleplay.finish")}
-                </button>
-              </div>
-              {hint && (
-                <div className="practice-why" style={{ marginTop: 12 }}>
-                  {hint.goal && <p className="sub">{t("roleplay.hintGoal", { goal: hint.goal })}</p>}
-                  {hint.line && (
-                    <p>
-                      {t("roleplay.hintLine")} <b lang="zh-CN">{hint.line.zh}</b>{" "}
-                      <span className="sub">{hint.line.pinyin}</span>
-                      {hint.line.translation && <span className="sub"> — {hint.line.translation}</span>}
-                    </p>
-                  )}
+          <section className="card rp-chat" aria-label={data.title}>
+            <div className="rp-thread" aria-live="polite">
+              {data.turns.map((turn, i) =>
+                turn.role === "partner"
+                  ? <PartnerLine key={i} turn={turn} role={data.role} icon={data.icon} />
+                  : <LearnerLine key={i} turn={turn} me={me} />
+              )}
+              {busy === "turn" && (
+                <div className="rp-msg is-partner" role="status">
+                  <PartnerAvatar icon={data.icon} />
+                  <div className="rp-line is-partner rp-typing">
+                    <span className="rp-dots" aria-hidden="true"><i /><i /><i /></span>
+                    <span className="sub">{t("roleplay.thinking")}</span>
+                    {slow && <span className="rp-slow">{t("roleplay.slow")}</span>}
+                  </div>
                 </div>
               )}
-              <p className="sub rp-note">{t("roleplay.aiNote")}</p>
-            </form>
-          )}
+              <div ref={threadEnd} />
+            </div>
+
+            {!finished && (
+              <form className="rp-compose" onSubmit={send}>
+                {hint && (
+                  <div className="rp-suggest" aria-live="polite">
+                    {hint.goal && <p className="rp-suggest-goal"><Icon name="target" size={13} /> {t("roleplay.hintGoal", { goal: hint.goal })}</p>}
+                    {hint.line && (
+                      <div className="rp-suggest-row">
+                        <button type="button" className="rp-suggest-chip" onClick={() => takeSuggestion(hint.line.zh)}
+                                title={t("roleplay.useSuggestion")}>
+                          <span className="rp-suggest-label">{t("roleplay.hintLine")}</span>
+                          <b lang="zh-CN">{hint.line.zh}</b>
+                          <span className="sub">{hint.line.pinyin}</span>
+                          {hint.line.translation && <span className="sub">{hint.line.translation}</span>}
+                        </button>
+                        <SpeakButton text={hint.line.zh} label={t("roleplay.listen")} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                <label className="side-title" htmlFor="rp-input">{t("roleplay.inputLabel")}</label>
+                <div className="rp-compose-row">
+                  <button type="button" className="btn small ghost rp-hint-btn" onClick={askHint} disabled={busy !== null}>
+                    <Icon name="sparkles" size={13} /> {busy === "hint" ? t("roleplay.hinting") : t("roleplay.hint")}
+                  </button>
+                  <input
+                    id="rp-input"
+                    ref={inputRef}
+                    className="input"
+                    lang="zh-CN"
+                    value={text}
+                    maxLength={200}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={t("roleplay.placeholder")}
+                    autoComplete="off"
+                    disabled={busy === "turn" || data.turns_left === 0}
+                  />
+                  <span className="rp-mic">
+                    <MicRecorder onTranscript={(heard) => setText((cur) => (cur ? `${cur} ${heard}` : heard))}
+                                 disabled={busy !== null} showStatus />
+                  </span>
+                  <button type="submit" className="btn primary rp-send" disabled={!text.trim() || busy !== null || data.turns_left === 0}>
+                    <Icon name="send" size={16} /> {t("roleplay.send")}
+                  </button>
+                </div>
+                {sendError && <p className="formerr" role="alert">{sendError}</p>}
+                <div className="rp-compose-foot">
+                  <p className="sub rp-note">{t("roleplay.aiNote")}</p>
+                  <button type="button" className="btn small ghost" onClick={finish} disabled={busy !== null || data.learner_turns === 0}>
+                    <Icon name="flag" size={13} /> {busy === "finish" ? t("roleplay.finishing") : t("roleplay.finish")}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
         </div>
 
         <aside className="ws-side">
@@ -406,7 +516,8 @@ export function RoleplayChat() {
             <ul className="rp-checklist">
               {data.goals.map((g, i) => (
                 <li key={i} className={g.met ? "is-met" : ""}>
-                  <Icon name={g.met ? "check" : "target"} size={14} /> <span>{g.text}</span>
+                  <span className="rp-check" aria-hidden="true"><Icon name={g.met ? "check" : "target"} size={14} /></span>
+                  <span>{g.text}</span>
                 </li>
               ))}
             </ul>

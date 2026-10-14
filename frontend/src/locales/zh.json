@@ -3214,7 +3214,15 @@
     "again": "再练一次",
     "all": "全部场景",
     "aiNote": "回答、纠正和总结由 AI 生成，偶尔可能有错误。",
-    "speakOrType": "说或者写"
+    "speakOrType": "说或者写",
+    "statOpen": "已开放场景",
+    "statPlayed": "已完成对话",
+    "pickScene": "选择对话场景",
+    "youMeet": "对话对象：",
+    "noRecent": "还没有对话——选一个场景开始吧。",
+    "goalsMet": "目标 {{met}}/{{total}}",
+    "useSuggestion": "把这句话放进输入框——发送前还可以修改",
+    "hinting": "正在想…"
   },
   "toneCoach": {
     "title": "声调教练",

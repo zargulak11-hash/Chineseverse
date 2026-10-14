@@ -219,7 +219,9 @@ def scenario_list(db: Session, user: models.User, locale: str) -> dict:
         "ai_available": ai_available(),
         "level": level,
         "scenarios": [
-            {"slug": slug, "icon": s["icon"], "title": s["title"][loc], "level": s["level"],
+            # `role` is the partner's Chinese name (服务员, 新同学小明): the hub
+            # shows who the learner will be talking to. Chinese, never translated.
+            {"slug": slug, "icon": s["icon"], "title": s["title"][loc], "level": s["level"], "role": s["role"],
              "unlocked": level >= s["level"], "goals": [g[loc] for g in s["goals"]], "played": played.get(slug, 0)}
             for slug, s in SCENARIOS.items()
         ],
