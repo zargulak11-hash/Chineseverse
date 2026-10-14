@@ -159,14 +159,19 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
         {/* WRITE entry point (real stroke data required, gated to the
             characters the real HSK 3.0 syllabus requires handwriting for) */}
         {current.handwriting_tier && (
-          <button
-            type="button"
-            className="btn small ghost"
-            style={{ marginTop: 10, width: "100%" }}
-            onClick={() => setTracing(true)}
-          >
-            {t("pages.hanzi.practiceWriting")}
-          </button>
+          <>
+            <div className="row" style={{ marginTop: 10, gap: 8, flexWrap: "wrap" }}>
+              <button type="button" className="btn small ghost" style={{ flex: "1 1 140px" }} onClick={() => setTracing("trace")}>
+                {t("pages.hanzi.practiceWriting")}
+              </button>
+              <button type="button" className="btn small" style={{ flex: "1 1 140px" }} onClick={() => setTracing("memory")}>
+                {t("pages.hanzi.writeFromMemory")}
+              </button>
+            </div>
+            <p className="sub" style={{ marginTop: 6, fontSize: "var(--text-xs)" }}>
+              {t("pages.hanzi.memoryCount", { count: current.times_written_memory ?? 0 })} · {t("pages.hanzi.memoryWhy")}
+            </p>
+          </>
         )}
 
         {/* EXAMPLES */}
@@ -197,9 +202,13 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated }) {
       {tracing && (
         <HanziTrace
           hanzi={current}
+          mode={tracing === "memory" ? "memory" : "trace"}
           onClose={() => setTracing(false)}
           onSaved={(res) => {
-            const updated = { ...current, writing_mastery: res.writing_mastery, writing_status: res.writing_status };
+            const updated = {
+              ...current, writing_mastery: res.writing_mastery, writing_status: res.writing_status,
+              times_written_memory: res.hanzi?.times_written_memory ?? current.times_written_memory,
+            };
             setCurrent(updated);
             onUpdated?.(updated);
             setReaction(res.reaction || null);

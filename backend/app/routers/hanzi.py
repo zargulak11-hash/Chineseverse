@@ -67,8 +67,16 @@ class WritePayload(BaseModel):
     strokes: list[DrawnStroke] = Field(min_length=1, max_length=400)
 
 
+class TraceStartPayload(BaseModel):
+    # "trace": over the outline (after watching the stroke order);
+    # "memory": no outline -- the learner writes the character from its
+    # pinyin and meaning, like Skritter's writing from memory.
+    mode: str = Field(default="trace", pattern="^(trace|memory)$")
+
+
 class TraceStartResponse(BaseModel):
     attempt_id: int
+    mode: str = "trace"
 
 
 # An attempt must be reported within this long, and can't be reported
@@ -83,6 +91,8 @@ class WriteResponse(BaseModel):
     writing_mastery: float
     writing_status: str
     reaction: dict | None = None
+    mode: str = "trace"
+    total_mistakes: int = 0
 
 
 @router.get("", response_model=list[schemas.HanziWithStatus])
@@ -122,6 +132,7 @@ def list_hanzi(
         item.due_for_review = bool(rec and rec.next_review_at and rec.next_review_at <= now)
         item.writing_status = rec.writing_status if rec else "not_practiced"
         item.writing_mastery = rec.writing_mastery if rec else 0.0
+        item.times_written_memory = (rec.times_written_memory or 0) if rec else 0
         out.append(item)
     out.sort(key=lambda h: (not h.due_for_review, h.hsk_level_id, h.id))
     return out
@@ -267,12 +278,15 @@ def review_hanzi(
 @router.post("/{hanzi_id}/write/start", response_model=TraceStartResponse, status_code=201)
 def start_trace(
     hanzi_id: int,
+    payload: TraceStartPayload | None = None,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Opens a tracing attempt for this character (the quiz's "Try writing").
-    An earlier unreported attempt on the same character is closed: only the
-    newest one can be reported."""
+    """Opens a tracing attempt for this character (the quiz's "Try writing",
+    or "Write from memory"). An earlier unreported attempt on the same
+    character is closed: only the newest one can be reported. The mode is
+    fixed here, so a trace can't be reported as a write from memory."""
+    mode = payload.mode if payload else "trace"
     h = db.get(models.Hanzi, hanzi_id)
     if h is None:
         raise HTTPException(status_code=404, detail="Hanzi not found")
@@ -282,10 +296,10 @@ def start_trace(
     (db.query(models.HanziTraceAttempt)
      .filter_by(user_id=user.id, hanzi_id=hanzi_id, status="open")
      .update({"status": "expired", "finished_at": now}, synchronize_session=False))
-    attempt = models.HanziTraceAttempt(user_id=user.id, hanzi_id=hanzi_id, status="open", started_at=now)
+    attempt = models.HanziTraceAttempt(user_id=user.id, hanzi_id=hanzi_id, status="open", started_at=now, mode=mode)
     db.add(attempt)
     db.commit()
-    return TraceStartResponse(attempt_id=attempt.id)
+    return TraceStartResponse(attempt_id=attempt.id, mode=mode)
 
 
 @router.post("/{hanzi_id}/write", response_model=WriteResponse)
@@ -350,18 +364,29 @@ def write_hanzi(
     writing_before = rec.writing_status
 
     rec.times_written = (rec.times_written or 0) + 1
+    memory = attempt.mode == "memory"
+    clean = total_mistakes <= 2
     # Fewer real stroke mistakes -> more mastery gained per attempt, but a
     # completed quiz always counts for something (it was still traced
-    # correctly in the end, just with retries along the way).
+    # correctly in the end, just with retries along the way). Writing it
+    # with no outline to follow is stronger evidence than tracing.
     if total_mistakes == 0:
-        gain = 25.0
-    elif total_mistakes <= 2:
-        gain = 15.0
+        gain = 30.0 if memory else 25.0
+    elif clean:
+        gain = 18.0 if memory else 15.0
     else:
         gain = 8.0
+    if memory and clean:
+        rec.times_written_memory = (rec.times_written_memory or 0) + 1
     rec.writing_mastery = min(100.0, (rec.writing_mastery or 0.0) + gain)
     rec.last_written_at = datetime.utcnow()
-    if rec.writing_mastery >= 85:
+    # "Mastered" writing needs the character written from memory at least
+    # once -- tracing over the outline is copying, not recalling (like
+    # "mastered" words need a recall, services/srs.py). Already mastered
+    # characters stay mastered.
+    if rec.writing_mastery >= 85 and not (rec.times_written_memory or 0) and rec.writing_status != "mastered":
+        rec.writing_status = "practicing"
+    elif rec.writing_mastery >= 85:
         rec.writing_status = "mastered"
     elif rec.writing_mastery >= 40:
         rec.writing_status = "practicing"
@@ -370,7 +395,10 @@ def write_hanzi(
 
     ensure_user_skills(db, user)
     skill_before = cr.skill_value(user, "writing")
-    bump_skill(user, "writing", 2.0 if total_mistakes <= 2 else 1.0)
+    bump_skill(user, "writing", (3.0 if memory else 2.0) if clean else 1.0)
+    if memory:
+        # Producing the character's form unaided is memory, literally.
+        bump_skill(user, "memory", 1.5 if clean else 0.0)
     skill_up = cr.skill_crossing("writing", skill_before, cr.skill_value(user, "writing"))
 
     if total_mistakes >= 3:
@@ -395,12 +423,14 @@ def write_hanzi(
     h_out.mastery = rec.mastery
     h_out.writing_status = rec.writing_status
     h_out.writing_mastery = rec.writing_mastery
+    h_out.times_written_memory = rec.times_written_memory or 0
     reaction = cr.write_reaction(
         user, total_mistakes=total_mistakes, status_before=writing_before, status_after=rec.writing_status,
         skill=skill_up, focus={"item_type": "hanzi", "hanzi": h.character, "pinyin": h.pinyin, "meaning": h_out.meaning},
     )
     return WriteResponse(
         hanzi=h_out, writing_mastery=round(rec.writing_mastery, 1), writing_status=rec.writing_status, reaction=reaction,
+        mode=attempt.mode, total_mistakes=total_mistakes,
     )
 
 

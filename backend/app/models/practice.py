@@ -175,6 +175,9 @@ class HanziTraceAttempt(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     hanzi_id = Column(Integer, ForeignKey("hanzi.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(String(20), nullable=False, default="open")
+    # "trace" (over the outline) or "memory" (no outline: only pinyin and
+    # meaning shown) -- fixed when the server opens the attempt.
+    mode = Column(String(10), nullable=False, default="trace", server_default="trace")
     started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     finished_at = Column(DateTime, nullable=True)
     total_mistakes = Column(Integer, nullable=True)

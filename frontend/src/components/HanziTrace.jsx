@@ -23,7 +23,14 @@ import { api } from "../api.js";
 // because the watch step and the write step share one HanziWriter instance
 // and one loaded stroke dataset -- no reason to split them into two
 // separately-loading pieces.
-export default function HanziTrace({ hanzi, onClose, onSaved }) {
+//
+// mode="memory" (like Skritter's writing from memory): no outline and no
+// stroke-order animation first -- the learner sees only the pinyin and the
+// meaning and writes the character unaided. HanziWriter still checks every
+// stroke; a stroke's hint appears after 3 misses (they count as mistakes).
+// The server fixes the mode when it opens the attempt.
+export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) {
+  const memory = mode === "memory";
   const { t } = useTranslation();
   const mountRef = useRef(null);
   const writerRef = useRef(null);
@@ -55,13 +62,17 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
           width: 260,
           height: 260,
           padding: 12,
-          showOutline: true,
+          showOutline: !memory,
           showCharacter: false,
           strokeAnimationSpeed: 1,
           delayBetweenStrokes: 250,
           charDataLoader: (_char, onLoad) => onLoad(data.stroke_data),
         });
         writerRef.current = writer;
+        if (memory) {
+          setPhase("watch"); // nothing is shown first: the character is the answer
+          return;
+        }
         writer.animateCharacter({
           onComplete: () => {
             if (!cancelled) setPhase("watch");
@@ -74,7 +85,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
       cancelled = true;
       writerRef.current = null;
     };
-  }, [hanzi.id]);
+  }, [hanzi.id, memory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function watchAgain() {
     writerRef.current?.hideCharacter({ duration: 0 });
@@ -93,13 +104,14 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
     strokesRef.current = [];
     attemptRef.current = null;
     try {
-      attemptRef.current = (await api.post(`/hanzi/${hanzi.id}/write/start`)).attempt_id;
+      attemptRef.current = (await api.post(`/hanzi/${hanzi.id}/write/start`, { mode })).attempt_id;
     } catch (e) {
       setError(e.message);
       return;
     }
     setPhase("quiz");
     writerRef.current?.quiz({
+      showHintAfterMisses: 3,
       onMistake: (s) => {
         record(s, false);
         setMistakes((m) => m + 1);
@@ -126,10 +138,17 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+    <div className={`modal modal-backdrop${memory ? " trace-memory-backdrop" : ""}`} onClick={onClose}>
       <div className="card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 340, textAlign: "center" }}>
-        <h2 className="h2">{hanzi.character}</h2>
-        <p className="sub">{hanzi.pinyin} · {hanzi.meaning}</p>
+        {memory && !done ? (
+          <>
+            <p className="side-title">{t("pages.hanzi.memoryPrompt")}</p>
+            <h2 className="h2">{hanzi.pinyin}</h2>
+          </>
+        ) : (
+          <h2 className="h2" lang="zh-CN">{hanzi.character}</h2>
+        )}
+        <p className="sub">{memory && !done ? hanzi.meaning : `${hanzi.pinyin} · ${hanzi.meaning}`}</p>
 
         {error && <p className="sub" style={{ color: "var(--bad, #e55)" }}>{error}</p>}
 
@@ -137,7 +156,15 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
 
         {phase === "loading" && <p className="sub">{t("pages.hanzi.watchingStrokeOrder")}</p>}
 
-        {phase === "watch" && (
+        {phase === "watch" && memory && (
+          <div>
+            <p className="sub">{t("pages.hanzi.memoryHint")}</p>
+            <div className="row" style={{ marginTop: 10, justifyContent: "center" }}>
+              <button className="btn small primary" onClick={startWriting}>{t("pages.hanzi.memoryStart")}</button>
+            </div>
+          </div>
+        )}
+        {phase === "watch" && !memory && (
           <div>
             <p className="sub">{t("pages.hanzi.strokeOrderShown")}</p>
             <div className="row" style={{ marginTop: 10, justifyContent: "center" }}>
@@ -159,7 +186,8 @@ export default function HanziTrace({ hanzi, onClose, onSaved }) {
                 </div>
               </div>
             ) : (
-              <button className="btn small ghost" onClick={watchAgain} style={{ marginTop: 6 }}>{t("pages.hanzi.watchAgain")}</button>
+              // From memory, watching it would show the answer.
+              !memory && <button className="btn small ghost" onClick={watchAgain} style={{ marginTop: 6 }}>{t("pages.hanzi.watchAgain")}</button>
             )}
           </>
         )}

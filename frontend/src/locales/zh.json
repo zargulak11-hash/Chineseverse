@@ -886,7 +886,13 @@
       "notDueYet": "还没到复习时间，所以这次不计入进度。这个汉字将在 {{date}} 回到复习中。",
       "stillLearning": "还在学",
       "viewDetail": "学习这个汉字",
-      "close": "关闭"
+      "close": "关闭",
+      "writeFromMemory": "凭记忆写",
+      "memoryPrompt": "写出这个字：",
+      "memoryStart": "开始写",
+      "memoryHint": "没有描红。一笔错三次后会出现提示，错误也会被记录。",
+      "memoryCount": "凭记忆写过：{{count}}次",
+      "memoryWhy": "凭记忆写出来以后，书写才算掌握。"
     },
     "adminUsers": {
       "authGithub": "GitHub",

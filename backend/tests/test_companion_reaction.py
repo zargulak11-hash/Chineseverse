@@ -252,8 +252,8 @@ def test_writing_and_self_check_reactions(client, learner):
 
     # Real traces drawn over the character's stroke data (tests/trace_helpers.py);
     # the server re-checks every stroke and counts the misses itself.
-    def traced(mistakes=0, seed=1):
-        r = draw_trace(client, h, hz_id, mistakes=mistakes, seed=seed)
+    def traced(mistakes=0, seed=1, mode=None):
+        r = draw_trace(client, h, hz_id, mistakes=mistakes, seed=seed, mode=mode)
         assert r.status_code == 200, r.text
         return r.json()
 
@@ -262,9 +262,12 @@ def test_writing_and_self_check_reactions(client, learner):
     assert w["reaction"]["focus"]["hanzi"] == character
     w = traced(mistakes=6, seed=2)
     assert w["reaction"]["mood"] == "encouraging" and w["reaction"]["cause"] == "shaky_trace", w
-    # writing mastery so far 25 + 8 = 33; +25 -> 58, +25 -> 83, +25 -> 100 (>= 85: mastered)
-    trace = [traced(seed=3 + i) for i in range(3)]
+    # writing mastery so far 25 + 8 = 33; traced +25 -> 58, +25 -> 83; then
+    # written from memory +30 -> 100. Tracing alone never masters it: the
+    # memory write does (routers/hanzi.py).
+    trace = [traced(seed=3), traced(seed=4), traced(seed=5, mode="memory")]
     assert [t["writing_status"] for t in trace] == ["practicing", "practicing", "mastered"], trace
+    assert trace[2]["mode"] == "memory" and trace[2]["hanzi"]["times_written_memory"] == 1, trace[2]
     assert trace[2]["reaction"]["mood"] == "celebrating" and trace[2]["reaction"]["milestone"] == "writing_mastered", trace[2]
 
     # A Hanzi "got it" is a self-check, so it only counts when the card is due

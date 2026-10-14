@@ -166,6 +166,9 @@ class UserHanzi(Base):
     writing_status = Column(String(20), default="not_practiced")
     writing_mastery = Column(Float, default=0.0)
     times_written = Column(Integer, default=0)
+    # Clean writes (<= 2 stroke mistakes) with no outline, from pinyin and
+    # meaning alone -- what "mastered" writing needs (routers/hanzi.py).
+    times_written_memory = Column(Integer, nullable=False, default=0, server_default="0")
     last_written_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="user_hanzi")

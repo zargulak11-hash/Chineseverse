@@ -49,8 +49,9 @@ def hand_trace(stroke_data, seed=1, mistakes=0):
     return drawn
 
 
-def start(client, headers, hanzi_id, seconds_ago=30):
-    r = client.post(f"/api/hanzi/{hanzi_id}/write/start", headers=headers)
+def start(client, headers, hanzi_id, seconds_ago=30, mode=None):
+    """Opens an attempt ("trace" by default; mode="memory": no outline)."""
+    r = client.post(f"/api/hanzi/{hanzi_id}/write/start", headers=headers, json={"mode": mode} if mode else None)
     assert r.status_code == 201, r.text
     aid = r.json()["attempt_id"]
     # the learner spends a while drawing between "Try writing" and "Save"
@@ -66,7 +67,7 @@ def stroke_data(hanzi_id):
         return db.get(models.Hanzi, hanzi_id).stroke_data
 
 
-def trace(client, headers, hanzi_id, mistakes=0, seed=1):
-    aid = start(client, headers, hanzi_id)
+def trace(client, headers, hanzi_id, mistakes=0, seed=1, mode=None):
+    aid = start(client, headers, hanzi_id, mode=mode)
     return client.post(f"/api/hanzi/{hanzi_id}/write", headers=headers,
                        json={"attempt_id": aid, "strokes": hand_trace(stroke_data(hanzi_id), seed, mistakes)})

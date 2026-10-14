@@ -156,3 +156,45 @@ def test_matcher_accepts_a_hand_drawn_stroke_but_not_a_mangled_one(chars):
     assert stroke_matches([tuple(p) for p in hand_stroke(first, rng)], meds, 0)
     assert not stroke_matches([tuple(p) for p in hand_stroke(first, rng)][::-1], meds, 0), "drawn backwards"
     assert not stroke_matches([(x + 300, y) for x, y in hand_stroke(first, rng)], meds, 0), "far off"
+
+
+# --------------------------------------------------------------------------- writing from memory
+
+def test_tracing_alone_never_masters_writing(client, chars, tracer):
+    for seed in range(6):
+        r = trace(client, tracer.h, chars.hid, seed=10 + seed)
+        assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["writing_mastery"] >= 85 and body["writing_status"] == "practicing", body
+    assert body["mode"] == "trace" and body["hanzi"]["times_written_memory"] == 0
+
+
+def test_a_clean_write_from_memory_masters_it_and_gains_more(client, chars, tracer):
+    t1 = trace(client, tracer.h, chars.hid, seed=21).json()
+    m1 = trace(client, tracer.h, chars.hid, seed=22, mode="memory").json()
+    assert m1["mode"] == "memory" and m1["writing_mastery"] - t1["writing_mastery"] == 30.0
+    assert m1["hanzi"]["times_written_memory"] == 1
+    m2 = trace(client, tracer.h, chars.hid, seed=23, mode="memory").json()
+    assert m2["writing_mastery"] >= 85 and m2["writing_status"] == "mastered", m2
+    listed = next(x for x in expect(client, "get", "/api/hanzi?hsk_level=1", 200, headers=tracer.h)
+                  if x["id"] == chars.hid)
+    assert listed["times_written_memory"] == 2
+
+
+def test_a_shaky_write_from_memory_is_not_a_memory_write(client, chars, tracer):
+    r = trace(client, tracer.h, chars.hid, seed=31, mistakes=4, mode="memory").json()
+    assert r["total_mistakes"] >= 3 and r["hanzi"]["times_written_memory"] == 0
+    notebook = expect(client, "get", "/api/mistakes", 200, headers=tracer.h)
+    assert any(m["mistake_type"] == "hanzi_write" for m in notebook)
+
+
+def test_the_mode_is_fixed_by_the_server_and_validated(client, chars, tracer):
+    r = client.post(f"/api/hanzi/{chars.hid}/write/start", headers=tracer.h, json={"mode": "copy"})
+    assert r.status_code == 422
+    r = client.post(f"/api/hanzi/{chars.hid}/write/start", headers=tracer.h)
+    assert r.status_code == 201 and r.json()["mode"] == "trace"
+    # Reporting extra fields can't turn a trace into a memory write.
+    aid = start(client, tracer.h, chars.hid)
+    body = client.post(f"/api/hanzi/{chars.hid}/write", headers=tracer.h,
+                       json={"attempt_id": aid, "strokes": hand_trace(chars.sd, 41), "mode": "memory"}).json()
+    assert body["mode"] == "trace" and body["hanzi"]["times_written_memory"] == 0

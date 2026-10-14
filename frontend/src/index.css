@@ -4559,6 +4559,13 @@ table.data td {
 }
 .dash-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
+/* Writing from memory (HanziTrace mode="memory"): the character panel
+   behind the dialog shows the answer, so it must not be readable through. */
+.modal.trace-memory-backdrop {
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(14px);
+}
+
 /* ---------- Tone Coach (ToneCoach.jsx) ---------- */
 .tc-card { display: flex; flex-direction: column; align-items: flex-start; }
 .tc-word { margin-top: var(--space-3); font-size: var(--text-3xl); font-weight: 800; line-height: 1.1; }

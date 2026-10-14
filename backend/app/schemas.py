@@ -444,6 +444,8 @@ class HanziWithStatus(HanziResponse):
     due_for_review: bool = False
     writing_status: Optional[str] = None
     writing_mastery: Optional[float] = None
+    # Clean writes from memory (no outline); "mastered" writing needs one.
+    times_written_memory: int = 0
 
 
 class HanziStrokeData(BaseModel):

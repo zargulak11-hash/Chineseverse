@@ -898,7 +898,13 @@
       "notDueYet": "Not due yet, so this didn't change your progress. The character comes back for review on {{date}}.",
       "stillLearning": "Still learning",
       "viewDetail": "Learn this character",
-      "close": "Close"
+      "close": "Close",
+      "writeFromMemory": "Write from memory",
+      "memoryPrompt": "Write the character for:",
+      "memoryStart": "Start writing",
+      "memoryHint": "No outline to follow. A stroke's hint appears after 3 misses — and counts as mistakes.",
+      "memoryCount": "Written from memory: {{count}}",
+      "memoryWhy": "Writing counts as mastered once you have written it from memory."
     },
     "adminUsers": {
       "authGithub": "GitHub",
