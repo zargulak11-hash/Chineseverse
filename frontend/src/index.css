@@ -5280,6 +5280,38 @@ table.data td {
 .cs-result.is-solved .cs-result-head { color: var(--good); }
 .cs-result.is-wrong .cs-result-head { color: var(--bad); }
 
+/* Community (Community.jsx): search on top, the learner's own network
+   below and beside it. */
+.cm-section { margin-top: var(--space-5); }
+.cm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.cm-person {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-1);
+}
+.cm-person.is-compact { padding: var(--space-2); border: 0; background: none; border-bottom: 1px solid var(--border); border-radius: 0; }
+.cm-list.is-side .cm-person:last-child { border-bottom: 0; }
+.cm-person-link { display: flex; align-items: center; gap: var(--space-3); min-width: 0; color: inherit; text-decoration: none; border-radius: var(--radius-sm); }
+.cm-person-link:hover b { color: var(--accent-strong); }
+.cm-person-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cm-person-text { display: flex; flex-direction: column; min-width: 0; }
+.cm-person-text b { overflow-wrap: anywhere; }
+.cm-person-text .sub { font-size: var(--text-xs); margin: 0; }
+.cm-follow { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-1); flex: 0 0 auto; max-width: 180px; }
+.cm-follow-err { color: var(--bad); font-size: var(--text-2xs); text-align: right; }
+
+/* Profile (Profile.jsx): the identity card at the top. */
+.pf-head { align-items: center; }
+.pf-id { display: flex; align-items: center; gap: var(--space-5); min-width: 0; }
+.pf-avatar { flex: 0 0 auto; box-shadow: 0 0 0 4px var(--surface-1), 0 0 0 6px var(--accent-border); }
+.pf-name { margin: 0; overflow-wrap: anywhere; }
+.pf-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.pf-companion { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--surface-2); border: 1px solid var(--border); }
+.pf-companion-name { font-weight: 800; font-size: var(--text-sm); }
+@media (max-width: 640px) {
+  .pf-id { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+  .cm-person { flex-wrap: wrap; }
+}
+
 /* ---------- AI roleplay (Roleplay.jsx) ----------
    The hub is a set of "doors" (a painted place, who you will meet there,
    what you set out to do); a session is a chat room -- the partner's face

@@ -36,30 +36,30 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="row spread">
-        <div className="row">
-          <UserAvatar url={dashboard?.avatar_url} name={me.user.username} size={56} />
-          <div>
-            <h1 className="h1">@{me.user.username}</h1>
+      {/* The learner's identity card: who they are, since when, their
+          companion, and where to go from here. */}
+      <header className="page-head pf-head">
+        <div className="pf-id">
+          <UserAvatar url={dashboard?.avatar_url} name={me.user.username} size={88} className="pf-avatar" />
+          <div style={{ minWidth: 0 }}>
+            <div className="page-eyebrow"><Icon name="user" size={13} /> {t("nav.groupYou")}</div>
+            <h1 className="h1 pf-name">@{me.user.username}</h1>
             <p className="sub">{me.user.email} · {t("pages.profile.joined")} {joined(me.user.created_at)}</p>
+            <div className="pf-actions">
+              <Link to="/passport" className="btn primary small"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
+              <Link to="/community" className="btn ghost small"><Icon name="users" size={13} /> {t("pages.profile.findPeople")}</Link>
+              <Link to="/settings" className="btn ghost small"><Icon name="settings" size={13} /> {t("pages.profile.editProfile")}</Link>
+            </div>
           </div>
         </div>
-        <div className="row">
-          <Link to="/passport" className="btn primary"><Icon name="award" size={13} /> {t("nav.passport")}</Link>
-          <Link to="/community">
-            <button className="btn ghost"><Icon name="users" size={13} /> {t("pages.profile.findPeople")}</button>
-          </Link>
-          {animal && (
-            <span className="row" style={{ gap: 6 }} title={animal.name}>
-              <AnimalAvatar slug={animal.slug} size={32} />
-              <span className="sub">{animal.name}</span>
-            </span>
-          )}
-          <Link to="/animals">
-            <button className="btn ghost">{t("pages.profile.changeCompanion")}</button>
-          </Link>
-        </div>
-      </div>
+        {animal && (
+          <div className="pf-companion">
+            <AnimalAvatar slug={animal.slug} size={64} />
+            <span className="pf-companion-name">{animal.name}</span>
+            <Link to="/animals" className="btn ghost small">{t("pages.profile.changeCompanion")}</Link>
+          </div>
+        )}
+      </header>
 
       <div className="grid grid-2" style={{ marginTop: 18 }}>
         <div className="card">

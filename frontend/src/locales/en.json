@@ -917,7 +917,12 @@
       "follow": "Follow",
       "unfollow": "Unfollow",
       "following": "Following",
-      "followError": "Couldn't update follow. Please try again."
+      "followError": "Couldn't update follow. Please try again.",
+      "youFollow": "People you follow",
+      "followNone": "You don't follow anyone yet — search for a learner above.",
+      "followYou": "Who follows you",
+      "followersNone": "No followers yet.",
+      "myPublicPage": "My public page"
     },
     "publicProfile": {
       "nobodyHere": "Nobody here yet.",

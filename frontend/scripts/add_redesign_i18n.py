@@ -189,6 +189,16 @@ S = {
     # ---- Real Chinese conversation (pages/Conversation.jsx) ----
     "pages.conversation.speakerNpc": L("Local", "Собеседник", "Ҳамсуҳбат", "对方"),
     "pages.conversation.speakerYou": L("You", "Вы", "Шумо", "你"),
+    # ---- Community (pages/Community.jsx) ----
+    "pages.community.youFollow": L("People you follow", "Вы подписаны", "Шумо обуна шудаед", "你关注的人"),
+    "pages.community.followNone": L(
+        "You don't follow anyone yet — search for a learner above.",
+        "Вы пока ни на кого не подписаны — найдите ученика через поиск выше.",
+        "Шумо ҳоло ба касе обуна нашудаед — хонандаро тавассути ҷустуҷӯи боло ёбед.",
+        "你还没有关注任何人——在上方搜索学习者吧。"),
+    "pages.community.followYou": L("Who follows you", "Ваши подписчики", "Обуначиёни шумо", "关注你的人"),
+    "pages.community.followersNone": L("No followers yet.", "Подписчиков пока нет.", "Ҳоло обуначӣ нест.", "还没有人关注你。"),
+    "pages.community.myPublicPage": L("My public page", "Моя публичная страница", "Саҳифаи ҷамъиятии ман", "我的公开主页"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(
