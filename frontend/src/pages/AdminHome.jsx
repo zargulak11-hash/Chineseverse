@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import Layout from "../components/Layout.jsx";
-import { Empty, Loading, Stat } from "../components/ui.jsx";
+import Icon from "../components/Icon.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
 const STATUS_TONE = { sent: "good", failed: "bad", pending: "warn", skipped: "warn", sending: "accent", no_address: "bad" };
@@ -131,27 +132,37 @@ export default function AdminHome() {
 
   return (
     <Layout>
-      <h1 className="h1">{t("pages.adminHome.title")}</h1>
-      <p className="sub">{t("pages.adminHome.subtitle")}</p>
+      <header className="page-head">
+        <div>
+          <div className="page-eyebrow"><Icon name="lock" size={13} /> {t("nav.groupAdmin")}</div>
+          <h1 className="h1">{t("pages.adminHome.title")}</h1>
+          <p className="sub">{t("pages.adminHome.subtitle")}</p>
+        </div>
+        {data && (
+          <div className="kpi-row">
+            <div className="kpi">
+              <span className="kpi-value">{data.total_users}</span>
+              <span className="kpi-label">{t("pages.adminHome.registeredUsers")}</span>
+            </div>
+          </div>
+        )}
+      </header>
 
       {error && <Empty>{error}</Empty>}
       {!data && !error && <Loading>{t("common.loading")}</Loading>}
 
-      {data && (
-        <div className="card" style={{ marginTop: 16, maxWidth: 320 }}>
-          <div className="scores">
-            <Stat label={t("pages.adminHome.registeredUsers")} value={data.total_users} tone="var(--accent)" />
-          </div>
-        </div>
-      )}
+      {/* The console's sections: people, then the follow-email delivery
+          diagnostics below. */}
+      <Link to="/admin/users" className="card hover adm-tile">
+        <span className="adm-tile-icon" aria-hidden="true"><Icon name="users" size={22} /></span>
+        <span className="adm-tile-text">
+          <b>{t("nav.adminUsers")}</b>
+          <span className="sub">{t("pages.adminUsers.subtitle")}</span>
+        </span>
+        <Icon name="arrowRight" size={18} />
+      </Link>
 
       <EmailDelivery />
-
-      <div className="row" style={{ marginTop: 20 }}>
-        <Link to="/admin/users" className="btn primary">
-          {t("nav.adminUsers")}
-        </Link>
-      </div>
     </Layout>
   );
 }

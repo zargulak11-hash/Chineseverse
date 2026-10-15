@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useAuth } from "../auth.js";
 import AnimalAvatar from "../components/AnimalAvatar.jsx";
@@ -179,8 +180,19 @@ export default function AdminUsers() {
 
   return (
     <Layout>
-      <h1 className="h1">{t("pages.adminUsers.users")}</h1>
-      <p className="sub">{t("pages.adminUsers.subtitle")}</p>
+      <header className="page-head">
+        <div>
+          <Link to="/admin" className="page-eyebrow ld-back"><Icon name="arrowLeft" size={13} /> {t("nav.adminHome")}</Link>
+          <h1 className="h1">{t("pages.adminUsers.users")}</h1>
+          <p className="sub">{t("pages.adminUsers.subtitle")}</p>
+        </div>
+        {data && (
+          <div className="kpi-row">
+            <div className="kpi"><span className="kpi-value">{data.total_users}</span><span className="kpi-label">{t("pages.adminHome.registeredUsers")}</span></div>
+            <div className="kpi"><span className="kpi-value">{data.admin_count}</span><span className="kpi-label">{t("pages.adminUsers.roleAdmin")}</span></div>
+          </div>
+        )}
+      </header>
 
       {error && (
         <div className="card" style={{ marginTop: 16, borderColor: "var(--bad)" }}>

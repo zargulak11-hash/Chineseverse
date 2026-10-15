@@ -6093,6 +6093,13 @@ table.data td {
 .admin-db-label { font-weight: 800; letter-spacing: 0.06em; }
 .admin-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-xs); color: var(--text-faint); overflow-wrap: anywhere; margin-top: 4px; }
 .admin-search { flex: 1 1 240px; max-width: 360px; }
+/* Admin console (AdminHome.jsx): its sections as tiles. */
+.adm-tile { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-5); color: inherit; text-decoration: none; }
+.adm-tile-icon { width: 52px; height: 52px; border-radius: var(--radius-md); display: grid; place-items: center; flex: none; background: var(--accent-dim); color: var(--accent-strong); }
+.adm-tile-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.adm-tile-text .sub { margin: 0; }
+.adm-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 
 /* ---- Practice / Review ------------------------------------------------ */
 .badge.bad {
