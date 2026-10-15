@@ -72,6 +72,28 @@ export default function Roadmap() {
             {r.levels.map((lvl) => {
               const stepClass =
                 lvl.status === "current" ? "is-current" : lvl.status === "locked" ? "is-locked" : "is-done";
+              // A level not open yet is one compact row -- what it holds and
+              // why it is closed -- instead of a card of empty bars.
+              if (lvl.status === "locked") {
+                return (
+                  <div key={lvl.level} className={`roadmap-step ${stepClass}`}>
+                    <div className="roadmap-node" aria-hidden="true">{lvl.level}</div>
+                    <div className="card roadmap-locked">
+                      <div className="roadmap-locked-id">
+                        <Icon name="lock" size={14} />
+                        <h2 className="h2" style={{ margin: 0 }}>HSK {lvl.level}</h2>
+                        {lvl.is_advanced_stage && (
+                          <span className="badge" title={t("pages.roadmap.advancedStageHint")}>{t("pages.roadmap.advancedStage")}</span>
+                        )}
+                      </div>
+                      <span className="roadmap-locked-facts">
+                        {lvl.vocab_total} {t("pages.roadmap.words")} · {lvl.hanzi_total} {t("pages.roadmap.hanzi")} · {lvl.grammar_total} {t("pages.roadmap.grammar")}
+                      </span>
+                      {lvl.reason && <p className="roadmap-locked-why">{lvl.reason}</p>}
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <div key={lvl.level} className={`roadmap-step ${stepClass}`}>
                   <div className="roadmap-node" aria-hidden="true">{lvl.level}</div>

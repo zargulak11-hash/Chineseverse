@@ -1591,42 +1591,72 @@ button.animal:focus-visible { outline: 2px solid var(--accent); outline-offset: 
 .next-bar-title { flex: 1 1 220px; min-width: 0; }
 .journey-section { margin-top: var(--space-6); }
 .journey-section > .sub { max-width: 80ch; }
-.journey-steps, .journey-levels {
-  list-style: none;
-  margin: var(--space-4) 0 0;
-  padding: 0;
-  display: grid;
-  gap: var(--space-4);
+/* The journey as a road (Journey.jsx): the foundation as a path of steps
+   on a rail, HSK 1-9 as a ladder under a 9-segment track, then the places
+   to explore with the ones that suit the learner now first. */
+.jr-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.jr-count { font-size: var(--text-lg); font-weight: 800; color: var(--accent-strong); }
+.jr-path { list-style: none; margin: var(--space-4) 0 0; padding: 0; position: relative; display: grid; gap: var(--space-2); }
+.jr-path::before { content: ""; position: absolute; left: 17px; top: var(--space-4); bottom: var(--space-4); border-left: 2px dashed var(--border-strong); }
+.jr-step {
+  position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center;
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
 }
-.journey-steps { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.journey-levels { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-.journey-step, .journey-level { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
-.journey-step.is-current, .journey-level.is-current { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim), var(--shadow-sm); }
-.journey-step.is-past, .journey-step.is-todo { opacity: 0.85; }
-.journey-step .btn { align-self: flex-start; margin-top: auto; }
-.journey-step-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.journey-step-no {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  font-weight: 800;
-  font-size: var(--text-xs);
+.jr-node {
+  position: relative; z-index: 1; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-1); border: 2px solid var(--border-strong); font-weight: 800; color: var(--text-dim);
 }
-.journey-step.is-current .journey-step-no { border-color: var(--accent); color: var(--accent-strong); }
-.journey-step.is-done .journey-step-no { border-color: var(--good); background: var(--good-dim); color: var(--good); }
-.journey-step-title { margin: 0; font-size: var(--text-base); font-weight: 800; }
-.journey-level-name { font-size: var(--text-md); font-weight: 800; }
-.journey-level-stage { color: var(--accent-strong); font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-.journey-level.is-ahead { opacity: 0.8; }
-.journey-level-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--text-xs); color: var(--text-dim); }
+.jr-step.is-done .jr-node { border-color: var(--good); background: var(--good-dim); color: var(--good); }
+.jr-step.is-current .jr-node { border-color: transparent; background: var(--accent-gradient); color: var(--on-accent); box-shadow: 0 0 0 5px var(--accent-dim); }
+.jr-step-body { min-width: 0; }
+.jr-step.is-current .jr-step-body { padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--accent-dim); border: 1px solid var(--accent-border); }
+.jr-step-head { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.jr-step-title { margin: 0; font-size: var(--text-base); font-weight: 800; }
+.jr-step-what { margin: var(--space-1) 0 0; }
+.jr-step.is-past .jr-step-body, .jr-step.is-todo .jr-step-body { opacity: 0.85; }
+.jr-track { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: var(--space-1); margin: var(--space-4) 0 var(--space-3); }
+.jr-track-seg {
+  height: 28px; border-radius: var(--radius-sm); display: grid; place-items: center; font-size: var(--text-xs); font-weight: 800;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-faint);
+}
+.jr-track-seg.is-done { background: var(--good-dim); border-color: var(--good); color: var(--good); }
+.jr-track-seg.is-current { background: var(--accent-gradient); border-color: transparent; color: var(--on-accent); }
+.jr-ladder { list-style: none; margin: 0; padding: 0; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); background: var(--surface-1); }
+.jr-rung {
+  display: grid; grid-template-columns: 140px minmax(0, 1fr) auto; gap: var(--space-4); align-items: center;
+  padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border);
+}
+.jr-rung:last-child { border-bottom: 0; }
+.jr-rung.is-current { background: var(--accent-dim); box-shadow: inset 4px 0 0 var(--accent); }
+.jr-rung.is-ahead { color: var(--text-dim); }
+.jr-rung-id { display: flex; flex-direction: column; }
+.jr-rung-name { font-size: var(--text-md); font-weight: 800; }
+.jr-rung-stage { color: var(--accent-strong); font-size: var(--text-2xs); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.jr-rung-body { min-width: 0; }
+.jr-rung-desc { margin: 0 0 var(--space-1); font-size: var(--text-sm); }
+.jr-rung-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+.jr-rung-links { display: flex; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
+.journey-level-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 2px var(--space-3); font-size: var(--text-xs); color: var(--text-dim); }
 .journey-level-facts .is-good { color: var(--good); }
-.journey-feature { display: flex; flex-direction: column; gap: var(--space-2); text-decoration: none; color: inherit; }
-.journey-feature.is-suggested { border-color: var(--accent-border); }
+.jr-explore { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--space-2); }
+.jr-place {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3);
+  border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-1); color: inherit; text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.jr-place:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.jr-place.is-suggested { border-color: var(--accent-border); }
+.jr-place:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.jr-place-text { display: flex; flex-direction: column; min-width: 0; }
+.jr-place-text .sub { font-size: var(--text-xs); }
+@media (max-width: 640px) {
+  .jr-step { grid-template-columns: 36px minmax(0, 1fr); padding-right: 0; }
+  .jr-step > .btn { grid-column: 2; justify-self: start; }
+  .jr-rung { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding: var(--space-3) var(--space-4); }
+  .jr-rung-side { align-items: flex-start; }
+  .jr-rung-links { justify-content: flex-start; }
+}
 .journey-feature-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-md); background: var(--accent-dim); color: var(--accent-strong); }
-.journey-feature:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Onboarding: three honest starting points. */
 .level-choices { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
 .level-choice {
@@ -7007,6 +7037,12 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 .roadmap-step .card { padding: 18px 20px; }
 .roadmap-step.is-current .card { border-color: var(--accent-border); box-shadow: var(--ring-accent); }
 .roadmap-step.is-locked .card { opacity: 0.7; box-shadow: none; }
+/* A level not open yet: one compact row, not a card of empty bars. */
+.roadmap-locked { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); }
+.roadmap-step .card.roadmap-locked { padding: var(--space-3) var(--space-4); }
+.roadmap-locked-id { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; color: var(--text-dim); }
+.roadmap-locked-facts { font-size: var(--text-xs); color: var(--text-dim); }
+.roadmap-locked-why { flex-basis: 100%; margin: 0; font-size: var(--text-xs); color: var(--text-faint); }
 .roadmap-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
 .roadmap-metrics {
   display: grid;
