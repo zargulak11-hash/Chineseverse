@@ -1389,7 +1389,9 @@
       "failed": "Not passed this time: you need {{score}}%. Your lessons stay completed. Review and try again.",
       "invalidated": "This attempt was ended because the exam page was left. Score: 0.",
       "expired": "Time ran out before the exam was submitted. Score: 0."
-    }
+    },
+    "navLabel": "Questions",
+    "navItem": "Question {{n}}"
   },
   "voice": {
     "title": "Daily Voice Companion",

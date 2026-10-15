@@ -254,6 +254,23 @@ export default function Exam() {
             </div>
           </header>
 
+          {/* Every question at a glance: answered, current, still open --
+              any of them can be opened again before submitting. */}
+          <nav className="exam-nav" aria-label={t("exam.navLabel")}>
+            {attempt.questions.map((qq, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`exam-nav-cell${i === index ? " is-now" : ""}${chosen[i] != null ? " is-done" : ""}`}
+                aria-current={i === index ? "step" : undefined}
+                aria-label={t("exam.navItem", { n: i + 1 })}
+                onClick={() => setIndex(i)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </nav>
+
           <div className="card practice-card" style={{ marginTop: 16 }}>
             <Bar value={answeredCount} max={attempt.total} />
             <p className="sub" style={{ margin: "12px 0 8px" }}>{t(`practice.q.${q.type}`)}</p>
@@ -345,7 +362,20 @@ export default function Exam() {
           </div>
         )}
       </header>
-      <div className="card" style={{ marginTop: 24 }}>
+      <div className={`card exam-gate${levelInfo?.exam === "passed" ? " is-passed" : open ? " is-open" : " is-locked"}`} style={{ marginTop: 24 }}>
+        {/* What opens the exam: every lesson of the level, counted by the server. */}
+        {levelInfo && levelInfo.exam !== "passed" && (
+          <div className="exam-gate-progress">
+            <span className="exam-gate-icon" aria-hidden="true"><Icon name={open ? "check" : "lock"} size={18} /></span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="row spread" style={{ margin: 0 }}>
+                <b>{t("exam.lessonsKpi")}</b>
+                <span className="sub">{levelInfo.lessons_completed}/{levelInfo.lessons_total}</span>
+              </div>
+              <Bar value={levelInfo.lessons_completed} max={Math.max(levelInfo.lessons_total, 1)} />
+            </div>
+          </div>
+        )}
         <h2 className="h2">{t("exam.rulesTitle")}</h2>
         <ul className="exam-rules">
           <li>{t("exam.rules.questions", { count: overview?.question_count ?? 20, level })}</li>

@@ -199,6 +199,9 @@ S = {
     "pages.community.followYou": L("Who follows you", "Ваши подписчики", "Обуначиёни шумо", "关注你的人"),
     "pages.community.followersNone": L("No followers yet.", "Подписчиков пока нет.", "Ҳоло обуначӣ нест.", "还没有人关注你。"),
     "pages.community.myPublicPage": L("My public page", "Моя публичная страница", "Саҳифаи ҷамъиятии ман", "我的公开主页"),
+    # ---- HSK exam (pages/Exam.jsx) ----
+    "exam.navLabel": L("Questions", "Вопросы", "Саволҳо", "题目"),
+    "exam.navItem": L("Question {{n}}", "Вопрос {{n}}", "Саволи {{n}}", "第 {{n}} 题"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(
