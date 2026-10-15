@@ -534,7 +534,8 @@
       "sayInChinese": "Say something in Chinese — try one of these:",
       "send": "Send",
       "recentSessions": "Recent voice sessions",
-      "noSessions": "No sessions yet."
+      "noSessions": "No sessions yet.",
+      "tryPhrase": "Phrases to try"
     },
     "petTeacher": {
       "title": "Pet Teacher Mode",
@@ -3232,7 +3233,8 @@
       "go": "Go",
       "done": "Done",
       "all": "All",
-      "filter": "Show"
+      "filter": "Show",
+      "cabinet": "Your achievements"
     },
     "dashboard": {
       "title": "Next achievements",

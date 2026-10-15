@@ -178,6 +178,10 @@ S = {
     "pages.petTeacher.boardLabel": L("{{name}} wrote on the board", "{{name}} написал(а) на доске",
                                      "{{name}} дар тахта навишт", "{{name}} 在黑板上写道"),
     "pages.petTeacher.yourLesson": L("Your lesson", "Ваш урок", "Дарси шумо", "你的讲解"),
+    # ---- Achievements cabinet (pages/Achievements.jsx) ----
+    "achievements.page.cabinet": L("Your achievements", "Ваши достижения", "Дастовардҳои шумо", "你的成就"),
+    # ---- Companion (pages/Companion.jsx) ----
+    "pages.companion.tryPhrase": L("Phrases to try", "Фразы, чтобы попробовать", "Ибораҳо барои озмоиш", "可以试试的句子"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

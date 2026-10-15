@@ -66,6 +66,28 @@ function AchCard({ a, fmtDate }) {
   );
 }
 
+// One medal in the cabinet: earned ones in colour with their check, locked
+// ones dimmed, with a ring filled to their real progress when they take
+// more than one step. Choosing one opens its full card in the inspector.
+function Medal({ a, selected, onPick }) {
+  const { t } = useTranslation();
+  const title = achievementTitle(t, a.code, a.title);
+  const pct = a.unlocked ? 100 : a.target > 1 ? Math.round(ratio(a) * 100) : 0;
+  return (
+    <li>
+      <button type="button" className={`ach-medal${a.unlocked ? " is-earned" : ""}${selected ? " is-on" : ""}`}
+              onClick={() => onPick(a.id)} aria-pressed={selected}
+              aria-label={`${title} — ${a.unlocked ? t("achievements.page.done") : progressText(a)}`}>
+        <span className="ach-medal-ring" style={{ "--p": pct }} aria-hidden="true">
+          <span className="ach-medal-face"><Icon name={achievementIcon(a)} size={20} /></span>
+          {a.unlocked && <span className="ach-medal-check"><Icon name="check" size={10} /></span>}
+        </span>
+        <span className="ach-medal-title">{title}</span>
+      </button>
+    </li>
+  );
+}
+
 export default function Achievements() {
   const { t, i18n } = useTranslation();
   const { data, error } = useApi("/achievements");
@@ -75,6 +97,7 @@ export default function Achievements() {
   const badges = data || [];
   const rootRef = useRef(null);
   const [filter, setFilter] = useState("all");
+  const [picked, setPicked] = useState(null);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -203,21 +226,37 @@ export default function Achievements() {
             </div>
           )}
 
-          {earnedShown.length > 0 && (
-            <section>
-              <h2 className="h2 section-title">{t("achievements.page.achieved")} · {earnedShown.length}</h2>
-              <div className="ach-grid">{earnedShown.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
-            </section>
-          )}
+          {/* The collection as a cabinet: earned first, then what is left to
+              earn, one medal each; the chosen one's full card above them. */}
+          {(earnedShown.length > 0 || restShown.length > 0) && (() => {
+            const all = [...earnedShown, ...restShown];
+            const sel = all.find((b) => b.id === picked) || all[0];
+            return (
+              <section className="ach-cabinet" aria-label={t("achievements.page.cabinet")}>
+                <div className="ach-inspector" aria-live="polite">
+                  {sel && <AchCard key={sel.id} a={sel} fmtDate={fmtDate} />}
+                </div>
+                {earnedShown.length > 0 && (
+                  <>
+                    <h2 className="h2 section-title">{t("achievements.page.achieved")} · {earnedShown.length}</h2>
+                    <ul className="ach-shelf">
+                      {earnedShown.map((a) => <Medal key={a.id} a={a} selected={sel?.id === a.id} onPick={setPicked} />)}
+                    </ul>
+                  </>
+                )}
+                {restShown.length > 0 && (
+                  <>
+                    <h2 className="h2 section-title">{t("achievements.page.toEarn")} · {restShown.length}</h2>
+                    <ul className="ach-shelf">
+                      {restShown.map((a) => <Medal key={a.id} a={a} selected={sel?.id === a.id} onPick={setPicked} />)}
+                    </ul>
+                  </>
+                )}
+              </section>
+            );
+          })()}
           {unlocked.length === 0 && badges.length > 0 && filter === "all" && (
             <p className="sub">{t("pages.achievements.noneYet")}</p>
-          )}
-
-          {restShown.length > 0 && (
-            <section>
-              <h2 className="h2 section-title">{t("achievements.page.toEarn")} · {restShown.length}</h2>
-              <div className="ach-grid">{restShown.map((a) => <AchCard key={a.id} a={a} fmtDate={fmtDate} />)}</div>
-            </section>
           )}
         </div>
 

@@ -525,7 +525,8 @@
       "sayInChinese": "用中文说点什么——可以试试这些：",
       "send": "发送",
       "recentSessions": "最近的语音记录",
-      "noSessions": "暂无记录。"
+      "noSessions": "暂无记录。",
+      "tryPhrase": "可以试试的句子"
     },
     "petTeacher": {
       "title": "教宠物模式",
@@ -3148,7 +3149,8 @@
       "go": "去完成",
       "done": "已完成",
       "all": "全部",
-      "filter": "显示"
+      "filter": "显示",
+      "cabinet": "你的成就"
     },
     "dashboard": {
       "title": "下一个成就",
