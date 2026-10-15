@@ -144,6 +144,26 @@ S = {
     "pages.lessonDetail.stepPractise": L("Practise to complete the lesson", "Практика, чтобы пройти урок",
                                          "Машқ барои анҷоми дарс", "练习以完成本课"),
     "pages.lessonDetail.yourLesson": L("This lesson", "Этот урок", "Ин дарс", "本课"),
+    # ---- Daily quests (pages/Quests.jsx) ----
+    "pages.quests.kpiDone": L("Done today", "Выполнено сегодня", "Имрӯз иҷрошуда", "今日完成"),
+    "pages.quests.kpiXp": L("XP claimed", "Получено XP", "XP гирифта шуд", "已领取 XP"),
+    "pages.quests.goDo": L("Go", "Перейти", "Гузаштан", "去完成"),
+    "pages.quests.howNote": L(
+        "Quests move forward by themselves as you study — there is nothing to tick off here. Claim the reward once one is complete.",
+        "Задания продвигаются сами, пока вы учитесь, — отмечать здесь ничего не нужно. Заберите награду, когда задание выполнено.",
+        "Вазифаҳо ҳангоми омӯзиш худ ба худ пеш мераванд — дар ин ҷо чизе қайд кардан лозим нест. Вақте вазифа иҷро шуд, мукофотро гиред.",
+        "任务会随着你的学习自动推进——这里不需要手动勾选。完成后领取奖励即可。"),
+    # ---- Missions (pages/Missions.jsx) ----
+    "pages.missions.inProgress": L("Under way", "В процессе", "Дар ҷараён", "进行中"),
+    "pages.missions.available": L("Ready to take on", "Можно взять", "Метавон гирифт", "可接受"),
+    "pages.missions.lockedTitle": L("At a higher level", "На следующих уровнях", "Дар сатҳҳои баландтар", "更高等级"),
+    "pages.missions.noneDone": L("Nothing finished yet.", "Пока ничего не завершено.", "Ҳоло чизе анҷом наёфтааст.", "还没有完成的任务。"),
+    "pages.missions.howTitle": L("How missions work", "Как работают миссии", "Миссияҳо чӣ тавр кор мекунанд", "任务怎么进行"),
+    "pages.missions.howText": L(
+        "Accept a mission, then do the real activity it names. Progress is counted automatically and the reward arrives the moment you finish.",
+        "Возьмите миссию и выполните настоящее занятие, о котором она говорит. Прогресс засчитывается сам, награда приходит сразу по завершении.",
+        "Миссияро қабул кунед ва машғулияти воқеии номбаршударо иҷро кунед. Пешрафт худкор ҳисоб мешавад ва мукофот фавран меояд.",
+        "接受任务后，去完成它所说的真实练习。进度会自动计算，完成时立即获得奖励。"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

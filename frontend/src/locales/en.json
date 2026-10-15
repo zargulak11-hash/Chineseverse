@@ -346,7 +346,11 @@
       "subtitle": "Generated from your Learning Compass every day. Complete them to feed your companion.",
       "claimReward": "Claim reward",
       "claimed": "Claimed",
-      "empty": "Nothing today. Take a walk around the world."
+      "empty": "Nothing today. Take a walk around the world.",
+      "kpiDone": "Done today",
+      "kpiXp": "XP claimed",
+      "goDo": "Go",
+      "howNote": "Quests move forward by themselves as you study — there is nothing to tick off here. Claim the reward once one is complete."
     },
     "missions": {
       "title": "Missions",
@@ -356,7 +360,13 @@
       "start": "Start",
       "locked": "Opens at HSK {{level}}",
       "completed": "Completed",
-      "empty": "No missions yet."
+      "empty": "No missions yet.",
+      "inProgress": "Under way",
+      "available": "Ready to take on",
+      "lockedTitle": "At a higher level",
+      "noneDone": "Nothing finished yet.",
+      "howTitle": "How missions work",
+      "howText": "Accept a mission, then do the real activity it names. Progress is counted automatically and the reward arrives the moment you finish."
     },
     "duels": {
       "title": "Duels",

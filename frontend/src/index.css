@@ -5071,6 +5071,74 @@ table.data td {
   .tc-deck { gap: var(--space-4); padding-inline: var(--space-3); }
   .tc-result { margin-inline: var(--space-3); }
 }
+/* ---------- Daily quests (Quests.jsx) ----------
+   Three objectives for today: a strip showing the day at a glance, then
+   each quest with a ring that fills to its real progress, its reward, and
+   one action -- go and do it, claim it, or a claimed seal. */
+.qs-day { display: flex; gap: var(--space-2); margin: var(--space-5) 0 var(--space-4); max-width: 520px; }
+.qs-day-seg { flex: 1 1 0; height: 8px; border-radius: var(--radius-full); background: var(--surface-3); }
+.qs-day-seg.is-ready { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.qs-day-seg.is-claimed { background: var(--good); }
+.qs-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); max-width: 860px; }
+.qs-quest {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-5); align-items: center;
+  padding: var(--space-5); border-radius: var(--radius-lg); border: 1px solid var(--border);
+  background: var(--surface-1); box-shadow: var(--shadow-sm);
+}
+.qs-quest.is-ready { border-color: var(--accent); background: radial-gradient(90% 140% at 0% 50%, var(--accent-dim), transparent 60%), var(--surface-1); }
+.qs-quest.is-claimed { border-color: var(--good); }
+.qs-ring {
+  --p: 0; width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--surface-3) 0);
+}
+.qs-quest.is-claimed .qs-ring { background: conic-gradient(var(--good) calc(var(--p) * 1%), var(--surface-3) 0); }
+.qs-ring-icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-1); color: var(--accent-strong); }
+.qs-quest.is-claimed .qs-ring-icon { color: var(--good); }
+.qs-body { min-width: 0; }
+.qs-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.qs-title { margin: 0; font-size: var(--text-md); font-weight: 800; }
+.qs-count { font-size: var(--text-lg); font-weight: 800; color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.qs-quest.is-claimed .qs-count { color: var(--good); }
+.qs-desc { margin: var(--space-1) 0 0; color: var(--text-dim); }
+.qs-flavor { margin: var(--space-1) 0 0; font-size: var(--text-xs); color: var(--text-faint); font-style: italic; }
+.qs-foot { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.qs-reward { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: var(--radius-full); background: var(--surface-2); border: 1px solid var(--border); font-size: var(--text-xs); font-weight: 700; }
+.qs-action { margin-left: auto; }
+.qs-note { margin-top: var(--space-4); font-size: var(--text-xs); max-width: 860px; }
+
+/* ---------- Missions (Missions.jsx) ----------
+   A board in the order the learner needs it: under way, ready to take on,
+   a level away, and a log of what is done beside it. */
+.ms-list { list-style: none; margin: 0 0 var(--space-5); padding: 0; display: grid; gap: var(--space-3); }
+.ms-ticket {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg); border: 1px solid var(--border); border-left: 4px solid var(--border-strong);
+  background: var(--surface-1); box-shadow: var(--shadow-sm);
+}
+.ms-ticket.is-active { border-left-color: var(--accent); }
+.ms-ticket.is-available { border-left-color: var(--accent-border); border-style: solid dashed dashed solid; }
+.ms-ticket.is-locked { opacity: 0.7; box-shadow: none; }
+.ms-kind { width: 44px; height: 44px; border-radius: var(--radius-md); display: grid; place-items: center; background: var(--surface-2); color: var(--accent-strong); }
+.ms-ticket.is-locked .ms-kind { color: var(--text-faint); }
+.ms-body { min-width: 0; }
+.ms-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.ms-title { margin: 0; font-size: var(--text-base); font-weight: 800; }
+.ms-rewards { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); }
+.ms-objective { margin: var(--space-1) 0 var(--space-3); color: var(--text-dim); font-size: var(--text-sm); }
+.ms-progress { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.ms-log { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-2); }
+.ms-log li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 var(--space-2); align-items: start; }
+.ms-log .sub { grid-column: 2; font-size: var(--text-xs); }
+.ms-log-check { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--good-dim); color: var(--good); }
+.ms-log-title { font-weight: 700; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .qs-quest { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-4); }
+  .qs-ring { width: 56px; height: 56px; }
+  .qs-ring-icon { width: 44px; height: 44px; }
+  .qs-action { margin-left: 0; width: 100%; }
+  .ms-ticket { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
+}
+
 /* ---------- AI roleplay (Roleplay.jsx) ----------
    The hub is a set of "doors" (a painted place, who you will meet there,
    what you set out to do); a session is a chat room -- the partner's face

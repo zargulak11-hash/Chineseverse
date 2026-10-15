@@ -337,7 +337,11 @@
       "subtitle": "每天根据你的学习指南针生成。完成它们来喂养你的伙伴。",
       "claimReward": "领取奖励",
       "claimed": "已领取",
-      "empty": "今天没有任务。去世界中逛逛吧。"
+      "empty": "今天没有任务。去世界中逛逛吧。",
+      "kpiDone": "今日完成",
+      "kpiXp": "已领取 XP",
+      "goDo": "去完成",
+      "howNote": "任务会随着你的学习自动推进——这里不需要手动勾选。完成后领取奖励即可。"
     },
     "missions": {
       "title": "使命",
@@ -347,7 +351,13 @@
       "start": "开始",
       "locked": "HSK {{level}} 开放",
       "completed": "已完成",
-      "empty": "暂无任务。"
+      "empty": "暂无任务。",
+      "inProgress": "进行中",
+      "available": "可接受",
+      "lockedTitle": "更高等级",
+      "noneDone": "还没有完成的任务。",
+      "howTitle": "任务怎么进行",
+      "howText": "接受任务后，去完成它所说的真实练习。进度会自动计算，完成时立即获得奖励。"
     },
     "duels": {
       "title": "对决",
