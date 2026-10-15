@@ -3176,6 +3176,23 @@ table.data td {
   gap: 8px;
   justify-content: flex-end;
 }
+/* Lobby rows as match strips (Duels.jsx): the learner vs the opponent,
+   both scores when it is over, edged by how it ended. */
+.duel-row.duel-match { grid-template-columns: auto minmax(0, 1fr) auto; border-left: 4px solid var(--border-strong); }
+.duel-match.is-pending, .duel-match.is-active { border-left-color: var(--accent); }
+.duel-match.is-win { border-left-color: var(--good); }
+.duel-match.is-loss { border-left-color: var(--bad); }
+.duel-match-vs { display: flex; align-items: center; gap: var(--space-2); }
+.duel-match-vs .vs { font-size: var(--text-xs); font-weight: 900; font-style: italic; color: var(--text-faint); }
+.duel-match-player { display: inline-flex; align-items: center; gap: var(--space-2); }
+.duel-match-score { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2ch; text-align: center; }
+.duel-match.is-win .duel-match-player:first-child .duel-match-score { color: var(--good); }
+.duel-match.is-loss .duel-match-player:last-child .duel-match-score { color: var(--bad); }
+.duel-kpi-win { color: var(--good); }
+@media (max-width: 640px) {
+  .duel-row.duel-match { grid-template-columns: minmax(0, 1fr) auto; }
+  .duel-match-vs { grid-column: 1 / -1; }
+}
 .duel-panel {
   width: 100%;
 }
@@ -3219,12 +3236,6 @@ table.data td {
   justify-content: center;
   margin-top: 16px;
 }
-.duel-hud-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
 .duel-clock {
   display: inline-flex;
   align-items: center;
@@ -3237,22 +3248,27 @@ table.data td {
 .duel-clock.low {
   color: var(--bad);
 }
-.duel-hud-stat {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-variant-numeric: tabular-nums;
-}
-.duel-hud-stat b {
-  font-size: 20px;
-}
-.duel-hud-opp {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  max-width: 100%;
+/* The live match as a scoreboard (DuelBattle.jsx): each player's avatar,
+   score and answered/total bar either side of the learner's clock. */
+.duel-board { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: var(--space-4); }
+.duel-board-side { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.duel-board-side.is-opp { justify-content: flex-end; text-align: right; }
+.duel-board-who { display: grid; gap: 2px; min-width: 0; flex: 1 1 auto; max-width: 260px; }
+.duel-board-side.is-opp .duel-board-who { justify-items: end; }
+.duel-board-score { font-size: var(--text-lg); font-weight: 800; font-variant-numeric: tabular-nums; }
+.duel-board-score .sub { font-size: var(--text-2xs); font-weight: 600; }
+.duel-board-line { font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.duel-board-bar { display: block; width: 100%; height: 6px; border-radius: var(--radius-full); background: var(--surface-3); overflow: hidden; }
+.duel-board-bar > span { display: block; height: 100%; background: var(--accent-gradient); border-radius: inherit; transition: width var(--dur-slow) var(--ease-out); }
+.duel-board-side.is-opp .duel-board-bar { transform: scaleX(-1); }
+.duel-board-side.is-opp .duel-board-bar > span { background: var(--text-dim); }
+.duel-board-count { font-size: var(--text-2xs); font-variant-numeric: tabular-nums; }
+.duel-board .duel-clock { justify-content: center; padding: var(--space-2) var(--space-4); border-radius: var(--radius-full); background: var(--surface-2); border: 1px solid var(--border); }
+.duel-board .duel-clock.low { border-color: var(--bad); background: var(--bad-dim); }
+@media (max-width: 640px) {
+  .duel-board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .duel-board .duel-clock { grid-column: 1 / -1; grid-row: 1; }
+  .duel-board-side .user-avatar-initial, .duel-board-side .avatar-preview { display: none; }
 }
 .duel-timerbar > div {
   transition: width 0.25s linear, background var(--dur-base) ease;
@@ -3310,10 +3326,6 @@ table.data td {
 @media (max-width: 640px) {
   .duel-result-grid {
     grid-template-columns: 1fr;
-  }
-  .duel-hud-opp {
-    margin-left: 0;
-    flex-basis: 100%;
   }
   .duel-row-actions {
     justify-content: flex-start;

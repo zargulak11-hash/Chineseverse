@@ -435,7 +435,10 @@
         "already_finished": "你已经完成了这场对决。",
         "not_pending": "这个挑战已被回应或已过期。",
         "not_active": "这场对决当前不在进行中。"
-      }
+      },
+      "kpiWins": "胜",
+      "kpiLosses": "负",
+      "kpiDraws": "平"
     },
     "duelBattle": {
       "back": "返回对决",

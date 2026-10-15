@@ -191,14 +191,27 @@ function DuelRow({ d, onAction, busyId }) {
     d.status === "completed" && d.result
       ? d.result.outcome === "win" ? "good" : d.result.outcome === "loss" ? "bad" : ""
       : d.status === "active" || d.status === "pending" ? "accent" : "";
+  const finished = d.status === "completed" && d.result;
   return (
-    <div className="card duel-row">
-      <UserAvatar url={opp.avatar_url} name={name} size={40} />
+    <div className={`card duel-row duel-match is-${d.status}${finished ? ` is-${d.result.outcome}` : ""}`}>
+      {/* A match strip: the learner against the opponent, both scores once
+          it is over. */}
+      <div className="duel-match-vs">
+        <span className="duel-match-player">
+          <UserAvatar url={d.me?.avatar_url} name={d.me?.username} size={40} />
+          {finished && <b className="duel-match-score">{d.me?.score ?? 0}</b>}
+        </span>
+        <span className="vs">{t("pages.duels.vs")}</span>
+        <span className="duel-match-player">
+          {finished && <b className="duel-match-score">{opp.score ?? 0}</b>}
+          <UserAvatar url={opp.avatar_url} name={name} size={40} />
+        </span>
+      </div>
       <div className="duel-row-main">
         <b className="duel-row-name">{name}</b>
         <span className="sub">{line}</span>
         {d.hsk_level && (
-          <span className="sub" style={{ fontSize: 12 }}>
+          <span className="sub" style={{ fontSize: "var(--text-xs)" }}>
             {t("pages.duels.meta", { level: d.hsk_level, focus: t(`pages.duels.focusType.${d.focus || "mix"}`) })}
           </span>
         )}
@@ -220,7 +233,7 @@ function DuelRow({ d, onAction, busyId }) {
             {t("pages.duels.cancelChallenge")}
           </button>
         )}
-        <Link to={`/duels/${d.id}`} className="btn small">
+        <Link to={`/duels/${d.id}`} className={`btn small${d.status === "active" && !d.me?.finished ? " primary" : ""}`}>
           {d.status === "active" && !d.me?.finished
             ? t("pages.duels.play")
             : d.status === "completed"
@@ -290,6 +303,14 @@ export default function Duels() {
   const outgoing = data.filter((d) => d.status === "pending" && d.my_role === "challenger");
   const active = data.filter((d) => d.status === "active");
   const history = data.filter((d) => !["pending", "active"].includes(d.status));
+  // The learner's record, from the finished duels' real outcomes.
+  const record = { win: 0, loss: 0, draw: 0, played: 0 };
+  for (const d of history) {
+    if (d.status === "completed" && d.result?.outcome in record) {
+      record[d.result.outcome] += 1;
+      record.played += 1;
+    }
+  }
   const sections = [
     ["incoming", incoming],
     ["inProgress", active],
@@ -299,16 +320,23 @@ export default function Duels() {
 
   return (
     <Layout>
-      <div className="row spread duel-head">
+      <header className="page-head">
         <div>
+          <div className="page-eyebrow"><Icon name="swords" size={13} /> {t("nav.groupPlay")}</div>
           <h1 className="h1">{t("pages.duels.title")}</h1>
           <p className="sub">{t("pages.duels.subtitle")}</p>
+          <button type="button" className="btn primary" style={{ marginTop: 12 }} onClick={() => setOpen(true)}>
+            <Icon name="swords" size={14} /> {t("pages.duels.newDuel")}
+          </button>
         </div>
-        <button type="button" className="btn primary" onClick={() => setOpen(true)}>
-          <Icon name="swords" size={14} /> {t("pages.duels.newDuel")}
-        </button>
-      </div>
-
+        {record.played > 0 && (
+          <div className="kpi-row">
+            <div className="kpi"><span className="kpi-value duel-kpi-win">{record.win}</span><span className="kpi-label">{t("pages.duels.kpiWins")}</span></div>
+            <div className="kpi"><span className="kpi-value">{record.loss}</span><span className="kpi-label">{t("pages.duels.kpiLosses")}</span></div>
+            <div className="kpi"><span className="kpi-value">{record.draw}</span><span className="kpi-label">{t("pages.duels.kpiDraws")}</span></div>
+          </div>
+        )}
+      </header>
       {open && (
         <ChallengeModal
           onClose={() => setOpen(false)}
@@ -327,7 +355,7 @@ export default function Duels() {
         sections.map(([key, list]) =>
           list.length ? (
             <section key={key} style={{ marginTop: 20 }}>
-              <h2 className="h2" style={{ fontSize: 17, marginBottom: 10 }}>
+              <h2 className="h2 section-title">
                 {t(`pages.duels.${key}`)} <span className="sub">({list.length})</span>
               </h2>
               <div className="col">

@@ -444,7 +444,10 @@
         "already_finished": "You've already finished this duel.",
         "not_pending": "This challenge was already answered or has lapsed.",
         "not_active": "This duel isn't in progress."
-      }
+      },
+      "kpiWins": "Wins",
+      "kpiLosses": "Losses",
+      "kpiDraws": "Draws"
     },
     "duelBattle": {
       "back": "Back to duels",

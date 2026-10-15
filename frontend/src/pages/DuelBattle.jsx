@@ -436,18 +436,30 @@ export default function DuelBattle() {
   return (
     <Layout>
       {back}
+      {/* A scoreboard: both players' real progress through the same
+          questions, the learner's clock between them. */}
       <div className="card duel-hud">
-        <div className="duel-hud-row">
+        <div className="duel-board">
+          <div className="duel-board-side is-me">
+            <UserAvatar url={me?.avatar_url} name={me?.username} size={40} />
+            <div className="duel-board-who">
+              <b>{t("pages.duels.you")}</b>
+              <span className="duel-board-score">{me.score ?? 0} <span className="sub">{t("pages.duelBattle.score")}</span></span>
+              <span className="duel-board-bar" aria-hidden="true"><span style={{ width: `${(me.answered / total) * 100}%` }} /></span>
+              <span className="sub duel-board-count">{me.answered}/{total}</span>
+            </div>
+          </div>
           <div className={`duel-clock${low ? " low" : ""}`} role="timer" aria-label={t("pages.duelBattle.timeLeft")}>
             <Icon name="clock" size={16} /> {fmtClock(remaining)}
           </div>
-          <div className="duel-hud-stat">
-            <b>{me.score ?? 0}</b>
-            <span className="sub">{t("pages.duelBattle.score")}</span>
-          </div>
-          <div className="duel-hud-opp sub">
-            <UserAvatar url={opp.avatar_url} name={oppName} size={22} />
-            <span className="duel-row-name">{oppLine}</span>
+          <div className="duel-board-side is-opp">
+            <div className="duel-board-who">
+              <b className="duel-row-name">{oppName}</b>
+              <span className="sub duel-board-line">{oppLine}</span>
+              <span className="duel-board-bar" aria-hidden="true"><span style={{ width: `${((opp.answered ?? 0) / total) * 100}%` }} /></span>
+              <span className="sub duel-board-count">{opp.answered ?? 0}/{total}</span>
+            </div>
+            <UserAvatar url={opp.avatar_url} name={oppName} size={40} />
           </div>
         </div>
         <div className={`timerbar duel-timerbar${low ? " low" : ""}`} style={{ marginTop: 10 }}>

@@ -182,6 +182,10 @@ S = {
     "achievements.page.cabinet": L("Your achievements", "Ваши достижения", "Дастовардҳои шумо", "你的成就"),
     # ---- Companion (pages/Companion.jsx) ----
     "pages.companion.tryPhrase": L("Phrases to try", "Фразы, чтобы попробовать", "Ибораҳо барои озмоиш", "可以试试的句子"),
+    # ---- Duels lobby (pages/Duels.jsx) ----
+    "pages.duels.kpiWins": L("Wins", "Победы", "Ғалабаҳо", "胜"),
+    "pages.duels.kpiLosses": L("Losses", "Поражения", "Шикастҳо", "负"),
+    "pages.duels.kpiDraws": L("Draws", "Ничьи", "Мусовӣ", "平"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(
