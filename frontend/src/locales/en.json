@@ -566,7 +566,9 @@
       "theRule": "The rule",
       "explainAgain": "Explain again",
       "skipCase": "Next case",
-      "unlocked": "Unlocked"
+      "unlocked": "Unlocked",
+      "boardLabel": "{{name}} wrote on the board",
+      "yourLesson": "Your lesson"
     },
     "world": {
       "title": "Chinese World",
@@ -1413,7 +1415,10 @@
     "micNoSpeech": "I didn't hear anything — try again a little closer to the microphone.",
     "micNoDevice": "No microphone was found.",
     "micNetwork": "Speech recognition needs an internet connection.",
-    "micLanguage": "This browser can't recognise speech in this language — choose another one or type."
+    "micLanguage": "This browser can't recognise speech in this language — choose another one or type.",
+    "sampleLine": "你好！我们一起说中文吧。",
+    "hearVoice": "Hear the voice",
+    "sessionOnly": "Only for today's conversation — your own companion stays the same."
   },
   "ui": {
     "heatmapLess": "Less",

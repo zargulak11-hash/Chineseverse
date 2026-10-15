@@ -64,6 +64,7 @@ export default function PetTeacher() {
     <Layout>
       <header className="page-head">
         <div>
+          <div className="page-eyebrow"><Icon name="teach" size={13} /> {t("nav.groupPlay")}</div>
           <h1 className="h1">{t("pages.petTeacher.title")}</h1>
           <p className="sub">
             {t("pages.petTeacher.subtitle", { name: animal ? animal.name : t("pages.petTeacher.yourCompanion") })}
@@ -79,35 +80,38 @@ export default function PetTeacher() {
 
       <div className="ws">
       <div className="ws-main">
-      <div className="card"><div className="chat">
-        <div className="bubble npc">
-          <span className="speaker" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            {animal ? (
-              <AnimalAvatar
-                slug={animal.slug}
-                accentColor={animal.accent_color}
-                size={16}
-                state={!result || result.error ? "idle" : result.success ? "celebrating" : result.correct_fix ? "happy" : "encouraging"}
-              />
-            ) : (
-              <Icon name="paw" size={14} style={{ verticalAlign: -2 }} />
-            )}{" "}
-            {animal?.name || t("pages.petTeacher.yourCompanion")}
-          </span>
-          <span lang="zh">{lesson.wrong_sentence}</span>
-          {lesson.hint && !result && <span className="english">{t("pages.conversation.hint")}: {lesson.hint}</span>}
+      {/* A lesson where the learner is the teacher: the companion, as the
+          pupil, has written a sentence with one real mistake on the board. */}
+      <section className="card pt-class" aria-labelledby="pt-board-label">
+        <div className="pt-pupil">
+          {animal ? (
+            <AnimalAvatar
+              slug={animal.slug}
+              accentColor={animal.accent_color}
+              size={112}
+              state={!result || result.error ? (busy ? "thinking" : "confused") : result.success ? "celebrating" : result.correct_fix ? "happy" : "encouraging"}
+            />
+          ) : (
+            <span className="pt-pupil-paw"><Icon name="paw" size={40} /></span>
+          )}
+          <span className="pt-pupil-name">{animal?.name || t("pages.petTeacher.yourCompanion")}</span>
         </div>
+        <div className="pt-board">
+          <p className="pt-board-label" id="pt-board-label">{t("pages.petTeacher.boardLabel", { name: animal ? animal.name : t("pages.petTeacher.yourCompanion") })}</p>
+          <p className="pt-board-zh" lang="zh">{lesson.wrong_sentence}</p>
+          {lesson.hint && !result && <p className="pt-board-hint">{t("pages.conversation.hint")}: {lesson.hint}</p>}
+        </div>
+      </section>
 
+      <div className="card pt-desk">
         {!result && (
-          <div
-            className="microw"
-            style={{ flexDirection: "column", alignItems: "stretch" }}
-          >
+          <div className="pt-form">
             <div className="field">
               <label htmlFor="pet-correction">{t("pages.petTeacher.yourCorrection")}</label>
               <input
                 id="pet-correction"
-                className="input"
+                className="input pt-correction"
+                lang="zh-CN"
                 value={correction}
                 onChange={(e) => setCorrection(e.target.value)}
                 placeholder={t("pages.petTeacher.correctionPlaceholder")}
@@ -115,20 +119,22 @@ export default function PetTeacher() {
             </div>
             <div className="field">
               <label htmlFor="pet-explain">{t("pages.petTeacher.explainRule")}</label>
-              <div className="row" style={{ alignItems: "stretch" }}>
+              <div className="row" style={{ alignItems: "stretch", margin: 0 }}>
                 <textarea
                   id="pet-explain"
                   className="input"
-                  rows={2}
+                  rows={3}
                   style={{ flex: 1 }}
                   value={explanation}
                   onChange={(e) => setExplanation(e.target.value)}
                   placeholder={t("pages.petTeacher.explanationPlaceholder")}
                 />
-                <MicRecorder
-                  onTranscript={(txt) => setExplanation((prev) => (prev ? `${prev} ${txt}` : txt))}
-                  disabled={busy}
-                />
+                <span className="rp-mic pt-mic">
+                  <MicRecorder
+                    onTranscript={(txt) => setExplanation((prev) => (prev ? `${prev} ${txt}` : txt))}
+                    disabled={busy}
+                  />
+                </span>
               </div>
             </div>
             <button
@@ -136,7 +142,7 @@ export default function PetTeacher() {
               onClick={submit}
               disabled={busy || !correction.trim() || !explanation.trim()}
             >
-              {busy ? t("pages.petTeacher.checking") : t("pages.petTeacher.teachCompanion")}
+              <Icon name="teach" size={15} /> {busy ? t("pages.petTeacher.checking") : t("pages.petTeacher.teachCompanion")}
             </button>
           </div>
         )}
@@ -144,9 +150,10 @@ export default function PetTeacher() {
         {result && result.error && <div className="bubble reaction" role="alert"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {result.error}</div>}
         {result && !result.error && (
           <div aria-live="polite" className="pt-result">
-            <div className="bubble me">
-              {correction}
-              <span className="english">{explanation}</span>
+            <div className="pt-answer">
+              <p className="side-title" style={{ margin: 0 }}>{t("pages.petTeacher.yourLesson")}</p>
+              <p className="pt-answer-zh" lang="zh-CN">{correction}</p>
+              <p className="pt-answer-why">{explanation}</p>
             </div>
             <div className={`pt-verdict ${tone}`}>
               <Icon name={result.correct_fix ? "check" : "x"} size={15} />
@@ -198,7 +205,7 @@ export default function PetTeacher() {
             </div>
           </div>
         )}
-      </div></div>
+      </div>
       </div>
       <aside className="ws-side">
         <div className="card side-card">

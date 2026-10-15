@@ -164,6 +164,20 @@ S = {
         "Возьмите миссию и выполните настоящее занятие, о котором она говорит. Прогресс засчитывается сам, награда приходит сразу по завершении.",
         "Миссияро қабул кунед ва машғулияти воқеии номбаршударо иҷро кунед. Пешрафт худкор ҳисоб мешавад ва мукофот фавран меояд.",
         "接受任务后，去完成它所说的真实练习。进度会自动计算，完成时立即获得奖励。"),
+    # ---- Daily Voice Companion (pages/VoiceCompanion.jsx) ----
+    # What the previewed animal says in its own voice -- spoken Chinese, the
+    # same in every locale.
+    "voice.sampleLine": L("你好！我们一起说中文吧。", "你好！我们一起说中文吧。", "你好！我们一起说中文吧。", "你好！我们一起说中文吧。"),
+    "voice.hearVoice": L("Hear the voice", "Послушать голос", "Овозро шунавед", "听听声音"),
+    "voice.sessionOnly": L(
+        "Only for today's conversation — your own companion stays the same.",
+        "Только для сегодняшнего разговора — ваш компаньон не меняется.",
+        "Танҳо барои суҳбати имрӯза — ҳамроҳи шумо иваз намешавад.",
+        "只用于今天的对话——你的伙伴不会改变。"),
+    # ---- Teach your companion (pages/PetTeacher.jsx) ----
+    "pages.petTeacher.boardLabel": L("{{name}} wrote on the board", "{{name}} написал(а) на доске",
+                                     "{{name}} дар тахта навишт", "{{name}} 在黑板上写道"),
+    "pages.petTeacher.yourLesson": L("Your lesson", "Ваш урок", "Дарси шумо", "你的讲解"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

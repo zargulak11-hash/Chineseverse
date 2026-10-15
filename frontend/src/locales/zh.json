@@ -557,7 +557,9 @@
       "theRule": "规则",
       "explainAgain": "再解释一次",
       "skipCase": "下一个例子",
-      "unlocked": "已解锁"
+      "unlocked": "已解锁",
+      "boardLabel": "{{name}} 在黑板上写道",
+      "yourLesson": "你的讲解"
     },
     "world": {
       "title": "中文世界",
@@ -1398,7 +1400,10 @@
     "micNoSpeech": "没有听到声音——靠近麦克风再试一次。",
     "micNoDevice": "没有找到麦克风。",
     "micNetwork": "语音识别需要联网。",
-    "micLanguage": "这个浏览器不能识别这种语言——换一种语言或者直接打字。"
+    "micLanguage": "这个浏览器不能识别这种语言——换一种语言或者直接打字。",
+    "sampleLine": "你好！我们一起说中文吧。",
+    "hearVoice": "听听声音",
+    "sessionOnly": "只用于今天的对话——你的伙伴不会改变。"
   },
   "ui": {
     "heatmapLess": "少",
