@@ -889,7 +889,9 @@
       "turns": "Turns",
       "progressTitle": "How far you are",
       "turnOf": "Turn {{n}} of {{total}}",
-      "keyWords": "Words that help here"
+      "keyWords": "Words that help here",
+      "speakerNpc": "Local",
+      "speakerYou": "You"
     },
     "caseSolve": {
       "opening": "Opening the file…",

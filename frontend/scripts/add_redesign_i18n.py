@@ -186,6 +186,9 @@ S = {
     "pages.duels.kpiWins": L("Wins", "Победы", "Ғалабаҳо", "胜"),
     "pages.duels.kpiLosses": L("Losses", "Поражения", "Шикастҳо", "负"),
     "pages.duels.kpiDraws": L("Draws", "Ничьи", "Мусовӣ", "平"),
+    # ---- Real Chinese conversation (pages/Conversation.jsx) ----
+    "pages.conversation.speakerNpc": L("Local", "Собеседник", "Ҳамсуҳбат", "对方"),
+    "pages.conversation.speakerYou": L("You", "Вы", "Шумо", "你"),
     # ---- Mistake notebook (pages/Mistakes.jsx) ----
     "pages.mistakes.listen": L("Listen", "Прослушать", "Гӯш кардан", "听"),
     "pages.mistakes.missedTimes": L(

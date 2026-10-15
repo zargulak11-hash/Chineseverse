@@ -875,7 +875,9 @@
       "turns": "轮次",
       "progressTitle": "进度",
       "turnOf": "第{{n}}轮，共{{total}}轮",
-      "keyWords": "这里用得上的词"
+      "keyWords": "这里用得上的词",
+      "speakerNpc": "对方",
+      "speakerYou": "你"
     },
     "caseSolve": {
       "opening": "正在打开卷宗…",

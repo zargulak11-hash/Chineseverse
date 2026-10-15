@@ -2,12 +2,62 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import { useAuth } from "../auth.js";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import MicRecorder from "../components/MicRecorder.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import { speakChinese } from "../zhSpeech.js";
+
+// A scripted Real Chinese conversation, laid out as the same chat room as
+// Roleplay: the person the learner meets on the left, the learner (their
+// own avatar) on the right, choices as reply chips, and the speaking turn
+// docked at the foot. The script, branching and grading are unchanged.
+
+// The scenario data names roles, not people ("npc" / "learner").
+function speakerLabel(t, speaker) {
+  const s = String(speaker || "").toLowerCase();
+  if (s === "npc") return t("pages.conversation.speakerNpc");
+  if (s === "learner") return t("pages.conversation.speakerYou");
+  return speaker;
+}
+
+function NpcAvatar() {
+  return <span className="cv-npc" aria-hidden="true"><Icon name="user" size={20} /></span>;
+}
+
+function NpcLine({ d, t }) {
+  return (
+    <div className="rp-msg is-partner">
+      <NpcAvatar />
+      <div className="rp-line is-partner">
+        <span className="rp-who">{speakerLabel(t, d.speaker)}</span>
+        <div className="rp-line-main">
+          <p className="rp-zh" lang="zh-CN">{d.text}</p>
+          {d.text && (
+            <button type="button" className="icon-btn rp-speak" onClick={() => speakChinese(d.text)} aria-label={t("roleplay.listen")} title={t("roleplay.listen")}>
+              <Icon name="volume" size={16} />
+            </button>
+          )}
+        </div>
+        {d.pinyin && <p className="rp-pinyin">{d.pinyin}</p>}
+        {d.english && <p className="rp-gloss">{d.english}</p>}
+      </div>
+    </div>
+  );
+}
+
+function MyLine({ text, me }) {
+  return (
+    <div className="rp-msg is-learner">
+      <div className="rp-line is-learner"><p className="rp-zh" lang="zh-CN">{text}</p></div>
+      <UserAvatar url={me.avatar} name={me.name} size={36} className="rp-me" />
+    </div>
+  );
+}
 
 export default function Conversation() {
   // Back to the place on the living-world map this talk was opened from.
@@ -17,6 +67,7 @@ export default function Conversation() {
   const { t, i18n } = useTranslation();
   const { scenarioId } = useParams();
   const { dashboard, refresh } = useDashboard() || {};
+  const { user } = useAuth();
   const companion = dashboard?.animal;
   const [sc, setSc] = useState(null);
   const [turnIndex, setTurnIndex] = useState(0);
@@ -26,6 +77,9 @@ export default function Conversation() {
   const [result, setResult] = useState(null);
   const [chosen, setChosen] = useState(null); // the DialogueChoice the user picked at the current turn
   const [sent, setSent] = useState(false);
+  // What the learner really said / chose at each past turn, so the thread
+  // keeps it (it used to leave an empty bubble once the turn moved on).
+  const [said, setSaid] = useState({});
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -33,6 +87,7 @@ export default function Conversation() {
       setSc(data);
       setTurnIndex(0);
       setHistory([0]);
+      setSaid({});
     }).catch((e) => setError(e.message));
   }, [scenarioId, i18n.language]);
 
@@ -72,6 +127,7 @@ export default function Conversation() {
         response_time_ms: 1500,
       });
       setResult(res);
+      if (!res.error) setSaid((s) => ({ ...s, [turnIndex]: { text: text.trim() } }));
       refresh?.(); // XP, streak, companion -- and maybe an achievement
     } catch (e) {
       setResult({ error: e.message });
@@ -90,6 +146,7 @@ export default function Conversation() {
 
   function pickChoice(choice) {
     setChosen(choice);
+    setSaid((s) => ({ ...s, [turnIndex]: { choice } }));
   }
 
   // Workspace shape: the conversation in the main column, what it is about
@@ -97,150 +154,113 @@ export default function Conversation() {
   const turns = Object.keys(dialoguesByTurn).length;
   const turnNo = Math.min(history.length, turns);
   const keyWords = [...new Set(Object.values(dialoguesByTurn).flatMap((d) => d.expected_keywords || []))];
+  const me = { avatar: dashboard?.avatar_url, name: user?.username };
+  const voiceTurn = current && !(current.choices?.length > 0) && current.requires_voice;
+
   return (
     <Layout>
-      <Link to={backTo} className="sub">
-        ← {sc.scenario_type === "case" ? t("pages.conversation.leaveCase") : t("pages.conversation.leaveConversation")}
-      </Link>
-      <header className="page-head" style={{ marginTop: 10 }}>
-        <div>
-          <h1 className="h1">
-            <Icon name={sc.is_case ? "search" : "chat"} size={20} style={{ verticalAlign: -3, marginRight: 6 }} />
-            {sc.title}
-          </h1>
+      <header className="card rp-room-head">
+        <Link to={backTo} className="icon-btn" aria-label={sc.scenario_type === "case" ? t("pages.conversation.leaveCase") : t("pages.conversation.leaveConversation")}>
+          <Icon name="arrowLeft" size={18} />
+        </Link>
+        <span className="rp-avatar cv-head-avatar"><NpcAvatar /></span>
+        <div className="rp-room-id">
+          <div className="page-eyebrow"><Icon name={sc.is_case ? "search" : "chat"} size={13} /> {t("nav.realChinese")}</div>
+          <h1 className="h1 rp-room-title">{sc.title}</h1>
           <p className="sub">{sc.description}</p>
         </div>
-        <div className="kpi-row">
-          <div className="kpi"><span className="kpi-value">HSK {sc.min_hsk_level}</span><span className="kpi-label"><Icon name="star" size={11} style={{ verticalAlign: -1 }} /> {sc.difficulty}</span></div>
-          <div className="kpi">
-            <span className="kpi-value">{done ? turns : turnNo}/{turns}</span>
-            <span className="kpi-label">{t("pages.conversation.turns")}</span>
+        <div className="rp-room-meta">
+          <span className="badge">HSK {sc.min_hsk_level} · <Icon name="star" size={11} /> {sc.difficulty}</span>
+          <div className="rp-turns">
+            <span className="rp-turns-label">{t("pages.conversation.turnOf", { n: done ? turns : turnNo, total: turns })}</span>
+            <span className="rp-turns-bar" aria-hidden="true"><span style={{ width: `${done ? 100 : (turnNo / Math.max(1, turns)) * 100}%` }} /></span>
           </div>
         </div>
       </header>
 
-      <div className="ws">
+      <div className="ws rp-ws">
       <div className="ws-main">
-
-      {done ? (
-        <div className="card center">
-          <div style={{ fontSize: 40 }}>🎉</div>
-          <p>{t("pages.conversation.completed")}</p>
-          <Link to={backTo}>
-            <button className="btn primary">{t("pages.conversation.backToWorld")}</button>
-          </Link>
-        </div>
-      ) : (
-        <div className="card"><div className="chat">
-          {history.map((turn, i) => {
+      <section className="card rp-chat" aria-label={sc.title}>
+        <div className="rp-thread" aria-live="polite">
+          {history.map((turn) => {
             const d = dialoguesByTurn[turn];
             if (!d) return null;
-            const isCurrent = turn === turnIndex;
+            const isCurrent = turn === turnIndex && !done;
             const hasChoices = d.choices && d.choices.length > 0;
+            const mine = said[turn];
             return (
-              <div key={d.id}>
-                <div className="bubble npc">
-                  <span className="speaker"><Icon name="user" size={13} style={{ verticalAlign: -2 }} /> {d.speaker}</span>
-                  {d.text}
-                  {d.pinyin && <span className="pinyin">{d.pinyin}</span>}
-                  {d.english && <span className="english">{d.english}</span>}
-                </div>
+              <div key={d.id} className="cv-turn">
+                {d.text && <NpcLine d={d} t={t} />}
 
                 {hasChoices && isCurrent && !chosen && (
-                  <div className="col" style={{ marginTop: 10, gap: 8 }}>
+                  <div className="cv-choices">
                     <p className="sub">{t("pages.conversation.whatDoYouSay")}</p>
                     {d.choices.map((c) => (
-                      <button key={c.id} className="option" onClick={() => pickChoice(c)}>
-                        {c.label}
+                      <button key={c.id} type="button" className="rp-suggest-chip cv-choice" onClick={() => pickChoice(c)}>
+                        <b lang="zh-CN">{c.label}</b>
                       </button>
                     ))}
                   </div>
                 )}
-                {hasChoices && isCurrent && chosen && (
-                  <>
-                    <div className="bubble me">{chosen.label}</div>
-                    {chosen.response_text && (
-                      <div className="bubble npc">{chosen.response_text}</div>
-                    )}
-                    <div
-                      className="bubble reaction"
-                      style={
-                        chosen.is_best
-                          ? { borderColor: "var(--good)", color: "var(--good)" }
-                          : undefined
-                      }
-                    >
-                      <Icon name={chosen.is_best ? "check" : "chat"} size={13} style={{ verticalAlign: -2, marginRight: 4 }} />
-                      {chosen.feedback}
-                    </div>
-                    <div className="row center" style={{ justifyContent: "center" }}>
-                      <button
-                        className="btn"
-                        onClick={() => advanceTo(chosen.next_turn ?? d.turn_index + 1)}
-                      >
-                        {t("common.continue")}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {!hasChoices && d.requires_voice && isCurrent && !result && (
-                  <div className="microw">
-                    <MicRecorder onTranscript={(t) => setText(t)} disabled={sent} />
-                    <div style={{ flex: 1, minWidth: 280 }}>
-                      <p className="sub" style={{ marginBottom: 6 }}>{d.prompt}</p>
-                      <textarea
-                        className="input"
-                        rows={2}
-                        placeholder={t("pages.conversation.micPlaceholder")}
-                        value={text}
-                        onChange={(e) => setText(e.target.value)}
-                      />
-                      <div className="row" style={{ marginTop: 8 }}>
-                        <button className="btn primary" onClick={submit} disabled={sent || !text.trim()}>
-                          {sent ? t("pages.conversation.checking") : t("pages.conversation.speak")}
-                        </button>
-                        <button className="btn ghost" onClick={() => advanceTo(d.turn_index + 1)}>
-                          {t("pages.conversation.skipForNow")}
-                        </button>
-                          {d.expected_keywords?.length > 0 && (
-                            <span className="muted" style={{ fontSize: 11 }}>
-                              {t("pages.conversation.hint")}: {d.expected_keywords.join(" · ")}
-                            </span>
-                          )}
+                {hasChoices && (isCurrent ? chosen : mine?.choice) && (() => {
+                  const c = isCurrent ? chosen : mine.choice;
+                  return (
+                    <>
+                      <MyLine text={c.label} me={me} />
+                      {c.response_text && (
+                        <div className="rp-msg is-partner">
+                          <NpcAvatar />
+                          <div className="rp-line is-partner"><p className="rp-zh" lang="zh-CN">{c.response_text}</p></div>
+                        </div>
+                      )}
+                      <div className={`cv-note${c.is_best ? " is-best" : ""}`}>
+                        <Icon name={c.is_best ? "check" : "chat"} size={13} /> {c.feedback}
                       </div>
-                    </div>
+                      {isCurrent && (
+                        <div className="cv-next">
+                          <button type="button" className="btn primary" onClick={() => advanceTo(c.next_turn ?? d.turn_index + 1)}>
+                            {t("common.continue")} <Icon name="arrowRight" size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+
+                {!hasChoices && d.requires_voice && !isCurrent && mine?.text && <MyLine text={mine.text} me={me} />}
+                {!hasChoices && d.requires_voice && isCurrent && !result && (
+                  <div className="cv-task">
+                    <Icon name="mic" size={14} /> <span>{d.prompt}</span>
                   </div>
                 )}
-                {!hasChoices && d.requires_voice && !isCurrent && <div className="bubble me" />}
                 {!hasChoices && !d.requires_voice && isCurrent && (
-                  <div className="microw">
-                    <button className="btn primary" onClick={() => advanceTo(d.turn_index + 1)}>
-                      {t("common.continue")}
+                  <div className="cv-next">
+                    <button type="button" className="btn primary" onClick={() => advanceTo(d.turn_index + 1)}>
+                      {t("common.continue")} <Icon name="arrowRight" size={14} />
                     </button>
                   </div>
                 )}
                 {!hasChoices && isCurrent && result && (
                   result.error ? (
-                    <div className="bubble reaction"><Icon name="alert" size={14} style={{ verticalAlign: -2 }} /> {result.error}</div>
+                    <div className="cv-note is-bad" role="alert"><Icon name="alert" size={14} /> {result.error}</div>
                   ) : (
                     <>
-                      <div className="bubble me">
-                        {text}
+                      <MyLine text={text} me={me} />
+                      <div className="cv-feedback">
+                        <VoiceFeedbackCard
+                          attempt={result.attempt}
+                          reaction={result.reaction}
+                          companionSlug={companion?.slug}
+                          companionName={companion?.name}
+                        />
                       </div>
-                      <VoiceFeedbackCard
-                        attempt={result.attempt}
-                        reaction={result.reaction}
-                        companionSlug={companion?.slug}
-                        companionName={companion?.name}
-                      />
                       {result.improvement && (
-                        <div className="bubble reaction" style={{ borderColor: "var(--accent)", color: "var(--accent)" }}>
-                          <Icon name="sparkles" size={13} style={{ verticalAlign: -2 }} /> {result.improvement}
-                        </div>
+                        <div className="cv-note is-tip"><Icon name="sparkles" size={13} /> {result.improvement}</div>
                       )}
-                      <div className="row center" style={{ justifyContent: "center" }}>
-                        <button className="btn" onClick={() => advanceTo(d.turn_index + 1)}>{t("common.continue")}</button>
+                      <div className="cv-next">
+                        <button type="button" className="btn primary" onClick={() => advanceTo(d.turn_index + 1)}>
+                          {t("common.continue")} <Icon name="arrowRight" size={14} />
+                        </button>
                       </div>
                     </>
                   )
@@ -248,9 +268,46 @@ export default function Conversation() {
               </div>
             );
           })}
+          {done && (
+            <div className="cv-done">
+              <span className="cv-done-icon" aria-hidden="true"><Icon name="check" size={26} /></span>
+              <p>{t("pages.conversation.completed")}</p>
+              <Link to={backTo} className="btn primary">{t("pages.conversation.backToWorld")}</Link>
+            </div>
+          )}
           <div ref={scrollRef} />
-        </div></div>
-      )}
+        </div>
+
+        {voiceTurn && !result && (
+          <div className="rp-compose">
+            <label className="side-title" htmlFor="cv-input">{t("pages.conversation.micPlaceholder")}</label>
+            <div className="rp-compose-row">
+              <input
+                id="cv-input"
+                className="input"
+                lang="zh-CN"
+                placeholder={t("pages.conversation.micPlaceholder")}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+                disabled={sent}
+              />
+              <span className="rp-mic"><MicRecorder onTranscript={(heard) => setText(heard)} disabled={sent} showStatus /></span>
+              <button type="button" className="btn primary rp-send" onClick={submit} disabled={sent || !text.trim()}>
+                <Icon name="mic" size={15} /> {sent ? t("pages.conversation.checking") : t("pages.conversation.speak")}
+              </button>
+            </div>
+            <div className="rp-compose-foot">
+              {current.expected_keywords?.length > 0 ? (
+                <p className="sub rp-note">{t("pages.conversation.hint")}: <span lang="zh-CN">{current.expected_keywords.join(" · ")}</span></p>
+              ) : <span />}
+              <button type="button" className="btn small ghost" onClick={() => advanceTo(current.turn_index + 1)}>
+                {t("pages.conversation.skipForNow")}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
       </div>
       <aside className="ws-side">
         <div className="card side-card">
@@ -262,7 +319,11 @@ export default function Conversation() {
           <div className="card side-card">
             <p className="side-title">{t("pages.conversation.keyWords")}</p>
             <div className="chip-row">
-              {keyWords.map((w) => <span key={w} className="badge" lang="zh-CN">{w}</span>)}
+              {keyWords.map((w) => (
+                <button key={w} type="button" className="rp-chip" lang="zh-CN" onClick={() => speakChinese(w)} aria-label={`${t("roleplay.listen")}: ${w}`}>
+                  {w}
+                </button>
+              ))}
             </div>
           </div>
         )}

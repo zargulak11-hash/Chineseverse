@@ -5244,6 +5244,42 @@ table.data td {
   .ms-ticket { grid-template-columns: minmax(0, 1fr); padding: var(--space-4); }
 }
 
+/* Visually hidden, still read by screen readers (labels that the layout
+   already shows in another way). */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Real Chinese conversation (Conversation.jsx) in the Roleplay room. */
+.cv-npc {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--accent-strong); box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3px var(--border-strong);
+}
+.cv-head-avatar .cv-npc { width: 56px; height: 56px; }
+.cv-turn { display: flex; flex-direction: column; gap: var(--space-3); }
+.cv-choices { display: grid; gap: var(--space-2); justify-items: end; }
+.cv-choices .sub { margin: 0; }
+.cv-choice { flex: 0 0 auto; max-width: min(520px, 100%); }
+.cv-note { align-self: center; display: inline-flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-2); font-size: var(--text-sm); color: var(--text-dim); max-width: 560px; }
+.cv-note.is-best { border-color: var(--good); color: var(--good); background: var(--good-dim); }
+.cv-note.is-tip { border-color: var(--accent-border); color: var(--accent-strong); background: var(--accent-dim); }
+.cv-note.is-bad { border-color: var(--bad); color: var(--bad); background: var(--bad-dim); }
+.cv-task { align-self: flex-end; display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius-full); border: 1px dashed var(--accent-border); color: var(--accent-strong); font-size: var(--text-sm); }
+.cv-feedback { align-self: flex-start; width: 100%; max-width: 560px; }
+.cv-next { display: flex; justify-content: center; }
+.cv-done { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-5) 0; }
+.cv-done p { margin: 0; font-weight: 700; }
+.cv-done-icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--good-dim); color: var(--good); }
+
+/* Real Chinese case (CaseSolve.jsx) on the dossier's styles. */
+.cs-back { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.cs-contradiction { border-color: var(--bad); border-left: 4px solid var(--bad); }
+.cs-contradiction .h2 { color: var(--bad); }
+.cs-verdict textarea { width: 100%; }
+.cs-result.is-solved { border-color: var(--good); }
+.cs-result.is-wrong { border-color: var(--bad); }
+.cs-result-head { display: flex; align-items: center; gap: var(--space-2); }
+.cs-result.is-solved .cs-result-head { color: var(--good); }
+.cs-result.is-wrong .cs-result-head { color: var(--bad); }
+
 /* ---------- AI roleplay (Roleplay.jsx) ----------
    The hub is a set of "doors" (a painted place, who you will meet there,
    what you set out to do); a session is a chat room -- the partner's face
