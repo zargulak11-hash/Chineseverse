@@ -8,6 +8,15 @@ class Settings(BaseSettings):
         "postgresql+psycopg://postgres:postgres@localhost:5432/linguaverse"
     )
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    # The Android / iOS app (Capacitor, frontend/capacitor.config.json) runs
+    # the bundled frontend from the phone itself -- https://localhost on
+    # Android, capacitor://localhost on iOS -- and calls this API across
+    # origins. Kept apart from CORS_ORIGINS, which deployments override with
+    # their own list: an override written before the app existed would
+    # otherwise lock it out. The session is a Bearer token, not a cookie, so
+    # these origins gain nothing a script on any page couldn't already do
+    # with a token. MOBILE_APP_ORIGINS='[]' turns the app's access off.
+    mobile_app_origins: list[str] = ["https://localhost", "capacitor://localhost"]
 
     # Security
     jwt_secret: str = "change-me-in-production"
