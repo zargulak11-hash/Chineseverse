@@ -11,7 +11,7 @@ import { Empty, Loading } from "../components/ui.jsx";
 import VoiceFeedbackCard from "../components/VoiceFeedbackCard.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { deriveVoiceProfile, voiceTone } from "../voiceProfile.js";
-import { speakChinese } from "../zhSpeech.js";
+import { speakChinese, stopSpeaking } from "../zhSpeech.js";
 
 // The Daily Voice Companion: pick an animal for today's spoken chat, then
 // talk. The picker is a roster with one animal previewed large (its voice
@@ -53,7 +53,7 @@ export default function VoiceCompanion() {
   }
 
   function endSession() {
-    window.speechSynthesis?.cancel();
+    stopSpeaking();
     setSession(null);
     setChat([]);
     setHistory([]);

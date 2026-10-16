@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Ink theme's page background (bg token, frontend/src/index.css). On WebViews older than
+         Chromium 140 Capacitor pads the window instead of letting the page
+         draw under the status and gesture bars, and those bars then show the
+         window background: white by default, under white icons. -->
+    <color name="cv_window_background">#0B1020</color>
+</resources>

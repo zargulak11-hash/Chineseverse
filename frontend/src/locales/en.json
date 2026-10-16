@@ -3456,5 +3456,8 @@
     "stepCompare": "Compare",
     "legendTarget": "The tone's shape",
     "legendVoice": "Your voice"
+  },
+  "network": {
+    "offline": "You're offline. Nothing is lost — reconnect to keep learning."
   }
 }

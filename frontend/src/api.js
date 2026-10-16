@@ -1,7 +1,9 @@
 import i18n from "./i18n.js";
 import { localizeApiError } from "./apiErrors.js";
+import { API_ORIGIN } from "./platform.js";
 
-const API_BASE = "/api";
+// "/api" on the website; the full server address inside the mobile app.
+const API_BASE = `${API_ORIGIN}/api`;
 const TOKEN_KEY = "linguaverse_token";
 const USER_KEY = "linguaverse_user";
 

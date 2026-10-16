@@ -11,6 +11,7 @@ import { nextTitle } from "../components/NextStep.jsx";
 import { Loading } from "../components/ui.jsx";
 import { SUPPORTED_LANGS } from "../i18n.js";
 import { usePrefs } from "../prefs.jsx";
+import { speakChinese } from "../zhSpeech.js";
 
 const MOTIVATIONS = ["travel", "work", "culture", "exam", "family", "other"];
 const SOURCES = ["friend", "social", "school", "search", "other"];
@@ -229,11 +230,11 @@ export default function Onboarding() {
 
   const q = questions[qIdx];
   useEffect(() => {
-    if (step === "test" && soundEnabled && q?.type === "listening" && q.tts_text && window.speechSynthesis) {
-      const utter = new SpeechSynthesisUtterance(q.tts_text);
-      utter.lang = "zh-CN";
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
+    // Through zhSpeech like every other page, so the placement test's
+    // listening questions also speak in the Android app (no speechSynthesis
+    // in its WebView) and pick the explicit Chinese voice on the web.
+    if (step === "test" && soundEnabled && q?.type === "listening" && q.tts_text) {
+      speakChinese(q.tts_text, { whole: true });
     }
   }, [step, qIdx, q?.type, q?.tts_text, soundEnabled]);
 

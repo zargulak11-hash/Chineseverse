@@ -128,6 +128,10 @@ python scripts/check_i18n_keys.py            # every used translation key exists
 
 Only when all three pass does a push to `main` deploy: the workflow connects to the server over SSH and runs its deploy script, which rebuilds the Docker stack (nginx serves the SPA and proxies `/api` and `/static` to the API).
 
+## Mobile app
+
+The same frontend also ships as an Android and iOS app (Capacitor, `frontend/android/` and `frontend/ios/`) against the same backend; `npm run mobile:sync` in `frontend/` rebuilds it. Building, testing on a phone and the store-release checklist are in [docs/MOBILE_APP.md](docs/MOBILE_APP.md).
+
 ## Languages
 
 The whole interface is available in English, Russian, Tajik and Chinese (`frontend/src/locales/`). Database content (meanings, lesson text, missions, …) is translated through one `content_translations` table and served in the learner's language via the `X-Locale` header. API error messages a learner can meet are shown in their language (`frontend/src/apiErrors.js`). Chinese text and pinyin are never translated.

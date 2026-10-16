@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { assetUrl } from "../platform.js";
 
 // The one avatar rule for a PERSON (the signed-in user, duel opponents,
 // people in Community, notification senders): their uploaded photo, or
@@ -30,7 +31,7 @@ export default function UserAvatar({ url, name, size = 36, className = "" }) {
   const style = { width: size, height: size };
   if (url && !failed) {
     return (
-      <img src={url} alt="" className={`avatar-preview ${className}`} style={style} onError={() => setFailed(true)} />
+      <img src={assetUrl(url)} alt="" className={`avatar-preview ${className}`} style={style} onError={() => setFailed(true)} />
     );
   }
   return (

@@ -5,18 +5,26 @@ import App from "./App.jsx";
 import { PrefsProvider } from "./prefs.jsx";
 import { ThemeProvider } from "./theme.jsx";
 import { i18nReady } from "./i18n.js";
+import { hideSplash, initNativeShell } from "./native.js";
 import "./index.css";
+
+// The Android / iOS app's status bar, safe areas and back button; nothing
+// on the website.
+initNativeShell();
 
 // Wait for the learner's language (i18n.js loads all but English on demand);
 // a failed load still renders, in English.
-i18nReady.finally(() => ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <PrefsProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </PrefsProvider>
-    </ThemeProvider>
-  </React.StrictMode>
-));
+i18nReady.finally(() => {
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <ThemeProvider>
+        <PrefsProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </PrefsProvider>
+      </ThemeProvider>
+    </React.StrictMode>
+  );
+  requestAnimationFrame(hideSplash);
+});

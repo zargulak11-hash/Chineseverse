@@ -9,7 +9,7 @@ import ReadingHelp, { HELP_ACTIONS } from "../components/ReadingHelp.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useApi } from "../hooks/useApi.js";
-import { speakChinese } from "../zhSpeech.js";
+import { speakChinese, stopSpeaking } from "../zhSpeech.js";
 import { BookStats } from "./StoryBook.jsx";
 
 // Reading one chapter (/stories/:slug/read/:n). The page is the Chinese
@@ -142,7 +142,7 @@ export default function StoryReader() {
 
   useEffect(() => () => {
     stopRef.current = true;
-    window.speechSynthesis?.cancel();
+    stopSpeaking();
   }, []);
 
   // Arrow keys move between lines in line-by-line mode (not while typing).
@@ -189,7 +189,7 @@ export default function StoryReader() {
   function toggleListen() {
     if (playing >= 0) {
       stopRef.current = true;
-      window.speechSynthesis?.cancel();
+      stopSpeaking();
       setPlaying(-1);
       return;
     }
@@ -208,7 +208,7 @@ export default function StoryReader() {
   function playLine(i) {
     const k = Math.max(0, Math.min(sentences.length - 1, i));
     stopRef.current = true; // a continuous reading stops
-    window.speechSynthesis?.cancel();
+    stopSpeaking();
     setPlaying(-1);
     setCur(k);
     setLineError("");
@@ -223,7 +223,7 @@ export default function StoryReader() {
   lineKeys.current = (d) => playLine(cur + d);
   function toggleLineMode() {
     if (lineMode) {
-      window.speechSynthesis?.cancel();
+      stopSpeaking();
       setLineMode(false);
       return;
     }

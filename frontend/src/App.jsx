@@ -7,6 +7,8 @@ import BrandLogo from "./components/BrandLogo.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { AppShell } from "./components/Layout.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
+import NetworkBanner from "./components/NetworkBanner.jsx";
+import { isNativeApp } from "./platform.js";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -156,9 +158,17 @@ export default function App() {
         saveSelf(fresh);
         setUser(fresh);
       })
-      .catch(() => {
-        clearSession();
-        setUser(null);
+      .catch((err) => {
+        // Only the server refusing the session ends it (401: expired or
+        // deactivated -- api.js has already cleared it; 403: blocked). No
+        // network, or a server restarting mid-deploy, used to sign the
+        // learner out too: opening the phone app on a train meant typing the
+        // password again. They stay signed in on the saved user, and the
+        // pages' own requests say what is wrong until the connection is back.
+        if (err?.status === 401 || err?.status === 403) {
+          clearSession();
+          setUser(null);
+        }
       })
       .finally(() => setBooted(true));
   }, []);
@@ -209,10 +219,25 @@ export default function App() {
   return (
     <AuthContext.Provider value={{ user, setCurrentUser, logout }}>
       <DashboardProvider>
+      <NetworkBanner />
       <ErrorBoundary resetKey={pathname}>
       <Suspense fallback={<div className="boot"><BrandLogo className="brand-logo--boot" /></div>}>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        {/* The app opens on sign-in (or straight into learning when signed
+            in): the landing page introduces the product to website
+            visitors, which the store listing does for the app. */}
+        <Route
+          path="/"
+          element={
+            isNativeApp ? (
+              <RedirectIfAuthed>
+                <Navigate to="/login" replace />
+              </RedirectIfAuthed>
+            ) : (
+              <Landing />
+            )
+          }
+        />
         <Route
           path="/login"
           element={

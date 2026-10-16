@@ -4,6 +4,11 @@
 // instead of a second copy: explicit zh-CN, and (when the browser actually
 // exposes one) an explicit Chinese SpeechSynthesisVoice rather than
 // whatever the browser/system default happens to be.
+//
+// Inside the Android / iOS app every call goes to the phone's own speech
+// engine instead (nativeSpeech.js): Android's WebView has no speechSynthesis.
+
+import { nativeSpeechEnabled, speakNative, stopNative } from "./nativeSpeech.js";
 
 let cachedZhVoice;
 
@@ -32,12 +37,20 @@ if (typeof window !== "undefined" && window.speechSynthesis) {
  * list (still loading) counts as able -- the browser may yet provide one.
  */
 export function canSpeakChinese() {
+  // Android and iOS ship a Mandarin voice with their speech engines; a phone
+  // without one fails quietly in speakNative, like a browser without one.
+  if (nativeSpeechEnabled) return true;
   if (typeof window === "undefined" || !window.speechSynthesis) return false;
   const voices = window.speechSynthesis.getVoices();
   return !voices.length || !!pickChineseVoice();
 }
 
 const VOICE_LANG = { en: "en", ru: "ru", tg: "tg", zh: "zh" };
+
+// The phone engines' tags for the interface languages they can read. Tajik
+// has no voice on stock Android or iOS, so it is left out: the assistant then
+// reads only the Chinese, as on a browser without a Tajik voice.
+const NATIVE_LANG = { en: "en-US", ru: "ru-RU" };
 
 function voiceFor(locale) {
   if (typeof window === "undefined" || !window.speechSynthesis) return null;
@@ -47,6 +60,7 @@ function voiceFor(locale) {
 
 /** Whether this device has a voice for the interface language `locale`. */
 export function canSpeakLocale(locale) {
+  if (nativeSpeechEnabled) return locale === "zh" || !!NATIVE_LANG[locale];
   return locale === "zh" ? canSpeakChinese() : !!voiceFor(locale);
 }
 
@@ -59,6 +73,19 @@ export function canSpeakLocale(locale) {
  * when there was nothing to say.
  */
 export function speakText(text, locale, { onEnd } = {}) {
+  if (text && nativeSpeechEnabled) {
+    const clean = text.replace(/\*\*|^\s*[*#-]+\s*/gm, "").replace(/[*_`#]/g, "");
+    const runs = clean.match(/[㐀-鿿，。！？、；：“”‘’（）《》·…—]+|[^㐀-鿿]+/g) || [];
+    const localLang = locale === "zh" ? null : NATIVE_LANG[locale];
+    const parts = [];
+    for (const run of runs) {
+      const isZh = /[㐀-鿿]/.test(run);
+      if (!isZh && (!localLang || !/[\p{L}\p{N}]/u.test(run))) continue;
+      parts.push({ text: run.trim(), lang: isZh ? "zh-CN" : localLang });
+    }
+    speakNative(parts, { onEnd });
+    return;
+  }
   if (!text || typeof window === "undefined" || !window.speechSynthesis) {
     onEnd?.();
     return;
@@ -88,6 +115,7 @@ export function speakText(text, locale, { onEnd } = {}) {
 }
 
 export function stopSpeaking() {
+  if (nativeSpeechEnabled) stopNative();
   if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
 }
 
@@ -102,6 +130,10 @@ export function stopSpeaking() {
 // `whole`: read the text as written. By default a leading "Speaker：" label
 // is dropped (dialogue lines); narration like 服务员问：“…” needs all of it.
 export function speakChinese(text, { profile, onStart, onEnd, whole = false } = {}) {
+  if (text && nativeSpeechEnabled) {
+    speakNative([{ text: whole ? text : text.replace(/^[^：:]+[：:]\s*/, ""), lang: "zh-CN" }], { profile, onStart, onEnd });
+    return;
+  }
   if (!text || typeof window === "undefined" || !window.speechSynthesis) {
     onEnd?.();
     return;

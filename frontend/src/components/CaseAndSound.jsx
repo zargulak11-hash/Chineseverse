@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
+import { canSpeakChinese, speakChinese, stopSpeaking } from "../zhSpeech.js";
 import Icon from "./Icon.jsx";
 
 // Detective Mode and Chinese Sound World pieces for Practice.jsx. What is
@@ -138,7 +138,7 @@ export function SoundStage({ question, autoPlay }) {
 
   useEffect(() => {
     if (autoPlay && !answered && !noVoice) playLines(lines, 0, setSpeaking);
-    return () => window.speechSynthesis?.cancel();
+    return () => stopSpeaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.index]);
 

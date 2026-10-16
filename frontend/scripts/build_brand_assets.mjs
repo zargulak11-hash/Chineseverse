@@ -11,6 +11,9 @@
 //   src/assets/chineseverse-logo-matte.png   the logo, background transparent
 //   public/favicon-{16,32,48,64}.png, favicon.ico, apple-touch-icon.png,
 //   public/icon-512.png                      the emblem, background transparent
+//   android/.../res/mipmap-*/, drawable*/splash.png, ios/.../Assets.xcassets,
+//   store-assets/play-icon-512.png           the mobile app's launcher icons
+//                                            and splash screens
 //
 // The artwork itself is never redrawn: every pixel away from the background
 // keeps its exact colour and full opacity. Only background pixels become
@@ -248,6 +251,14 @@ function dropSpecks(w, h, px) {
 // rim never picks up a dark or light fringe, and area-averaging keeps small
 // sizes clean instead of aliasing.
 function icon(img, size) {
+  return encodePng({ w: size, h: size, px: emblemPixels(img, size) });
+}
+
+// The emblem's RGBA pixels at `size`: the box filter for every size up to
+// the crop's own 565px, bilinear above it (the 1024px store icon, splash
+// screens) -- a box narrower than one source pixel would only repeat pixels.
+function emblemPixels(img, size) {
+  if (size > MARK.size) return emblemUpscaled(img, size);
   const { w, px } = img;
   const out = Buffer.alloc(size * size * 4);
   const scale = MARK.size / size;
@@ -279,7 +290,49 @@ function icon(img, size) {
       out[o + 3] = a;
     }
   }
-  return encodePng({ w: size, h: size, px: out });
+  return out;
+}
+
+// Bilinear, premultiplied by alpha like the box filter, clamped to the crop.
+function emblemUpscaled(img, size) {
+  const { w, px } = img;
+  const out = Buffer.alloc(size * size * 4);
+  const scale = MARK.size / size;
+  const at = (x, y) => {
+    const cx = Math.min(MARK.x + MARK.size - 1, Math.max(MARK.x, x));
+    const cy = Math.min(MARK.y + MARK.size - 1, Math.max(MARK.y, y));
+    return (cy * w + cx) * 4;
+  };
+  for (let oy = 0; oy < size; oy++) {
+    const fy = MARK.y + (oy + 0.5) * scale - 0.5;
+    const y0 = Math.floor(fy), ty = fy - y0;
+    for (let ox = 0; ox < size; ox++) {
+      const fx = MARK.x + (ox + 0.5) * scale - 0.5;
+      const x0 = Math.floor(fx), tx = fx - x0;
+      let r = 0, g = 0, b = 0, alpha = 0;
+      for (const [sx, sy, wt] of [
+        [x0, y0, (1 - tx) * (1 - ty)],
+        [x0 + 1, y0, tx * (1 - ty)],
+        [x0, y0 + 1, (1 - tx) * ty],
+        [x0 + 1, y0 + 1, tx * ty],
+      ]) {
+        const o = at(sx, sy);
+        const a = (px[o + 3] / 255) * wt;
+        r += px[o] * a;
+        g += px[o + 1] * a;
+        b += px[o + 2] * a;
+        alpha += a;
+      }
+      const a = Math.round(alpha * 255);
+      if (a === 0) continue;
+      const o = (oy * size + ox) * 4;
+      out[o] = Math.round(r / alpha);
+      out[o + 1] = Math.round(g / alpha);
+      out[o + 2] = Math.round(b / alpha);
+      out[o + 3] = a;
+    }
+  }
+  return out;
 }
 
 // .ico with embedded PNG images (supported by every current browser).
@@ -319,3 +372,88 @@ for (const size of [16, 32, 48, 64]) write(`public/favicon-${size}.png`, sizes[s
 write("public/apple-touch-icon.png", sizes[180]);
 write("public/icon-512.png", sizes[512]);
 write("public/favicon.ico", ico([16, 32, 48].map((size) => ({ size, data: sizes[size] }))));
+
+// ---------- mobile app (Capacitor: android/, ios/) ----------
+// Launcher icons sit on white, the ground the logo was drawn on: its navy
+// book stripes vanish on a dark tile. Splash screens use the Ink theme's
+// --bg (index.css), the colour the app opens in, with the emblem as-is --
+// the same picture as the app's own boot screen (.boot in index.css), so
+// the hand-over from splash to app doesn't flash.
+const ICON_BG = "#ffffff";
+const SPLASH_BG = "#0b1020";
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+// A w x h canvas (`bg` colour, or transparent when null) with the emblem
+// `mark` px wide in the middle; `round` clips it to a circle (the legacy
+// round launcher icon).
+function compose(w, h, bg, mark, { round = false } = {}) {
+  const px = Buffer.alloc(w * h * 4);
+  if (bg) {
+    const [r, g, b] = rgb(bg);
+    for (let i = 0; i < w * h; i++) px.set([r, g, b, 255], i * 4);
+  }
+  const em = emblemPixels(matted, mark);
+  const left = Math.round((w - mark) / 2), top = Math.round((h - mark) / 2);
+  for (let y = 0; y < mark; y++) {
+    for (let x = 0; x < mark; x++) {
+      const s = (y * mark + x) * 4;
+      const sa = em[s + 3] / 255;
+      if (!sa) continue;
+      const d = ((top + y) * w + left + x) * 4;
+      const da = px[d + 3] / 255;
+      const oa = sa + da * (1 - sa);
+      for (let k = 0; k < 3; k++) px[d + k] = Math.round((em[s + k] * sa + px[d + k] * da * (1 - sa)) / oa);
+      px[d + 3] = Math.round(oa * 255);
+    }
+  }
+  if (round) {
+    const c = (w - 1) / 2, radius = w / 2;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const edge = radius - Math.hypot(x - c, y - c); // >= 1 inside, <= 0 outside
+        if (edge >= 1) continue;
+        const o = (y * w + x) * 4;
+        px[o + 3] = Math.round(px[o + 3] * Math.max(0, edge));
+      }
+    }
+  }
+  return encodePng({ w, h, px });
+}
+
+const RES = "android/app/src/main/res";
+const DENSITY = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
+for (const [d, k] of Object.entries(DENSITY)) {
+  const legacy = Math.round(48 * k);
+  write(`${RES}/mipmap-${d}/ic_launcher.png`, compose(legacy, legacy, ICON_BG, Math.round(legacy * 0.8)));
+  write(`${RES}/mipmap-${d}/ic_launcher_round.png`, compose(legacy, legacy, ICON_BG, Math.round(legacy * 0.66), { round: true }));
+  // Adaptive icon (Android 8+): a 108dp transparent layer over the white
+  // background colour (values/ic_launcher_background.xml). Launchers mask
+  // it to their own shape and keep only the middle 66dp circle for sure, so
+  // the emblem stays inside it -- its book corners included.
+  const adaptive = Math.round(108 * k);
+  write(`${RES}/mipmap-${d}/ic_launcher_foreground.png`, compose(adaptive, adaptive, null, Math.round(adaptive * 0.5)));
+}
+// Pre-Android-12 splash (Android 12+ draws its own from the launcher icon
+// on windowSplashScreenBackground, values/styles.xml), at the sizes
+// Capacitor's template ships.
+const SPLASH = {
+  "drawable": [480, 320],
+  "drawable-port-mdpi": [320, 480], "drawable-port-hdpi": [480, 800], "drawable-port-xhdpi": [720, 1280],
+  "drawable-port-xxhdpi": [960, 1600], "drawable-port-xxxhdpi": [1280, 1920],
+  "drawable-land-mdpi": [480, 320], "drawable-land-hdpi": [800, 480], "drawable-land-xhdpi": [1280, 720],
+  "drawable-land-xxhdpi": [1600, 960], "drawable-land-xxxhdpi": [1920, 1280],
+};
+for (const [dir, [w, h]] of Object.entries(SPLASH)) {
+  write(`${RES}/${dir}/splash.png`, compose(w, h, SPLASH_BG, Math.round(Math.min(w, h) * 0.36)));
+}
+// Google Play's 512px store-listing icon (uploaded by hand in Play Console).
+write("store-assets/play-icon-512.png", compose(512, 512, ICON_BG, Math.round(512 * 0.8)));
+
+// iOS: one 1024px icon (Xcode derives every size; no transparency allowed)
+// and the 2732px splash Capacitor's storyboard scales to fit every device.
+const XC = "ios/App/App/Assets.xcassets";
+write(`${XC}/AppIcon.appiconset/AppIcon-512@2x.png`, compose(1024, 1024, ICON_BG, Math.round(1024 * 0.8)));
+const iosSplash = compose(2732, 2732, SPLASH_BG, Math.round(2732 * 0.22));
+for (const name of ["splash-2732x2732.png", "splash-2732x2732-1.png", "splash-2732x2732-2.png"]) {
+  write(`${XC}/Splash.imageset/${name}`, iosSplash);
+}

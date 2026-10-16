@@ -7744,3 +7744,78 @@ a.story-card:hover { border-color: var(--accent-border); transform: translateY(-
 @media (max-width: 640px) {
   .email-diag-grid { grid-template-columns: 1fr; }
 }
+
+/* =========================================================================
+   Mobile app (Android / iOS, Capacitor) -- native.js puts .is-native on
+   <html> and viewport-fit=cover in the viewport meta inside the app only, so
+   none of this reaches the website. The app draws under the status bar and
+   the home indicator; the shell is padded back out of them by the safe-area
+   insets (0 where a device has none, and on older Android WebViews, which
+   Capacitor pads natively instead). A strip in the page background sits
+   behind the status bar so scrolled content never shows through it.
+   ========================================================================= */
+html.is-native {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  /* No grey flash on tap, and no long-press callout on buttons and links;
+     text the learner reads stays selectable. */
+  -webkit-tap-highlight-color: transparent;
+}
+html.is-native body {
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  overscroll-behavior-y: none;
+}
+html.is-native body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  background: var(--bg);
+  z-index: 210;
+  pointer-events: none;
+}
+html.is-native a,
+html.is-native button { -webkit-touch-callout: none; }
+html.is-native .shell,
+html.is-native .onboard,
+html.is-native .boot { min-height: calc(100vh - var(--safe-top) - var(--safe-bottom)); }
+html.is-native .topbar,
+html.is-native .sidebar { top: var(--safe-top); }
+html.is-native .sidebar { height: calc(100vh - var(--safe-top) - var(--safe-bottom)); }
+@media (max-width: 980px) {
+  /* The drawer slides over everything, so it reaches the screen edges and
+     pads its own content instead. */
+  html.is-native .sidebar {
+    top: 0;
+    height: 100vh;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+}
+
+/* Offline notice (NetworkBanner.jsx), on the website and in the app. */
+.net-banner {
+  position: fixed;
+  z-index: 110;
+  top: calc(var(--safe-top, 0px) + var(--space-3));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100vw - var(--space-6));
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  animation: fadeIn var(--dur-base) var(--ease-out);
+}
+.net-banner svg { color: var(--bad); flex-shrink: 0; }

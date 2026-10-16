@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ChineseVerse</string>
+    <string name="title_activity_main">ChineseVerse</string>
+    <string name="package_name">tj.qobus.chineseverse</string>
+    <string name="custom_url_scheme">tj.qobus.chineseverse</string>
+</resources>

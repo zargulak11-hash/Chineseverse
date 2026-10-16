@@ -3369,5 +3369,8 @@
     "stepCompare": "对比",
     "legendTarget": "声调的形状",
     "legendVoice": "你的声音"
+  },
+  "network": {
+    "offline": "当前没有网络连接。学习记录不会丢失，联网后即可继续学习。"
   }
 }

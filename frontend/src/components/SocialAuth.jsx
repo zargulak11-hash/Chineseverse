@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import { isNativeApp } from "../platform.js";
 import GitHubAuthButton from "./GitHubAuthButton.jsx";
 import GoogleAuthButton, { GOOGLE_CONFIGURED } from "./GoogleAuthButton.jsx";
 
@@ -23,7 +24,17 @@ const OAUTH_ERRORS = new Set([
 // offer the same providers with the same behaviour. `page` is where a
 // GitHub failure returns to; `onSuccess(user)` runs after a Google sign-in
 // (GitHub finishes on /auth/github instead, see GitHubCallback.jsx).
-export default function SocialAuth({ page, onSuccess, onError }) {
+// Not offered in the Android / iOS app yet: Google refuses sign-in inside an
+// embedded WebView ("disallowed_useragent"), and GitHub's round trip comes
+// back to the website's address, not to the app. Both need native sign-in
+// SDKs and per-app OAuth clients first (docs/MOBILE_APP.md). Email and
+// password sign-in works in the app.
+export default function SocialAuth(props) {
+  if (isNativeApp) return null;
+  return <WebSocialAuth {...props} />;
+}
+
+function WebSocialAuth({ page, onSuccess, onError }) {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [providers, setProviders] = useState(null);
