@@ -130,7 +130,7 @@ Only when all three pass does a push to `main` deploy: the workflow connects to 
 
 ## Mobile app
 
-The same frontend also ships as an Android and iOS app (Capacitor, `frontend/android/` and `frontend/ios/`) against the same backend; `npm run mobile:sync` in `frontend/` rebuilds it. Building, testing on a phone and the store-release checklist are in [docs/MOBILE_APP.md](docs/MOBILE_APP.md).
+The same frontend also ships as an Android and iOS app (Capacitor, `frontend/android/` and `frontend/ios/`) against the same backend; `npm run mobile:sync` in `frontend/` rebuilds it. Visitors download the Android app from [/download](https://chineseverse.qobus.tj/download) (a GitHub Release asset). Building, publishing a new APK, testing on a phone and the store-release checklist are in [docs/MOBILE_APP.md](docs/MOBILE_APP.md).
 
 ## Languages
 

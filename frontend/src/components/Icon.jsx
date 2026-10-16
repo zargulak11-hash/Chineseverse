@@ -5,6 +5,8 @@
 // general-purpose icon library the app needs to pull arbitrary names from.
 
 const PATHS = {
+  phone: "M8.5 2.5h7a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2ZM10.5 18.5h3",
+  download: "M12 3.5v11.5M7 10.5l5 5 5-5M5 20.5h14",
   home: "M4 11.5 12 4l8 7.5 M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9",
   world: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM3.6 9h16.8M3.6 15h16.8M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18",
   book: "M4 19.5V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0 0 4h13 M4 19.5A2 2 0 0 1 6 18",

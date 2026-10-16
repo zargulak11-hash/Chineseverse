@@ -109,12 +109,17 @@ unaffected by its Node 22 requirement.
 
 ### Android
 
+The published release installs from https://chineseverse.qobus.tj/download,
+the same way learners get it. To test your own changes before publishing:
+
 1. Build a debug APK: in `frontend/android/` run `gradlew assembleDebug`
    (or Android Studio → Run). Output: `android/app/build/outputs/apk/debug/app-debug.apk`.
 2. Either connect the phone by USB with *Developer options → USB debugging* on
    and run `adb install -r app-debug.apk`, or copy the APK to the phone and
    open it (allow "install unknown apps" for your file manager).
-3. Sign in with an existing ChineseVerse account (email + password).
+3. Sign in with an existing ChineseVerse account (username + password).
+   A debug build has a different signature from the published release, so
+   uninstall one before installing the other.
 
 A debug build can be inspected from desktop Chrome at `chrome://inspect`.
 
@@ -142,29 +147,75 @@ after 7 days); TestFlight needs the paid Apple Developer Program.
 - [ ] Android back button: back through pages, leaves on the first screen
 - [ ] Airplane mode mid-lesson: a clear message, no crash, progress intact after reconnecting
 
+## Publishing the downloadable APK
+
+Visitors download the app from **https://chineseverse.qobus.tj/download**
+(`src/pages/Download.jsx`, linked from the landing page). The APK is not in
+this repository or the website build: it is an asset of a **GitHub Release**
+on the public repo, so anyone can download it over HTTPS without signing in.
+
+| | |
+|---|---|
+| Release | https://github.com/zargulak11-hash/Chineseverse/releases/tag/android-v1.0 |
+| File the button downloads | `…/releases/download/android-v1.0/ChineseVerse-1.0-android.apk` |
+| Always-newest alias | `…/releases/latest/download/ChineseVerse.apk` (same file, fixed name) |
+| Signing certificate SHA-256 | `2c884436c263b8b522d2486d8e011f4665640bf0123b0aaa450e1f14de36d00d` |
+
+**Signing.** Public builds are signed, non-debuggable **release** builds,
+never the debug APK and never the unsigned AAB. The release key lives
+outside the repository, in
+`%LOCALAPPDATA%\ChineseVerseBuildTools\signing\` (`chineseverse-release.jks`
+plus `keystore.properties` with its password). A copy of that
+`keystore.properties` sits in `frontend/android/` (gitignored), which is
+what makes `assembleRelease` sign. **Back both files up somewhere safe.**
+Android only installs an update signed with the same key, so if the key is
+lost, every learner has to uninstall and reinstall.
+
+**Releasing a new version:**
+1. Raise `versionCode` (by 1) and `versionName` in `frontend/android/app/build.gradle`.
+2. `npm run mobile:sync`, then `cd frontend/android && gradlew --no-daemon assembleRelease`
+   → `app/build/outputs/apk/release/app-release.apk`.
+3. Verify before publishing: `apksigner verify --print-certs` shows the
+   certificate above; `aapt2 dump badging` has no `application-debuggable`;
+   install it over the previous version on a phone or emulator (an in-place
+   update proves the key matches) and sign in.
+4. Create release `android-v<version>` on GitHub (*Releases → Draft a new
+   release*) and attach the APK twice: as `ChineseVerse-<version>-android.apk`
+   and as `ChineseVerse.apk`. Mark it as the latest release.
+5. Download it once without signing in and compare its SHA-256 with the
+   built file.
+6. Update the five values in `frontend/src/appDownload.js` (version,
+   fileName, url, sizeBytes, sha256), commit and push; the website deploy
+   switches the button over. Keep the previous release, since links to old
+   versions keep working.
+
+Debug builds are for development only: they are inspectable over USB and
+signed with whichever PC built them. (An emulator image of type
+`userdebug` makes *every* app's WebView inspectable, the release build
+included. Real phones are `user` builds, and Capacitor keeps WebView
+debugging off in release builds.)
+
 ## Releasing to Google Play
 
 1. **Google Play developer account**, one-time US$25, opened by the owner
    (`play.google.com/console`). Not done.
-2. **Upload key**, created once and backed up safely:
-   ```
-   keytool -genkeypair -v -keystore chineseverse-upload.jks -alias chineseverse-upload -keyalg RSA -keysize 2048 -validity 10000
-   ```
-   Put the `.jks` in `frontend/android/` and copy
-   `android/keystore.properties.example` to `android/keystore.properties` with
-   the passwords. Both are gitignored, so never commit them.
-3. **Build the bundle:** `cd frontend/android && gradlew bundleRelease` →
-   `app/build/outputs/bundle/release/app-release.aab` (signed when
-   `keystore.properties` exists, unsigned otherwise).
-4. In Play Console: create the app, enrol in **Play App Signing**, upload the
-   AAB to *Internal testing* first, then production.
-5. Store listing: title, short and full description (EN / RU / TG / ZH),
+2. **Signing key:** the release key above already exists, and
+   `gradlew bundleRelease` signs the AAB with it
+   (`app/build/outputs/bundle/release/app-release.aab`). When enrolling in
+   **Play App Signing**, choose to *use your existing app signing key* and
+   export this key with Play's PEPK tool. Then the Play version and the
+   APK people already installed from the website share one signature, and
+   updates install over each other. If Google generates a new key instead,
+   website installs must be uninstalled before installing from Play.
+3. In Play Console: create the app and upload the AAB to *Internal testing*
+   first, then production.
+4. Store listing: title, short and full description (EN / RU / TG / ZH),
    `store-assets/play-icon-512.png`, a 1024×500 feature graphic, and at
    least 2 phone screenshots.
-6. **App content** forms: privacy policy URL, Data safety, ads (none),
+5. **App content** forms: privacy policy URL, Data safety, ads (none),
    content rating questionnaire, target audience, and an **account deletion**
    URL (see blockers).
-7. New personal developer accounts must run a **closed test with at least 12
+6. New personal developer accounts must run a **closed test with at least 12
    testers for 14 days** before production access is granted.
 
 ## Releasing to the Apple App Store

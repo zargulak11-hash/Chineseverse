@@ -18,6 +18,8 @@ import GitHubCallback from "./pages/GitHubCallback.jsx";
 // whole app used to ship as one 1.4 MB script, so the landing and login
 // pages downloaded every page of the product before showing anything. The
 // public entry pages above stay in the main bundle.
+// /download is public too, but few visitors open it: it loads on demand.
+const Download = lazy(() => import("./pages/Download.jsx"));
 const AnimalSelect = lazy(() => import("./pages/AnimalSelect.jsx"));
 const Onboarding = lazy(() => import("./pages/Onboarding.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
@@ -254,6 +256,8 @@ export default function App() {
             </RedirectIfAuthed>
           }
         />
+        {/* Public: the Android app is for visitors who haven't signed up yet too. */}
+        <Route path="/download" element={<Download />} />
         {/* The backend's GitHub callback lands here (routers/auth.py). */}
         <Route path="/auth/github" element={<GitHubCallback />} />
         {/* Onboarding is full-screen, outside the app shell: no sidebar or

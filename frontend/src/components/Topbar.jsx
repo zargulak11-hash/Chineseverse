@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api.js";
+import { isNativeApp } from "../platform.js";
 import { usePrefs } from "../prefs.jsx";
 import { useTheme } from "../theme.jsx";
 import Icon from "./Icon.jsx";
@@ -38,6 +39,8 @@ const NAV_INDEX = [
   ["/achievements", "nav.achievements", "trophy"],
   ["/assistant", "nav.assistant", "chat"],
   ["/voice-companion", "nav.voiceCompanion", "mic"],
+  // The public download page; pointless inside the app itself.
+  ...(isNativeApp ? [] : [["/download", "download.cta", "phone"]]),
 ];
 
 // The places of the living world (backend services/world_places.py).

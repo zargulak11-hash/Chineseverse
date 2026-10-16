@@ -6,8 +6,7 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import HeroCarousel from "../components/HeroCarousel.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
-import { useTheme } from "../theme.jsx";
-import LanguagePicker from "../components/LanguagePicker.jsx";
+import PublicHeader from "../components/PublicHeader.jsx";
 
 // Each feature gets its own color and its own size — bento-style
 // asymmetric rhythm, not a row of identical boxes. Column spans (out of
@@ -33,44 +32,9 @@ const SHOWCASE = ["fox", "wolf", "snake", "monkey", "cat", "phoenix", "owl", "pa
 export default function Landing() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   return (
     <>
-      <div className="appbar-wrap">
-        <header className="appbar">
-          <Link to="/" className="brand" aria-label={t("nav.toLanding")}
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <BrandLogo className="brand-logo--bar" />
-          </Link>
-          <span className="spacer" />
-          <LanguagePicker />
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={toggleTheme}
-            title={theme === "ink" ? t("ui.switchToPaper") : t("ui.switchToInk")}
-            aria-label={t("ui.toggleTheme")}
-          >
-            <Icon name="droplet" size={15} />
-          </button>
-          {user ? (
-            <Link to="/dashboard">
-              <button className="btn primary">{t("landing.openDashboard")}</button>
-            </Link>
-          ) : (
-            <>
-              <Link to="/login">
-                <button className="btn ghost">{t("landing.logIn")}</button>
-              </Link>
-              {/* On a small phone the hero's own "Create account" is the call
-                  to action; this one wrapped onto a row of its own. */}
-              <Link to="/register" className="appbar-cta">
-                <button className="btn primary">{t("landing.startFree")}</button>
-              </Link>
-            </>
-          )}
-        </header>
-      </div>
+      <PublicHeader />
       <div className="page">
 
       <section className="hero">
@@ -95,6 +59,9 @@ export default function Landing() {
               </button>
             </Link>
           )}
+          <Link to="/download" className="btn ghost landing-app-btn">
+            <Icon name="phone" size={17} /> {t("download.cta")}
+          </Link>
         </div>
       </section>
 
@@ -124,6 +91,21 @@ export default function Landing() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* The Android app, one tap from the bottom of the page too: the hero
+          button scrolls out of view long before a visitor decides. */}
+      <section className="card landing-app">
+        <div className="landing-app-ic" aria-hidden="true">
+          <Icon name="phone" size={26} />
+        </div>
+        <div className="landing-app-text">
+          <h2 className="h2">{t("download.promoTitle")}</h2>
+          <p className="sub">{t("download.promoText")}</p>
+        </div>
+        <Link to="/download" className="btn primary">
+          <Icon name="download" size={16} /> {t("download.cta")}
+        </Link>
       </section>
 
       <section className="center" style={{ marginTop: 46 }}>

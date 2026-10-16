@@ -7819,3 +7819,100 @@ html.is-native .sidebar { height: calc(100vh - var(--safe-top) - var(--safe-bott
   animation: fadeIn var(--dur-base) var(--ease-out);
 }
 .net-banner svg { color: var(--bad); flex-shrink: 0; }
+
+/* =========================================================================
+   Mobile app download: the landing page's app links and /download
+   (Download.jsx). Built from the existing card / btn / sub pieces.
+   ========================================================================= */
+.landing-app-btn { font-size: var(--text-base); padding: var(--space-3) var(--space-5); }
+.landing-app {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+  border-color: var(--accent-border);
+}
+.landing-app-ic,
+.dl-benefit-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+  color: var(--accent-strong);
+}
+.landing-app-ic { width: 56px; height: 56px; }
+.landing-app-text { flex: 1; min-width: 0; }
+.landing-app-text .sub { margin: var(--space-1) 0 0; }
+@media (max-width: 640px) {
+  .landing-app { flex-direction: column; align-items: flex-start; }
+  .landing-app .btn { width: 100%; }
+}
+
+.dl-page .sub { overflow-wrap: anywhere; }
+.dl-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  border-color: var(--accent-border);
+}
+.dl-hero .sub { margin: 0; }
+.dl-btn { font-size: var(--text-base); padding: var(--space-3) var(--space-5); }
+.dl-meta { margin: 0; font-size: var(--text-xs); color: var(--text-dim); }
+.dl-alt {
+  width: 100%;
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+.dl-section { margin-top: var(--space-5); }
+.dl-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+.dl-benefit { padding: 18px; min-width: 0; }
+.dl-benefit-ic { width: 36px; height: 36px; }
+.dl-benefit-title { margin: var(--space-3) 0 var(--space-1); font-size: var(--text-base); font-weight: 800; }
+.dl-benefit .sub { margin: 0; }
+.dl-steps {
+  margin: var(--space-3) 0 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  line-height: 1.5;
+}
+.dl-steps li::marker { color: var(--accent-strong); font-weight: 800; }
+.dl-note {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+}
+.dl-note svg { flex-shrink: 0; margin-top: 2px; color: var(--accent-strong); }
+.dl-note .sub { margin: var(--space-1) 0 0; }
+.dl-note-title { margin: 0; font-weight: 800; }
+.dl-side { gap: var(--space-4); min-width: 0; }
+.dl-file {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0 var(--space-4);
+  font-size: var(--text-xs);
+}
+.dl-file dt { color: var(--text-faint); font-weight: 700; }
+.dl-file dd { margin: 0; overflow-wrap: anywhere; }
+.dl-sum { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--text-dim); }
+@media (max-width: 480px) {
+  .dl-btn { width: 100%; }
+  .dl-file { grid-template-columns: 1fr; gap: var(--space-1); }
+  .dl-file dd + dt { margin-top: var(--space-2); }
+}
