@@ -47,6 +47,7 @@ export default function StoryReader() {
   const [playing, setPlaying] = useState(-1);
   const [finish, setFinish] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [finishError, setFinishError] = useState("");
   const textRef = useRef(null);
   const sentRefs = useRef([]);
   const stopRef = useRef(false);
@@ -68,6 +69,7 @@ export default function StoryReader() {
     setPinyin(data.support.pinyin === "on");
     setHelp(null);
     setFinish(null);
+    setFinishError("");
     setKept(new Set(data.saved || []));
     setHeard(new Set());
     setLineTr({});
@@ -256,6 +258,7 @@ export default function StoryReader() {
 
   async function finishChapter() {
     setBusy(true);
+    setFinishError("");
     try {
       flush();
       const r = await api.post(`/stories/${slug}/chapters/${chapter}/finish`);
@@ -268,7 +271,10 @@ export default function StoryReader() {
       } else {
         navigate(`/stories/${slug}`);
       }
-    } catch {
+    } catch (err) {
+      // It used to fail in silence: the button came back and nothing said
+      // the chapter wasn't marked read.
+      setFinishError(err.message);
       setBusy(false);
       return;
     }
@@ -429,6 +435,7 @@ export default function StoryReader() {
                 </button>
               )}
             </div>
+            {finishError && <p className="formerr reader-foot-error" role="alert">{finishError}</p>}
           </footer>
         </article>
 
