@@ -268,6 +268,45 @@ def test_google_sign_in_is_not_blocked_by_a_password_lock(client, accounts, cloc
     assert r.json()["user"]["username"] == "bob"
 
 
+def test_login_ignores_letter_case_and_surrounding_spaces(client, accounts):
+    # A phone keyboard capitalizes the first letter; autofill adds a space.
+    for typed in ("Alice", "ALICE", " alice", "alice "):
+        r = login(client, typed, accounts)
+        assert r.status_code == 200, (typed, r.text)
+        assert r.json()["user"]["username"] == "alice"
+    # Still a wrong password with the right name in another case.
+    assert login(client, "Alice", "nope-nope").json() == {"detail": INVALID}
+
+
+def test_login_never_guesses_between_names_that_differ_only_in_case(client):
+    # Legacy rows (before registration compared case-insensitively) may be
+    # "Frank" and "frank": each exact name signs in to its own account, and
+    # a third spelling matches neither rather than picking one.
+    with SessionLocal() as db:
+        for name in ("Frank", "frank"):
+            db.add(models.User(username=name, email=f"{name}-legacy@example.com",
+                               password_hash=hash_password("same-pass")))
+        db.commit()
+    assert login(client, "Frank", "same-pass").json()["user"]["username"] == "Frank"
+    assert login(client, "frank", "same-pass").json()["user"]["username"] == "frank"
+    r = login(client, "FRANK", "same-pass")
+    assert r.status_code == 401 and r.json() == {"detail": INVALID}
+
+
+def test_registration_trims_the_username(client):
+    data = expect(client, "post", "/api/auth/register", 201,
+                  json={"username": "  gina  ", "email": "gina@example.com", "password": "secret1"})
+    assert data["user"]["username"] == "gina"
+    # The padded spelling is the same name, not a second account.
+    r = client.post("/api/auth/register",
+                    json={"username": "gina ", "email": "gina2@example.com", "password": "secret1"})
+    assert r.status_code == 409
+    # Spaces don't count towards the minimum length.
+    r = client.post("/api/auth/register",
+                    json={"username": "  a  ", "email": "a1@example.com", "password": "secret1"})
+    assert r.status_code == 422
+
+
 def test_registration_still_signs_the_learner_in(client):
     data = register_raw(client, "erin", password="secret1")
     me = expect(client, "get", "/api/me", 200, headers=bearer(data["access_token"]))

@@ -1,7 +1,7 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 
 PROGRESS_STATUSES = ("not_started", "in_progress", "completed")
 MISTAKE_TYPES = ("word", "tone", "grammar", "character", "pinyin")
@@ -10,8 +10,16 @@ SCENARIO_TYPES = ("conversation", "mission", "case", "practice")
 
 
 # --------------------------------------------------------------------------- Auth
+# A username as the learner chose it, minus the spaces a phone keyboard or
+# autofill adds around it: " alice" used to register as an account next to
+# "alice" that nobody could tell apart, and "alice " typed at login failed
+# as a wrong password. Stripped before the length check, so "  a " is still
+# too short. Inner spaces are kept -- existing accounts may have them.
+Username = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=50)]
+
+
 class RegisterRequest(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
+    username: Username
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
     native_language: str = Field(default="English", max_length=50)
@@ -19,7 +27,7 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    username: str = Field(min_length=1, max_length=50)
+    username: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
     password: str = Field(min_length=1, max_length=128)
 
 

@@ -61,7 +61,7 @@ class ProfilePatch(BaseModel):
 
 
 class AccountPatch(BaseModel):
-    username: str = Field(min_length=3, max_length=50)
+    username: schemas.Username
 
 
 class PasswordChange(BaseModel):

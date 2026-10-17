@@ -45,6 +45,26 @@ def _find_by_email(db: Session, email: str) -> models.User | None:
     )
 
 
+def _find_by_username(db: Session, username: str) -> models.User | None:
+    """The account a password sign-in names. Registration and renaming
+    refuse a name that differs from an existing one only in letter case, but
+    login compared exactly -- so "Alice" (a phone keyboard capitalizes the
+    first letter) failed as a wrong password for "alice". The exact name
+    still wins; otherwise the case-insensitive match, but only when there is
+    exactly one, since accounts created before that rule (or by an admin)
+    may differ only in case and must never be guessed between."""
+    exact = db.query(models.User).filter(models.User.username == username).first()
+    if exact is not None:
+        return exact
+    matches = (
+        db.query(models.User)
+        .filter(func.lower(models.User.username) == username.lower())
+        .limit(2)
+        .all()
+    )
+    return matches[0] if len(matches) == 1 else None
+
+
 def _is_admin_email(email: str) -> bool:
     return email.lower() in {e.strip().lower() for e in settings.admin_emails if e.strip()}
 
@@ -198,11 +218,7 @@ def login(
             detail=login_throttle.LOCKED_DETAIL,
             headers={"Retry-After": str(wait)},
         )
-    user = (
-        db.query(models.User)
-        .filter(models.User.username == payload.username)
-        .first()
-    )
+    user = _find_by_username(db, payload.username)
     if user is None:
         burn_password_check(payload.password)
     if user is None or not verify_password(payload.password, user.password_hash):
