@@ -746,6 +746,15 @@ def _option_labels(labels: dict, item_type: str, option_ids: list[int], rows: di
     text: a lone Russian option among English ones would give the answer
     away (the translated words are the ones lessons teach)."""
     field = {"vocab": "meanings", "hanzi": "meaning", "grammar": "title"}[item_type]
+    # Not for grammar: there the raw titles are themselves in two languages
+    # -- a lesson point's is English ("是 — to be"), a syllabus point's is
+    # Chinese terminology ("比较句1") -- so falling back mixed them, and in
+    # English the right answer was often the only English option (209 of
+    # 395 grammar questions in the lesson rounds). Every syllabus point has
+    # a name in en/ru/tg (grammar_names), so the labels are already one
+    # language.
+    if item_type == "grammar":
+        return {oid: labels[item_type].get(oid) for oid in option_ids}
     if all(oid in labels["translated"][item_type] for oid in option_ids):
         return {oid: labels[item_type].get(oid) for oid in option_ids}
     return {oid: getattr(rows[oid], field) for oid in option_ids if oid in rows}

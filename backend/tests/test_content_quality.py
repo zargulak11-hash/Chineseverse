@@ -206,6 +206,39 @@ def test_zh_options_never_give_the_answer_away(client, learner):
     # zh practice: a meaning is never just the word itself, so options do not reveal answers
 
 
+def test_grammar_options_use_the_learners_names_for_syllabus_points(client, learner):
+    # "Which grammar point does this sentence use?" -- the options used to
+    # fall back to raw titles whenever one option had no translation. A
+    # lesson point's raw title is already English ("是 — to be") but a
+    # syllabus point's is Chinese grammar terminology ("比较句1",
+    # "主谓句2：形容词谓语句"), so in English the right answer was often the
+    # only English option on screen. A point that has a name in the
+    # learner's language (grammar_names) must be shown by it. Pattern titles
+    # (从, 越来越) have no name: they are the Chinese being taught.
+    from app.services.grammar_names import syllabus_names
+
+    uid, _ = learner
+    with SessionLocal() as db:
+        lesson_ids = [l.id for l, _lvl in ordered_lessons(db)]
+        u = db.get(models.User, uid)
+        for loc in ("en", "ru", "tg"):
+            checked = raw = 0
+            for lid in lesson_ids:
+                s_ = practice_svc.build_session(db, u, "lesson", lesson_id=lid, locale=loc)
+                for q in practice_svc.render_session(db, s_, loc)["questions"]:
+                    if q["type"] != "example_to_point":
+                        continue
+                    topics = [db.get(models.GrammarTopic, o["id"]) for o in q["options"]]
+                    named = syllabus_names(db, topics, loc)
+                    for o, t in zip(q["options"], topics):
+                        if t.id in named:
+                            checked += 1
+                            raw += o["label"] == t.title
+            assert checked > 50, (loc, checked)
+            assert raw == 0, (loc, raw, checked)
+    # a syllabus grammar point is always offered by its name in en, ru and tg
+
+
 def test_placement_tone_questions_hide_the_pinyin(client):
     # placement tone question
     with SessionLocal() as db:
