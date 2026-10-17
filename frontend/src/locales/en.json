@@ -1558,7 +1558,12 @@
     "resetExpired": "This reset link has expired. Ask for a new one — it works for 30 minutes.",
     "googleNotLinked": "Your account isn't linked to a Google account.",
     "googleWrongAccount": "That Google account isn't the one linked to your ChineseVerse account. Choose the right one.",
-    "googleConfirmAgain": "Please confirm with Google again."
+    "googleConfirmAgain": "Please confirm with Google again.",
+    "aiRoleplayOff": "AI conversations aren't available on this server right now. The scripted Real Chinese scenes still work.",
+    "aiRoleplayLater": "AI conversations aren't available right now. Try again later.",
+    "aiPartnerSilent": "Your conversation partner didn't answer. Send your message again in a moment.",
+    "aiExplainOff": "AI explanations aren't available right now — the explanation above still applies.",
+    "aiExplainFailed": "The explanation couldn't be written right now. Try again in a moment."
   },
   "realLife": {
     "title": "Real-life Chinese",

@@ -1542,7 +1542,12 @@
     "resetExpired": "此链接已过期。请重新申请——新链接 30 分钟内有效。",
     "googleNotLinked": "你的账户没有关联 Google。",
     "googleWrongAccount": "这个 Google 账户不是与你的 ChineseVerse 账户关联的那个，请选择正确的账户。",
-    "googleConfirmAgain": "请再次用 Google 确认。"
+    "googleConfirmAgain": "请再次用 Google 确认。",
+    "aiRoleplayOff": "此服务器暂时无法进行 AI 对话。“真实中文”里的情景对话仍可正常使用。",
+    "aiRoleplayLater": "AI 对话暂时不可用，请稍后再试。",
+    "aiPartnerSilent": "对话伙伴没有回应，请稍后再发送一次。",
+    "aiExplainOff": "AI 讲解暂时不可用——上面的说明依然有效。",
+    "aiExplainFailed": "暂时无法生成讲解，请稍后再试。"
   },
   "realLife": {
     "title": "生活中的中文",

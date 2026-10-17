@@ -62,6 +62,14 @@ const EXACT = {
   "This grammar point has no example to practice at this level": "grammarNoExample",
   // routers/assistant.py
   "You've sent a lot of messages this hour — take a short break and try again": "chatLimit",
+  // When the AI is down or past its budget (services/roleplay.py,
+  // practice.explain_answer): shown exactly when the AI fails, and they
+  // were the only learner-facing answers left in English.
+  "AI conversations are not available on this server right now": "aiRoleplayOff",
+  "AI conversations are not available right now. Try again later.": "aiRoleplayLater",
+  "Your conversation partner didn't answer. Send your message again in a moment.": "aiPartnerSilent",
+  "AI explanations are not available right now": "aiExplainOff",
+  "The explanation couldn't be written right now. Try again in a moment.": "aiExplainFailed",
   // services/password_reset.py, routers/auth.py (forgot password, set a password with Google)
   "Password reset by email isn't available right now": "resetUnavailable",
   "This reset link is invalid or was already used": "resetInvalid",
