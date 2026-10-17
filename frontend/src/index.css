@@ -3949,6 +3949,11 @@ table.data td {
    with the existing scaleIn/pop keyframes, not a replacement for them. */
 .burst {
   position: relative;
+  /* The rings reach 30% past the element and end scaled to 1.6x: invisible
+     by then, but still layout overflow -- a won duel's result page was
+     2276px wide on a 1440px screen and scrolled sideways on a phone. They
+     glow inside the element's rounded edge instead. */
+  overflow: clip;
 }
 
 .burst::before,
