@@ -16,6 +16,27 @@ export function MotionButton({ className = "", children, ...props }) {
   );
 }
 
+// Props for a dialog backdrop that closes it only on a press that both
+// starts and ends on the backdrop itself. A plain onClick closed the
+// Hanzi writing dialog mid-character: a stroke drawn on the square and
+// released past the card makes the browser fire `click` on the element
+// both ends share -- the backdrop -- and the drawing was lost. The click
+// also stops here, so (React events travel through portals) it can't
+// reach a dialog underneath and close that one too.
+export function useBackdropClose(onClose) {
+  const pressedOnBackdrop = useRef(false);
+  return {
+    onPointerDown: (e) => {
+      pressedOnBackdrop.current = e.target === e.currentTarget;
+    },
+    onClick: (e) => {
+      e.stopPropagation();
+      if (pressedOnBackdrop.current && e.target === e.currentTarget) onClose();
+      pressedOnBackdrop.current = false;
+    },
+  };
+}
+
 const SPARK_COUNT = 16;
 
 // A reusable celebratory moment — level-up, achievement unlock, duel win —

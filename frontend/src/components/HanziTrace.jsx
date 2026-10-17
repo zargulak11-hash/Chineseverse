@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { api } from "../api.js";
 import Icon from "./Icon.jsx";
+import { useBackdropClose } from "./ui.jsx";
 
 // Real stroke-order practice: HanziWriter validates every drawn stroke
 // against the character's actual stroke path/median data (fetched from
@@ -47,6 +48,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   const [done, setDone] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const backdrop = useBackdropClose(onClose);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +154,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   // uses a transform, a fixed overlay inside it would be positioned (and
   // clipped) relative to that panel instead of the screen.
   return createPortal(
-    <div className={`modal modal-backdrop${memory ? " trace-memory-backdrop" : ""}`} onClick={onClose}>
+    <div className={`modal modal-backdrop${memory ? " trace-memory-backdrop" : ""}`} {...backdrop}>
       <div className="card hz-write" onClick={(e) => e.stopPropagation()}>
         {/* watch -> write -> save, lit by where the attempt really is. From
             memory there is nothing to watch. */}

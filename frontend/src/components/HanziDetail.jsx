@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import CompanionReaction from "./CompanionReaction.jsx";
-import { Bar } from "./ui.jsx";
+import { Bar, useBackdropClose } from "./ui.jsx";
 import Icon from "./Icon.jsx";
 import HanziTrace from "./HanziTrace.jsx";
 import { speakChinese } from "../zhSpeech.js";
@@ -217,8 +217,9 @@ export default function HanziDetail({ hanzi, level, onClose, onUpdated, inline =
 // The trace dialog renders inside the card too; it is a fixed overlay of its
 // own and stops its own clicks.
 function ModalWrap({ onClose, children }) {
+  const backdrop = useBackdropClose(onClose);
   return (
-    <div className="modal modal-backdrop" onClick={onClose}>
+    <div className="modal modal-backdrop" {...backdrop}>
       <div
         className="card"
         onClick={(e) => e.stopPropagation()}
