@@ -86,7 +86,7 @@ def reset_process_state() -> None:
     """In-process limits and caches are keyed by user id or content and
     would otherwise carry over from one module's database to the next."""
     from app.routers import assistant
-    from app.services import ai_budget, ai_client, grammar_lesson, lesson_path, login_throttle, stories
+    from app.services import ai_budget, ai_client, grammar_lesson, lesson_path, login_throttle, password_reset, stories
 
     assistant._chat_calls.clear()
     grammar_lesson._ai_calls.clear()
@@ -95,6 +95,7 @@ def reset_process_state() -> None:
     ai_client._translation_cache.clear()
     lesson_path._practicable_cache.update(key=None, ids=frozenset())
     login_throttle.reset()
+    password_reset.reset_limits()
     ai_budget.reset()
 
 

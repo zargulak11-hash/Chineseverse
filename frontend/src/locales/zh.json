@@ -119,8 +119,14 @@
     "changePasswordSubmit": "修改密码",
     "changingPassword": "正在修改密码…",
     "passwordChanged": "密码已修改。你在其他设备上已被退出登录。",
-    "passwordProviderHint": "使用 Google 或 GitHub 注册的？你的账户没有单独的密码——请继续用那个按钮登录。",
-    "save": "保存更改"
+    "passwordProviderHint": "用 Google 或 GitHub 注册、从来没有密码？请使用下方的“通过 Google 设置密码”，或登录页的“忘记密码？”。",
+    "save": "保存更改",
+    "googlePasswordTitle": "通过 Google 设置密码",
+    "googlePasswordSub": "你的账户已关联 Google。设置一个密码并用 Google 确认后，也可以用用户名和这个密码登录，比如在安卓应用里。",
+    "googlePasswordStep": "输入两次新密码，然后点 Google 按钮确认是你本人。",
+    "googlePasswordSaving": "正在保存…",
+    "googlePasswordDone": "密码已设置。现在可以用用户名和这个密码登录。你在其他设备上的登录已失效。",
+    "googlePasswordApp": "通过 Google 设置密码需要在网站上进行：用浏览器打开 chineseverse.qobus.tj，进入“设置”。也可以退出登录，在登录界面使用“忘记密码？”。"
   },
   "landing": {
     "kicker": "在生活中学中文",
@@ -199,7 +205,28 @@
     "register": "创建账户",
     "registerSub": "伙伴稍后再选 — 我们先把账户设置好。",
     "confirmPassword": "确认密码",
-    "passwordMismatch": "两次输入的密码不一致"
+    "passwordMismatch": "两次输入的密码不一致",
+    "forgotLink": "忘记密码？",
+    "forgotTitle": "重置密码",
+    "forgotSub": "输入你账户的邮箱地址，我们会发送一个设置新密码的链接。",
+    "forgotSubmit": "发送链接",
+    "forgotSending": "正在发送…",
+    "forgotSentTitle": "请查看邮箱",
+    "forgotSent": "如果有账户使用 {{email}}，重置密码的链接已经发出。链接只能使用一次，30 分钟内有效。几分钟后还没收到？请查看垃圾邮件文件夹，或重新申请。",
+    "forgotAgain": "再发一次",
+    "forgotUnavailableTitle": "目前无法重置密码",
+    "forgotUnavailable": "服务器目前无法发送邮件，所以没法发送重置链接。如果你是用 Google 注册的，请用 Google 登录，然后在“设置”里设置密码。",
+    "resetTitle": "设置新密码",
+    "resetSub": "至少 6 个字符。你在其他设备上的登录会失效。",
+    "resetSubmit": "保存新密码",
+    "resetSaving": "正在保存…",
+    "resetChecking": "正在检查链接…",
+    "resetDoneTitle": "密码已更改",
+    "resetDone": "你已登录。今后请使用新密码——网站和应用都一样。",
+    "resetContinue": "继续学习",
+    "resetBadTitle": "此链接无法使用",
+    "resetNoToken": "此页面需要通过重置邮件里的链接打开。如有需要，请重新申请链接。",
+    "resetNewLink": "重新申请链接"
   },
   "dashboard": {
     "goal": "目标 {{minutes}} 分钟/天",
@@ -1509,7 +1536,13 @@
       "email": "这个邮箱地址好像不对，请检查后再试。",
       "username": "用户名长度须为 3 到 50 个字符。",
       "password": "密码至少需要 6 个字符。"
-    }
+    },
+    "resetUnavailable": "目前无法通过邮件重置密码。",
+    "resetInvalid": "此链接无效或已被使用，请重新申请。",
+    "resetExpired": "此链接已过期。请重新申请——新链接 30 分钟内有效。",
+    "googleNotLinked": "你的账户没有关联 Google。",
+    "googleWrongAccount": "这个 Google 账户不是与你的 ChineseVerse 账户关联的那个，请选择正确的账户。",
+    "googleConfirmAgain": "请再次用 Google 确认。"
   },
   "realLife": {
     "title": "生活中的中文",
@@ -3447,7 +3480,7 @@
     "help5Q": "Google Play 保护机制发出警告",
     "help5A": "Play 保护机制会对不是来自 Google Play 的应用发出警告。如果文件是从本页下载的，点“更多详情”→“仍然安装”。可以在“文件信息”里核对 SHA-256 校验值。",
     "help6Q": "在应用里无法登录",
-    "help6A": "应用用 ChineseVerse 的用户名和密码登录，并需要联网。如果你的账户是用 Google 创建的，它还没有密码——目前请继续在网站上学习。",
+    "help6A": "应用用 ChineseVerse 的用户名和密码登录，并需要联网。账户是用 Google 创建的？请先设置密码：在网站“设置”→“通过 Google 设置密码”，或在登录界面使用“忘记密码？”。",
     "helpFallback": "还是不行？应用里的一切在网站上同样能用，账户也是同一个。",
     "helpWebsite": "在网站上继续"
   }

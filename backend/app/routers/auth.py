@@ -1,8 +1,9 @@
 import logging
 import re
 import secrets
+import time
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func
 from google.auth import exceptions as google_exceptions
@@ -14,7 +15,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.config import settings
 from app.database import get_db
-from app.deps import get_client_ip
+from app.deps import get_client_ip, get_current_user, get_locale
 from app.security import (
     burn_password_check,
     create_access_token,
@@ -23,7 +24,7 @@ from app.security import (
     hash_password,
     verify_password,
 )
-from app.services import github_oauth, login_throttle
+from app.services import github_oauth, login_throttle, password_reset
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -164,6 +165,8 @@ def providers():
     return {
         "google": bool(settings.google_client_id),
         "github": github_oauth.is_configured(),
+        # "Forgot password?" needs outgoing email (SMTP).
+        "password_reset": password_reset.available(),
     }
 
 
@@ -231,8 +234,11 @@ def login(
     return schemas.TokenResponse(access_token=token, user=user)
 
 
-@router.post("/google", response_model=schemas.TokenResponse)
-def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_db)):
+def _verify_google(credential: str) -> dict:
+    """The verified claims of a Google ID token (signature, audience =
+    our client id, expiry, verified email, account id), or the HTTPException
+    a learner should see. Shared by sign-in and "set a password with
+    Google", so both trust exactly the same checks."""
     if not settings.google_client_id:
         raise HTTPException(
             status_code=501,
@@ -246,7 +252,7 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
         # a pooled keep-alive connection left idle between logins gets closed
         # server-side and the next reuse fails with a connection reset.
         claims = google_id_token.verify_oauth2_token(
-            payload.credential, google_requests.Request(), settings.google_client_id
+            credential, google_requests.Request(), settings.google_client_id
         )
     except ValueError as exc:
         # Covers a malformed, expired, tampered, or wrong-audience token. The
@@ -273,7 +279,13 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
     sub = claims.get("sub")
     if not sub:
         raise HTTPException(status_code=401, detail="Google credential has no account id")
+    return claims
 
+
+@router.post("/google", response_model=schemas.TokenResponse)
+def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_db)):
+    claims = _verify_google(payload.credential)
+    email, sub = claims["email"], claims["sub"]
     user = _sign_in_external(
         db,
         id_field="google_sub",
@@ -292,6 +304,108 @@ def google_login(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_d
     db.refresh(user)
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)
+
+
+# How recent the Google sign-in behind "set a password" must be. Google's
+# ID tokens live an hour; this asks for one just produced by a click, not
+# one lying around in a tab.
+GOOGLE_PROOF_MAX_AGE_SECONDS = 10 * 60
+
+
+@router.post("/google/password", response_model=schemas.TokenResponse)
+def google_set_password(
+    payload: schemas.GooglePasswordRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set (or replace) the signed-in learner's password, proven by a fresh
+    Google sign-in instead of the old password. An account created with
+    Google has a random password nobody ever knew, so Settings -> Change
+    password could never work for it, and it could not sign in where only
+    passwords work (the Android app).
+
+    Both are required: the session (whose account) AND a Google credential
+    for the very Google account bound to it (google_sub) -- a stolen
+    session alone, or someone else's Google account with the same email,
+    sets nothing. Ends every other session and hands this one a fresh token,
+    like a password change. Passwords are plain strings checked here, so a
+    422 never echoes them."""
+    if not user.google_sub:
+        raise HTTPException(status_code=403, detail="Your account isn't linked to a Google account")
+    try:
+        claims = _verify_google(payload.credential)
+    except HTTPException as exc:
+        # A rejected Google proof is a 400 here, never a 401: the app signs
+        # out on a 401, and a failed confirmation must not end the session
+        # it is made from (the same rule as change_password).
+        if exc.status_code == 401:
+            raise HTTPException(status_code=400, detail=exc.detail) from exc
+        raise
+    if claims["sub"] != user.google_sub:
+        raise HTTPException(
+            status_code=403, detail="This Google account isn't the one linked to your ChineseVerse account"
+        )
+    issued = claims.get("iat")
+    if not isinstance(issued, (int, float)) or time.time() - issued > GOOGLE_PROOF_MAX_AGE_SECONDS:
+        raise HTTPException(status_code=400, detail="Please confirm with Google again")
+    problem = password_reset.new_password_problem(payload.new_password, payload.confirm_password)
+    if problem:
+        raise HTTPException(status_code=422, detail=problem)
+    password_reset.set_password(db, user, payload.new_password)
+    db.commit()
+    db.refresh(user)
+    return schemas.TokenResponse(access_token=create_access_token(user.id), user=user)
+
+
+# --------------------------------------------------------------------------
+# Forgot password: an emailed single-use link (services/password_reset.py).
+# --------------------------------------------------------------------------
+
+FORGOT_SENT = "If an account uses this email, a link to reset its password is on its way"
+
+
+@router.post("/password/forgot", status_code=202)
+def forgot_password(
+    payload: schemas.ForgotPasswordRequest,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+    ip: str | None = Depends(get_client_ip),
+    locale: str = Depends(get_locale),
+):
+    """The same answer for every address, so the form can't be used to find
+    out who has an account; the email goes out after the response, so its
+    timing doesn't tell either. Without SMTP the server says honestly that
+    it can't send -- for every address alike."""
+    if not password_reset.available():
+        raise HTTPException(status_code=503, detail=password_reset.UNAVAILABLE)
+    job = password_reset.request_reset(db, payload.email, ip, locale)
+    if job is not None:
+        background.add_task(password_reset.send_reset_email, *job)
+    return {"detail": FORGOT_SENT}
+
+
+@router.post("/password/reset/check")
+def check_reset_link(payload: schemas.ResetLinkCheck, db: Session = Depends(get_db)):
+    """Whether a reset link can still be used, so the page can say "expired"
+    before the learner types a new password. Never names the account."""
+    try:
+        password_reset.check_token(db, payload.token)
+    except password_reset.ResetError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    return {"ok": True}
+
+
+@router.post("/password/reset", response_model=schemas.TokenResponse)
+def reset_password(payload: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Choose a new password with an emailed link. Every session opened
+    before it ends; the learner is signed in with a fresh one."""
+    try:
+        user = password_reset.reset_password(
+            db, payload.token, payload.new_password, payload.confirm_password
+        )
+    except password_reset.ResetError as exc:
+        raise HTTPException(status_code=exc.status, detail=exc.detail) from exc
+    return schemas.TokenResponse(access_token=create_access_token(user.id), user=user)
 
 
 # --------------------------------------------------------------------------

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { api, changePassword } from "../api.js";
+import { api, changePassword, setPasswordWithGoogle } from "../api.js";
+import GoogleAuthButton, { GOOGLE_CONFIGURED } from "../components/GoogleAuthButton.jsx";
 import Icon from "../components/Icon.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
 import Layout from "../components/Layout.jsx";
 import { useAuth } from "../auth.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { SUPPORTED_LANGS } from "../i18n.js";
+import { isNativeApp } from "../platform.js";
 import { usePrefs } from "../prefs.jsx";
 import { useTheme } from "../theme.jsx";
 
@@ -137,6 +139,109 @@ function ChangePassword({ user, onChanged }) {
         {busy ? t("settings.changingPassword") : t("settings.changePasswordSubmit")}
       </button>
       <p className="sub" style={{ marginTop: 12, fontSize: "var(--text-xs)" }}>{t("settings.passwordProviderHint")}</p>
+    </form>
+  );
+}
+
+// The rules for a new password chosen without the old one (server:
+// services/password_reset.new_password_problem).
+function newPasswordProblem({ next, confirm }) {
+  if (next.length < 6) return "passwordTooShort";
+  if (next.length > 128) return "passwordTooLong";
+  if (next !== confirm) return "newPasswordMismatch";
+  return null;
+}
+
+// "Set a password with Google", for an account linked to Google. One made
+// with Google has a random password nobody ever knew, so Change password
+// (which asks for the current one) could never work for it, and it could
+// not sign in where only passwords work -- the Android app. A fresh Google
+// sign-in for the very account linked here proves it instead
+// (POST /api/auth/google/password). Google's button can't run inside the
+// app's WebView, so there the card points to the website and the emailed
+// "Forgot password?" link.
+function GooglePassword({ onChanged }) {
+  const { t, i18n } = useTranslation();
+  const [pw, setPw] = useState({ next: "", confirm: "" });
+  const pwRef = useRef(pw);
+  pwRef.current = pw;
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState(null); // { key } | { text }
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setProblem((p) => (p?.text ? null : p));
+  }, [i18n.language]);
+
+  async function confirmWithGoogle(credential) {
+    const current = pwRef.current;
+    const key = newPasswordProblem(current);
+    if (key) {
+      setProblem({ key });
+      return;
+    }
+    setProblem(null);
+    setDone(false);
+    setBusy(true);
+    try {
+      onChanged(await setPasswordWithGoogle(credential, current));
+      setPw({ next: "", confirm: "" });
+      setDone(true);
+    } catch (err) {
+      setProblem({ text: err.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (isNativeApp) {
+    return (
+      <div className="card formcard is-inline">
+        <h2 className="h2">{t("settings.googlePasswordTitle")}</h2>
+        <p className="sub">{t("settings.googlePasswordApp")}</p>
+      </div>
+    );
+  }
+  if (!GOOGLE_CONFIGURED) return null;
+
+  return (
+    <form className="card formcard is-inline" onSubmit={(e) => e.preventDefault()} noValidate>
+      <h2 className="h2">{t("settings.googlePasswordTitle")}</h2>
+      <p className="sub" style={{ marginBottom: 12 }}>{t("settings.googlePasswordSub")}</p>
+      <div className="field">
+        <label htmlFor="gpw-new">{t("settings.newPassword")}</label>
+        <input
+          id="gpw-new"
+          className="input"
+          type="password"
+          autoComplete="new-password"
+          maxLength={128}
+          value={pw.next}
+          onChange={(e) => { setPw({ ...pw, next: e.target.value }); setDone(false); }}
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="gpw-confirm">{t("settings.confirmNewPassword")}</label>
+        <input
+          id="gpw-confirm"
+          className="input"
+          type="password"
+          autoComplete="new-password"
+          maxLength={128}
+          value={pw.confirm}
+          onChange={(e) => { setPw({ ...pw, confirm: e.target.value }); setDone(false); }}
+        />
+      </div>
+      {problem && (
+        <p className="formerr" role="alert">{problem.key ? t(`apiErrors.${problem.key}`) : problem.text}</p>
+      )}
+      <p className="sub" role="status" aria-live="polite" style={{ color: "var(--good)", margin: 0 }}>
+        {done ? t("settings.googlePasswordDone") : busy ? t("settings.googlePasswordSaving") : ""}
+      </p>
+      <div className="google-password-confirm" aria-busy={busy || undefined}>
+        <p className="sub" style={{ margin: 0, fontSize: "var(--text-xs)" }}>{t("settings.googlePasswordStep")}</p>
+        <GoogleAuthButton onCredential={confirmWithGoogle} onError={(text) => setProblem({ text })} />
+      </div>
     </form>
   );
 }
@@ -345,6 +450,7 @@ export default function Settings() {
           </div>
 
           <ChangePassword user={user} onChanged={setCurrentUser} />
+          {user?.google_linked && <GooglePassword onChanged={setCurrentUser} />}
 
           <div className="card formcard is-inline">
             <h2 className="h2">{t("settings.learningProfile")}</h2>

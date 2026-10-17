@@ -82,6 +82,7 @@ export default function Login() {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
             />
+            <Link to="/forgot-password" className="auth-forgot">{t("auth.forgotLink")}</Link>
           </div>
           {error && <p className="formerr" role="alert">{error}</p>}
           <button type="submit" className="btn primary" style={{ width: "100%" }} disabled={busy} aria-busy={busy || undefined}>

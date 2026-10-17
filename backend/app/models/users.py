@@ -96,6 +96,16 @@ class User(Base):
     roleplay_sessions = relationship("RoleplaySession", back_populates="user", cascade="all, delete-orphan")
     tone_attempts = relationship("ToneAttempt", back_populates="user", cascade="all, delete-orphan")
     saved_sentences = relationship("SavedSentence", back_populates="user", cascade="all, delete-orphan")
+    password_reset_tokens = relationship(
+        "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    @property
+    def google_linked(self) -> bool:
+        """Whether a Google account is bound to this row (google_sub). Lets
+        Settings offer "set a password with Google" -- the id itself is
+        never sent to the client."""
+        return bool(self.google_sub)
 
     @property
     def onboarding_completed(self) -> bool:
@@ -104,6 +114,26 @@ class User(Base):
         from the same stored `user` it already gates sign-in on. The profile
         column stays the one source of truth; this only exposes it."""
         return bool(self.profile is not None and self.profile.onboarding_completed)
+
+
+class PasswordResetToken(Base):
+    """One "forgot password" link (services/password_reset.py). Only the
+    SHA-256 of the token is stored -- the token itself exists only in the
+    email -- so a database read can't be turned into a password reset.
+    Single use (used_at) and short-lived (expires_at); asking for a new
+    link, or resetting, spends every older unused one."""
+
+    __tablename__ = "password_reset_tokens"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_password_reset_tokens_token_hash"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(64), nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="password_reset_tokens")
 
 
 class UserProfile(Base):

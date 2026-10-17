@@ -35,6 +35,30 @@ class GoogleAuthRequest(BaseModel):
     credential: str = Field(min_length=10)
 
 
+# The passwords below are plain strings, checked in the route
+# (services/password_reset.new_password_problem): a constrained field's 422
+# body echoes the submitted value back, and these are passwords.
+class GooglePasswordRequest(BaseModel):
+    """Set a password, proven by a fresh Google sign-in (POST /auth/google/password)."""
+    credential: str = Field(min_length=10, max_length=4096)
+    new_password: str
+    confirm_password: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetLinkCheck(BaseModel):
+    token: str = Field(max_length=200)
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(max_length=200)
+    new_password: str
+    confirm_password: str
+
+
 # --------------------------------------------------------------------------- User
 class UserCreate(BaseModel):
     username: str = Field(min_length=3, max_length=50)
@@ -73,6 +97,9 @@ class UserResponse(BaseModel):
     # property). The frontend sends a learner without it to /onboarding and
     # keeps one with it out of there; only the placement endpoints set it.
     onboarding_completed: bool = False
+    # Read-only (models.User.google_linked): a Google account is bound, so
+    # Settings can offer "set a password with Google". Never the id itself.
+    google_linked: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

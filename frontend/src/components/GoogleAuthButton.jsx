@@ -11,7 +11,10 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 // rather than a decorative one that would silently fail.
 export const GOOGLE_CONFIGURED = Boolean(CLIENT_ID);
 
-export default function GoogleAuthButton({ onSuccess, onError }) {
+// `onCredential(credential)`, when given, receives Google's ID token itself
+// instead of signing in with it -- Settings uses it to prove the linked
+// Google account before setting a password.
+export default function GoogleAuthButton({ onSuccess, onError, onCredential }) {
   const { t, i18n } = useTranslation();
   // Google's button speaks the browser's language unless told otherwise;
   // drawing reads the current UI language each time.
@@ -28,8 +31,10 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
   // still calling the latest ones.
   const onSuccessRef = useRef(onSuccess);
   const onErrorRef = useRef(onError);
+  const onCredentialRef = useRef(onCredential);
   onSuccessRef.current = onSuccess;
   onErrorRef.current = onError;
+  onCredentialRef.current = onCredential;
   // One exchange at a time: a duplicate callback for the same click would
   // otherwise race a second POST /auth/google against the first.
   const inFlight = useRef(false);
@@ -50,6 +55,10 @@ export default function GoogleAuthButton({ onSuccess, onError }) {
           if (inFlight.current) return;
           inFlight.current = true;
           try {
+            if (onCredentialRef.current) {
+              await onCredentialRef.current(response.credential);
+              return;
+            }
             const user = await loginWithGoogle(response.credential);
             onSuccessRef.current?.(user);
           } catch (err) {

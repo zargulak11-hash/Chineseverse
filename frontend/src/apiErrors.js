@@ -62,6 +62,13 @@ const EXACT = {
   "This grammar point has no example to practice at this level": "grammarNoExample",
   // routers/assistant.py
   "You've sent a lot of messages this hour — take a short break and try again": "chatLimit",
+  // services/password_reset.py, routers/auth.py (forgot password, set a password with Google)
+  "Password reset by email isn't available right now": "resetUnavailable",
+  "This reset link is invalid or was already used": "resetInvalid",
+  "This reset link has expired": "resetExpired",
+  "Your account isn't linked to a Google account": "googleNotLinked",
+  "This Google account isn't the one linked to your ChineseVerse account": "googleWrongAccount",
+  "Please confirm with Google again": "googleConfirmAgain",
 };
 
 // routers/assistant.py: "<file name>: <problem>" -- the name stays, the

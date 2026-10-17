@@ -120,8 +120,14 @@
     "changePasswordSubmit": "Change password",
     "changingPassword": "Changing password…",
     "passwordChanged": "Password changed. Your other devices have been signed out.",
-    "passwordProviderHint": "Signed up with Google or GitHub? Your account has no password of its own — keep signing in with that button.",
-    "save": "Save changes"
+    "passwordProviderHint": "Signed up with Google or GitHub and never had a password? Use “Set a password with Google” below, or “Forgot password?” on the sign-in page.",
+    "save": "Save changes",
+    "googlePasswordTitle": "Set a password with Google",
+    "googlePasswordSub": "Your account is linked to Google. Choose a password and confirm with Google — then you can also sign in with your username and this password, for example in the Android app.",
+    "googlePasswordStep": "Enter the new password twice, then press the Google button to confirm it's you.",
+    "googlePasswordSaving": "Saving…",
+    "googlePasswordDone": "Password set. You can now sign in with your username and this password. Your other devices have been signed out.",
+    "googlePasswordApp": "Setting a password with Google works on the website: open chineseverse.qobus.tj in a browser and go to Settings. Or sign out and use “Forgot password?” on the sign-in screen."
   },
   "landing": {
     "kicker": "Learn Chinese by living it",
@@ -200,7 +206,28 @@
     "register": "Create account",
     "registerSub": "Pick a companion later — first, let's get you set up.",
     "confirmPassword": "Confirm password",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "forgotLink": "Forgot password?",
+    "forgotTitle": "Reset your password",
+    "forgotSub": "Enter the email address of your account. We'll send you a link to choose a new password.",
+    "forgotSubmit": "Send the link",
+    "forgotSending": "Sending…",
+    "forgotSentTitle": "Check your email",
+    "forgotSent": "If an account uses {{email}}, a link to reset its password is on its way. It works once, for 30 minutes. Nothing after a few minutes? Check the spam folder, or ask again.",
+    "forgotAgain": "Send another link",
+    "forgotUnavailableTitle": "Password reset isn't available right now",
+    "forgotUnavailable": "This server can't send email at the moment, so a reset link can't be sent. If you signed up with Google, sign in with Google and set a password in Settings.",
+    "resetTitle": "Choose a new password",
+    "resetSub": "Use at least 6 characters. Your other devices will be signed out.",
+    "resetSubmit": "Save the new password",
+    "resetSaving": "Saving…",
+    "resetChecking": "Checking the link…",
+    "resetDoneTitle": "Your password is changed",
+    "resetDone": "You're signed in. Use the new password from now on — on the website and in the app.",
+    "resetContinue": "Continue learning",
+    "resetBadTitle": "This link can't be used",
+    "resetNoToken": "This page opens from the link in the reset email. Ask for a new link if you need one.",
+    "resetNewLink": "Ask for a new link"
   },
   "dashboard": {
     "goal": "goal {{minutes}} min/day",
@@ -1525,7 +1552,13 @@
       "email": "That email address doesn't look right. Check it and try again.",
       "username": "The username must be 3 to 50 characters long.",
       "password": "The password must be at least 6 characters long."
-    }
+    },
+    "resetUnavailable": "Password reset by email isn't available right now.",
+    "resetInvalid": "This reset link is invalid or was already used. Ask for a new one.",
+    "resetExpired": "This reset link has expired. Ask for a new one — it works for 30 minutes.",
+    "googleNotLinked": "Your account isn't linked to a Google account.",
+    "googleWrongAccount": "That Google account isn't the one linked to your ChineseVerse account. Choose the right one.",
+    "googleConfirmAgain": "Please confirm with Google again."
   },
   "realLife": {
     "title": "Real-life Chinese",
@@ -3534,7 +3567,7 @@
     "help5Q": "Google Play Protect warns about the app",
     "help5A": "Play Protect warns about apps that don't come from Google Play. If you downloaded the file from this page, tap “More details” → “Install anyway”. You can compare the SHA-256 checksum under “File details”.",
     "help6Q": "I can't sign in in the app",
-    "help6A": "The app signs in with your ChineseVerse username and password and needs an internet connection. If you created your account with Google, it has no password yet — keep using the website for now.",
+    "help6A": "The app signs in with your ChineseVerse username and password and needs an internet connection. Created your account with Google? Set a password first: on the website, Settings → “Set a password with Google”, or “Forgot password?” on the sign-in screen.",
     "helpFallback": "Still stuck? Everything in the app also works right here on the website, with the same account.",
     "helpWebsite": "Continue on the website"
   }

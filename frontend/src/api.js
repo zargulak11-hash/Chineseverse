@@ -235,6 +235,42 @@ export async function changePassword({ current, next, confirm }) {
   return data.user;
 }
 
+// Settings -> Set a password with Google: a fresh Google sign-in proves the
+// account instead of a password the learner never had (an account created
+// with Google). Like changePassword, other sessions end and this one gets
+// a fresh token.
+export async function setPasswordWithGoogle(credential, { next, confirm }) {
+  const data = await request("POST", "/auth/google/password", {
+    credential,
+    new_password: next,
+    confirm_password: confirm,
+  });
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}
+
+// Forgot password: the server answers the same for every address.
+export function requestPasswordReset(email) {
+  return request("POST", "/auth/password/forgot", { email });
+}
+
+export function checkResetLink(token) {
+  return request("POST", "/auth/password/reset/check", { token });
+}
+
+// The emailed link's new password; signs the learner in with a fresh token.
+export async function resetPassword(token, { next, confirm }) {
+  const data = await request("POST", "/auth/password/reset", {
+    token,
+    new_password: next,
+    confirm_password: confirm,
+  });
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}
+
 export async function loginWithGoogle(credential) {
   const data = await request("POST", "/auth/google", { credential });
   saveToken(data.access_token);

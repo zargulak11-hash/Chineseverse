@@ -20,6 +20,8 @@ import GitHubCallback from "./pages/GitHubCallback.jsx";
 // public entry pages above stay in the main bundle.
 // /download is public too, but few visitors open it: it loads on demand.
 const Download = lazy(() => import("./pages/Download.jsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.jsx"));
 const AnimalSelect = lazy(() => import("./pages/AnimalSelect.jsx"));
 const Onboarding = lazy(() => import("./pages/Onboarding.jsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
@@ -258,6 +260,12 @@ export default function App() {
         />
         {/* Public: the Android app is for visitors who haven't signed up yet too. */}
         <Route path="/download" element={<Download />} />
+        {/* Forgot password: asking for the emailed link, and the page the
+            link opens (services/password_reset.py). Public, not redirected
+            when signed in -- the link may be opened in a browser that holds
+            another session, and a reset replaces it. */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* The backend's GitHub callback lands here (routers/auth.py). */}
         <Route path="/auth/github" element={<GitHubCallback />} />
         {/* Onboarding is full-screen, outside the app shell: no sidebar or

@@ -16,6 +16,7 @@ from app.models.users import (
     ActivityEvent,
     Follow,
     Notification,
+    PasswordResetToken,
 )
 from app.models.companions import Animal, AnimalPersonality, UserAnimal, PetTeacherCase, UserTaughtFact
 from app.models.skills import HSKLevel, Skill, UserSkill
@@ -55,6 +56,7 @@ __all__ = [
     "ActivityEvent",
     "Follow",
     "Notification",
+    "PasswordResetToken",
     "Animal",
     "AnimalPersonality",
     "UserAnimal",
