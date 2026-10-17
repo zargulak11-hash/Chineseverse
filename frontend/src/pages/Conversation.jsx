@@ -228,7 +228,7 @@ export default function Conversation() {
                 })()}
 
                 {!hasChoices && d.requires_voice && !isCurrent && mine?.text && <MyLine text={mine.text} me={me} />}
-                {!hasChoices && d.requires_voice && isCurrent && !result && (
+                {!hasChoices && d.requires_voice && isCurrent && (!result || result.error) && (
                   <div className="cv-task">
                     <Icon name="mic" size={14} /> <span>{d.prompt}</span>
                   </div>
@@ -278,7 +278,9 @@ export default function Conversation() {
           <div ref={scrollRef} />
         </div>
 
-        {voiceTurn && !result && (
+        {/* Also after a failed attempt: the error used to replace the box,
+            and with it the only way on (no retry, no skip, no continue). */}
+        {voiceTurn && (!result || result.error) && (
           <div className="rp-compose">
             <label className="side-title" htmlFor="cv-input">{t("pages.conversation.micPlaceholder")}</label>
             <div className="rp-compose-row">
