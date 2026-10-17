@@ -62,6 +62,42 @@ const EXACT = {
   "This grammar point has no example to practice at this level": "grammarNoExample",
   // routers/assistant.py
   "You've sent a lot of messages this hour — take a short break and try again": "chatLimit",
+  // Sentences a learner meets in normal use that were still English
+  // everywhere (found by listing every detail the API can return).
+  // services/sentence.py (One Sentence)
+  "Enter a Chinese sentence (at least two characters)": "sentenceInput",
+  "No HSK words were found in this sentence": "sentenceNoWords",
+  "This sentence is too short to build a lesson from": "sentenceTooShort",
+  "The sentence should be written in Chinese characters": "sentenceNotChinese",
+  // stories, vocabulary, Character DNA
+  "Select some Chinese text": "selectChinese",
+  "This word is already in your review": "alreadyInReview",
+  "This word can't be practised here": "wordNotPractisable",
+  "This character isn't in the ChineseVerse curriculum yet": "charNotInCurriculum",
+  "Give one Chinese character": "giveOneChar",
+  "This chapter has nothing to practise yet": "chapterNothing",
+  "No words to practise at this level": "noWordsAtLevel",
+  "Not enough curriculum words to build this case yet": "caseNotReady",
+  "Not enough curriculum words to build this place yet": "placeNotReady",
+  "This item no longer exists": "itemGone",
+  // practice rounds (services/practice.py)
+  "Answer the question first": "answerFirst",
+  "Answer the question before saying it aloud": "answerBeforeSpeaking",
+  "You've already practised saying this one": "alreadySpoken",
+  "This question has nothing to say aloud": "nothingToSay",
+  "This answer was right -- there is nothing to explain": "nothingToExplain",
+  "This kind of question can't be explained here": "cantExplain",
+  "Type your answer for this question": "typeAnswer",
+  // roleplay, tone coach, sound world, exam
+  "Write something to say": "writeSomething",
+  "Say something before finishing": "saySomething",
+  "This conversation is complete -- finish it to see your summary": "conversationComplete",
+  "This conversation is finished": "conversationFinished",
+  "The recording should be between a moment and 5 seconds long": "recordingLength",
+  "This speed isn't unlocked yet": "speedLocked",
+  "This exam attempt is over": "examOver",
+  "An exam attempt is already in progress": "examInProgress",
+  "This exam is not open: finish the level's lessons first": "examNotOpen",
   // When the AI is down or past its budget (services/roleplay.py,
   // practice.explain_answer): shown exactly when the AI fails, and they
   // were the only learner-facing answers left in English.
