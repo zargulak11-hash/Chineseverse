@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { login } from "../api.js";
 import SocialAuth from "../components/SocialAuth.jsx";
 import { useAuth } from "../auth.js";
-import LanguagePicker from "../components/LanguagePicker.jsx";
+import AuthCardTools from "../components/AuthCardTools.jsx";
 
 export default function Login() {
   const { t } = useTranslation();
@@ -53,7 +53,7 @@ export default function Login() {
   return (
     <div className="page">
       <div className="card formcard">
-        <div className="formcard-tools"><LanguagePicker /></div>
+        <AuthCardTools />
         <h1 className="h1">{t("auth.welcomeBack")}</h1>
         <p className="sub">{t("auth.welcomeBackSub")}</p>
         <form onSubmit={submit}>
@@ -62,6 +62,9 @@ export default function Login() {
             <input
               id="login-username"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className="input"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -80,7 +83,7 @@ export default function Login() {
               required
             />
           </div>
-          {error && <p className="formerr">{error}</p>}
+          {error && <p className="formerr" role="alert">{error}</p>}
           <button type="submit" className="btn primary" style={{ width: "100%" }} disabled={busy} aria-busy={busy || undefined}>
             {busy ? t("auth.signingIn") : t("auth.logIn")}
           </button>

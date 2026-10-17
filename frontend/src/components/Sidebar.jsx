@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { prefersReducedMotion } from "../anime.js";
+import { isNativeApp } from "../platform.js";
 import BrandLogo from "./BrandLogo.jsx";
 import Icon from "./Icon.jsx";
 import UserAvatar from "./UserAvatar.jsx";
@@ -220,6 +221,19 @@ export default function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onClo
             </div>
           ))}
         </nav>
+
+        {/* The Android app, for a learner on the website: /download lived
+            only on the landing page, which a signed-in learner never sees.
+            Outside the groups (it is not a place in the course) and not in
+            the app itself, which is what it downloads. */}
+        {!isNativeApp && (
+          <div className="sidebar-app">
+            <Link to="/download" className="sidebar-link" data-label={t("nav.downloadApp")} onClick={onCloseMobile}>
+              <Icon name="phone" size={17} />
+              <span className="label">{t("nav.downloadApp")}</span>
+            </Link>
+          </div>
+        )}
 
         <div className="sidebar-profile">
           <UserAvatar url={avatarUrl} name={user?.username} size={36} />

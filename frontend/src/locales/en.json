@@ -73,7 +73,8 @@
     "groupYou": "You",
     "groupPlay": "Play & extras",
     "roleplay": "AI Roleplay",
-    "toneCoach": "Tone Coach"
+    "toneCoach": "Tone Coach",
+    "downloadApp": "Android app"
   },
   "topbar": {
     "hello": "你好, {{name}}",
@@ -150,7 +151,19 @@
     "featNotebookTitle": "Mistakes that teach",
     "featNotebookDesc": "Every slip is remembered. Words you mix up come back side by side until you can tell them apart.",
     "featStoriesTitle": "Real Chinese books",
-    "featStoriesDesc": "Graded stories for every HSK level, written in Chinese. Tap a word or select a sentence whenever you need help."
+    "featStoriesDesc": "Graded stories for every HSK level, written in Chinese. Tap a word or select a sentence whenever you need help.",
+    "startEyebrow": "Where to start",
+    "startTitle": "How learning works",
+    "startIntro": "ChineseVerse is a free Mandarin Chinese course — from your first tones to HSK 9, on the website and in the Android app. Four steps take you from here to your first lesson.",
+    "step1Title": "Create your account",
+    "step1Text": "Sign up with a username, email and password — or continue with Google. It takes a minute.",
+    "step2Title": "Pick a companion and your level",
+    "step2Text": "Choose the animal who learns with you. Start from zero, or take a short test that finds your HSK level.",
+    "step3Title": "Learn lesson by lesson",
+    "step3Text": "Each lesson teaches words, characters and grammar, then a practice round checks what you remember. All lessons are under Lessons, and Home always shows your next step.",
+    "step4Title": "Review and track your progress",
+    "step4Text": "Words you get wrong come back in Review until they stick. Progress shows your streak, XP and every level you have finished.",
+    "haveAccount": "Already learning with ChineseVerse?"
   },
   "auth": {
     "continueGithub": "Continue with GitHub",
@@ -3508,6 +3521,21 @@
     "allVersions": "All versions",
     "inAppTitle": "You're already using the app",
     "inAppText": "This is the ChineseVerse app. New versions are published at chineseverse.qobus.tj/download.",
-    "inAppButton": "Back to learning"
+    "inAppButton": "Back to learning",
+    "helpTitle": "If something goes wrong",
+    "help1Q": "The download doesn't start or stops halfway",
+    "help1A": "Check your internet connection and tap “Download Android App” again. If the browser blocks the file, open this page in Chrome, or download the file from “All versions”.",
+    "help2Q": "I can't find the downloaded file",
+    "help2A": "Open your browser's downloads (in Chrome: menu ⋮ → Downloads) or the Files app → Downloads. The file is called {{file}}.",
+    "help3Q": "Android won't let me install it",
+    "help3A": "Open Settings → Apps → Special app access → Install unknown apps, choose the browser or file manager you used, and turn on “Allow from this source”. Menu names differ a little between phone brands.",
+    "help4Q": "“App not installed” or “problem parsing the package”",
+    "help4A": "The file is probably incomplete: delete it and download it again. Check that your phone runs Android {{android}} or newer and has enough free space. If an earlier test version of ChineseVerse is installed, uninstall it first.",
+    "help5Q": "Google Play Protect warns about the app",
+    "help5A": "Play Protect warns about apps that don't come from Google Play. If you downloaded the file from this page, tap “More details” → “Install anyway”. You can compare the SHA-256 checksum under “File details”.",
+    "help6Q": "I can't sign in in the app",
+    "help6A": "The app signs in with your ChineseVerse username and password and needs an internet connection. If you created your account with Google, it has no password yet — keep using the website for now.",
+    "helpFallback": "Still stuck? Everything in the app also works right here on the website, with the same account.",
+    "helpWebsite": "Continue on the website"
   }
 }

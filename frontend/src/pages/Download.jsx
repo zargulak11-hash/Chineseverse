@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ANDROID_APP, RELEASES_URL, detectPlatform } from "../appDownload.js";
+import { useAuth } from "../auth.js";
 import Icon from "../components/Icon.jsx";
 import PublicHeader from "../components/PublicHeader.jsx";
 import { isNativeApp } from "../platform.js";
@@ -20,6 +21,7 @@ const BENEFITS = [
   ["phone", "benefit4"],
 ];
 const STEPS = ["step1", "step2", "step3", "step4", "step5", "step6"];
+const HELP = ["help1", "help2", "help3", "help4", "help5", "help6"];
 
 function AndroidButton() {
   const { t } = useTranslation();
@@ -38,6 +40,7 @@ function Meta() {
 
 export default function Download() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const platform = useMemo(() => detectPlatform(), []);
 
   if (isNativeApp) {
@@ -147,6 +150,27 @@ export default function Download() {
             </section>
           </div>
         </div>
+
+        {/* What to do when the download or the install fails -- the page
+            explained the happy path only, so a blocked install or a
+            "problem parsing the package" left the visitor with nothing. */}
+        <section className="card dl-section" aria-labelledby="dl-help">
+          <h2 className="h2" id="dl-help">{t("download.helpTitle")}</h2>
+          <dl className="dl-help">
+            {HELP.map((key) => (
+              <div className="dl-help-item" key={key}>
+                <dt>{t(`download.${key}Q`)}</dt>
+                <dd className="sub">
+                  {t(`download.${key}A`, { file: ANDROID_APP.fileName, android: ANDROID_APP.minAndroid })}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <div className="dl-help-fallback">
+            <p className="sub">{t("download.helpFallback")}</p>
+            <Link to={user ? "/dashboard" : "/login"} className="btn small">{t("download.helpWebsite")}</Link>
+          </div>
+        </section>
       </div>
     </>
   );

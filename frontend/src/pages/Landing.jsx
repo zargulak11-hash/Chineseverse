@@ -27,6 +27,9 @@ const FEATURES = [
   ["paw", "featCompanionsTitle", "featCompanionsDesc", "#FFC24B", ""],
 ];
 
+// A numbered path, not another row of icon cards: the order is the point.
+const START_STEPS = ["step1", "step2", "step3", "step4"];
+
 const SHOWCASE = ["fox", "wolf", "snake", "monkey", "cat", "phoenix", "owl", "panda"];
 
 export default function Landing() {
@@ -62,6 +65,46 @@ export default function Landing() {
           <Link to="/download" className="btn ghost landing-app-btn">
             <Icon name="phone" size={17} /> {t("download.cta")}
           </Link>
+        </div>
+        {!user && (
+          <p className="landing-signin">
+            {t("landing.haveAccount")} <Link to="/login">{t("landing.logIn")}</Link>
+          </p>
+        )}
+      </section>
+
+      {/* Where to start: what ChineseVerse is and the four steps from this
+          page to a first lesson, before the feature tour. A first-time
+          visitor saw a tagline and six feature cards, and had to guess what
+          happens after "Create your account" and where lessons and progress
+          live. The steps name the real sections (nav.lessons, nav.home,
+          nav.review, nav.progress) a learner will find in the sidebar. */}
+      <section className="landing-start" aria-labelledby="landing-start-title">
+        <p className="page-eyebrow"><Icon name="route" size={13} /> {t("landing.startEyebrow")}</p>
+        <h2 className="h2 landing-start-title" id="landing-start-title">{t("landing.startTitle")}</h2>
+        <p className="sub landing-start-intro">{t("landing.startIntro")}</p>
+        <ol className="landing-steps">
+          {START_STEPS.map((key, i) => (
+            <li className="landing-step" key={key}>
+              <span className="landing-step-num" aria-hidden="true">{i + 1}</span>
+              <h3 className="landing-step-title">{t(`landing.${key}Title`)}</h3>
+              <p className="sub">{t(`landing.${key}Text`)}</p>
+            </li>
+          ))}
+        </ol>
+        <div className="row landing-start-actions">
+          {user ? (
+            <>
+              <Link to="/dashboard" className="btn primary">{t("landing.continueLearning")}</Link>
+              <Link to="/lessons" className="btn ghost">{t("nav.lessons")}</Link>
+              <Link to="/progress" className="btn ghost">{t("nav.progress")}</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/register" className="btn primary">{t("landing.createAccount")}</Link>
+              <Link to="/login" className="btn ghost">{t("landing.logIn")}</Link>
+            </>
+          )}
         </div>
       </section>
 
