@@ -157,7 +157,7 @@ SKILL_PRACTICE = {
 NEXT_SOURCE = {"tones": "tones", "characters": "hanzi", "first_lesson": "lesson", "sentence": "sentence",
                "listen": "sound", "speak": "voice", "story": "story", "review": "review",
                "lesson": "lesson", "stories": "story", "exam": "exam", "mixups": "mixups",
-               "continue": "story", "skill": "", "recall": "recall"}
+               "continue": "story", "skill": "", "recall": "recall", "testout": "exam", "checkskill": ""}
 
 
 def _reading(db: Session, user: models.User, level: int, locale: str) -> dict | None:
@@ -182,6 +182,37 @@ def _reading(db: Session, user: models.User, level: int, locale: str) -> dict | 
                 "to": f"/stories/{row.slug}/read/{row.chapter + 1}",
                 "days": (datetime.utcnow() - row.updated_at).days}
     return None
+
+
+TEST_OUT_RETRY_DAYS = 7  # a failed test-out is not suggested again this soon
+
+
+def _test_out(db: Session, user: models.User, state, level: int) -> dict | None:
+    """A learner whose real level (placement test, or the skills they built
+    in practice: gamification.user_rank) is above the level of their current
+    lesson is offered the exam of the highest level they may test out of
+    (services/hsk_exam.test_out_levels) instead of lesson 1 of a level they
+    already know. Not after a recent failed attempt: then the lessons are
+    the way on."""
+    from datetime import datetime, timedelta
+
+    from app.services import hsk_exam
+
+    if state.current is None or level <= state.current.level:
+        return None
+    open_levels = [lvl for lvl in hsk_exam.test_out_levels(state) if lvl <= level]
+    if not open_levels:
+        return None
+    target = max(open_levels)
+    since = datetime.utcnow() - timedelta(days=TEST_OUT_RETRY_DAYS)
+    failed = (db.query(models.HSKExamAttempt.id)
+              .filter(models.HSKExamAttempt.user_id == user.id, models.HSKExamAttempt.level.in_(open_levels),
+                      models.HSKExamAttempt.status != "passed", models.HSKExamAttempt.started_at >= since)
+              .first())
+    if failed is not None:
+        return None
+    return {"kind": "testout", "key": "testout", "to": f"/exam/{target}", "level": target,
+            "from": state.current.level}
 
 
 def today(db: Session, user: models.User, level: int, nxt: dict, due: int, foundation_complete: bool,
@@ -300,8 +331,21 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
     # Each step carries the learner's own numbers that justify it, so the
     # page can say WHY (the pair they keep confusing, how many words are
     # fading), never a generic line.
+    testout = _test_out(db, user, state, level)
+    from app.services import diagnostic
+
+    check = diagnostic.latest(db, user)
     if current is not None:
         nxt = {"kind": "foundation", "key": current, "to": next(s["to"] for s in steps if s["key"] == current)}
+    elif check is not None and check["fresh"] and check["weak"]:
+        # The skill check found a weak skill, not practised since: that,
+        # with the learner's own result (services/diagnostic.py). Before the
+        # review backlog -- the check's own missed items fill Review, and
+        # would otherwise bury what the learner just found out; Review stays
+        # in today's plan.
+        w = check["weak"][0]
+        nxt = {"kind": "checkskill", "key": "checkskill", "skill": w["skill"], "to": w["to"],
+               "correct": w["correct"], "total": w["total"]}
     elif due >= REVIEW_FIRST_AT or slipping >= SLIPPING_FIRST_AT:
         nxt = {"kind": "review", "key": "review", "to": "/review", "count": due, "slipping": slipping}
     elif mixed and mixed[0]["confused"] >= MIXUP_FIRST_AT:
@@ -314,6 +358,9 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         nxt = {"kind": "exam", "key": "exam", "to": f"/exam/{state.exam_level}", "level": state.exam_level}
     elif reading is not None and reading["days"] < FRESH_READING_DAYS:
         nxt = {"kind": "continue", "key": "continue", **reading}
+    elif testout is not None:
+        # In place of the next lesson -- a lesson of a level they already know.
+        nxt = testout
     elif state.current is not None:
         from app.services.localization import load_translations, tr
 
@@ -359,5 +406,6 @@ def journey(db: Session, user: models.User, locale: str = "en") -> dict:
         "foundation": foundation, "next": nxt, "levels": levels, "features": features,
         "due_reviews": due, "slipping": slipping, "known_words": ev["known_words"], "lessons_done": ev["lessons"],
         "unrecalled": unrecalled,
+        "skill_check": check,
         "today": today(db, user, level, nxt, due, foundation["complete"] or past, mixed, reading, unrecalled),
     }

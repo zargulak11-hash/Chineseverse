@@ -52,6 +52,9 @@ TIME_LIMIT = timedelta(minutes=20)
 # The exam page beats every HEARTBEAT seconds (frontend pages/Exam.jsx);
 # six missed beats is not a network hiccup, it is a page that is gone.
 PRESENCE_TIMEOUT = timedelta(seconds=30)
+# A test-out (an exam taken without the level's lessons) may reach this many
+# levels above the learner's current lesson: HSK 1 -> up to HSK 3.
+TEST_OUT_AHEAD = 2
 VIOLATIONS = {"left_page", "hidden", "navigation", "closed", "reopened", "window_blur", "lost_contact"}
 
 IN_PROGRESS, PASSED, FAILED, INVALIDATED, EXPIRED = "in_progress", "passed", "failed", "invalidated", "expired"
@@ -167,6 +170,8 @@ def overview(db: Session, user: models.User) -> dict:
     active = next((a for a in attempts if a.status == IN_PROGRESS), None)
     return {
         "exam_level": state.exam_level,
+        # Levels this learner may test out of now (see test_out_levels).
+        "test_out_levels": test_out_levels(state),
         "pass_score": PASS_SCORE,
         "question_count": QUESTION_COUNT,
         "time_limit_seconds": int(TIME_LIMIT.total_seconds()),
@@ -175,10 +180,23 @@ def overview(db: Session, user: models.User) -> dict:
     }
 
 
+def test_out_levels(state: lesson_path.PathState) -> list[int]:
+    """Levels a learner may test out of: the level of their current lesson
+    and up to TEST_OUT_AHEAD above it, not yet passed. A learner who already
+    knows HSK 1-3 would otherwise have to finish every HSK 1 and 2 lesson
+    first. It is the same proctored exam with the same pass mark -- passing
+    it is the evidence; failing it changes nothing (lessons stay as they are)."""
+    if state.exam_level is not None or state.current is None:
+        return []
+    top = max(e.level for e in state.entries)
+    return [lvl for lvl in range(state.current.level, min(state.current.level + TEST_OUT_AHEAD, top) + 1)
+            if lvl not in state.exams_passed]
+
+
 def start(db: Session, user: models.User, level: int, locale: str) -> models.HSKExamAttempt:
     expire_stale(db, user)
     state = lesson_path.path_state(db, user)
-    if state.exam_level != level:
+    if state.exam_level != level and level not in test_out_levels(state):
         raise ExamError(403, "This exam is not open: finish the level's lessons first", "exam_locked",
                         exam_level=state.exam_level)
     active = db.query(models.HSKExamAttempt).filter_by(user_id=user.id, status=IN_PROGRESS).first()

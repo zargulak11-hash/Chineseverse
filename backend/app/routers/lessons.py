@@ -6,7 +6,7 @@ from app import models, schemas
 from app.crud import apply_updates, get_or_404
 from app.database import get_db
 from app.deps import get_current_user, get_locale, get_user_or_none, require_admin
-from app.services import lesson_path
+from app.services import hsk_exam, lesson_path
 from app.services.grammar_names import titles as grammar_titles
 from app.services.hsk_band import display_level_for_row, resolve_level_filter
 from app.services.localization import load_translations, tr
@@ -95,6 +95,9 @@ def get_path(
         # Set when every lesson of this level is done and its final exam is
         # what opens the next level (services/hsk_exam.py).
         "exam_level": state.exam_level,
+        # Levels the learner may test out of with the level's exam
+        # (services/hsk_exam.test_out_levels) instead of doing every lesson.
+        "test_out_levels": hsk_exam.test_out_levels(state),
         "completed": sum(1 for e in steps if e.status == lesson_path.COMPLETED),
         "total": len(steps),
         "levels": levels,

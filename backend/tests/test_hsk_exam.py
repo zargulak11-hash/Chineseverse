@@ -85,11 +85,13 @@ def test_a_new_learner_has_no_exam_open(client, learner):
     ov = expect(client, "get", "/api/exams", 200, headers=h)
     assert ov["exam_level"] is None and all(l["exam"] == "locked" for l in ov["levels"])
     assert ov["pass_score"] == 80.0 and ov["question_count"] == 20
-    body = expect(client, "post", "/api/exams/1/start", 403, headers=h)
+    # No exam is DUE; a learner who already knows some Chinese may test out of
+    # their current level and up to TEST_OUT_AHEAD above it (tests/test_test_out.py),
+    # never further.
+    assert ov["test_out_levels"] == [1, 2, 3] and p["test_out_levels"] == [1, 2, 3]
+    body = expect(client, "post", "/api/exams/4/start", 403, headers=h)
     assert body["code"] == "exam_locked"
-    expect(client, "post", "/api/exams/2/start", 403, headers=h)
     expect(client, "get", "/api/exams", 401)
-    # new learner: no exam open, starting one (any level) is refused
 
 
 def test_finishing_hsk1_opens_its_exam_and_keeps_hsk2_locked(client, learner):

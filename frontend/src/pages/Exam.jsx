@@ -220,7 +220,7 @@ export default function Exam() {
             ) : (
               <Link to="/lessons" className="btn">{t("exam.toLessons")}</Link>
             )}
-            {!passed && overview?.exam_level === level && (
+            {!passed && (overview?.exam_level === level || overview?.test_out_levels?.includes(level)) && (
               <button type="button" className="btn primary" onClick={start} disabled={busy}>{t("exam.retry")}</button>
             )}
           </div>
@@ -340,7 +340,10 @@ export default function Exam() {
   }
 
   // ------------------------------------------------------------ intro
-  const open = overview?.exam_level === level;
+  // A test-out (services/hsk_exam.test_out_levels): the exam of a level whose
+  // lessons are not all done yet, for a learner who already knows it.
+  const testOut = overview?.exam_level !== level && !!overview?.test_out_levels?.includes(level);
+  const open = overview?.exam_level === level || testOut;
   return (
     <Layout>
       <header className="page-head">
@@ -374,6 +377,12 @@ export default function Exam() {
               </div>
               <Bar value={levelInfo.lessons_completed} max={Math.max(levelInfo.lessons_total, 1)} />
             </div>
+          </div>
+        )}
+        {testOut && levelInfo?.exam !== "passed" && (
+          <div className="practice-why" style={{ marginBottom: 16 }}>
+            <p><b>{t("exam.testOutTitle", { level })}</b></p>
+            <p>{t("exam.testOutBody", { level, next: next || level })}</p>
           </div>
         )}
         <h2 className="h2">{t("exam.rulesTitle")}</h2>

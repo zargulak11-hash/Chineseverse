@@ -10,6 +10,7 @@ import { NpcLine, RoundContextCard, SceneThread, SpeakLine, speakAt } from "../c
 import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } from "../components/CaseAndSound.jsx";
 import NextStepBar from "../components/NextStep.jsx";
 import { CheckExplain, ExplainAnswer, RecallForm } from "../components/RecallAnswer.jsx";
+import { SkillBreakdown } from "../components/SkillCheck.jsx";
 import { Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
@@ -261,7 +262,7 @@ export default function Practice({ forceSource }) {
     ? `/lessons/${lessonId}`
     : source === "review" || source === "mixups"
       ? "/mistakes"
-      : source === "recall"
+      : source === "recall" || source === "diagnostic"
         ? "/journey"
       : source === "scene"
         ? `/real-chinese/${scene || ""}`
@@ -429,6 +430,14 @@ export default function Practice({ forceSource }) {
             )}
           </div>
         </div>
+        {summary.skills?.length > 0 && (
+          // The skill check's result, skill by skill (services/diagnostic.py).
+          <div className="card" style={{ marginTop: 16 }}>
+            <h2 className="h2">{t("skillCheck.resultTitle")}</h2>
+            <p className="sub">{t("skillCheck.resultBody")}</p>
+            <SkillBreakdown skills={summary.skills} />
+          </div>
+        )}
         {/* What now? The journey's next step, fresh after this round. */}
         <NextStepBar />
         <div className="row" style={{ marginTop: 16, flexWrap: "wrap" }}>

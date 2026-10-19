@@ -170,7 +170,9 @@ def test_a_learner_placed_at_hsk3_skips_the_foundation(client):
     j3 = journey(client, h)
     assert j3["level"] == 3 and j3["stage"] == "growing" and j3["foundation"]["past"]
     assert all(s["status"] == "past" for s in j3["foundation"]["steps"]), "past, never claimed as done"
-    assert j3["next"]["kind"] in ("lesson", "review", "exam", "stories")
+    # ... and not sent to HSK 1 lesson 1: the path leads on through the
+    # HSK 3 test-out (tests/test_test_out.py).
+    assert j3["next"]["kind"] == "testout" and j3["next"]["level"] == 3, j3["next"]
     lib3 = {x["slug"]: x["status"] for x in expect(client, "get", "/api/stories", 200, headers=h)["books"]}
     assert lib3["first-metro-ride"] == "new" and lib3["the-interview"] == "locked"
 

@@ -95,7 +95,9 @@ def test_a_book_just_being_read_is_continued(client, placed):
         row.updated_at = datetime.utcnow() - timedelta(days=7)
         db.commit()
     j = expect(client, "get", "/api/journey", 200, headers=h)
-    assert j["next"]["kind"] == "lesson", j["next"]
+    # Placed at HSK 2 with no lessons done: the path leads on through the
+    # HSK 2 test-out, not HSK 1 lesson 1 (tests/test_test_out.py).
+    assert j["next"]["kind"] == "testout" and j["next"]["level"] == 2, j["next"]
     # ... and today's plan still leads back into the book.
     read = next(t for t in j["today"]["tasks"] if t["key"] == "read")
     assert read["to"] == f"/stories/{book['slug']}/read/2" and read["book"], read

@@ -14,6 +14,8 @@ export function nextTitle(t, next) {
   if (next.kind === "lesson") return t("journey.next.lesson", { title: next.title });
   if (next.kind === "review") return t("journey.next.review", { count: next.count });
   if (next.kind === "exam") return t("journey.next.exam", { level: next.level });
+  if (next.kind === "testout") return t("journey.next.testout", { level: next.level });
+  if (next.kind === "checkskill") return t("journey.next.checkskill", { skill: t(`companionReact.skill.${next.skill}`, { defaultValue: next.skill }) });
   if (next.kind === "mixups") return t("journey.next.mixups", { a: next.a, b: next.b });
   if (next.kind === "recall") return t("journey.next.recall", { count: next.count });
   if (next.kind === "continue") return t("journey.next.continue", { title: next.title, chapter: next.chapter });
@@ -31,6 +33,8 @@ export function nextWhy(t, next) {
   if (next.kind === "review" && next.slipping > 0) return t("journey.nextWhy.reviewSlipping", { count: next.slipping });
   if (next.kind === "mixups") return t("journey.nextWhy.mixups", { count: next.count });
   if (next.kind === "skill") return t("journey.nextWhy.skill", { mastery: next.mastery });
+  if (next.kind === "testout") return t("journey.nextWhy.testout", { level: next.level, from: next.from });
+  if (next.kind === "checkskill") return t("journey.nextWhy.checkskill", { correct: next.correct, total: next.total });
   return t(`journey.nextWhy.${next.kind}`);
 }
 

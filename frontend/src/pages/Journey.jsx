@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
 import { NextStepHero } from "../components/NextStep.jsx";
+import SkillCheckCard from "../components/SkillCheck.jsx";
 import { Bar, Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 
@@ -57,6 +58,10 @@ export default function Journey() {
       </header>
 
       <NextStepHero journey={data} />
+
+      {/* Where do I stand, skill by skill? (services/diagnostic.py) -- for a
+          learner past the first steps; a beginner's foundation comes first. */}
+      {(f.complete || f.past) && <SkillCheckCard level={data.level} check={data.skill_check} />}
 
       <section className="journey-section">
         <div className="jr-section-head">

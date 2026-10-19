@@ -141,16 +141,27 @@ def path_state(db: Session, user: models.User) -> PathState:
     passed = {
         lvl for (lvl,) in db.query(models.HSKExamAttempt.level).filter_by(user_id=user.id, status="passed")
     }
+    # An exam passed WITHOUT doing the level's lessons (a test-out: a learner
+    # who already knows that level -- hsk_exam.test_out_levels) moves the
+    # path past it, so someone at HSK 3 is not sent back to HSK 1 lesson 1.
+    # Its lessons stay open to read and practise; none is marked completed.
+    if passed:
+        past = max(passed)
+        jump = next((i for i, e in enumerate(entries) if e.practicable and e.level > past), len(entries))
+        frontier = max(frontier, jump)
     level_of = {e.lesson.id: e.level for e in entries}
     done_levels = {e.level for e in entries if e.lesson.id in done} | {
         level_of[lid] for lid, p in progress.items()
         if lid in level_of and p.created_at is not None and p.created_at < EXAMS_INTRODUCED_AT
     }
-    cleared = {lvl for lvl in {e.level for e in entries} if lvl in passed or any(d > lvl for d in done_levels)}
+    cleared = {lvl for lvl in {e.level for e in entries}
+               if lvl in passed or any(d > lvl for d in done_levels) or any(p > lvl for p in passed)}
     gate = None
     for lvl in sorted({e.level for e in entries if e.practicable}):
         steps = [e for e in entries if e.level == lvl and e.practicable]
         if not all(e.lesson.id in done for e in steps):
+            if passed and lvl <= max(passed):
+                continue  # tested out (this exam or a higher one passed): its lessons are optional
             break
         if lvl not in cleared:
             gate = lvl

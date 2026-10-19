@@ -1141,7 +1141,8 @@
       "story": "故事 · {{title}}",
       "mixups": "易混词练习",
       "recall": "凭记忆回想",
-      "pronunciation": "发音 · {{title}}"
+      "pronunciation": "发音 · {{title}}",
+      "diagnostic": "技能检测 · HSK {{level}}"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -1425,7 +1426,11 @@
       "expired": "提交之前时间已到。成绩：0。"
     },
     "navLabel": "题目",
-    "navItem": "第 {{n}} 题"
+    "navItem": "第 {{n}} 题",
+    "testOutTitle": "跳级测试：HSK {{level}}",
+    "testOutBody": "这一级的课还没学完。如果你已经掌握了 HSK {{level}}，通过这个考试，你的学习路线就从 HSK {{next}} 继续；跳过的课仍然可以学习和练习。没通过也没关系，课程保持原样。",
+    "testOutOffer": "已经会了？参加这一级的考试，直接往后学：",
+    "testOutLevel": "跳级测试 HSK {{level}}"
   },
   "voice": {
     "title": "每日语音伙伴",
@@ -2598,7 +2603,9 @@
       "mixups": "分清“{{a}}”和“{{b}}”",
       "continue": "继续读《{{title}}》第{{chapter}}章",
       "skill": "练习{{skill}}",
-      "recall_other": "凭记忆写出{{count}}个你只认得的词"
+      "recall_other": "凭记忆写出{{count}}个你只认得的词",
+      "testout": "跳级测试：HSK {{level}}",
+      "checkskill": "练习：{{skill}}"
     },
     "nextWhy": {
       "lesson": "课程是你 HSK 之路的主干：新词、语法和一轮简短练习。",
@@ -2609,7 +2616,9 @@
       "continue": "你正在读这本书——书签就在你上次停下的地方。",
       "skill": "这是你目前最弱的能力（{{mastery}}%），而前面的课程已经学完了。",
       "reviewSlipping_other": "有{{count}}个学会的词快忘了——现在复习就能记住。",
-      "recall": "你能在选项里认出它们，但还没有自己写出来过。能回忆起来的词，才是能用的词。"
+      "recall": "你能在选项里认出它们，但还没有自己写出来过。能回忆起来的词，才是能用的词。",
+      "testout": "你的成绩说明你已经超过了 HSK {{from}} 的课程。通过 HSK {{level}} 考试，课程就从它后面继续，不用重学已经会的内容。",
+      "checkskill": "技能检测里这一项你答对了 {{total}} 题中的 {{correct}} 题，是你最弱的一项。现在练一小轮吧。"
     },
     "foundationTitle": "入门：你的第一步",
     "foundationSub": "按最容易掌握的顺序学习中文基础。每一步在你真正完成时就算完成。",
@@ -3601,5 +3610,19 @@
       "mark_oe": "没有 a，就标在 o 或 e 上。",
       "mark_iu_ui": "iu、ui 标在后一个字母上：liù、guì。"
     }
+  },
+  "skillCheck": {
+    "title": "技能检测",
+    "body": "同一个 HSK 等级的 12 道题，每项技能两道：词语、听力、汉字、声调、语法和凭记忆写词。你会看到哪些已经会了、哪些需要练习，下一步也会据此安排。",
+    "start": "开始检测",
+    "again": "再测一次",
+    "levelLabel": "检测等级",
+    "last": "上次检测：HSK {{level}}",
+    "score": "答对 {{correct}}/{{total}}",
+    "practise": "去练习",
+    "weakLeft_other": "检测后还有 {{count}} 项技能需要练习。",
+    "noneWeak": "上次检测的弱项都已经练过了。想知道自己的水平，随时可以再测。",
+    "resultTitle": "你在这个等级的各项技能",
+    "resultBody": "答对不到一半的技能需要练习。下一步会从最弱的一项开始。"
   }
 }

@@ -106,6 +106,20 @@ export default function Lessons() {
                   <Icon name="play" size={15} /> {t("pages.lessons.start")}
                 </Link>
               </div>
+              {/* Already know this level (or the next ones)? Its exam moves
+                  the path on without every lesson (services/hsk_exam.py). */}
+              {path.test_out_levels?.length > 0 && (
+                <div className="lesson-testout">
+                  <p className="sub" style={{ margin: 0 }}>{t("exam.testOutOffer")}</p>
+                  <div className="row" style={{ gap: 8, flexWrap: "wrap", margin: 0 }}>
+                    {path.test_out_levels.map((lv) => (
+                      <Link key={lv} to={`/exam/${lv}`} className="btn small ghost">
+                        <Icon name="award" size={13} /> {t("exam.testOutLevel", { level: lv })}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="card lesson-next">

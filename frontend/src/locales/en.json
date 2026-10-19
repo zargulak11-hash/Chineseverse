@@ -1155,7 +1155,8 @@
       "story": "Story · {{title}}",
       "mixups": "Mix-up drill",
       "recall": "Recall from memory",
-      "pronunciation": "Pronunciation · {{title}}"
+      "pronunciation": "Pronunciation · {{title}}",
+      "diagnostic": "Skill check · HSK {{level}}"
     },
     "retry": "Try again",
     "back": "Back",
@@ -1440,7 +1441,11 @@
       "expired": "Time ran out before the exam was submitted. Score: 0."
     },
     "navLabel": "Questions",
-    "navItem": "Question {{n}}"
+    "navItem": "Question {{n}}",
+    "testOutTitle": "Test out of HSK {{level}}",
+    "testOutBody": "You haven't finished this level's lessons. If you already know HSK {{level}}, pass this exam and your path moves on to HSK {{next}}; the skipped lessons stay open to read and practise. If you don't pass, nothing changes — your lessons stay exactly as they are.",
+    "testOutOffer": "Already know this? Take a level's exam to skip ahead:",
+    "testOutLevel": "Test out of HSK {{level}}"
   },
   "voice": {
     "title": "Daily Voice Companion",
@@ -2659,7 +2664,9 @@
       "continue": "Continue “{{title}}” — chapter {{chapter}}",
       "skill": "Practise {{skill}}",
       "recall_one": "Recall a word you only recognise",
-      "recall_other": "Recall {{count}} words you only recognise"
+      "recall_other": "Recall {{count}} words you only recognise",
+      "testout": "Test out of HSK {{level}}",
+      "checkskill": "Practise {{skill}}"
     },
     "nextWhy": {
       "lesson": "Lessons are the backbone of your HSK path: new words, grammar and a short practice round.",
@@ -2672,7 +2679,9 @@
       "skill": "It is your weakest skill right now ({{mastery}}%), and the lessons ahead are done.",
       "reviewSlipping_one": "{{count}} word you knew is slipping — reviewing it now keeps it.",
       "reviewSlipping_other": "{{count}} words you knew are slipping — reviewing them now keeps them.",
-      "recall": "You pick these out of options, but have never produced them yourself. A word you can recall is a word you can use."
+      "recall": "You pick these out of options, but have never produced them yourself. A word you can recall is a word you can use.",
+      "testout": "Your results show you already know more than HSK {{from}} lessons. Pass the HSK {{level}} exam and your lessons continue after it — no need to repeat what you know.",
+      "checkskill": "In your skill check you got {{correct}} of {{total}} right here — the weakest of your skills. A short round now."
     },
     "foundationTitle": "Foundation: your first steps",
     "foundationSub": "The basics of Chinese, in the order that makes them easy. Each step opens the moment you really do it.",
@@ -3688,5 +3697,20 @@
       "mark_oe": "With no a, the mark goes on o or e.",
       "mark_iu_ui": "In iu and ui, the mark goes on the second letter: liù, guì."
     }
+  },
+  "skillCheck": {
+    "title": "Skill check",
+    "body": "12 questions at one HSK level, two for each skill: words, listening, characters, tones, grammar and recalling words from memory. You'll see which skills you have and which need practice — and the next step follows it.",
+    "start": "Start the skill check",
+    "again": "Check again",
+    "levelLabel": "Level of the check",
+    "last": "Last check: HSK {{level}}",
+    "score": "{{correct}}/{{total}} right",
+    "practise": "Practise this",
+    "weakLeft_one": "{{count}} skill still needs practice since the check.",
+    "weakLeft_other": "{{count}} skills still need practice since the check.",
+    "noneWeak": "No weak skill left from the last check. Check again whenever you want to see where you stand.",
+    "resultTitle": "Your skills at this level",
+    "resultBody": "Fewer than half right is marked as needing practice. Your next step now starts with the weakest one."
   }
 }

@@ -62,7 +62,7 @@ from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs, recall_probability
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
-           "tones", "story", "pronunciation", "mixups", "recall")
+           "tones", "story", "pronunciation", "mixups", "recall", "diagnostic")
 # The beginner's first round (services/journey.py, /foundation): tones on real
 # HSK 1 material -- a character's pinyin among the same syllable in other
 # tones, and a word picked by ear. Real items, so SRS and DNA move as usual.
@@ -562,6 +562,17 @@ def build_session(
         except (real_life.SceneError, sentence_svc.SentenceError, detective.CaseError, sound_world.SoundError,
                 internet.InternetError, stories.StoryError, pronunciation.PronunciationError) as exc:
             raise PracticeError(exc.status, exc.detail) from exc
+    if source == "diagnostic":
+        # The skill check (services/diagnostic.py): a few questions per skill
+        # at the learner's level, or the level they chose.
+        from app.services import diagnostic
+        from app.services.gamification import user_rank
+
+        if hsk_level is None:
+            hsk_level = min(user_rank(db, user)[0], 6)
+        if not 1 <= hsk_level <= 9:
+            raise PracticeError(422, "hsk_level must be between 1 and 9")
+        questions = diagnostic.build_questions(db, user, hsk_level, rng, locale, translated)
     # Every round meets the learner's own mix-ups: an item they have taken
     # for another is offered with that other one among its options.
     partners = {}
@@ -1507,6 +1518,8 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             log_activity(db, user, "internet_read")
         elif session.source == "tones":
             log_activity(db, user, "tones_practice")
+        elif session.source == "diagnostic":
+            log_activity(db, user, "skill_check")
         elif session.source == "story":
             log_activity(db, user, "story_read")
             from app.services import stories
@@ -1575,6 +1588,8 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
         "next_lesson_id": next_lesson_id,
         "passed": score >= PASS_SCORE,
         "missed": missed,
+        # The skill check's result, skill by skill (services/diagnostic.py).
+        **({"skills": _diagnostic_breakdown(session)} if session.source == "diagnostic" else {}),
         "reaction": cr.session_reaction(
             user, answers, total, source=session.source,
             # Celebrate the completion only when THIS round completed it --
@@ -1584,6 +1599,12 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             words_milestone=words_milestone,
         ),
     }
+
+
+def _diagnostic_breakdown(session: models.PracticeSession) -> list[dict]:
+    from app.services import diagnostic
+
+    return diagnostic.breakdown(session)
 
 
 def start_reaction(db: Session, user: models.User, session: models.PracticeSession, locale: str) -> dict:
