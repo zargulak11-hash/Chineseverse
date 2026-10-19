@@ -1,4 +1,9 @@
 fastapi==0.141.1
+# fastapi only asks for starlette>=0.46, so a fresh install took 1.9.0
+# (2026-10-18), under which the assistant's model stream is no longer closed
+# when the client stops reading (tests/test_assistant_stream.py fails; CI and
+# the next deploy broke). 1.8.0 is the release before it.
+starlette==1.8.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
 psycopg[binary]==3.3.6
