@@ -38,6 +38,9 @@ export const INDEXED_PAGES = {
     file: "index.html",
     title: "ChineseVerse — Learn Chinese Online, HSK 1 to 9",
     description: HOME_DESCRIPTION,
+    // Google Search Console ownership check: Google looks for this exact tag
+    // in the home page's HTML. Removing it un-verifies the property.
+    googleSiteVerification: "7QRYysqWa6gXXBFJiFq4DXTnAtkDlz6dFA102f9vlkI",
     // Names the site in search results ("ChineseVerse" rather than the
     // domain) and tells Google the spaced spelling is the same site.
     jsonLd: {
@@ -99,6 +102,9 @@ export function renderHead(path) {
     tags.push(`<meta name="robots" content="noindex" />`);
   } else {
     tags.push(`<link rel="canonical" href="${attr(canonicalUrl(path))}" />`);
+  }
+  if (page.googleSiteVerification) {
+    tags.push(`<meta name="google-site-verification" content="${attr(page.googleSiteVerification)}" />`);
   }
   tags.push(
     `<meta property="og:site_name" content="${SITE_NAME}" />`,

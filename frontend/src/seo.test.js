@@ -100,6 +100,12 @@ describe("page metadata", () => {
     expect(canonicalUrl("/download")).toBe("https://chineseverse.qobus.tj/download");
   });
 
+  it("serves Google's exact Search Console verification tag on the home page", () => {
+    expect(renderHead("/")).toContain(
+      '<meta name="google-site-verification" content="7QRYysqWa6gXXBFJiFq4DXTnAtkDlz6dFA102f9vlkI" />'
+    );
+  });
+
   it("keeps the tab title in step on client-side navigation", () => {
     expect(pageTitle("/")).toBe(INDEXED_PAGES["/"].title);
     expect(pageTitle("/dashboard")).toBe(APP_SHELL.title);
