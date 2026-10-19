@@ -7905,6 +7905,42 @@ html.is-native .sidebar { height: calc(100vh - var(--safe-top) - var(--safe-bott
   .landing-app .btn { width: 100%; }
 }
 
+/* Landing page video tour (PromoVideo.jsx). The video is portrait
+   (1080x1920), so it sits in a phone-width frame beside the text on wide
+   screens and under it on narrow ones; aspect-ratio reserves its height
+   before anything loads, so the page does not jump. */
+.promo-video {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  align-items: center;
+  gap: var(--space-7);
+  margin-top: var(--space-7);
+  border-color: var(--accent-border);
+}
+.promo-video-text { min-width: 0; }
+.promo-video-title { margin: var(--space-2) 0 0; font-size: var(--text-lg); }
+.promo-video-text .sub { margin: var(--space-3) 0 0; max-width: 560px; }
+.promo-video-note { margin: var(--space-3) 0 0; font-size: var(--text-sm); }
+.promo-video-frame {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+}
+.promo-video-player {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  background: var(--bg);
+}
+@media (max-width: 760px) {
+  .promo-video { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+  .promo-video-frame { max-width: 340px; margin: 0 auto; }
+}
+
 .dl-page .sub { overflow-wrap: anywhere; }
 .dl-hero {
   display: flex;

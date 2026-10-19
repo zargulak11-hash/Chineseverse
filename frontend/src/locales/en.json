@@ -169,7 +169,12 @@
     "step3Text": "Each lesson teaches words, characters and grammar, then a practice round checks what you remember. All lessons are under Lessons, and Home always shows your next step.",
     "step4Title": "Review and track your progress",
     "step4Text": "Words you get wrong come back in Review until they stick. Progress shows your streak, XP and every level you have finished.",
-    "haveAccount": "Already learning with ChineseVerse?"
+    "haveAccount": "Already learning with ChineseVerse?",
+    "videoEyebrow": "Video tour",
+    "videoTitle": "Discover ChineseVerse",
+    "videoText": "A 1.5-minute tour of the real app: lessons, the dictionary, Chinese characters, the tone coach, review, the living Chinese city, books and the Android app.",
+    "videoVoiceNote": "Voice-over in Russian.",
+    "videoDownload": "Download the video (MP4)"
   },
   "auth": {
     "continueGithub": "Continue with GitHub",

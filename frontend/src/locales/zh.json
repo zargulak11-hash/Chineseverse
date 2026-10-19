@@ -168,7 +168,12 @@
     "step3Text": "每节课教词语、汉字和语法，再用一轮练习检查你记住了多少。所有课程都在“课程”里，“主页”总会显示下一步。",
     "step4Title": "复习并跟踪进度",
     "step4Text": "答错的词会回到“复习”里，直到你记住为止。“进度”页显示连续学习天数、经验值和已完成的等级。",
-    "haveAccount": "已经在 ChineseVerse 学习了？"
+    "haveAccount": "已经在 ChineseVerse 学习了？",
+    "videoEyebrow": "视频导览",
+    "videoTitle": "探索 ChineseVerse",
+    "videoText": "一分半钟带你看看真实的应用：课程、词典、汉字、声调教练、复习、鲜活的中文城市、图书和安卓应用。",
+    "videoVoiceNote": "旁白为俄语。",
+    "videoDownload": "下载视频（MP4）"
   },
   "auth": {
     "continueGithub": "使用 GitHub 继续",

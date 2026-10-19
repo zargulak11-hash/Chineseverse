@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -19,7 +19,13 @@ function seoPages(mode) {
       outDir = resolve(config.root, config.build.outDir);
     },
     closeBundle() {
-      if (mode === "mobile") return;
+      if (mode === "mobile") {
+        // The phone app never shows the landing page (App.jsx sends "/" to
+        // sign-in), so the landing video tour (public/media/, ~15 MB) stays
+        // out of the APK/IPA. The website build keeps it.
+        rmSync(resolve(outDir, "media"), { recursive: true, force: true });
+        return;
+      }
       const built = readFileSync(resolve(outDir, "index.html"), "utf8");
       const TITLE = /<title>[^<]*<\/title>/;
       if (!TITLE.test(built)) throw new Error("index.html has no <title> to replace with the SEO head");

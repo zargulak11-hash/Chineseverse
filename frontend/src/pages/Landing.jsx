@@ -6,6 +6,7 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import HeroCarousel from "../components/HeroCarousel.jsx";
 import Icon from "../components/Icon.jsx";
 import InkBrush from "../components/InkBrush.jsx";
+import PromoVideo from "../components/PromoVideo.jsx";
 import PublicHeader from "../components/PublicHeader.jsx";
 
 // Each feature gets its own color and its own size — bento-style
@@ -72,6 +73,10 @@ export default function Landing() {
           </p>
         )}
       </section>
+
+      {/* The 1.5-minute video tour of the real app, right under the hero:
+          the quickest way for a visitor to see what ChineseVerse does. */}
+      <PromoVideo />
 
       {/* Where to start: what ChineseVerse is and the four steps from this
           page to a first lesson, before the feature tour. A first-time
