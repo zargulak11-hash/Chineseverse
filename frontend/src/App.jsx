@@ -9,6 +9,7 @@ import { AppShell } from "./components/Layout.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import NetworkBanner from "./components/NetworkBanner.jsx";
 import { isNativeApp } from "./platform.js";
+import { pageTitle } from "./seo.js";
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -197,6 +198,13 @@ export default function App() {
   useEffect(() => {
     initButtonFX();
   }, []);
+
+  // Each served page carries its own title (seo.js); keep the tab in step
+  // when the app moves between pages without a reload, so the landing
+  // page's search title doesn't stay on the Dashboard's tab.
+  useEffect(() => {
+    document.title = pageTitle(pathname);
+  }, [pathname]);
 
   function saveSelf(u) {
     localStorage.setItem("linguaverse_user", JSON.stringify(u));

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The public, indexable pages only: src/seo.js INDEXED_PAGES (seo.test.js
+     checks the two match). Pages behind sign-in never belong here. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://chineseverse.qobus.tj/</loc>
+  </url>
+  <url>
+    <loc>https://chineseverse.qobus.tj/download</loc>
+  </url>
+</urlset>
