@@ -279,6 +279,12 @@ def _q(db: Session, qtype: str, lines: list[dict], options: list[dict], answer: 
 
 
 def build_questions(db: Session, user: models.User, key: str, rng: random.Random) -> list[dict]:
+    # The pinyin foundation course (services/pinyin_course.py) plays its
+    # mastery checks through this same source, with its own unit keys.
+    from app.services import pinyin_course
+
+    if key in pinyin_course.BY_KEY:
+        return pinyin_course.build_questions(db, user, key, rng)
     lesson = BY_KEY.get(key or "")
     if lesson is None:
         raise PronunciationError(404, "Pronunciation lesson not found")

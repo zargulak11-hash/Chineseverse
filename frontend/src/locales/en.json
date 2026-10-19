@@ -1151,7 +1151,8 @@
       "tones": "Sounds & tones round",
       "story": "Story · {{title}}",
       "mixups": "Mix-up drill",
-      "recall": "Recall from memory"
+      "recall": "Recall from memory",
+      "pronunciation": "Pronunciation · {{title}}"
     },
     "retry": "Try again",
     "back": "Back",
@@ -1925,7 +1926,11 @@
       "sound_pair": "Which word did you hear?",
       "sound_tonepair": "Which tone pattern do you hear?",
       "sound_dialogue": "Listen to the dialogue and answer.",
-      "sound_memory": "What did speaker {{order}} ({{speaker}}) mention?"
+      "sound_memory": "What did speaker {{order}} ({{speaker}}) mention?",
+      "pinyin_part_initial": "Which is the initial of {{item}}?",
+      "pinyin_part_final": "Which is the final of {{item}}?",
+      "pinyin_tone_mark": "Which tone is marked on {{item}}?",
+      "pinyin_spell": "How is {{item}} written? (the number is the tone)"
     },
     "enter": "Listen · {{stage}}"
   },
@@ -3610,5 +3615,75 @@
     "help6A": "The app signs in with your ChineseVerse username and password and needs an internet connection. Created your account with Google? Set a password first: on the website, Settings → “Set a password with Google”, or “Forgot password?” on the sign-in screen.",
     "helpFallback": "Still stuck? Everything in the app also works right here on the website, with the same account.",
     "helpWebsite": "Continue on the website"
+  },
+  "pinyinCourse": {
+    "title": "The pinyin course",
+    "kpiUnits": "Units passed",
+    "unitN": "Unit {{n}}",
+    "statusPassed": "Passed · {{score}}%",
+    "statusBest": "Best {{score}}%",
+    "statusNext": "Start here",
+    "statusNew": "Not started",
+    "unitsLabel": "Units of the course",
+    "stepLearn": "Understand",
+    "stepHear": "Listen and repeat",
+    "stepHearBody": "Tap each syllable to hear it, then say it after the voice.",
+    "stepTry": "Try it — with help",
+    "stepTryBody": "Three questions. Every answer is explained; nothing here is graded or saved.",
+    "stepCheck": "Mastery check",
+    "stepCheckBody": "8 graded questions. Score {{score}}% or more to pass this unit — you can repeat it any time.",
+    "startCheck": "Start the check",
+    "checkAgain": "Check again",
+    "nextUnit": "Next unit",
+    "prevUnit": "Previous unit",
+    "play": "Play the sound",
+    "question": "Question {{n}}",
+    "right": "Right.",
+    "wrong": "Not quite.",
+    "tryAgain": "Try another option",
+    "finalTitle": "Step check: real HSK 1 characters",
+    "finalBody": "Hear real HSK 1 characters and words and pick the right tone and meaning. Passing every unit above, or this round with 60% or more, completes step 1.",
+    "sideBody": "Six short units, in order: the parts of a syllable, the tones, the initials, the finals and the spelling rules. Each one explains first, then lets you try, then checks.",
+    "allPassed": "Every unit passed — you can read and hear pinyin. Step 1 is complete.",
+    "initial": "initial",
+    "final": "final",
+    "tone": "tone",
+    "toneName": {
+      "0": "the light tone",
+      "1": "tone 1 (high, level)",
+      "2": "tone 2 (rising)",
+      "3": "tone 3 (low, dipping)",
+      "4": "tone 4 (falling)"
+    },
+    "why": {
+      "tone": "You chose {{picked}} — {{pickedTone}}. You heard {{answer}} — {{answerTone}}. Same sound, another tone: another word.",
+      "toneChar": "{{picked}} is {{pickedTone}}; this character is read {{answer}} — {{answerTone}}.",
+      "mark": "The mark on {{syllable}} shows {{answerTone}}.",
+      "markPicked": "You chose {{pickedTone}}.",
+      "part": "{{syllable}} = {{initial}} (initial) + {{final}} (final) + {{tone}}.",
+      "partNoInitial": "{{syllable}} has no initial: it is only the final {{final}} + {{tone}}.",
+      "initial": "You chose {{picked}}, but you heard {{answer}}: the initial is {{answerPart}}, not {{pickedPart}}.",
+      "final": "You chose {{picked}}, but you heard {{answer}}: the final is {{answerPart}}, not {{pickedPart}}.",
+      "heard": "You heard {{answer}}. Play it again and compare it with {{picked}}.",
+      "rule": "{{parts}} is written {{answer}}."
+    },
+    "tip": {
+      "air": "Listen for the puff of air: p, t, k, q, ch, c have it; b, d, g, j, zh, z do not.",
+      "tongue": "Listen for where the tongue is: zh ch sh curled back, z c s behind the teeth, j q x flat with a smile.",
+      "nl": "n goes through the nose; l along the sides of the tongue.",
+      "r": "r is said like sh with the voice humming, the tongue curled back — it is not a rolled r.",
+      "initial": "Only the first sound differs — listen to the very start.",
+      "nasal": "Listen to the end: -n stops at the front of the mouth, -ng rings at the back, like “song”.",
+      "umlaut": "ü is i with rounded lips; u is said with the tongue back.",
+      "final": "Only the vowel part differs — listen after the first sound."
+    },
+    "rule": {
+      "u_after_jqx": "After j, q, x and y, ü is written u without dots — these initials are never followed by a plain u.",
+      "u_after_nl": "After n and l the dots stay: nǚ and lǜ are different from nù and lù.",
+      "y_w": "With no initial, i becomes yi (or y-), u becomes wu (or w-), ü becomes yu.",
+      "mark_a": "The tone mark goes on a whenever there is one.",
+      "mark_oe": "With no a, the mark goes on o or e.",
+      "mark_iu_ui": "In iu and ui, the mark goes on the second letter: liù, guì."
+    }
   }
 }

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api.js";
 import { speakChinese } from "../zhSpeech.js";
 import Icon from "./Icon.jsx";
+import PinyinWhy from "./PinyinWhy.jsx";
 
 // A question answered from memory (type_word / type_pinyin): the learner
 // types the word or the reading, and the server grades it
@@ -114,6 +115,7 @@ export function ExplainAnswer({ sessionId, index }) {
 export function CheckExplain({ check, card }) {
   const { t } = useTranslation();
   if (!check || !check.kind || check.kind === "exact") return null;
+  if (check.kind === "pinyin") return <PinyinWhy check={check} />;
   if (check.kind === "picked_grammar") {
     // Two grammar points: the one chosen and the one the sentence uses,
     // each a link to its own explanation.
@@ -148,6 +150,16 @@ export function CheckExplain({ check, card }) {
     <div className="practice-why" aria-live="polite">
       {check.typed && <p className="sub" lang="zh-CN">{t("practice.recall.youTyped", { text: check.typed, interpolation: { escapeValue: false } })}</p>}
       <p>{t(`practice.why.${check.kind}`, vars)}</p>
+      {/* A character's reading picked in the wrong tone: name both tones. */}
+      {check.picked_tone !== undefined && (
+        <p>
+          {t("pinyinCourse.why.toneChar", {
+            picked: check.picked, pickedTone: t(`pinyinCourse.toneName.${check.picked_tone}`),
+            answer: check.answer, answerTone: t(`pinyinCourse.toneName.${check.answer_tone}`),
+            interpolation: { escapeValue: false },
+          })}
+        </p>
+      )}
     </div>
   );
 }

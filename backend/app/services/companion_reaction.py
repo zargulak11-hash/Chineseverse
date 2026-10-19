@@ -77,6 +77,9 @@ PRIMARY_SKILL = {
     "sound_pair": "tones",
     "sound_tonepair": "tones",
     "sound_dialogue": "listening",
+    "pinyin_tone_mark": "tones",
+    "pinyin_part": "reading",
+    "pinyin_spell": "reading",
     "net_comprehension": "reading",
     "net_listen": "listening",
 }

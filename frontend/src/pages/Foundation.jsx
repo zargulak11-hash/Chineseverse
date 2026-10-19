@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../components/Icon.jsx";
 import Layout from "../components/Layout.jsx";
+import { pinyinWhyLines } from "../components/PinyinWhy.jsx";
+import { Empty, Loading } from "../components/ui.jsx";
 import { useApi } from "../hooks/useApi.js";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 
-// Step 1 of the journey (/foundation): how pinyin spells a syllable, the four
-// tones (and the light one) on the classic mā/má/mǎ/mà/ma, and the pairs
-// beginners confuse -- then a real graded round (practice source "tones":
-// HSK 1 characters' pinyin among the same syllable in other tones, and words
-// by ear). Passing that round is what completes the step (services/journey.py).
-//
-// Laid out as a short lesson: understand -> meet each tone -> compare and
-// test your ear -> practise. The ear test is a warm-up on this page only:
-// nothing is graded or saved; the round on the side is what counts.
+// Step 1 of the journey (/foundation): the pinyin course
+// (services/pinyin_course.py). A beginner used to get one page of
+// mā/má/mǎ/mà and then a graded round of characters never taught -- a
+// guess. Now each unit, in order, is a short lesson: understand (the
+// explanation), listen and repeat (real syllables), try it with help (three
+// questions answered with WHY, nothing graded or saved), then the mastery
+// check -- a server-graded round (practice source "pronunciation", env =
+// the unit). Passing every unit, or the tones round on real HSK 1
+// characters at the end, completes the step (services/journey.py).
 
 const TONES = [
   { zh: "妈", py: "mā", key: "1", mean: "ma1", path: "M4 8 H36" },
@@ -33,19 +35,10 @@ function Contour({ path, className = "tone-contour" }) {
   );
 }
 
-function Say({ zh, py, children, className = "tone-say" }) {
-  const { t } = useTranslation();
+function Step({ n, title, children, done = false, now = false }) {
   return (
-    <button type="button" className={className} onClick={() => speakChinese(zh)} aria-label={`${t("foundation.hear")}: ${zh} ${py}`}>
-      {children}
-    </button>
-  );
-}
-
-function Step({ n, title, children, done }) {
-  return (
-    <section className={`card fd-step${done ? " is-done" : ""}`} aria-labelledby={`fd-step-${n}`}>
-      <span className="fd-step-n" aria-hidden="true">{n}</span>
+    <section className={`card fd-step${done ? " is-done" : ""}${now ? " is-now" : ""}`} aria-labelledby={`fd-step-${n}`}>
+      <span className="fd-step-n" aria-hidden="true">{done ? <Icon name="check" size={16} /> : n}</span>
       <div className="fd-step-body">
         <h2 className="h2" id={`fd-step-${n}`}>{title}</h2>
         {children}
@@ -94,17 +87,167 @@ function EarTest({ pair }) {
   );
 }
 
-export default function Foundation() {
+// The tones unit's explanation: each tone's shape over the classic mā/má/mǎ/mà.
+function ToneShapes() {
   const { t } = useTranslation();
-  const { data: journey } = useApi("/journey");
-  const step = journey?.foundation?.steps?.find((s) => s.key === "tones");
-  const voice = canSpeakChinese();
   const [focus, setFocus] = useState(TONES[0]);
-
   function meet(tn) {
     setFocus(tn);
     speakChinese(tn.zh);
   }
+  return (
+    <>
+      <div className="fd-focus" aria-live="polite">
+        <Contour path={focus.path} className="fd-focus-contour" />
+        <span className="fd-focus-zh" lang="zh-CN">{focus.zh}</span>
+        <span className="fd-focus-py">{focus.py}</span>
+        <span className="fd-focus-name">{t(`foundation.tone${focus.key}`)}</span>
+        <span className="sub">{t(`foundation.mean.${focus.mean}`)}</span>
+        <button type="button" className="btn small" onClick={() => speakChinese(focus.zh)}>
+          <Icon name="volume" size={14} /> {t("foundation.hear")}
+        </button>
+      </div>
+      <div className="tone-grid">
+        {TONES.map((tn) => (
+          <button key={tn.key} type="button" className={`tone-say${focus.key === tn.key ? " is-on" : ""}`}
+                  onClick={() => meet(tn)} aria-pressed={focus.key === tn.key}
+                  aria-label={`${t("foundation.hear")}: ${tn.zh} ${tn.py}`}>
+            <Contour path={tn.path} />
+            <span className="tone-zh" lang="zh-CN">{tn.zh}</span>
+            <span className="tone-py">{tn.py}</span>
+            <span className="tone-name">{t(`foundation.tone${tn.key}`)}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// The words a guided question asks in, the same as the graded round's.
+function guidedAsk(t, g) {
+  if (g.type === "pinyin_part") return t(`soundWorld.ask.pinyin_part_${g.part}`, { item: g.ask });
+  if (g.type.startsWith("pinyin_")) return t(`soundWorld.ask.${g.type}`, { item: g.ask });
+  return t(`soundWorld.ask.${g.type}`);
+}
+
+// One guided question: pick until it is right, each pick explained.
+function Guided({ g, n }) {
+  const { t } = useTranslation();
+  const [picks, setPicks] = useState([]);
+  const solved = picks.includes(g.answer);
+  const last = picks[picks.length - 1];
+  const why = last === undefined ? [] : pinyinWhyLines(t, g.why[last]);
+  return (
+    <li className="py-guided">
+      <p className="side-title">{t("pinyinCourse.question", { n })}</p>
+      <p className="py-guided-ask">{guidedAsk(t, g)}</p>
+      <div className="row" style={{ flexWrap: "wrap", gap: 8, margin: 0 }}>
+        {(g.heard || solved) && (
+          <button type="button" className="btn small" onClick={() => speakChinese(g.zh)}>
+            <Icon name="volume" size={14} /> {t("pinyinCourse.play")}
+          </button>
+        )}
+        {!g.heard && <span className="py-guided-item">{g.ask}</span>}
+        {g.heard && !canSpeakChinese() && <span className="sub">{g.py}</span>}
+      </div>
+      <div className="fd-ear-choices py-guided-options" role="group" aria-label={guidedAsk(t, g)}>
+        {g.options.map((o) => {
+          const state = picks.includes(o.id) ? (o.id === g.answer ? " is-right" : " is-wrong") : "";
+          return (
+            <button key={o.id} type="button" className={`fd-ear-choice${state}`}
+                    disabled={solved || picks.includes(o.id)} onClick={() => setPicks((p) => [...p, o.id])}>
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      {last !== undefined && (
+        <div className="practice-why" aria-live="polite">
+          <p><b>{solved ? t("pinyinCourse.right") : t("pinyinCourse.wrong")}</b>{" "}
+            {solved && <span lang="zh-CN">{g.zh} {g.py}</span>}
+          </p>
+          {why.map((line, i) => <p key={i}>{line}</p>)}
+          {!solved && <p className="sub">{t("pinyinCourse.tryAgain")}</p>}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function Examples({ unit }) {
+  const { t } = useTranslation();
+  if (unit.key === "py_syllable") {
+    return (
+      <ul className="py-split-list">
+        {unit.examples.map((e) => (
+          <li key={e.zh}>
+            <button type="button" className="pinyin-parts py-split" onClick={() => speakChinese(e.zh)}
+                    aria-label={`${t("foundation.hear")}: ${e.zh} ${e.py}`}>
+              <span className="pinyin-part"><b>{e.initial || "—"}</b><small>{t("pinyinCourse.initial")}</small></span>
+              <span className="pinyin-plus">+</span>
+              <span className="pinyin-part"><b>{e.final}</b><small>{t("pinyinCourse.final")}</small></span>
+              <span className="pinyin-plus">+</span>
+              <span className="pinyin-part"><b>{e.tone || "·"}</b><small>{t("pinyinCourse.tone")}</small></span>
+              <span className="pinyin-plus">=</span>
+              <span className="pinyin-part is-result"><b lang="zh-CN">{e.zh} {e.py}</b></span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return (
+    <>
+      <div className="tone-grid">
+        {unit.examples.map((e) => (
+          <button key={e.zh + e.py} type="button" className="tone-say" onClick={() => speakChinese(e.zh)}
+                  aria-label={`${t("foundation.hear")}: ${e.zh} ${e.py}`}>
+            <span className="tone-zh" lang="zh-CN">{e.zh}</span>
+            <span className="tone-py">{e.py}</span>
+            {e.parts && <span className="tone-name">{e.parts}</span>}
+          </button>
+        ))}
+      </div>
+      {unit.key === "py_tones" && canSpeakChinese() && (
+        <div className="fd-ear-test">
+          <p className="side-title">{t("foundation.earTitle")}</p>
+          <p className="sub">{t("foundation.earBody")}</p>
+          <ul className="fd-ears">
+            {PAIRS.map((p) => <EarTest key={p[0] + p[2]} pair={p} />)}
+          </ul>
+        </div>
+      )}
+    </>
+  );
+}
+
+function unitStatus(t, u, next) {
+  if (u.passed) return { cls: "good", text: t("pinyinCourse.statusPassed", { score: Math.round(u.best) }) };
+  if (u.played) return { cls: "", text: t("pinyinCourse.statusBest", { score: Math.round(u.best) }) };
+  if (u.key === next) return { cls: "accent", text: t("pinyinCourse.statusNext") };
+  return { cls: "", text: t("pinyinCourse.statusNew") };
+}
+
+export default function Foundation() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const { data: course, error } = useApi("/sound-world/pinyin-course");
+  const { data: journey } = useApi("/journey");
+  const step = journey?.foundation?.steps?.find((s) => s.key === "tones");
+
+  if (error) return <Layout><Empty>{error}</Empty></Layout>;
+  if (!course) return <Layout><Loading /></Layout>;
+
+  const units = course.units;
+  const asked = units.find((u) => u.key === params.get("unit"));
+  const unit = asked || units.find((u) => u.key === course.next) || units[0];
+  const i = units.indexOf(unit);
+  const open = (u) => {
+    setParams({ unit: u.key }, { replace: true });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const voice = canSpeakChinese();
+  const stepDone = step?.status === "done";
 
   return (
     <Layout>
@@ -114,103 +257,105 @@ export default function Foundation() {
           <h1 className="h1">{t("foundation.title")}</h1>
           <p className="sub">{t("foundation.subtitle")}</p>
         </div>
-        {step && (
-          <div className="kpi-row">
+        <div className="kpi-row">
+          <div className="kpi">
+            <span className="kpi-value">{course.passed}/{course.total}</span>
+            <span className="kpi-label">{t("pinyinCourse.kpiUnits")}</span>
+          </div>
+          {step && (
             <div className="kpi">
-              <span className="kpi-value">
-                {step.status === "done" ? <Icon name="check" size={18} /> : "1/8"}
-              </span>
+              <span className="kpi-value">{stepDone ? <Icon name="check" size={18} /> : "1/8"}</span>
               <span className="kpi-label">{t(`journey.status.${step.status}`)}</span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       <div className="ws">
-        <div className="ws-main fd-path">
-          <Step n={1} title={t("foundation.pinyinTitle")}>
-            <p>{t("foundation.pinyinBody")}</p>
-            <div className="pinyin-parts" aria-hidden="true">
-              <span className="pinyin-part"><b>m</b><small>{t("foundation.partInitial")}</small></span>
-              <span className="pinyin-plus">+</span>
-              <span className="pinyin-part"><b>a</b><small>{t("foundation.partFinal")}</small></span>
-              <span className="pinyin-plus">+</span>
-              <span className="pinyin-part"><b>ˉ</b><small>{t("foundation.partTone")}</small></span>
-              <span className="pinyin-plus">=</span>
-              <span className="pinyin-part is-result"><b lang="zh-CN">妈 mā</b></span>
-            </div>
-          </Step>
+        <div className="ws-main">
+          <nav aria-label={t("pinyinCourse.unitsLabel")}>
+            <ol className="py-units">
+              {units.map((u) => {
+                const st = unitStatus(t, u, course.next);
+                return (
+                  <li key={u.key}>
+                    <button type="button" className={`py-unit${u.key === unit.key ? " is-on" : ""}${u.passed ? " is-passed" : ""}`}
+                            aria-current={u.key === unit.key ? "step" : undefined} onClick={() => open(u)}>
+                      <span className="py-unit-n" aria-hidden="true">{u.passed ? <Icon name="check" size={14} /> : u.n}</span>
+                      <span className="py-unit-text">
+                        <b>{u.title}</b>
+                        <span className={`badge ${st.cls}`}>{st.text}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
 
-          <Step n={2} title={t("foundation.tonesTitle")}>
-            <p className="sub">{t("foundation.tonesBody")}</p>
-            {!voice && <p className="sub">{t("foundation.noVoice")}</p>}
-            {/* The tone in focus, large: its contour drawn over the syllable. */}
-            <div className="fd-focus" aria-live="polite">
-              <Contour path={focus.path} className="fd-focus-contour" />
-              <span className="fd-focus-zh" lang="zh-CN">{focus.zh}</span>
-              <span className="fd-focus-py">{focus.py}</span>
-              <span className="fd-focus-name">{t(`foundation.tone${focus.key}`)}</span>
-              <span className="sub">{t(`foundation.mean.${focus.mean}`)}</span>
-              <button type="button" className="btn small" onClick={() => speakChinese(focus.zh)}>
-                <Icon name="volume" size={14} /> {t("foundation.hear")}
-              </button>
-            </div>
-            <div className="tone-grid">
-              {TONES.map((tn) => (
-                <button key={tn.key} type="button" className={`tone-say${focus.key === tn.key ? " is-on" : ""}`}
-                        onClick={() => meet(tn)} aria-pressed={focus.key === tn.key}
-                        aria-label={`${t("foundation.hear")}: ${tn.zh} ${tn.py}`}>
-                  <Contour path={tn.path} />
-                  <span className="tone-zh" lang="zh-CN">{tn.zh}</span>
-                  <span className="tone-py">{tn.py}</span>
-                  <span className="tone-name">{t(`foundation.tone${tn.key}`)}</span>
-                </button>
-              ))}
-            </div>
-          </Step>
+          <div className="fd-path" key={unit.key}>
+            <p className="page-eyebrow" style={{ margin: "0 0 8px" }}>{t("pinyinCourse.unitN", { n: unit.n })} · {unit.title}</p>
+            <Step n={1} title={t("pinyinCourse.stepLearn")}>
+              <p>{unit.intro}</p>
+              <ul className="py-points">
+                {unit.points.map((p, k) => <li key={k}>{p}</li>)}
+              </ul>
+              {unit.key === "py_tones" && <ToneShapes />}
+            </Step>
 
-          <Step n={3} title={t("foundation.pairsTitle")}>
-            <p className="sub">{t("foundation.pairsBody")}</p>
-            <ul className="tone-pairs">
-              {PAIRS.map(([a, ap, b, bp]) => (
-                <li key={a + b}>
-                  <Say zh={a} py={ap}><span lang="zh-CN">{a}</span> <small>{ap}</small></Say>
-                  <span aria-hidden="true">·</span>
-                  <Say zh={b} py={bp}><span lang="zh-CN">{b}</span> <small>{bp}</small></Say>
-                </li>
-              ))}
-            </ul>
-            {voice && (
-              <div className="fd-ear-test">
-                <p className="side-title">{t("foundation.earTitle")}</p>
-                <p className="sub">{t("foundation.earBody")}</p>
-                <ul className="fd-ears">
-                  {PAIRS.map((p) => <EarTest key={p[0] + p[2]} pair={p} />)}
-                </ul>
+            <Step n={2} title={t("pinyinCourse.stepHear")}>
+              <p className="sub">{t("pinyinCourse.stepHearBody")}</p>
+              {!voice && <p className="sub">{t("foundation.noVoice")}</p>}
+              <Examples unit={unit} />
+            </Step>
+
+            <Step n={3} title={t("pinyinCourse.stepTry")}>
+              <p className="sub">{t("pinyinCourse.stepTryBody")}</p>
+              <ol className="py-guided-list">
+                {unit.guided.map((g, k) => <Guided key={`${unit.key}-${k}`} g={g} n={k + 1} />)}
+              </ol>
+            </Step>
+
+            <Step n={4} title={t("pinyinCourse.stepCheck")} done={unit.passed} now={!unit.passed}>
+              <p className="sub">{t("pinyinCourse.stepCheckBody", { score: Math.round(course.pass_score) })}</p>
+              {unit.played > 0 && (
+                <p className="sub">{t("foundation.bestScore", { score: Math.round(unit.best) })}</p>
+              )}
+              <div className="row" style={{ flexWrap: "wrap", gap: 8, margin: 0 }}>
+                <Link to={`/practice?source=pronunciation&env=${unit.key}`} className={`btn${unit.passed ? "" : " primary"}`}>
+                  <Icon name="target" size={15} /> {unit.played ? t("pinyinCourse.checkAgain") : t("pinyinCourse.startCheck")}
+                </Link>
+                {i > 0 && (
+                  <button type="button" className="btn ghost" onClick={() => open(units[i - 1])}>
+                    <Icon name="arrowLeft" size={15} /> {t("pinyinCourse.prevUnit")}
+                  </button>
+                )}
+                {i + 1 < units.length && (
+                  <button type="button" className={`btn${unit.passed ? " primary" : " ghost"}`} onClick={() => open(units[i + 1])}>
+                    {t("pinyinCourse.nextUnit")} <Icon name="arrowRight" size={15} />
+                  </button>
+                )}
               </div>
-            )}
-          </Step>
-
-          <Step n={4} title={t("foundation.roundTitle")} done={step?.status === "done"}>
-            <p className="sub">{t("foundation.roundBody")}</p>
-            <div className="row" style={{ flexWrap: "wrap", gap: 8, margin: 0 }}>
-              <Link to="/practice?source=tones" className="btn primary">
-                <Icon name="play" size={15} /> {t("foundation.startRound")}
-              </Link>
-              <Link to="/tone-coach" className="btn">
-                <Icon name="mic" size={15} /> {t("nav.toneCoach")}
-              </Link>
-            </div>
-          </Step>
+            </Step>
+          </div>
         </div>
 
         <aside className="ws-side">
-          <div className="card side-card foundation-round">
-            <p className="side-title">{t("foundation.roundTitle")}</p>
-            <p className="sub">{t("foundation.roundBody")}</p>
-            <Link to="/practice?source=tones" className="btn primary">
-              <Icon name="play" size={15} /> {t("foundation.startRound")}
-            </Link>
+          <div className="card side-card">
+            <p className="side-title">{t("pinyinCourse.title")}</p>
+            <p className="sub">{course.passed === course.total ? t("pinyinCourse.allPassed") : t("pinyinCourse.sideBody")}</p>
+          </div>
+          <div className={`card side-card foundation-round${stepDone ? " is-done" : ""}`}>
+            <p className="side-title">{t("pinyinCourse.finalTitle")}</p>
+            <p className="sub">{t("pinyinCourse.finalBody")}</p>
+            <div className="side-links">
+              <Link to="/practice?source=tones" className={`btn${course.passed === course.total && !stepDone ? " primary" : ""}`}>
+                <Icon name="play" size={15} /> {t("foundation.startRound")}
+              </Link>
+              <Link to="/tone-coach" className="btn ghost">
+                <Icon name="mic" size={15} /> {t("nav.toneCoach")}
+              </Link>
+            </div>
           </div>
           <div className="card side-card">
             <p className="side-title">{t("foundation.alsoTitle")}</p>

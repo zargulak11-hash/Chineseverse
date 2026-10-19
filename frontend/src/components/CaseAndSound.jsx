@@ -21,7 +21,8 @@ export function askText(t, question) {
   // A pronunciation dialogue carries its own question (Chinese + translation).
   if (ask.question_zh) return `${ask.question_zh}${ask.question ? ` — ${ask.question}` : ""}`;
   const sub = question.type === "sound_info" ? `${question.type}.${ask.info}` :
-    question.type === "sound_conversation" ? `${question.type}.${ask.ask}` : question.type;
+    question.type === "sound_conversation" ? `${question.type}.${ask.ask}` :
+    question.type === "pinyin_part" ? `pinyin_part_${ask.part}` : question.type;
   return t(`soundWorld.ask.${sub}`, {
     item: ask.item,
     order: ask.order,

@@ -216,7 +216,7 @@ export function RoundContextCard({ context }) {
     const lang = i18n.language;
     return (
       <div className="card side-card">
-        <p className="side-title">{t("soundWorld.pron.title")}</p>
+        <p className="side-title">{t(context.course === "pinyin" ? "pinyinCourse.title" : "soundWorld.pron.title")}</p>
         <div className="row" style={{ margin: 0, gap: 12 }}>
           <Art name={pronArt(context.lesson)} size={56} />
           <div style={{ minWidth: 0 }}>

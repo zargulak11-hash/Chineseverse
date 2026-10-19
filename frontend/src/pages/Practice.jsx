@@ -159,7 +159,9 @@ export default function Practice({ forceSource }) {
 
   // Listening questions (and the audio button) use the browser's Mandarin TTS.
   useEffect(() => {
-    if (question?.type === "listen_to_word" && question.prompt.speak && !result) {
+    // The tones round's characters (source "tones") come with their sound:
+    // the question is which tone is heard (services/practice.py).
+    if (["listen_to_word", "char_to_pinyin"].includes(question?.type) && question.prompt.speak && !result) {
       speakChinese(question.prompt.speak);
     }
     // Lines heard before they're read: listening checks, and advanced
@@ -250,7 +252,9 @@ export default function Practice({ forceSource }) {
   const context = session?.context;
   const title = t(`practice.title.${source}`, {
     level: level ?? "",
-    title: typeof context?.title === "string" ? context.title : "",
+    title: typeof context?.title === "string"
+      ? context.title
+      : context?.titles?.[i18n.language] || context?.titles?.en || "",
     place: context?.env ? t(`soundWorld.env.${context.env}`) : "",
   });
   const backTo = lessonId
@@ -265,6 +269,8 @@ export default function Practice({ forceSource }) {
           ? `/sentence${sentence ? `?text=${encodeURIComponent(sentence)}` : ""}`
           : source === "detective"
             ? (caseKey?.startsWith("file:") ? `/detective/file/${caseKey.slice(5)}` : "/detective")
+            : source === "pronunciation" && context?.course === "pinyin"
+              ? `/foundation?unit=${context.lesson}`
             : source === "sound" || source === "pronunciation"
               ? "/sound-world"
               : source === "internet"
@@ -282,6 +288,8 @@ export default function Practice({ forceSource }) {
         ? t("nav.sentence")
         : source === "detective"
           ? t("nav.detective")
+          : source === "pronunciation" && context?.course === "pinyin"
+            ? t("foundation.eyebrow")
           : source === "sound" || source === "pronunciation"
             ? t("nav.soundWorld")
             : source === "internet"
@@ -451,7 +459,10 @@ export default function Practice({ forceSource }) {
     ["scene_reply", "sentence_listen", "sentence_order", "sentence_word", "case_deduce", "sound_respond",
       "net_comprehension", "net_listen", "story_q", "story_listen"].includes(qtype);
   // Detective Mode / Sound World questions word their own ask from the round.
-  const custom = qtype.startsWith("case_") || qtype.startsWith("sound_");
+  // The pinyin course's read questions (a written syllable, its sound only
+  // after answering) word their ask the same way.
+  const pinyinRead = qtype.startsWith("pinyin_");
+  const custom = qtype.startsWith("case_") || qtype.startsWith("sound_") || pinyinRead;
   const say = result?.say;
   const animal = dashboard?.animal;
   // The greeting belongs to the start of the round only; after that the
@@ -508,9 +519,12 @@ export default function Practice({ forceSource }) {
             </p>
             {qtype === "case_clue" && <CaseClue question={question} />}
             {qtype.startsWith("sound_") && <SoundStage question={question} autoPlay />}
+            {pinyinRead && question.prompt.lines?.length > 0 && <SoundStage key="heard" question={question} />}
             {qtype === "scene_reply" && <NpcLine question={question} context={context} />}
             <div className={`practice-prompt${qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? " is-empty" : ""}`}>
-              {qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? null : qtype === "case_deduce" ? (
+              {qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? null : pinyinRead ? (
+                <div className="practice-hanzi py-read">{question.prompt.ask?.item}</div>
+              ) : qtype === "case_deduce" ? (
                 <>
                   <div className="practice-text" lang="zh-CN">{question.prompt.text}</div>
                   {question.prompt.pinyin && <div className="sub">{question.prompt.pinyin}</div>}
@@ -613,10 +627,15 @@ export default function Practice({ forceSource }) {
                   <b style={{ fontSize: 22 }}>{result.card.hanzi}</b>{" "}
                   {result.card.pinyin && <span className="sub" style={{ color: "var(--accent2)" }}>{result.card.pinyin}</span>}
                   <div className="sub">{result.card.meaning}</div>
-                  <div className="sub" style={{ fontSize: 12, marginTop: 4 }}>
-                    {t("practice.masteryNow", { value: Math.round(result.mastery) })}
-                    {result.xp_gained > 0 && ` · +${result.xp_gained} XP`}
-                  </div>
+                  {/* A pinyin-course question about a sound or a spelling moves
+                      no word's mastery (only its own check record), so "mastery
+                      0%" there would be misleading. */}
+                  {!((pinyinRead || result.check?.kind === "pinyin") && !result.mastery) && (
+                    <div className="sub" style={{ fontSize: 12, marginTop: 4 }}>
+                      {t("practice.masteryNow", { value: Math.round(result.mastery) })}
+                      {result.xp_gained > 0 && ` · +${result.xp_gained} XP`}
+                    </div>
+                  )}
                 </div>
                 {/* On narrow screens the side panel sits below the fold, so
                     the reaction is repeated here where the learner is looking. */}

@@ -397,6 +397,13 @@ def build_questions(db: Session, user: models.User, env: str, stage: int, level:
 
 # --------------------------------------------------------------------------- rendering
 
+def _label(o: dict, locale: str) -> str:
+    """An option's text; options that are words of the learner's language
+    (a tone's name in the pinyin course) carry one per locale."""
+    labels = o.get("labels")
+    return (labels.get(locale) or labels["en"]) if labels else o["label"]
+
+
 def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, list[dict]]:
     ids = [o["word_id"] for o in q["options"] if o.get("word_id")]
     m = ss.meanings(db, [x for x in (q.get("ask_item"), q.get("focus_id")) if x], locale)
@@ -407,13 +414,17 @@ def render(db: Session, q: dict, answered: bool, locale: str) -> tuple[dict, lis
         options = [{"id": i, "label": o["zh"], "pinyin": (o.get("py") or None) if q.get("tier") == "beginner" else None}
                    for i, o in enumerate(q["options"])]
     else:
-        options = [{"id": i, "label": o["label"]} for i, o in enumerate(q["options"])]
-    lines = [{"speaker": l["speaker"], "speaker_zh": l["speaker_zh"], "pitch": l["pitch"], "rate": l["rate"],
-              "speak": l["zh"], "text": l["zh"] if answered else None,
-              "pinyin": l["py"] if answered else None, "fallback": l["py"]} for l in q["lines"]]
+        options = [{"id": i, "label": _label(o, locale)} for i, o in enumerate(q["options"])]
+    # A read question of the pinyin course (services/pinyin_course.py) is
+    # answered from the written syllable: its sound would give the answer
+    # away, so it is offered only once the question is answered.
+    lines = [] if q.get("silent") and not answered else [
+        {"speaker": l["speaker"], "speaker_zh": l["speaker_zh"], "pitch": l["pitch"], "rate": l["rate"],
+         "speak": l["zh"], "text": l["zh"] if answered else None,
+         "pinyin": l["py"] if answered else None, "fallback": l["py"]} for l in q["lines"]]
     ask = {"kind": q["type"], "info": q.get("info"), "ask": q.get("ask"),
-           "item": m.get(q.get("ask_item"), "") if q.get("ask_item") else "",
-           "speaker": q.get("ask_speaker"), "order": (q.get("ask_order") or 0) + 1}
+           "item": q.get("ask_text") or (m.get(q.get("ask_item"), "") if q.get("ask_item") else ""),
+           "speaker": q.get("ask_speaker"), "order": (q.get("ask_order") or 0) + 1, "part": q.get("part")}
     if q.get("pron_ask"):
         # A pronunciation dialogue asks its own question (services/pronunciation.py),
         # in Chinese with the learner's translation.
@@ -431,7 +442,7 @@ def card(db: Session, q: dict, locale: str) -> dict:
     elif q["answer_kind"] == "reply":
         meaning, answer = "", o["zh"]
     else:
-        meaning, answer = o["label"], o["zh"]
+        meaning, answer = _label(o, locale), o["zh"]
     text = "".join(l["zh"] for l in q["lines"])
     return {"hanzi": " / ".join(l["zh"] for l in q["lines"]), "pinyin": " / ".join(l["py"] for l in q["lines"]),
             "meaning": meaning, "answer_zh": answer, "gloss": ss.gloss(db, text, locale)}

@@ -27,3 +27,17 @@ def pronunciation_lessons(
 ):
     """The pronunciation course (played as source "pronunciation", env = lesson key)."""
     return pronunciation.lesson_list(db, user, locale)
+
+
+@router.get("/pinyin-course")
+def pinyin_course_units(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The pinyin foundation course (/foundation): each unit's explanation,
+    examples, guided questions and the learner's check record. Its checks
+    are played as source "pronunciation", env = the unit key."""
+    from app.services import pinyin_course
+
+    return pinyin_course.course(db, user, locale)

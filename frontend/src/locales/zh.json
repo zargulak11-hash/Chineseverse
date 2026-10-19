@@ -1137,7 +1137,8 @@
       "tones": "声音和声调练习",
       "story": "故事 · {{title}}",
       "mixups": "易混词练习",
-      "recall": "凭记忆回想"
+      "recall": "凭记忆回想",
+      "pronunciation": "发音 · {{title}}"
     },
     "retry": "再试一次",
     "back": "返回",
@@ -1889,7 +1890,11 @@
       "sound_pair": "你听到的是哪个词？",
       "sound_tonepair": "你听到的是哪种声调组合？",
       "sound_dialogue": "听对话，回答问题。",
-      "sound_memory": "第{{order}}个说话的人（{{speaker}}）提到了什么？"
+      "sound_memory": "第{{order}}个说话的人（{{speaker}}）提到了什么？",
+      "pinyin_part_initial": "{{item}} 的声母是哪个？",
+      "pinyin_part_final": "{{item}} 的韵母是哪个？",
+      "pinyin_tone_mark": "{{item}} 标的是第几声？",
+      "pinyin_spell": "{{item}} 怎么写？（数字是声调）"
     },
     "enter": "进去听 · {{stage}}"
   },
@@ -3523,5 +3528,75 @@
     "help6A": "应用用 ChineseVerse 的用户名和密码登录，并需要联网。账户是用 Google 创建的？请先设置密码：在网站“设置”→“通过 Google 设置密码”，或在登录界面使用“忘记密码？”。",
     "helpFallback": "还是不行？应用里的一切在网站上同样能用，账户也是同一个。",
     "helpWebsite": "在网站上继续"
+  },
+  "pinyinCourse": {
+    "title": "拼音课程",
+    "kpiUnits": "已通过单元",
+    "unitN": "第 {{n}} 单元",
+    "statusPassed": "已通过 · {{score}}%",
+    "statusBest": "最好 {{score}}%",
+    "statusNext": "从这里开始",
+    "statusNew": "未开始",
+    "unitsLabel": "课程单元",
+    "stepLearn": "理解",
+    "stepHear": "听和跟读",
+    "stepHearBody": "点一下音节听读音，然后跟着说。",
+    "stepTry": "试一试（有讲解）",
+    "stepTryBody": "三道题。每个答案都有讲解；这里不打分，也不保存。",
+    "stepCheck": "掌握检测",
+    "stepCheckBody": "8 道计分题。得到 {{score}}% 或以上就通过本单元，随时可以再做。",
+    "startCheck": "开始检测",
+    "checkAgain": "再测一次",
+    "nextUnit": "下一单元",
+    "prevUnit": "上一单元",
+    "play": "播放读音",
+    "question": "第 {{n}} 题",
+    "right": "对了。",
+    "wrong": "不太对。",
+    "tryAgain": "再选一个",
+    "finalTitle": "本步检测：真实的 HSK 1 汉字",
+    "finalBody": "听真实的 HSK 1 汉字和词语，选出声调和意思。上面所有单元都通过，或者这一轮得到 60% 以上，第一步就完成了。",
+    "sideBody": "六个短单元，按顺序学：音节的组成、声调、声母、韵母和拼写规则。每个单元先讲解，再练习，最后检测。",
+    "allPassed": "所有单元都通过了——你已经能读、能听拼音。第一步完成了。",
+    "initial": "声母",
+    "final": "韵母",
+    "tone": "声调",
+    "toneName": {
+      "0": "轻声",
+      "1": "第一声（高平）",
+      "2": "第二声（上升）",
+      "3": "第三声（低，先降后升）",
+      "4": "第四声（下降）"
+    },
+    "why": {
+      "tone": "你选了 {{picked}}——{{pickedTone}}。听到的是 {{answer}}——{{answerTone}}。音一样，声调不同，就是另一个词。",
+      "toneChar": "{{picked}} 是{{pickedTone}}；这个字读 {{answer}}——{{answerTone}}。",
+      "mark": "{{syllable}} 上的符号表示{{answerTone}}。",
+      "markPicked": "你选的是{{pickedTone}}。",
+      "part": "{{syllable}} = {{initial}}（声母）+ {{final}}（韵母）+ {{tone}}。",
+      "partNoInitial": "{{syllable}} 没有声母，只有韵母 {{final}} + {{tone}}。",
+      "initial": "你选了 {{picked}}，听到的是 {{answer}}：声母是 {{answerPart}}，不是 {{pickedPart}}。",
+      "final": "你选了 {{picked}}，听到的是 {{answer}}：韵母是 {{answerPart}}，不是 {{pickedPart}}。",
+      "heard": "听到的是 {{answer}}。再听一遍，和 {{picked}} 比一比。",
+      "rule": "{{parts}} 写成 {{answer}}。"
+    },
+    "tip": {
+      "air": "听送气：p、t、k、q、ch、c 送气；b、d、g、j、zh、z 不送气。",
+      "tongue": "听舌头的位置：zh ch sh 卷舌，z c s 舌尖抵齿，j q x 舌面平、嘴角像微笑。",
+      "nl": "n 从鼻子出气，l 从舌头两边出气。",
+      "r": "r 像 sh 一样卷舌，但声带振动，不是打舌的 r。",
+      "initial": "只有开头的音不同，注意听开头。",
+      "nasal": "注意听结尾：-n 在前面收住，-ng 在后面，像 song 的结尾。",
+      "umlaut": "ü 是圆唇的 i；u 舌头往后缩。",
+      "final": "只有韵母不同，注意听开头后面的部分。"
+    },
+    "rule": {
+      "u_after_jqx": "j、q、x、y 后面的 ü 去掉两点写成 u——这几个声母从来不跟 u 相拼。",
+      "u_after_nl": "n、l 后面保留两点：nǚ、lǜ 和 nù、lù 不一样。",
+      "y_w": "没有声母时，i 写成 yi（或 y-），u 写成 wu（或 w-），ü 写成 yu。",
+      "mark_a": "有 a 就标在 a 上。",
+      "mark_oe": "没有 a，就标在 o 或 e 上。",
+      "mark_iu_ui": "iu、ui 标在后一个字母上：liù、guì。"
+    }
   }
 }

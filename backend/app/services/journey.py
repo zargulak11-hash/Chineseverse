@@ -93,8 +93,10 @@ def evidence(db: Session, user: models.User) -> dict:
     from app.services import stories
 
     books = len(stories.read_slugs(db, user))
+    from app.services import pinyin_course
+
     return {"best": best, "voice": voice, "lessons": lessons, "known_words": known, "any": bool(done) or voice,
-            "books": books}
+            "books": books, "pinyin": pinyin_course.passed_all(db, user)}
 
 
 def _slipping_count(db: Session, user: models.User) -> int:
@@ -117,7 +119,9 @@ def _slipping_count(db: Session, user: models.User) -> int:
 def _step_done(key: str, ev: dict) -> bool:
     best = ev["best"]
     if key == "tones":
-        return best.get("tones", 0.0) >= PASS
+        # The tones round, or every unit of the pinyin course passed
+        # (services/pinyin_course.py) -- the course is what teaches it.
+        return best.get("tones", 0.0) >= PASS or ev.get("pinyin", False)
     if key == "characters":
         return best.get("hanzi", 0.0) >= PASS
     if key == "first_lesson":

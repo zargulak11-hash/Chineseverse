@@ -593,6 +593,11 @@ def build_session(
             q = {"type": recall.RECALL_TYPE[item_type], "item_type": item_type, "item_id": row.id, "option_ids": []}
         else:
             q = _question(db, item_type, row, i, rng, translated, qtype=forced, first=first)
+        if q and source == "tones" and q["type"] == "char_to_pinyin":
+            # The tones round is a beginner's first graded step: its
+            # characters have not been taught yet, so the question is
+            # "which tone do you HEAR" -- shown silent it was a guess.
+            q["speak"] = True
         if q:
             questions.append(q)
     if not questions:
@@ -803,7 +808,8 @@ def render_session(db: Session, session: models.PracticeSession, locale: str) ->
                 # meanings, so the reading does not give the answer away).
                 prompt = {"speak": target.simplified, "pinyin": target.pinyin}
             elif qtype in ("char_to_meaning", "char_to_pinyin"):
-                prompt = {"text": target.character, "speak": target.character if qtype == "char_to_meaning" else None}
+                prompt = {"text": target.character,
+                          "speak": target.character if qtype == "char_to_meaning" or q.get("speak") else None}
             elif qtype == "type_word":
                 # Only the meaning: the sound or the reading would be the answer.
                 prompt = {"text": _short(labels["vocab"].get(target.id), 90)}
@@ -892,6 +898,16 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
     return {"hanzi": q["sentence"], "pinyin": q.get("pinyin") or "", "meaning": ""}
 
 
+def _virtual_check(q: dict, answer: dict | None) -> dict | None:
+    """Why a heard or read pinyin answer was wrong -- the initial, the final,
+    the tone or the spelling rule that differed (services/pinyin_course.py)."""
+    if q["item_type"] != "sound" or answer is None:
+        return None
+    from app.services import pinyin_course
+
+    return pinyin_course.explain(q, answer.get("choice_id"))
+
+
 def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, locale: str) -> dict:
     qtype = q["type"]
     answered = answer is not None
@@ -904,7 +920,7 @@ def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, local
                 "answer": None, "can_speak": bool(q.get("say"))}
         if answered:
             item["answer"] = {**answer, "correct_id": q["item_id"], "card": _virtual_card(db, q, locale),
-                              "say": (q.get("say") or {}).get("zh")}
+                              "say": (q.get("say") or {}).get("zh"), "check": _virtual_check(q, answer)}
         return item
     rules: dict = {}
     if q.get("scene"):
@@ -1011,7 +1027,17 @@ def _check_out(db: Session, q: dict, answer: dict, locale: str) -> dict | None:
         return out
     if answer.get("correct") or answer.get("choice_id") in (None, q["item_id"]):
         return None
-    return {"kind": "picked", "other": _card_for(db, q["item_type"], answer["choice_id"], locale)}
+    out = {"kind": "picked", "other": _card_for(db, q["item_type"], answer["choice_id"], locale)}
+    if q["type"] == "char_to_pinyin" and out["other"]:
+        # Same syllable, another tone (that is how its options are chosen):
+        # say which tone was picked and which one the character has.
+        from app.services import pinyin_course
+
+        target = _row(db, "hanzi", q["item_id"])
+        pp, rp = out["other"]["pinyin"] or "", (target.pinyin if target else "") or ""
+        if pinyin_course.split(pp) == pinyin_course.split(rp) and " " not in pp + rp:
+            out.update(picked_tone=pinyin_course.tone_of(pp), answer_tone=pinyin_course.tone_of(rp), answer=rp, picked=pp)
+    return out
 
 
 def _record(db: Session, user: models.User, session: models.PracticeSession, q: dict, row, correct: bool, response_ms: int,
@@ -1125,6 +1151,12 @@ _VIRTUAL_SKILLS = {
     "sound_pair": (("tones", 1.5, -0.3), ("listening", 1.0, 0.0)),
     "sound_tonepair": (("tones", 2.0, -0.3), ("listening", 0.5, 0.0)),
     "sound_dialogue": (("listening", 2.0, -0.3), ("memory", 0.5, 0.0)),
+    # The pinyin course's read questions (services/pinyin_course.py): the
+    # written tone mark is tones; taking a syllable apart and spelling it
+    # are reading pinyin.
+    "pinyin_tone_mark": (("tones", 1.5, -0.3), ("reading", 0.5, 0.0)),
+    "pinyin_part": (("reading", 1.5, -0.3), ("tones", 0.5, 0.0)),
+    "pinyin_spell": (("reading", 1.5, -0.3), ("tones", 0.5, 0.0)),
     # Chinese Stories: reading for meaning, and the story's key line by ear.
     "story_q": (("reading", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
     "story_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
@@ -1324,6 +1356,7 @@ def answer_question(
     if not virtual:
         out["check"] = _check_out(db, q, answers[index], locale)
     if virtual:
+        out["check"] = _virtual_check(q, answers[index])
         out["say"] = (q.get("say") or {}).get("zh")
         # The question as it reads now that it's answered (a hidden line is
         # revealed), so the dialogue thread can show it.
