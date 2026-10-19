@@ -42,6 +42,9 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   const [phase, setPhase] = useState("loading"); // loading | watch | quiz | done
   const [mistakes, setMistakes] = useState(0);
   const [strokesOk, setStrokesOk] = useState(0);
+  // The last missed stroke, so the learner knows WHICH stroke and what to
+  // check (HanziWriter reports the stroke and whether it was drawn backwards).
+  const [miss, setMiss] = useState(null);
   // A writing surface as large as the screen allows (strokes are matched in
   // character space, so the drawing size changes nothing in the checking).
   const [size] = useState(() => Math.min(340, Math.max(220, (typeof window !== "undefined" ? window.innerWidth : 400) - 96)));
@@ -111,6 +114,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
     setDone(null);
     setMistakes(0);
     setStrokesOk(0);
+    setMiss(null);
     strokesRef.current = [];
     attemptRef.current = null;
     try {
@@ -125,10 +129,12 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
       onMistake: (s) => {
         record(s, false);
         setMistakes((m) => m + 1);
+        setMiss({ n: s.strokeNum + 1, backwards: !!s.isBackwards, hint: s.mistakesOnStroke >= 3 });
       },
       onCorrectStroke: (s) => {
         record(s, true);
         setStrokesOk((n) => n + 1);
+        setMiss(null);
       },
       onComplete: (summary) => setDone({ totalMistakes: summary.totalMistakes }),
     });
@@ -220,6 +226,13 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
         {phase === "quiz" && (
           <>
             <p className="sub">{t("pages.hanzi.mistakes", { count: mistakes })}</p>
+            {miss && !done && (
+              <p className="practice-why" aria-live="polite">
+                {t(miss.backwards ? "pages.hanzi.missBackwards" : "pages.hanzi.missStroke",
+                  { n: miss.n, total: hanzi.stroke_count || "?" })}
+                {miss.hint && ` ${t("pages.hanzi.missHint")}`}
+              </p>
+            )}
             {done ? (
               <div>
                 <p className="badge good">{t("pages.hanzi.traceComplete", { count: done.totalMistakes })}</p>

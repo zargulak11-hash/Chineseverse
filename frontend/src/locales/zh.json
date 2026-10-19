@@ -1018,7 +1018,10 @@
       "step_watch": "看",
       "step_write": "写",
       "step_save": "保存",
-      "strokesDone": "笔画 {{done}} / {{total}}"
+      "strokesDone": "笔画 {{done}} / {{total}}",
+      "missStroke": "第 {{n}} 笔（共 {{total}} 笔）不对。看看这一笔从哪里起笔，按笔顺下一笔是哪一笔。",
+      "missBackwards": "第 {{n}} 笔（共 {{total}} 笔）形状对，方向反了：笔画从左到右、从上到下写。",
+      "missHint": "现在提示会显示这一笔的位置。"
     },
     "adminUsers": {
       "authGithub": "GitHub",

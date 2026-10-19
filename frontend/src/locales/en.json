@@ -1032,7 +1032,10 @@
       "step_watch": "Watch",
       "step_write": "Write",
       "step_save": "Save",
-      "strokesDone": "{{done}} of {{total}} strokes"
+      "strokesDone": "{{done}} of {{total}} strokes",
+      "missStroke": "Stroke {{n}} of {{total}} didn't match. Check where it starts and which stroke comes next in the order you watched.",
+      "missBackwards": "Stroke {{n}} of {{total}} has the right shape but the wrong direction: strokes go left to right and top to bottom.",
+      "missHint": "The hint now shows where this stroke goes."
     },
     "adminUsers": {
       "authGithub": "GitHub",
