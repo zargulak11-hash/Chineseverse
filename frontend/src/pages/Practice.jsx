@@ -11,7 +11,8 @@ import { AmbientToggle, askText, CaseClue, CaseFile, GlossList, SoundStage } fro
 import NextStepBar from "../components/NextStep.jsx";
 import { CheckExplain, ExplainAnswer, RecallForm } from "../components/RecallAnswer.jsx";
 import { SkillBreakdown } from "../components/SkillCheck.jsx";
-import { Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
+import { PHRASE_TYPES, PhraseBuild, PhrasePrompt, PhraseWhy, TeachCard, phraseAsk, phraseOptionsInChinese } from "../components/LessonSteps.jsx";
+import { Bar, Celebration, Empty, Loading, RingHero } from "../components/ui.jsx";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { canSpeakChinese, speakChinese } from "../zhSpeech.js";
 
@@ -54,6 +55,8 @@ export default function Practice({ forceSource }) {
   const chapter = params.get("chapter") ? Number(params.get("chapter")) : null;
   // A grammar page's "Practice this point": the round opens with that topic.
   const topicId = params.get("topic") ? Number(params.get("topic")) : null;
+  // A lesson's guided step (services/lesson_flow.py): listen|build|recall|apply.
+  const step = params.get("step");
 
   const [session, setSession] = useState(null);
   const [index, setIndex] = useState(0);
@@ -107,6 +110,7 @@ export default function Practice({ forceSource }) {
       if (chapter) body.chapter = chapter;
     }
     if (source === "grammar" && topicId) body.topic_id = topicId;
+    if (source === "lesson_step" && step) body.step = step;
     api
       .post("/practice/sessions", body)
       .then((s) => {
@@ -117,7 +121,7 @@ export default function Practice({ forceSource }) {
       // A lesson the learner hasn't reached on the path is refused by the
       // server with code lesson_locked; explain it in their language.
       .catch((e) => setError(e.code === "lesson_locked" ? i18n.t("pages.lessonDetail.lockedText") : e.message));
-  }, [source, level, waitingForLevel, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, topicId, i18n]);
+  }, [source, level, waitingForLevel, lessonId, scene, sentence, caseKey, env, stage, item, version, story, chapter, topicId, step, i18n]);
 
   useEffect(start, [start]);
 
@@ -197,14 +201,14 @@ export default function Practice({ forceSource }) {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  async function choose(optionId, text) {
+  async function choose(optionId, text, order) {
     if (busy || result) return;
     setBusy(true);
     try {
       const typed = text !== undefined;
       const r = await api.post(`/practice/sessions/${session.id}/answer`, {
         index,
-        ...(typed ? { text } : { choice_id: optionId }),
+        ...(order ? { order } : typed ? { text } : { choice_id: optionId }),
         response_ms: Date.now() - shownAt.current,
       });
       if (r.retry) {
@@ -212,7 +216,7 @@ export default function Practice({ forceSource }) {
         return;
       }
       setRetry(false);
-      setResult({ ...r, choice_id: optionId, index });
+      setResult({ ...r, choice_id: optionId, index, order });
       setOutcomes((o) => ({ ...o, [index]: r.correct }));
       setEarned((x) => ({ ...x, [index]: r.xp_gained || 0 }));
       // Scene/sentence answers come back with the question as it now reads
@@ -225,6 +229,23 @@ export default function Practice({ forceSource }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  // A played lesson's teaching screen (services/lesson_flow.build_play):
+  // the server records it as seen -- never graded -- and the lesson goes on.
+  async function seen() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api.post(`/practice/sessions/${session.id}/answer`, { index, choice_id: 0, response_ms: Date.now() - shownAt.current });
+      setOutcomes((o) => ({ ...o, [index]: "seen" }));
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    await next();
   }
 
   async function next() {
@@ -253,13 +274,14 @@ export default function Practice({ forceSource }) {
   const context = session?.context;
   const title = t(`practice.title.${source}`, {
     level: level ?? "",
+    step: context?.stage ? t(`lessonFlow.stage.${context.stage}`) : "",
     title: typeof context?.title === "string"
       ? context.title
       : context?.titles?.[i18n.language] || context?.titles?.en || "",
     place: context?.env ? t(`soundWorld.env.${context.env}`) : "",
   });
   const backTo = lessonId
-    ? `/lessons/${lessonId}`
+    ? `/lessons/${lessonId}${source === "lesson_step" && step ? `?stage=${step}` : ""}`
     : source === "review" || source === "mixups"
       ? "/mistakes"
       : source === "recall" || source === "diagnostic"
@@ -395,6 +417,38 @@ export default function Practice({ forceSource }) {
           onClose={() => setCelebrating(false)}
           actionLabel={t("practice.nice")}
         />
+        {source === "lesson_play" && (
+          // What this lesson taught (its teaching screens), in its order.
+          <div className="card lf-learned" style={{ marginTop: 16 }}>
+            <h2 className="h2">
+              {summary.lesson_status === "completed" ? t("lessonPlay.doneTitle") : t("lessonPlay.notYetTitle")}
+            </h2>
+            <p className="sub">
+              {summary.lesson_status === "completed" ? t("lessonPlay.doneBody") : t("lessonPlay.notYetBody", { score: 70 })}
+            </p>
+            <p className="side-title" style={{ marginTop: 12 }}>{t("lessonPlay.learned")}</p>
+            <ul className="lf-learned-list">
+              {session.questions.filter((q) => q.type === "teach").map((q) => (
+                <li key={q.index}>
+                  <button type="button" className="ld-zh-run" lang="zh-CN" onClick={() => speakChinese(q.prompt.speak)}>
+                    {q.prompt.zh}
+                  </button>
+                  {q.prompt.pinyin && <span className="sub"> {q.prompt.pinyin}</span>}
+                  {q.prompt.meaning && <span> — {q.prompt.meaning}</span>}
+                </li>
+              ))}
+            </ul>
+            <div className="row" style={{ marginTop: 16, flexWrap: "wrap", gap: 8 }}>
+              {summary.next_lesson_id && (
+                <Link to={`/lessons/${summary.next_lesson_id}`} className="btn primary">
+                  {t("practice.nextLesson")} <Icon name="arrowRight" size={15} />
+                </Link>
+              )}
+              <button className={`btn${summary.next_lesson_id ? "" : " primary"}`} onClick={start}>{t("lessonPlay.again")}</button>
+              <Link to={backTo} className="btn ghost">{t("practice.back")}</Link>
+            </div>
+          </div>
+        )}
         <div className="grid grid-2" style={{ marginTop: 16 }}>
           <div className="card" style={{ textAlign: "center" }}>
             <RingHero value={summary.score} label={t("practice.score")} />
@@ -440,6 +494,7 @@ export default function Practice({ forceSource }) {
         )}
         {/* What now? The journey's next step, fresh after this round. */}
         <NextStepBar />
+        {source !== "lesson_play" && (
         <div className="row" style={{ marginTop: 16, flexWrap: "wrap" }}>
           {/* Set by the server only when this round just completed the lesson. */}
           {summary.next_lesson_id && (
@@ -451,13 +506,17 @@ export default function Practice({ forceSource }) {
           <Link to="/review"><button className="btn">{t("nav.review")}</button></Link>
           <Link to={backTo}><button className="btn ghost">{t("practice.back")}</button></Link>
         </div>
+        )}
       </Layout>
     );
   }
 
   const total = session.questions.length;
-  const answered = Object.keys(outcomes).length;
-  const correctCount = Object.values(outcomes).filter(Boolean).length;
+  const graded = Object.values(outcomes).filter((o) => o !== "seen");
+  const answered = graded.length;
+  const correctCount = graded.filter(Boolean).length;
+  // A played lesson is a focused screen: one task, a progress bar, no side panels.
+  const focus = source === "lesson_play";
   const bigPrompt = ["word_to_meaning", "char_to_meaning", "char_to_pinyin", "type_pinyin"].includes(question.type);
   const typedQuestion = ["type_word", "type_pinyin"].includes(question.type);
   const qtype = question.type;
@@ -471,6 +530,7 @@ export default function Practice({ forceSource }) {
   // The pinyin course's read questions (a written syllable, its sound only
   // after answering) word their ask the same way.
   const pinyinRead = qtype.startsWith("pinyin_");
+  const phraseQ = PHRASE_TYPES.includes(qtype);
   const custom = qtype.startsWith("case_") || qtype.startsWith("sound_") || pinyinRead;
   const say = result?.say;
   const animal = dashboard?.animal;
@@ -484,6 +544,17 @@ export default function Practice({ forceSource }) {
 
   return (
     <Layout>
+      {focus ? (
+        <header className="lp-head">
+          <Link to={backTo} className="icon-btn" aria-label={t("lessonPlay.leave")} title={t("lessonPlay.leave")}>
+            <Icon name="x" size={18} />
+          </Link>
+          <div className="lp-bar" aria-label={t("lessonPlay.progress", { n: index + 1, total })}>
+            <Bar value={index + (result || outcomes[index] ? 1 : 0)} max={total} />
+          </div>
+          <span className="lp-count">{index + 1}/{total}</span>
+        </header>
+      ) : (
       <header className="page-head">
         <div>
           <div className="page-eyebrow">
@@ -509,29 +580,37 @@ export default function Practice({ forceSource }) {
           </div>
         </div>
       </header>
+      )}
 
-      <div className="ws">
+      <div className={`ws${focus ? " is-focus" : ""}`}>
         <div className="ws-main">
-          {narrowGreeting && (
+          {narrowGreeting && !focus && (
             <div className="card only-narrow" style={{ marginBottom: 12 }}>
               <CompanionReaction animal={animal} reaction={narrowGreeting} compact size={56} />
             </div>
           )}
           {source === "scene" && <SceneThread questions={session.questions} upTo={index} context={context} />}
           {source === "detective" && <CaseFile context={context} questions={session.questions} upTo={index} />}
+          {qtype === "teach" ? (
+            <div className="card practice-card" key={`${session.id}-${index}-${i18n.language}`}>
+              <TeachCard question={question} busy={busy} onContinue={seen} />
+            </div>
+          ) : (
           <div className="card practice-card" key={`${session.id}-${index}-${i18n.language}`}>
             {question.tag && (
               <span className="badge accent" style={{ marginBottom: 8 }}>{t(`detective.tag.${question.tag}`)}</span>
             )}
             <p className="sub" style={{ marginBottom: 8 }}>
-              {custom ? askText(t, question) : t(`practice.q.${qtype}`, { meaning: question.prompt.meaning || "" })}
+              {phraseQ ? phraseAsk(t, question) : custom ? askText(t, question) : t(`practice.q.${qtype}`, { meaning: question.prompt.meaning || "" })}
             </p>
             {qtype === "case_clue" && <CaseClue question={question} />}
             {qtype.startsWith("sound_") && <SoundStage question={question} autoPlay />}
             {pinyinRead && question.prompt.lines?.length > 0 && <SoundStage key="heard" question={question} />}
             {qtype === "scene_reply" && <NpcLine question={question} context={context} />}
-            <div className={`practice-prompt${qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? " is-empty" : ""}`}>
-              {qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? null : pinyinRead ? (
+            <div className={`practice-prompt${qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") || qtype === "phrase_build" ? " is-empty" : ""}`}>
+              {qtype === "scene_reply" || qtype === "case_clue" || qtype.startsWith("sound_") ? null : phraseQ ? (
+                qtype === "phrase_build" ? null : <PhrasePrompt question={question} answered={!!result} />
+              ) : pinyinRead ? (
                 <div className="practice-hanzi py-read">{question.prompt.ask?.item}</div>
               ) : qtype === "case_deduce" ? (
                 <>
@@ -586,7 +665,9 @@ export default function Practice({ forceSource }) {
               )}
             </div>
 
-            {typedQuestion ? (
+            {qtype === "phrase_build" ? (
+              <PhraseBuild question={question} busy={busy} result={result} onSubmit={(order) => choose(null, undefined, order)} />
+            ) : typedQuestion ? (
               <RecallForm
                 question={question}
                 busy={busy}
@@ -603,7 +684,7 @@ export default function Practice({ forceSource }) {
                   if (o.id === result.correct_id) cls += " is-correct";
                   else if (o.id === result.choice_id) cls += " is-wrong";
                 }
-                const cjk = cjkOptions;
+                const cjk = phraseQ ? phraseOptionsInChinese(question) : cjkOptions;
                 const long = cjk && o.label.length > 6;
                 return (
                   <button key={o.id} type="button" className={cls} disabled={busy || !!result} onClick={() => choose(o.id)}
@@ -628,7 +709,7 @@ export default function Practice({ forceSource }) {
                   <span className="practice-verdict-icon" aria-hidden="true"><Icon name={result.correct ? "check" : "x"} size={16} /></span>
                   <b>{result.correct ? t("practice.correct") : t("practice.notQuite")}</b>
                 </div>
-                <CheckExplain check={result.check} card={result.card} />
+                {phraseQ ? <PhraseWhy check={result.check} /> : <CheckExplain check={result.check} card={result.card} />}
                 {!result.correct && ["vocab", "hanzi", "grammar"].includes(question.item_type) && (
                   <ExplainAnswer key={`${session.id}-${index}`} sessionId={session.id} index={index} />
                 )}
@@ -667,6 +748,7 @@ export default function Practice({ forceSource }) {
               </div>
             )}
           </div>
+          )}
         </div>
 
         <aside className="ws-side">

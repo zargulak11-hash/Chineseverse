@@ -160,6 +160,25 @@ def get_lesson(
     return out
 
 
+@router.get("/{lesson_id}/flow")
+def get_lesson_flow(
+    lesson_id: int,
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+    user: models.User = Depends(get_current_user),
+):
+    """The lesson as a guided sequence (services/lesson_flow.py): its
+    phrases one by one with their words, the words and grammar, and the
+    learner's record in each step and in the lesson's own check. Locked
+    like the lesson itself."""
+    from app.services import lesson_flow
+
+    lesson, _entry, locked = _open_lesson(db, user, lesson_id)
+    if locked:
+        return locked
+    return lesson_flow.flow(db, user, lesson, locale)
+
+
 @router.get("/{lesson_id}/items")
 def get_lesson_items(
     lesson_id: int,

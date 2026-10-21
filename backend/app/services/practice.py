@@ -62,12 +62,13 @@ from app.services.localization import load_translations, tr
 from app.services.srs import apply_srs, recall_probability
 
 SOURCES = ("vocab", "hanzi", "grammar", "lesson", "review", "scene", "sentence", "detective", "sound", "internet",
-           "tones", "story", "pronunciation", "mixups", "recall", "diagnostic")
+           "tones", "story", "pronunciation", "mixups", "recall", "diagnostic", "lesson_step",
+           "lesson_play")
 # The beginner's first round (services/journey.py, /foundation): tones on real
 # HSK 1 material -- a character's pinyin among the same syllable in other
 # tones, and a word picked by ear. Real items, so SRS and DNA move as usual.
 TONES_CHARS, TONES_WORDS = 6, 4
-VIRTUAL = ("line", "sentence", "case", "sound", "reading")  # item types whose options are text, not rows
+VIRTUAL = ("line", "sentence", "case", "sound", "reading", "phrase")  # item types whose options are text, not rows
 SPEAK_LIMIT = 3  # spoken attempts per question (each one is a VoiceAttempt)
 VOCAB_TYPES = ("meaning_to_word", "word_to_meaning", "listen_to_word")
 HANZI_TYPES = ("char_to_meaning", "char_to_pinyin")
@@ -459,7 +460,7 @@ def build_session(
     scene: str | None = None, sentence: str | None = None,
     case: str | None = None, env: str | None = None, stage: int | None = None,
     item: str | None = None, version: str | None = None, story: str | None = None,
-    chapter: int | None = None, topic_id: int | None = None,
+    chapter: int | None = None, topic_id: int | None = None, step: str | None = None,
 ) -> models.PracticeSession | None:
     if source not in SOURCES:
         raise PracticeError(422, f"source must be one of {', '.join(SOURCES)}")
@@ -573,6 +574,35 @@ def build_session(
         if not 1 <= hsk_level <= 9:
             raise PracticeError(422, "hsk_level must be between 1 and 9")
         questions = diagnostic.build_questions(db, user, hsk_level, rng, locale, translated)
+    if source == "lesson_play":
+        # The lesson played through as one sequence (services/lesson_flow.py
+        # build_play). It carries the lesson (session.lesson_id), so finishing
+        # it with >= 70% of its graded answers completes the lesson exactly as
+        # the lesson's round does (_record_lesson, the lesson path's order).
+        from app.services import lesson_flow
+
+        lesson = db.get(models.Lesson, lesson_id) if lesson_id else None
+        if lesson is None:
+            raise PracticeError(404, "Lesson not found")
+        questions = lesson_flow.build_play(db, user, lesson, rng, locale, translated)
+        if not questions:
+            raise PracticeError(422, "This lesson has too little material to play through; practise it instead")
+        hsk_level = lesson.hsk_level
+    if source == "lesson_step":
+        # One step of a lesson's guided sequence (services/lesson_flow.py).
+        # The lesson rides in the round's ctx, NOT session.lesson_id: only the
+        # lesson's own round ("lesson") completes a lesson.
+        from app.services import lesson_flow
+
+        step_lesson = db.get(models.Lesson, lesson_id) if lesson_id else None
+        if step_lesson is None:
+            raise PracticeError(404, "Lesson not found")
+        if step not in lesson_flow.STAGES:
+            raise PracticeError(422, f"step must be one of {', '.join(lesson_flow.STAGES)}")
+        questions = lesson_flow.build_questions(db, user, step_lesson, step, rng, locale, translated)
+        if not questions:
+            raise PracticeError(422, "This lesson has no material for this step")
+        hsk_level = step_lesson.hsk_level
     # Every round meets the learner's own mix-ups: an item they have taken
     # for another is offered with that other one among its options.
     partners = {}
@@ -896,6 +926,10 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
         from app.services import internet
 
         return internet.card(db, q, locale)
+    if q["item_type"] == "phrase":
+        from app.services import lesson_flow
+
+        return lesson_flow.card(db, q, locale)
     if qtype == "scene_reply":
         r = q["reply"]
         return {"hanzi": r["zh"], "pinyin": r["py"], "meaning": _line_tr(r.get("tr"), locale)}
@@ -909,10 +943,17 @@ def _virtual_card(db: Session, q: dict, locale: str) -> dict:
     return {"hanzi": q["sentence"], "pinyin": q.get("pinyin") or "", "meaning": ""}
 
 
-def _virtual_check(q: dict, answer: dict | None) -> dict | None:
+def _virtual_check(db: Session, q: dict, answer: dict | None, locale: str) -> dict | None:
     """Why a heard or read pinyin answer was wrong -- the initial, the final,
-    the tone or the spelling rule that differed (services/pinyin_course.py)."""
-    if q["item_type"] != "sound" or answer is None:
+    the tone or the spelling rule that differed (services/pinyin_course.py) --
+    or a lesson phrase answer (services/lesson_flow.py)."""
+    if answer is None:
+        return None
+    if q["item_type"] == "phrase":
+        from app.services import lesson_flow
+
+        return lesson_flow.explain(db, q, answer, locale)
+    if q["item_type"] != "sound":
         return None
     from app.services import pinyin_course
 
@@ -922,16 +963,18 @@ def _virtual_check(q: dict, answer: dict | None) -> dict | None:
 def _render_virtual(db: Session, q: dict, index: int, answer: dict | None, locale: str) -> dict:
     qtype = q["type"]
     answered = answer is not None
-    if q["item_type"] in ("case", "sound", "reading"):
+    if q["item_type"] in ("case", "sound", "reading", "phrase"):
         from app.services import detective, internet, sound_world
 
-        mod = {"case": detective, "sound": sound_world, "reading": internet}[q["item_type"]]
+        from app.services import lesson_flow
+
+        mod = {"case": detective, "sound": sound_world, "reading": internet, "phrase": lesson_flow}[q["item_type"]]
         prompt, options = mod.render(db, q, answered, locale)
         item = {"index": index, "type": qtype, "item_type": q["item_type"], "prompt": prompt, "options": options,
                 "answer": None, "can_speak": bool(q.get("say"))}
         if answered:
             item["answer"] = {**answer, "correct_id": q["item_id"], "card": _virtual_card(db, q, locale),
-                              "say": (q.get("say") or {}).get("zh"), "check": _virtual_check(q, answer)}
+                              "say": (q.get("say") or {}).get("zh"), "check": _virtual_check(db, q, answer, locale)}
         return item
     rules: dict = {}
     if q.get("scene"):
@@ -1168,6 +1211,13 @@ _VIRTUAL_SKILLS = {
     "pinyin_tone_mark": (("tones", 1.5, -0.3), ("reading", 0.5, 0.0)),
     "pinyin_part": (("reading", 1.5, -0.3), ("tones", 0.5, 0.0)),
     "pinyin_spell": (("reading", 1.5, -0.3), ("tones", 0.5, 0.0)),
+    # A lesson's guided steps (services/lesson_flow.py).
+    "phrase_listen": (("listening", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
+    "phrase_gap": (("vocabulary", 1.5, -0.3), ("grammar", 0.5, 0.0)),
+    "phrase_build": (("grammar", 2.0, -0.3), ("reading", 0.5, 0.0)),
+    "phrase_meaning": (("memory", 1.5, -0.3), ("vocabulary", 0.5, 0.0)),
+    "phrase_situation": (("speaking", 1.0, -0.3), ("vocabulary", 0.5, 0.0)),
+    "phrase_reply": (("listening", 1.0, -0.3), ("speaking", 1.0, 0.0)),
     # Chinese Stories: reading for meaning, and the story's key line by ear.
     "story_q": (("reading", 2.0, -0.3), ("vocabulary", 0.5, 0.0)),
     "story_listen": (("listening", 2.0, -0.3), ("tones", 0.5, 0.0)),
@@ -1251,7 +1301,7 @@ def _focus_virtual(db: Session, q: dict, locale: str) -> dict | None:
 
 def answer_question(
     db: Session, user: models.User, session: models.PracticeSession, index: int, choice_id: int | None,
-    response_ms: int, locale: str, text: str | None = None,
+    response_ms: int, locale: str, text: str | None = None, order: list[int] | None = None,
 ) -> dict:
     if session.completed_at is not None:
         raise PracticeError(409, "This practice round is already finished")
@@ -1260,12 +1310,26 @@ def answer_question(
     if session.answers[index] is not None:
         raise PracticeError(409, "This question was already answered")
     q = session.questions[index]
+    if q["type"] == "teach":
+        # A teaching screen (services/lesson_flow.py): marked as seen, never
+        # graded -- no mastery, XP, mistake or score comes from reading it.
+        if choice_id != 0:
+            raise PracticeError(422, "That option was not offered for this question")
+        answers = list(session.answers)
+        answers[index] = {"choice_id": 0, "correct": True, "seen": True, "response_ms": response_ms,
+                          "answered_at": datetime.utcnow().isoformat()}
+        session.answers = answers
+        db.commit()
+        return {"correct": True, "seen": True, "correct_id": 0, "card": _virtual_card(db, q, locale),
+                "mastery": 0.0, "xp_gained": 0, "reaction": None, "check": None}
     typed = q["type"] in recall.TYPED_TYPES
     if typed:
         if text is None:
             raise PracticeError(422, "Type your answer for this question")
         text = text.strip()[: recall.MAX_TYPED]
         choice_id = None
+    elif q["type"] == "phrase_build":
+        choice_id = None  # answered by the order of its pieces (services/lesson_flow.py)
     elif choice_id is None or choice_id not in q["option_ids"]:
         raise PracticeError(422, "That option was not offered for this question")
     virtual = q["item_type"] in VIRTUAL
@@ -1297,7 +1361,15 @@ def answer_question(
             # penalised.
             credit = other
     else:
-        correct = choice_id == q["item_id"]
+        if q["type"] == "phrase_build":
+            from app.services import lesson_flow
+
+            try:
+                correct, _given = lesson_flow.grade_order(q, order)
+            except ValueError as exc:
+                raise PracticeError(422, str(exc)) from exc
+        else:
+            correct = choice_id == q["item_id"]
     now = datetime.utcnow()
     seen = [datetime.fromisoformat(a["answered_at"]) for a in session.answers if a and a.get("answered_at")]
     since = max(seen) if seen else (session.created_at or now)
@@ -1332,6 +1404,8 @@ def answer_question(
     answers = list(session.answers)  # reassign so the JSON column is marked dirty
     answers[index] = {"choice_id": choice_id, "correct": correct, "response_ms": response_ms,
                       "answered_at": now.isoformat()}
+    if q["type"] == "phrase_build":
+        answers[index]["order"] = list(order)
     if typed:
         answers[index].update({"typed": text, "kind": check["kind"]})
         if check.get("other") is not None:
@@ -1367,7 +1441,7 @@ def answer_question(
     if not virtual:
         out["check"] = _check_out(db, q, answers[index], locale)
     if virtual:
-        out["check"] = _virtual_check(q, answers[index])
+        out["check"] = _virtual_check(db, q, answers[index], locale)
         out["say"] = (q.get("say") or {}).get("zh")
         # The question as it reads now that it's answered (a hidden line is
         # revealed), so the dialogue thread can show it.
@@ -1482,8 +1556,11 @@ def companion_memory_confusable() -> set[str]:
 
 
 def complete_session(db: Session, user: models.User, session: models.PracticeSession, locale: str) -> dict:
-    answers = session.answers
-    total = len(session.questions)
+    # A teaching screen (type "teach") is seen, not answered: it is no part
+    # of the score, so a lesson can't be passed by reading it.
+    graded = [(q, a) for q, a in zip(session.questions, session.answers) if q.get("type") != "teach"]
+    answers = [a for _, a in graded]
+    total = len(graded)
     correct = sum(1 for a in answers if a and a["correct"])
     answered = sum(1 for a in answers if a is not None)
     score = correct / total if total else 0.0
@@ -1518,6 +1595,8 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             log_activity(db, user, "internet_read")
         elif session.source == "tones":
             log_activity(db, user, "tones_practice")
+        elif session.source == "lesson_step":
+            log_activity(db, user, "lesson_step")
         elif session.source == "diagnostic":
             log_activity(db, user, "skill_check")
         elif session.source == "story":
@@ -1555,7 +1634,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
     labels = _labels(db, session.questions, locale)
     missed = []
     focus = None
-    for q, a in zip(session.questions, answers):
+    for q, a in graded:
         if a is not None and not a["correct"] and q["item_type"] in VIRTUAL:
             missed.append({"item_type": q["item_type"], **_virtual_card(db, q, locale)})
             focus = focus or _focus_virtual(db, q, locale)
@@ -1595,7 +1674,7 @@ def complete_session(db: Session, user: models.User, session: models.PracticeSes
             # Celebrate the completion only when THIS round completed it --
             # re-practicing an already completed lesson is judged by score.
             lesson_completed=newly_completed,
-            focus=focus, skill=cr.trained_skill(user, session.questions, answers),
+            focus=focus, skill=cr.trained_skill(user, [q for q, _ in graded], answers),
             words_milestone=words_milestone,
         ),
     }

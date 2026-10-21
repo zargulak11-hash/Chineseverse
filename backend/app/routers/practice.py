@@ -37,6 +37,8 @@ class SessionCreate(BaseModel):
     # source "grammar": a topic the round opens with (its grammar page's
     # "Practice this point"); the rest of the round is the level as usual.
     topic_id: int | None = Field(default=None, ge=1)
+    # source "lesson_step": which step of the lesson (services/lesson_flow.py).
+    step: str | None = Field(default=None, max_length=10)
 
 
 class SpeakPayload(BaseModel):
@@ -52,6 +54,8 @@ class AnswerPayload(BaseModel):
     # service refuses the wrong one for the question's type.
     choice_id: int | None = None
     text: str | None = Field(default=None, max_length=80)
+    # A "build the phrase" question: the ids of its pieces in the learner's order.
+    order: list[int] | None = Field(default=None, max_length=30)
     response_ms: int = Field(default=0, ge=0, le=600_000)
 
 
@@ -76,7 +80,7 @@ def create_session(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ):
-    if payload.source == "lesson" and payload.lesson_id is not None:
+    if payload.source in ("lesson", "lesson_step", "lesson_play") and payload.lesson_id is not None:
         # A lesson round is how a lesson gets completed, so it is only built
         # for a lesson the learner has reached on the path (admins included).
         state = lesson_path.path_state(db, user)
@@ -88,7 +92,7 @@ def create_session(
         scene=payload.scene, sentence=payload.sentence,
         case=payload.case, env=payload.env, stage=payload.stage,
         item=payload.item, version=payload.version, story=payload.story, chapter=payload.chapter,
-        topic_id=payload.topic_id,
+        topic_id=payload.topic_id, step=payload.step,
     )
     if session is None:
         # Review with nothing due: a real, successful "all caught up" state.
@@ -122,7 +126,7 @@ def answer(
 ):
     session = _owned(db, session_id, user)
     result = _run(svc.answer_question, db, user, session, payload.index, payload.choice_id, payload.response_ms, locale,
-                  text=payload.text)
+                  text=payload.text, order=payload.order)
     check_achievements(db, user)
     return result
 

@@ -80,6 +80,12 @@ PRIMARY_SKILL = {
     "pinyin_tone_mark": "tones",
     "pinyin_part": "reading",
     "pinyin_spell": "reading",
+    "phrase_listen": "listening",
+    "phrase_gap": "vocabulary",
+    "phrase_build": "grammar",
+    "phrase_meaning": "memory",
+    "phrase_situation": "vocabulary",
+    "phrase_reply": "reading",
     "net_comprehension": "reading",
     "net_listen": "listening",
 }

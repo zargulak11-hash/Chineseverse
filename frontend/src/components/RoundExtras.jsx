@@ -258,6 +258,26 @@ export function RoundContextCard({ context }) {
       </div>
     );
   }
+  if (context.kind === "lesson_step") {
+    // A lesson's guided step (services/lesson_flow.py): what it trains, and
+    // how much help this learner's level gets.
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t(`lessonFlow.stage.${context.stage}`)}</p>
+        <p className="sub" style={{ margin: 0 }}>{t(`lessonFlow.why.${context.stage}`)}</p>
+        {context.stage === "build" && <p className="sub" style={{ marginTop: 8 }}>{t(`lessonFlow.hints.${context.hints}`)}</p>}
+      </div>
+    );
+  }
+  if (context.kind === "diagnostic") {
+    return (
+      <div className="card side-card">
+        <p className="side-title">{t("skillCheck.title")} · HSK {context.level}</p>
+        <p className="sub" style={{ margin: 0 }}>{t("skillCheck.body")}</p>
+      </div>
+    );
+  }
+  if (context.kind !== "sentence") return null;
   return (
     <div className="card side-card">
       <p className="side-title">{t("nav.sentence")}</p>

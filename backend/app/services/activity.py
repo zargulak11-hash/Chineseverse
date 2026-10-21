@@ -39,6 +39,7 @@ ACTION_WEIGHTS: dict[str, tuple[str, float]] = {
     "internet_read": ("internet", 3.0),
     "tones_practice": ("foundation", 2.0),
     "skill_check": ("practice", 3.0),  # services/diagnostic.py
+    "lesson_step": ("lessons", 2.0),  # a lesson's guided step (services/lesson_flow.py)
     "story_read": ("stories", 4.0),
     # Reading a book (services/stories.py): a chapter read to its end, the
     # whole book finished, listening to it, asking for help with a sentence.
