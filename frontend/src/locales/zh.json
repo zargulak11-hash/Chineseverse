@@ -231,7 +231,14 @@
     "resetContinue": "继续学习",
     "resetBadTitle": "此链接无法使用",
     "resetNoToken": "此页面需要通过重置邮件里的链接打开。如有需要，请重新申请链接。",
-    "resetNewLink": "重新申请链接"
+    "resetNewLink": "重新申请链接",
+    "continueGoogle": "使用 Google 继续",
+    "googleAppSigningIn": "正在通过 Google 登录…",
+    "googleAppCancelled": "已取消 Google 登录。你可以再试一次，或用其他方式登录。",
+    "googleAppNoAccount": "这部手机上还没有 Google 账号。请在手机“设置”→“账号”中添加后再试，或者用用户名和密码登录。",
+    "googleAppNetwork": "无法连接 Google。请检查网络连接后再试。",
+    "googleAppNotConfigured": "这个版本的应用还没有配置 Google 登录。请暂时使用用户名和密码登录。",
+    "googleAppFailed": "Google 登录没有成功，请再试一次。"
   },
   "dashboard": {
     "goal": "目标 {{minutes}} 分钟/天",
@@ -1593,7 +1600,8 @@
     "speedLocked": "这个语速还没有解锁。",
     "examOver": "这次考试已经结束。",
     "examInProgress": "已经有一场考试正在进行。",
-    "examNotOpen": "考试还没开放：请先完成这个等级的课程。"
+    "examNotOpen": "考试还没开放：请先完成这个等级的课程。",
+    "googleServerOff": "服务器目前无法使用 Google 登录。请用用户名和密码登录。"
   },
   "realLife": {
     "title": "生活中的中文",

@@ -21,6 +21,8 @@ const EXACT = {
   "Google sign-in could not be verified": "googleInvalid",
   "Google credential has no account id": "googleInvalid",
   "Could not reach Google to verify the sign-in": "googleUnreachable",
+  // 501 when the server has no GOOGLE_CLIENT_ID (its text is for the operator)
+  "Google Sign-In is not configured on this server. Set GOOGLE_CLIENT_ID in backend/.env and restart the API.": "googleServerOff",
   // routers/auth.py POST /auth/github/session (ticket missing or used)
   "This GitHub sign-in has expired. Please try again.": "githubExpired",
   "Not authenticated": "sessionExpired",

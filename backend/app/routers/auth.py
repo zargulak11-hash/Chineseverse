@@ -161,9 +161,17 @@ def _sign_in_external(
 def providers():
     """Which external sign-ins this server can complete, so the Login and
     Register pages show a working button or say it isn't set up -- never a
-    button that fails after a round trip to the provider. Booleans only."""
+    button that fails after a round trip to the provider. No secrets: the
+    Google client id is public (the website's own bundle carries it).
+
+    The Android app asks Google for an ID token addressed to
+    google_client_id, which is exactly the audience _verify_google accepts.
+    Taking it from here rather than from a value baked into the app at
+    build time means an app built with another project's id (a developer's
+    local frontend/.env) can't produce tokens this server will refuse."""
     return {
         "google": bool(settings.google_client_id),
+        "google_client_id": settings.google_client_id or None,
         "github": github_oauth.is_configured(),
         # "Forgot password?" needs outgoing email (SMTP).
         "password_reset": password_reset.available(),
@@ -265,12 +273,21 @@ def _verify_google(credential: str) -> dict:
         raise HTTPException(
             status_code=401, detail="Google sign-in could not be verified"
         ) from exc
-    except google_exceptions.GoogleAuthError as exc:
-        # Covers transport/network failures reaching Google's cert endpoint —
-        # not the token's fault, so it isn't a 401.
+    except google_exceptions.TransportError as exc:
+        # Network failures reaching Google's cert endpoint -- not the token's
+        # fault, so it isn't a 401.
         logger.warning("Could not reach Google to verify a credential: %s", exc)
         raise HTTPException(
             status_code=503, detail="Could not reach Google to verify the sign-in"
+        ) from exc
+    except google_exceptions.GoogleAuthError as exc:
+        # The verifier raises a bare GoogleAuthError (not a ValueError) for a
+        # correctly signed token with the wrong issuer. This branch used to
+        # catch every GoogleAuthError as "could not reach Google" -- a 503
+        # telling the learner to retry a token that will never verify.
+        logger.warning("Google credential rejected: %s", exc)
+        raise HTTPException(
+            status_code=401, detail="Google sign-in could not be verified"
         ) from exc
 
     email = claims.get("email")

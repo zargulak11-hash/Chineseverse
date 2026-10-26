@@ -39,7 +39,8 @@ frontend/
 | Chinese audio | `speechSynthesis` | the phone's TTS engine (`@capacitor-community/text-to-speech`) |
 | Speaking answers | Web Speech recognizer | the phone's recognizer (`@capgo/capacitor-speech-recognition`) |
 | Tone Coach recording | `getUserMedia` | the same, in the WebView (microphone permission) |
-| Google / GitHub sign-in | yes | **hidden** (see Limitations) |
+| Google sign-in | Google's web button (GIS) | Android: the phone's own account picker (see "Google sign-in in the Android app"); iOS: hidden |
+| GitHub sign-in | yes | hidden (its round trip returns to the website) |
 | `/` | landing page | sign-in, or the dashboard when signed in |
 | Status bar, notch, home indicator | n/a | `src/native.js` + "Mobile app" section of `index.css` |
 | Android back button | n/a | walks back through the app; leaves on the first screen |
@@ -146,6 +147,55 @@ after 7 days); TestFlight needs the paid Apple Developer Program.
 - [ ] Notch / Dynamic Island / gesture bar: nothing hidden under them, both orientations
 - [ ] Android back button: back through pages, leaves on the first screen
 - [ ] Airplane mode mid-lesson: a clear message, no crash, progress intact after reconnecting
+
+## Google sign-in in the Android app
+
+Google refuses its web sign-in inside an embedded WebView
+(`disallowed_useragent`), so the app does not use Google's web button. It
+asks Android itself:
+
+1. "Continue with Google" (`components/NativeGoogleButton.jsx`) calls
+   `src/googleNative.js`, which uses `@capgo/capacitor-social-login`
+   (pinned) and Android's **Credential Manager** to show the phone's Google
+   account picker.
+2. The ID token is requested with the server's **web** client id as
+   `serverClientId`, so its audience (`aud`) is exactly the one the backend
+   already checks. The app reads that id from `GET /api/auth/providers`
+   (`google_client_id`) and falls back to `VITE_GOOGLE_CLIENT_ID` from the
+   build (`frontend/.env.mobile`) on a server that doesn't send it.
+3. The token goes to the same `POST /api/auth/google` as the website. The
+   backend verifies its signature, issuer, audience, expiry and verified
+   email, then uses the same account chain (Google id, then verified email,
+   then a new account) and returns the usual session token.
+
+No client secret is involved anywhere, and none is in the app.
+
+**What Google Cloud needs.** Google only issues the token to an app it
+recognizes. In the **same Google Cloud project as the website's web client
+id** (`654667958739-…`), create an OAuth client of type **Android**:
+
+| Field | Value |
+|---|---|
+| Package name | `tj.qobus.chineseverse` |
+| SHA-1 (release key, every published APK) | `0D:C4:9B:6F:44:C1:32:D7:41:04:4F:5D:07:3E:00:F0:F6:89:59:E4` |
+
+Each signing key needs its own Android client (same package, different
+SHA-1). Add a second one only for testing debug builds from a PC; this PC's
+debug key is `BF:43:99:70:26:B5:B1:BD:B0:F9:3D:96:AC:EB:13:98:C5:65:42:0E`.
+A Google Play build signed by a key Google generates would need that key's
+SHA-1 too (see "Releasing to Google Play"). The website's web client and
+its settings stay as they are. Changes can take a few minutes, sometimes
+hours, to take effect.
+
+Without that client, the picker fails and the app says Google sign-in isn't
+set up for this version. Logcat (tag `GoogleProvider`) then prints the
+package, the signing SHA-1 and the masked client id it used.
+
+The `MainActivity` hands Google's extra consent screen result back to the
+plugin (`onActivityResult`); without it a sign-in that needs that screen
+would never finish. Facebook, Apple and Twitter support in the plugin is
+switched off in `capacitor.config.json` (`plugins.SocialLogin.providers`),
+so their SDKs are not in the APK.
 
 ## Publishing the downloadable APK
 
@@ -257,19 +307,12 @@ are built yet:
 
 ## Limitations
 
-- **Google and GitHub sign-in are not available in the app yet.** Google
-  blocks its sign-in inside embedded WebViews, and the GitHub flow returns to
-  the website's address, so the buttons are hidden in the app.
-  A learner who only ever signed in with Google has no password, so they
-  can't sign in to the app until one of these is done:
-  - native Google Sign-In (a Capacitor plugin plus Android and iOS OAuth
-    clients in Google Cloud Console, with the Android client registered
-    against the Play signing key's SHA-1). The backend already verifies
-    Google ID tokens; the native client's token audience must match
-    `GOOGLE_CLIENT_ID`, or the backend must accept the extra client ids;
-  - or a "set a password" option for Google accounts.
-  Adding Google sign-in on iOS also triggers Apple guideline 4.8, which
-  requires offering **Sign in with Apple** too.
+- **Google sign-in in the app is Android only**, and only once the Android
+  OAuth client above exists. GitHub sign-in stays website-only (its flow
+  returns to the website's address). On iOS the Google button is hidden:
+  it needs an iOS OAuth client, and Apple guideline 4.8 then requires
+  **Sign in with Apple** too. Settings → "Set a password with Google" still
+  points to the website inside the app.
 - **Text-to-speech voices** come from the phone. A phone with no Chinese voice
   installed stays silent, the same as a browser without one. On a fresh
   Android device the first Chinese phrase can fail silently while Google TTS

@@ -19,6 +19,7 @@
     "@capacitor/core": "^8.5.3",
     "@capacitor/ios": "^8.5.3",
     "@capacitor/splash-screen": "^8.0.2",
+    "@capgo/capacitor-social-login": "8.5.15",
     "@capgo/capacitor-speech-recognition": "^8.4.3",
     "animejs": "^4.5.0",
     "framer-motion": "^13.4.1",

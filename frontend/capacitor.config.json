@@ -25,6 +25,14 @@
       "backgroundColor": "#0b1020",
       "androidScaleType": "CENTER_INSIDE",
       "showSpinner": false
+    },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": false,
+        "twitter": false
+      }
     }
   }
 }

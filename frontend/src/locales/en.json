@@ -232,7 +232,14 @@
     "resetContinue": "Continue learning",
     "resetBadTitle": "This link can't be used",
     "resetNoToken": "This page opens from the link in the reset email. Ask for a new link if you need one.",
-    "resetNewLink": "Ask for a new link"
+    "resetNewLink": "Ask for a new link",
+    "continueGoogle": "Continue with Google",
+    "googleAppSigningIn": "Signing in with Google…",
+    "googleAppCancelled": "Google sign-in was cancelled. You can try again or sign in another way.",
+    "googleAppNoAccount": "There's no Google account on this phone yet. Add one in the phone's Settings → Accounts, then try again — or sign in with your username and password.",
+    "googleAppNetwork": "Couldn't reach Google. Check your internet connection and try again.",
+    "googleAppNotConfigured": "Google sign-in isn't set up for this version of the app yet. Please sign in with your username and password for now.",
+    "googleAppFailed": "Google sign-in didn't work. Please try again."
   },
   "dashboard": {
     "goal": "goal {{minutes}} min/day",
@@ -1609,7 +1616,8 @@
     "speedLocked": "This speed isn't unlocked yet.",
     "examOver": "This exam attempt is over.",
     "examInProgress": "An exam attempt is already in progress.",
-    "examNotOpen": "This exam isn't open yet: finish the level's lessons first."
+    "examNotOpen": "This exam isn't open yet: finish the level's lessons first.",
+    "googleServerOff": "Google sign-in isn't available on the server right now. Please sign in with your username and password."
   },
   "realLife": {
     "title": "Real-life Chinese",

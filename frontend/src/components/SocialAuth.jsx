@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
-import { isNativeApp } from "../platform.js";
+import { isNativeApp, nativePlatform } from "../platform.js";
 import GitHubAuthButton from "./GitHubAuthButton.jsx";
-import GoogleAuthButton, { GOOGLE_CONFIGURED } from "./GoogleAuthButton.jsx";
+import GoogleAuthButton, { GOOGLE_CLIENT_ID, GOOGLE_CONFIGURED } from "./GoogleAuthButton.jsx";
+import NativeGoogleButton from "./NativeGoogleButton.jsx";
 
 // Reasons the backend's GitHub callback can send a learner back with
 // (?auth_error=..., routers/auth.py); anything else gets the generic one.
@@ -24,14 +25,46 @@ const OAUTH_ERRORS = new Set([
 // offer the same providers with the same behaviour. `page` is where a
 // GitHub failure returns to; `onSuccess(user)` runs after a Google sign-in
 // (GitHub finishes on /auth/github instead, see GitHubCallback.jsx).
-// Not offered in the Android / iOS app yet: Google refuses sign-in inside an
-// embedded WebView ("disallowed_useragent"), and GitHub's round trip comes
-// back to the website's address, not to the app. Both need native sign-in
-// SDKs and per-app OAuth clients first (docs/MOBILE_APP.md). Email and
-// password sign-in works in the app.
+// In the Android app, Google signs in through Android's own account picker
+// (NativeGoogleButton.jsx): Google refuses its web button inside an embedded
+// WebView ("disallowed_useragent"). GitHub stays website-only -- its round
+// trip comes back to the website's address, not to the app.
 export default function SocialAuth(props) {
-  if (isNativeApp) return null;
+  if (isNativeApp) return nativePlatform === "android" ? <AppSocialAuth {...props} /> : null;
   return <WebSocialAuth {...props} />;
+}
+
+// The app asks the server which web client id its Google tokens must be
+// for (the audience routers/auth.py verifies), so a build made with another
+// project's VITE_GOOGLE_CLIENT_ID can't sign in against the wrong one. A
+// server from before that field falls back to the build's own value.
+function AppSocialAuth({ onSuccess, onError }) {
+  const { t } = useTranslation();
+  const [providers, setProviders] = useState(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get("/auth/providers")
+      .then((p) => !cancelled && setProviders(p))
+      // Offline at start: keep the build's value; the button then explains
+      // it can't reach Google.
+      .catch(() => !cancelled && setProviders(null));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (providers === undefined || providers?.google === false) return null;
+  const clientId = providers?.google_client_id || GOOGLE_CLIENT_ID;
+  if (!clientId) return null;
+
+  return (
+    <div className="social-auth">
+      <div className="divider">{t("auth.or")}</div>
+      <NativeGoogleButton clientId={clientId} onSuccess={onSuccess} onError={onError} />
+    </div>
+  );
 }
 
 function WebSocialAuth({ page, onSuccess, onError }) {

@@ -10,6 +10,7 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 // invented here — if VITE_GOOGLE_CLIENT_ID isn't set, there is no button
 // rather than a decorative one that would silently fail.
 export const GOOGLE_CONFIGURED = Boolean(CLIENT_ID);
+export const GOOGLE_CLIENT_ID = CLIENT_ID || null;
 
 // `onCredential(credential)`, when given, receives Google's ID token itself
 // instead of signing in with it -- Settings uses it to prove the linked
