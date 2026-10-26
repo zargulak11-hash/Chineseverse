@@ -178,6 +178,11 @@ id** (`654667958739-…`), create an OAuth client of type **Android**:
 |---|---|
 | Package name | `tj.qobus.chineseverse` |
 | SHA-1 (release key, every published APK) | `0D:C4:9B:6F:44:C1:32:D7:41:04:4F:5D:07:3E:00:F0:F6:89:59:E4` |
+| Created (2026-10-26, project `chineseverse`) | `654667958739-huohmg2chrsnb1cg1ebtogb6f8hfdl0i.apps.googleusercontent.com` |
+
+The Android client id is never put in the app or the server: Google
+recognizes the app by package name + SHA-1 and puts that id in the token's
+`azp`, while `aud` stays the web client id the backend checks.
 
 Each signing key needs its own Android client (same package, different
 SHA-1). Add a second one only for testing debug builds from a PC; this PC's
