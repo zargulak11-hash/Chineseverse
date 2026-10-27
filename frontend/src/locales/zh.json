@@ -126,7 +126,12 @@
     "googlePasswordStep": "输入两次新密码，然后点 Google 按钮确认是你本人。",
     "googlePasswordSaving": "正在保存…",
     "googlePasswordDone": "密码已设置。现在可以用用户名和这个密码登录。你在其他设备上的登录已失效。",
-    "googlePasswordApp": "通过 Google 设置密码需要在网站上进行：用浏览器打开 chineseverse.qobus.tj，进入“设置”。也可以退出登录，在登录界面使用“忘记密码？”。"
+    "googlePasswordApp": "通过 Google 设置密码需要在网站上进行：用浏览器打开 chineseverse.qobus.tj，进入“设置”。也可以退出登录，在登录界面使用“忘记密码？”。",
+    "otherDevicesTitle": "其他设备",
+    "otherDevicesSub": "曾在共用或丢失的手机、电脑上登录？可以退出除本设备外的所有设备。你的密码不会改变。",
+    "otherDevicesSubmit": "退出所有其他设备",
+    "otherDevicesBusy": "正在退出…",
+    "otherDevicesDone": "完成：所有其他设备都已退出。你在这里仍保持登录。"
   },
   "landing": {
     "kicker": "在生活中学中文",
@@ -194,7 +199,8 @@
       "github_not_configured": "本网站尚未设置 GitHub 登录。",
       "github_other_account": "该邮箱已属于一个关联了其他 GitHub 账号的 ChineseVerse 账号。",
       "deactivated": "该账号已被停用。",
-      "unknown": "登录失败，请重试。"
+      "unknown": "登录失败，请重试。",
+      "github_email_unconfirmed": "该邮箱已有一个 ChineseVerse 账号。请用它的密码登录，或点击“忘记密码？”确认这个邮箱属于你，然后再试一次。"
     },
     "welcomeBack": "欢迎回来",
     "welcomeBackSub": "你的伙伴很想你。",
@@ -1601,7 +1607,9 @@
     "examOver": "这次考试已经结束。",
     "examInProgress": "已经有一场考试正在进行。",
     "examNotOpen": "考试还没开放：请先完成这个等级的课程。",
-    "googleServerOff": "服务器目前无法使用 Google 登录。请用用户名和密码登录。"
+    "googleServerOff": "服务器目前无法使用 Google 登录。请用用户名和密码登录。",
+    "emailUnconfirmed": "该邮箱已有一个 ChineseVerse 账号。请用它的密码登录，或点击“忘记密码？”确认这个邮箱属于你，然后再试一次。",
+    "signupLimited": "此网络的注册次数过多，请稍后再试。"
   },
   "realLife": {
     "title": "生活中的中文",

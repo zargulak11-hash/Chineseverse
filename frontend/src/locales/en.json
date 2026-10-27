@@ -127,7 +127,12 @@
     "googlePasswordStep": "Enter the new password twice, then press the Google button to confirm it's you.",
     "googlePasswordSaving": "Saving…",
     "googlePasswordDone": "Password set. You can now sign in with your username and this password. Your other devices have been signed out.",
-    "googlePasswordApp": "Setting a password with Google works on the website: open chineseverse.qobus.tj in a browser and go to Settings. Or sign out and use “Forgot password?” on the sign-in screen."
+    "googlePasswordApp": "Setting a password with Google works on the website: open chineseverse.qobus.tj in a browser and go to Settings. Or sign out and use “Forgot password?” on the sign-in screen.",
+    "otherDevicesTitle": "Other devices",
+    "otherDevicesSub": "Signed in on a shared or lost phone or computer? Sign out everywhere except here. Your password stays the same.",
+    "otherDevicesSubmit": "Sign out of all other devices",
+    "otherDevicesBusy": "Signing out…",
+    "otherDevicesDone": "Done: every other device is signed out. You're still signed in here."
   },
   "landing": {
     "kicker": "Learn Chinese by living it",
@@ -195,7 +200,8 @@
       "github_not_configured": "GitHub sign-in isn't set up for this site yet.",
       "github_other_account": "This email already belongs to a ChineseVerse account linked to a different GitHub account.",
       "deactivated": "This account has been deactivated.",
-      "unknown": "Sign-in didn't work. Please try again."
+      "unknown": "Sign-in didn't work. Please try again.",
+      "github_email_unconfirmed": "This email already has a ChineseVerse account. Sign in with its password, or use \"Forgot password?\" to confirm the address is yours, then try again."
     },
     "welcomeBack": "Welcome back",
     "welcomeBackSub": "Your companion missed you.",
@@ -1617,7 +1623,9 @@
     "examOver": "This exam attempt is over.",
     "examInProgress": "An exam attempt is already in progress.",
     "examNotOpen": "This exam isn't open yet: finish the level's lessons first.",
-    "googleServerOff": "Google sign-in isn't available on the server right now. Please sign in with your username and password."
+    "googleServerOff": "Google sign-in isn't available on the server right now. Please sign in with your username and password.",
+    "emailUnconfirmed": "This email already has a ChineseVerse account. Sign in with its password, or use \"Forgot password?\" to confirm the address is yours, then try again.",
+    "signupLimited": "Too many sign-ups from this network. Please try again later."
   },
   "realLife": {
     "title": "Real-life Chinese",

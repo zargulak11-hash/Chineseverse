@@ -2,6 +2,7 @@ import logging
 import re
 import secrets
 import time
+from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -24,7 +25,7 @@ from app.security import (
     hash_password,
     verify_password,
 )
-from app.services import github_oauth, login_throttle, password_reset
+from app.services import github_oauth, login_throttle, password_reset, signup_throttle
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -96,6 +97,8 @@ def _create_user_from_email(
         email=email,
         google_sub=google_sub,
         github_id=github_id,
+        # The provider verified this address (only verified emails get here).
+        email_verified_at=datetime.utcnow(),
         # Provider-created accounts never use a password; store an
         # unguessable hash so the NOT NULL constraint and login-by-password
         # path both stay safe.
@@ -106,6 +109,34 @@ def _create_user_from_email(
     db.add(models.UserProfile(user_id=user.id))
     db.add(models.UserStreak(user_id=user.id))
     return user
+
+
+UNCONFIRMED_EMAIL_DETAIL = (
+    "This email already has a ChineseVerse account. Sign in with its password, "
+    'or use "Forgot password?" to confirm the address is yours, then try again.'
+)
+
+
+def _link_by_email(user: models.User, id_field: str, provider_id: str, conflict_detail: str) -> None:
+    """Bind an account found only by its email to this provider identity,
+    or refuse. A matching email string is not enough on its own: the
+    provider proved the signer owns the address, but a password
+    registration never proved the ACCOUNT's owner does -- anyone could have
+    registered a victim's address with a password of their own and be
+    waiting inside the victim's first Google sign-in (and inside admin, for
+    an address in ADMIN_EMAILS). So the account's email must have been
+    proven itself (users.email_verified_at); the real owner proves it with
+    the emailed reset link, which also ends a squatter's password and
+    sessions."""
+    linked = getattr(user, id_field)
+    if linked and linked != provider_id:
+        # The row is already bound to a different account at this
+        # provider; silently re-binding it would hand one person's
+        # data to another.
+        raise HTTPException(status_code=409, detail=conflict_detail)
+    if user.email_verified_at is None:
+        raise HTTPException(status_code=409, detail=UNCONFIRMED_EMAIL_DETAIL)
+    setattr(user, id_field, provider_id)
 
 
 def _sign_in_external(
@@ -119,21 +150,15 @@ def _sign_in_external(
 ) -> models.User:
     """The identity chain every external sign-in shares (Google, GitHub):
     the provider's permanent account id first, then the provider-VERIFIED
-    email (links an existing password account, or a provider account from
-    before linking existed), and only then a brand-new row. Never a second
-    account for the same person. Flushes, does not commit."""
+    email -- linking an existing account only when that account's own email
+    was proven too (_link_by_email) -- and only then a brand-new row. Never
+    a second account for the same person. Flushes, does not commit."""
     column = getattr(models.User, id_field)
     user = db.query(models.User).filter(column == provider_id).first()
     if user is None:
         user = _find_by_email(db, email)
         if user is not None:
-            linked = getattr(user, id_field)
-            if linked and linked != provider_id:
-                # The row is already bound to a different account at this
-                # provider; silently re-binding it would hand one person's
-                # data to another.
-                raise HTTPException(status_code=409, detail=conflict_detail)
-            setattr(user, id_field, provider_id)
+            _link_by_email(user, id_field, provider_id, conflict_detail)
     if user is None:
         try:
             user = _create_user_from_email(
@@ -144,14 +169,16 @@ def _sign_in_external(
             # Two requests for one sign-in (Google's widget can fire its
             # callback twice; a double-clicked button) can both see "no user
             # yet" and race to insert the same email/id. The loser falls back
-            # to the row the winner just created.
+            # to the row the winner just created. A row found only by email
+            # is held to the same rule as above, or a lost race would be a
+            # way around it.
             db.rollback()
-            user = (
-                db.query(models.User).filter(column == provider_id).first()
-                or _find_by_email(db, email)
-            )
+            user = db.query(models.User).filter(column == provider_id).first()
             if user is None:
-                raise
+                user = _find_by_email(db, email)
+                if user is None:
+                    raise
+                _link_by_email(user, id_field, provider_id, conflict_detail)
     if not user.is_active:
         raise HTTPException(status_code=403, detail="This account has been deactivated")
     return user
@@ -179,7 +206,20 @@ def providers():
 
 
 @router.post("/register", response_model=schemas.TokenResponse, status_code=201)
-def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
+def register(
+    payload: schemas.RegisterRequest,
+    db: Session = Depends(get_db),
+    ip: str | None = Depends(get_client_ip),
+):
+    # Before any lookup, so a refused request also tells nothing about
+    # which usernames or emails exist (services/signup_throttle.py).
+    wait = signup_throttle.check(ip)
+    if wait:
+        raise HTTPException(
+            status_code=429,
+            detail=signup_throttle.LIMITED_DETAIL,
+            headers={"Retry-After": str(wait)},
+        )
     if db.query(models.User).filter(
         func.lower(models.User.username) == payload.username.lower()
     ).first() is not None:
@@ -546,7 +586,11 @@ def github_callback(
         )
     except HTTPException as exc:
         db.rollback()
-        return _back_with_error(page, "github_other_account" if exc.status_code == 409 else "deactivated")
+        if exc.detail == UNCONFIRMED_EMAIL_DETAIL:
+            code = "github_email_unconfirmed"
+        else:
+            code = "github_other_account" if exc.status_code == 409 else "deactivated"
+        return _back_with_error(page, code)
     db.commit()
     logger.info("GitHub sign-in completed for user %s", user.id)
 

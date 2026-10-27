@@ -65,6 +65,14 @@ def remember_timezone(db: Session, user: models.User, raw: str | None) -> None:
         db.commit()
 
 
+def session_ended(issued_at: int | None, user: models.User) -> bool:
+    """A token issued before the account's last password change or its
+    last "sign out of all other devices" no longer opens a session."""
+    return token_predates_password_change(
+        issued_at, user.password_changed_at
+    ) or token_predates_password_change(issued_at, user.sessions_revoked_at)
+
+
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: Session = Depends(get_db),
@@ -87,8 +95,9 @@ def get_current_user(
         )
     # Changing the password ends every session opened before it (the device
     # that changed it got a new token): a stolen token must not outlive the
-    # password it was signed in with.
-    if token_predates_password_change(issued_at, user.password_changed_at):
+    # password it was signed in with. "Sign out of all other devices" does
+    # the same without a new password.
+    if session_ended(issued_at, user):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
         )
@@ -125,9 +134,9 @@ def get_user_or_none(
     # A deactivated account is anonymous here too, as get_current_user
     # refuses it: its still-unexpired token must not keep an admin's view
     # of lesson bodies or a learner's unlocks. So is a session the password
-    # change ended.
+    # change (or "sign out of all other devices") ended.
     if user is None or not user.is_active:
         return None
-    if token_predates_password_change(issued_at, user.password_changed_at):
+    if session_ended(issued_at, user):
         return None
     return user

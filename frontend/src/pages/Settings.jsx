@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { api, changePassword, setPasswordWithGoogle } from "../api.js";
+import { api, changePassword, setPasswordWithGoogle, signOutOtherDevices } from "../api.js";
 import GoogleAuthButton, { GOOGLE_CONFIGURED } from "../components/GoogleAuthButton.jsx";
 import Icon from "../components/Icon.jsx";
 import UserAvatar from "../components/UserAvatar.jsx";
@@ -140,6 +140,50 @@ function ChangePassword({ user, onChanged }) {
       </button>
       <p className="sub" style={{ marginTop: 12, fontSize: "var(--text-xs)" }}>{t("settings.passwordProviderHint")}</p>
     </form>
+  );
+}
+
+// "Sign out of all other devices" (POST /api/me/sessions/revoke): signing
+// out only ever forgot the token in this browser, so one left on a shared or
+// lost device kept working for days. This ends every other session without
+// changing the password; this device stays signed in with a fresh token.
+function OtherDevices({ onChanged }) {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [problem, setProblem] = useState(null);
+
+  async function signOutOthers() {
+    if (busy) return; // one request at a time, even on a double click
+    setBusy(true);
+    setDone(false);
+    setProblem(null);
+    try {
+      onChanged(await signOutOtherDevices());
+      setDone(true);
+    } catch (err) {
+      setProblem(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card formcard is-inline">
+      <h2 className="h2">{t("settings.otherDevicesTitle")}</h2>
+      <p className="sub" style={{ marginBottom: 12 }}>{t("settings.otherDevicesSub")}</p>
+      {problem && (
+        <p className="formerr" role="alert">
+          {problem}
+        </p>
+      )}
+      <p className="sub" role="status" aria-live="polite" style={{ color: "var(--good)", marginBottom: done ? 12 : 0 }}>
+        {done ? t("settings.otherDevicesDone") : ""}
+      </p>
+      <button type="button" className="btn" style={{ width: "100%" }} onClick={signOutOthers} disabled={busy} aria-busy={busy || undefined}>
+        {busy ? t("settings.otherDevicesBusy") : t("settings.otherDevicesSubmit")}
+      </button>
+    </div>
   );
 }
 
@@ -451,6 +495,7 @@ export default function Settings() {
 
           <ChangePassword user={user} onChanged={setCurrentUser} />
           {user?.google_linked && <GooglePassword onChanged={setCurrentUser} />}
+          <OtherDevices onChanged={setCurrentUser} />
 
           <div className="card formcard is-inline">
             <h2 className="h2">{t("settings.learningProfile")}</h2>

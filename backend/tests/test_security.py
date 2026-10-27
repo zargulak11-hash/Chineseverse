@@ -89,3 +89,20 @@ def test_a_real_png_avatar_is_still_accepted(client, learner):
     url = expect(client, "post", "/api/me/avatar", 200, headers=h, files={"file": ("a.png", PNG, "image/png")})["avatar_url"]
     assert avatars.file_for(url).is_file()
     expect(client, "delete", "/api/me/avatar", 200, headers=h)
+
+
+@pytest.mark.parametrize("secret, problem", [
+    ("change-me-in-production", "placeholder"),
+    ("x" * 31, "shorter than 32 bytes"),
+    ("x" * 32, None),
+    ("a" * 64, None),
+])
+def test_startup_names_a_weak_jwt_secret_without_printing_it(monkeypatch, secret, problem):
+    from app import main
+
+    monkeypatch.setattr(settings, "jwt_secret", secret)
+    found = main.jwt_secret_problem()
+    if problem is None:
+        assert found is None
+    else:
+        assert problem in found and secret not in found

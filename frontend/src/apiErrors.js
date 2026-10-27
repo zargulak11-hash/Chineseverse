@@ -12,11 +12,16 @@ const EXACT = {
   "Invalid username or password": "invalidLogin",
   // services/login_throttle.py (429 after repeated failed sign-ins)
   "Too many sign-in attempts. Please wait a few minutes and try again.": "loginLocked",
+  // services/signup_throttle.py (429 from registration)
+  "Too many sign-ups from this network. Please try again later.": "signupLimited",
   "username already registered": "usernameTaken",
   "username already taken": "usernameTaken",
   "email already registered": "emailTaken",
   "This account has been deactivated": "deactivated",
   "This email is linked to a different Google account": "googleOtherAccount",
+  // routers/auth.py UNCONFIRMED_EMAIL_DETAIL: an account with this email
+  // exists, but its address was never proven, so Google won't join it.
+  'This email already has a ChineseVerse account. Sign in with its password, or use "Forgot password?" to confirm the address is yours, then try again.': "emailUnconfirmed",
   "Google account has no verified email": "googleNoEmail",
   "Google sign-in could not be verified": "googleInvalid",
   "Google credential has no account id": "googleInvalid",

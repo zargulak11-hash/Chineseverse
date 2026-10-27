@@ -7,6 +7,7 @@ from app.crud import apply_updates, delete_user_cascade_safe, get_or_404
 from app.database import get_db
 from app.deps import require_admin
 from app.security import hash_password
+from app.services import password_reset
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -34,6 +35,16 @@ def _check_unique(db: Session, payload, current_user=None):
         raise HTTPException(
             status_code=409, detail=f"{field} already registered"
         )
+
+
+def _forget_verification_if_email_changes(db: Session, user: models.User, new_email: str) -> None:
+    # An address typed in here was never proven by its owner; until it is
+    # (reset link), Google/GitHub must not join this account by email. A
+    # reset link already sent went to the OLD address: it must not reset the
+    # account or prove the new address, so it stops working too.
+    if new_email.lower() != (user.email or "").lower():
+        user.email_verified_at = None
+        password_reset.spend_open_links(db, user)
 
 
 @router.get("", response_model=list[schemas.UserResponse])
@@ -79,10 +90,14 @@ def update_user(
     user = get_or_404(db, models.User, user_id)
     _ensure_animal_exists(db, payload.animal_id)
     _check_unique(db, payload, current_user=user)
+    _forget_verification_if_email_changes(db, user, payload.email)
     user.username = payload.username
     user.email = payload.email
     if payload.password:
-        user.password_hash = hash_password(payload.password)
+        # Like any other password change: every session opened with the old
+        # one ends (password_changed_at). It used to only swap the hash, so
+        # an admin locking out an intruder this way left them signed in.
+        password_reset.set_password(db, user, payload.password)
     user.animal_id = payload.animal_id
     db.commit()
     db.refresh(user)
@@ -102,10 +117,13 @@ def patch_user(
         _ensure_animal_exists(db, data["animal_id"])
     if "username" in data or "email" in data:
         _check_unique(db, payload, current_user=user)
-    if "password" in data and data["password"]:
-        data["password_hash"] = hash_password(data["password"])
-    data.pop("password", None)
+    if data.get("email"):
+        _forget_verification_if_email_changes(db, user, data["email"])
+    new_password = data.pop("password", None)
     apply_updates(user, data)
+    if new_password:
+        # Ends every older session, as in update_user.
+        password_reset.set_password(db, user, new_password)
     db.commit()
     db.refresh(user)
     return user

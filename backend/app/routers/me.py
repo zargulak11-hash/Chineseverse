@@ -228,6 +228,24 @@ def change_password(
     return schemas.TokenResponse(access_token=create_access_token(user.id), user=user)
 
 
+@router.post("/sessions/revoke", response_model=schemas.TokenResponse)
+def sign_out_other_devices(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Settings -> "Sign out of all other devices". Signing out used to only
+    forget the token in that one browser, so a token left on a shared or
+    lost device worked for the rest of its seven days unless the password
+    changed. Every token issued before now is refused from here on
+    (deps.session_ended); this device gets a fresh one in the response and
+    stays signed in. Nothing about the password changes."""
+    # Whole seconds, like a token's `iat` (security.token_predates_password_change).
+    user.sessions_revoked_at = datetime.utcnow().replace(microsecond=0)
+    db.commit()
+    db.refresh(user)
+    return schemas.TokenResponse(access_token=create_access_token(user.id), user=user)
+
+
 @router.post("/avatar", response_model=schemas.UserProfileResponse)
 async def upload_avatar(
     file: UploadFile = File(...),

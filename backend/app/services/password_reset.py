@@ -182,6 +182,15 @@ def _spend_open_tokens(db: Session, user_id: int, now: datetime) -> None:
     ).update({models.PasswordResetToken.used_at: now}, synchronize_session=False)
 
 
+def spend_open_links(db: Session, user: models.User) -> None:
+    """Make every reset link already sent for this account unusable (an
+    admin moved it to another address). A link went to the address the
+    account had THEN; left open, it could reset the account and mark the
+    new, never-proven address as verified (reset_password). Does not
+    commit."""
+    _spend_open_tokens(db, user.id, datetime.utcnow())
+
+
 def _usable(db: Session, token: str) -> models.PasswordResetToken:
     row = None
     if token and len(token) <= 128:
@@ -213,6 +222,13 @@ def reset_password(db: Session, token: str, new: str, confirm: str) -> models.Us
     # Spend this link and any other open one (sets used_at on this row too).
     _spend_open_tokens(db, user.id, now)
     set_password(db, user, new)
+    # The link went to the account's own address, so whoever opened it
+    # controls that address: Google/GitHub sign-in may now join this account
+    # by email (routers/auth._link_by_email). For an address someone else
+    # registered, this same reset is what took the account back -- their
+    # password and sessions just ended.
+    if user.email_verified_at is None:
+        user.email_verified_at = now
     db.commit()
     db.refresh(user)
     return user

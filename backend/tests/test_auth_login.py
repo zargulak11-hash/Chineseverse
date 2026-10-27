@@ -3,6 +3,8 @@
 Everything goes through the real POST /api/auth/login; only the throttle's
 clock is replaced so a 15-minute lock can be crossed without sleeping."""
 
+from datetime import datetime
+
 import pytest
 from starlette.requests import Request
 
@@ -256,6 +258,11 @@ def test_google_sign_in_is_not_blocked_by_a_password_lock(client, accounts, cloc
     assert login(client, "bob", accounts).status_code == 429
 
     monkeypatch.setattr(settings, "google_client_id", "test-client-id.apps.googleusercontent.com")
+    # Google joins bob's password account only once its address is proven
+    # (the emailed reset link; test_email_linking.py).
+    with SessionLocal() as db:
+        db.query(models.User).filter_by(username="bob").one().email_verified_at = datetime.utcnow()
+        db.commit()
     monkeypatch.setattr(
         auth_router.google_id_token,
         "verify_oauth2_token",

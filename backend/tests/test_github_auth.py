@@ -8,6 +8,7 @@ the real flow: /start's state cookie and redirect, the callback's state
 check, account resolution and ticket cookie, and the ticket-for-token swap.
 """
 
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -193,7 +194,11 @@ def test_existing_password_account_is_linked_and_keeps_its_onboarding(client, gi
     name = unique_name("gitlinked")
     existing = register_raw(client, name)["user"]
     with SessionLocal() as db:
-        db.get(models.User, existing["id"]).profile.onboarding_completed = True
+        row = db.get(models.User, existing["id"])
+        row.profile.onboarding_completed = True
+        # Its address proven (the emailed reset link does this; an
+        # unproven one is refused -- test_email_linking.py).
+        row.email_verified_at = datetime.utcnow()
         db.commit()
     github_as(ident(f"{name.upper()}@EXAMPLE.COM", gid="4001"))
     user = full_sign_in(client)["user"]

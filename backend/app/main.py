@@ -52,15 +52,30 @@ def _run_migrations() -> None:
     command.upgrade(cfg, "head")
 
 
-@asynccontextmanager
-async def lifespan(_app: FastAPI):
+def jwt_secret_problem() -> str | None:
+    """What is wrong with JWT_SECRET, if anything -- logged at startup.
+    Never fatal: a fresh local checkout runs with the placeholder, and
+    refusing to start over a short secret would sign everyone out."""
     if settings.jwt_secret == "change-me-in-production":
         # Anyone who knows this public placeholder can sign a token for any
-        # account. Not fatal (a fresh local checkout runs with it), but a
-        # server must set JWT_SECRET in backend/.env.
-        logging.getLogger("app").error(
-            "JWT_SECRET is the placeholder from config.py -- set a real secret in backend/.env"
+        # account. A server must set JWT_SECRET in backend/.env.
+        return "JWT_SECRET is the placeholder from config.py -- set a real secret in backend/.env"
+    if len(settings.jwt_secret.encode("utf-8")) < 32:
+        # HS256 with a key shorter than its 32-byte hash is easier to brute
+        # force offline from any one token (RFC 7518 3.2); PyJWT now warns
+        # on every decode.
+        return (
+            "JWT_SECRET is shorter than 32 bytes -- replace it with e.g. "
+            "python -c \"import secrets; print(secrets.token_hex(32))\" (this signs everyone out once)"
         )
+    return None
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    problem = jwt_secret_problem()
+    if problem:
+        logging.getLogger("app").error(problem)
     _run_migrations()
     logging.getLogger("app").info("Database migrations applied.")
     with SessionLocal() as db:

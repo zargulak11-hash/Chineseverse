@@ -8,9 +8,11 @@ import {
   getToken,
   githubStartUrl,
   login,
+  loginWithGoogle,
   onSessionExpired,
   saveToken,
   saveUser,
+  signOutOtherDevices,
 } from "./api.js";
 import i18n from "./i18n.js";
 import ru from "./locales/ru.json";
@@ -212,6 +214,41 @@ describe("change password", () => {
     const err = await changePassword({ current: "nope", next: "brand-new", confirm: "brand-new" }).catch((e) => e);
     expect(err.message).toBe(ru.apiErrors.currentPasswordWrong);
     expect(getToken()).toBe("still-valid");
+  });
+});
+
+describe("sign out of all other devices", () => {
+  it("posts with this session and swaps in the fresh token at once", async () => {
+    // Settings -> Other devices: every older token is refused from now on
+    // (backend deps.session_ended), so keeping the old one would sign this
+    // device out on its next request.
+    saveToken("this-device-old");
+    fetch.mockResolvedValue(respond(200, { access_token: "this-device-fresh", user: { id: 2, username: "b" } }));
+    expect(await signOutOtherDevices()).toEqual({ id: 2, username: "b" });
+    const { url, options } = lastCall();
+    expect(url).toBe("/api/me/sessions/revoke");
+    expect(options.method).toBe("POST");
+    expect(options.headers.Authorization).toBe("Bearer this-device-old");
+    expect(getToken()).toBe("this-device-fresh");
+    expect(getSavedUser()).toEqual({ id: 2, username: "b" });
+  });
+
+  it("a failure keeps this device signed in with its token", async () => {
+    saveToken("keep-me");
+    fetch.mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(signOutOtherDevices()).rejects.toThrow();
+    expect(getToken()).toBe("keep-me");
+  });
+});
+
+describe("Google sign-in refused for an unconfirmed email", () => {
+  it("shows the next step in the learner's language and stores nothing", async () => {
+    await i18n.changeLanguage("ru");
+    const detail =
+      'This email already has a ChineseVerse account. Sign in with its password, or use "Forgot password?" to confirm the address is yours, then try again.';
+    fetch.mockResolvedValue(respond(409, { detail }));
+    await expect(loginWithGoogle("google-credential")).rejects.toThrow(ru.apiErrors.emailUnconfirmed);
+    expect(getToken()).toBeNull();
   });
 });
 

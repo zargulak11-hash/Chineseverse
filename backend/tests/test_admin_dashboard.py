@@ -3,6 +3,7 @@ GET /api/admin/users (companion, auth method, activity, paging, search,
 database source) and DELETE /api/admin/users/{id} -- all admin-only, none
 exposing credentials or profile photos, and no demo-user seed path."""
 
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -111,6 +112,11 @@ def test_auth_method_google_id_and_last_activity(client, accounts, monkeypatch):
     monkeypatch.setattr(auth_router.google_id_token, "verify_oauth2_token", lambda *a, **k: {
         "email": "realalice@example.com", "email_verified": True, "sub": "google-sub-alice",
     })
+    # Google joins alice's password account only once its address is proven
+    # (the emailed reset link; test_email_linking.py).
+    with SessionLocal() as db:
+        db.get(models.User, accounts.alice_id).email_verified_at = datetime.utcnow()
+        db.commit()
     expect(client, "post", "/api/auth/google", 200, json={"credential": "fake-but-long-enough"})
 
     s = expect(client, "post", "/api/practice/sessions", 201,

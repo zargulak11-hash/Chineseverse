@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator, model_validator
 
 PROGRESS_STATUSES = ("not_started", "in_progress", "completed")
 MISTAKE_TYPES = ("word", "tone", "grammar", "character", "pinyin")
@@ -79,6 +79,16 @@ class UserPatch(BaseModel):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(default=None, min_length=6, max_length=128)
     animal_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def _no_null_for_required_columns(self):
+        # Optional here means "leave it out to keep it", not "may be null":
+        # users.username and users.email are NOT NULL, and an explicit null
+        # used to reach the database and fail there as a 500.
+        for name in ("username", "email"):
+            if name in self.model_fields_set and getattr(self, name) is None:
+                raise ValueError(f"{name} cannot be null")
+        return self
 
 
 class UserResponse(BaseModel):

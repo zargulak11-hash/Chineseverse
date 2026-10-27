@@ -10,9 +10,11 @@ import zh from "./locales/zh.json";
 
 const LOCALES = { en, ru, tg, zh };
 // The detail -> key table, read from the source so a new mapping is
-// checked without having to be listed here too.
+// checked without having to be listed here too. Keys may be single-quoted
+// when the sentence itself has double quotes (the unconfirmed-email one);
+// matching only "..." used to skip those silently.
 const source = fs.readFileSync(path.join(__dirname, "apiErrors.js"), "utf8");
-const exact = [...source.matchAll(/^\s*"([^"]+)":\s*"(\w+)",/gm)].map((m) => [m[1], m[2]]);
+const exact = [...source.matchAll(/^\s*(?:"([^"]+)"|'([^']+)'):\s*"(\w+)",/gm)].map((m) => [m[1] ?? m[2], m[3]]);
 
 beforeEach(async () => {
   await i18n.changeLanguage("en");
@@ -21,6 +23,13 @@ beforeEach(async () => {
 describe("server error messages", () => {
   it("every mapped message has a translation in all four languages", () => {
     expect(exact.length).toBeGreaterThan(30);
+    // The sign-in refusals a learner must be able to read (routers/auth.py,
+    // services/signup_throttle.py): checked by name so a reworded server
+    // sentence or an unparsed table entry fails here, not silently in English.
+    const keys = new Set(exact.map(([, key]) => key));
+    for (const key of ["emailUnconfirmed", "signupLimited", "googleOtherAccount", "loginLocked"]) {
+      expect(keys.has(key), `apiErrors.js maps a detail to ${key}`).toBe(true);
+    }
     for (const [, key] of exact) {
       for (const [code, locale] of Object.entries(LOCALES)) {
         expect(locale.apiErrors[key], `${code}: apiErrors.${key}`).toBeTruthy();

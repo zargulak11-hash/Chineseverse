@@ -235,6 +235,16 @@ export async function changePassword({ current, next, confirm }) {
   return data.user;
 }
 
+// Settings -> Sign out of all other devices. Every token issued before now
+// is refused from here on (the password stays the same); this device's
+// fresh token replaces the stored one at once.
+export async function signOutOtherDevices() {
+  const data = await request("POST", "/me/sessions/revoke");
+  saveToken(data.access_token);
+  saveUser(data.user);
+  return data.user;
+}
+
 // Settings -> Set a password with Google: a fresh Google sign-in proves the
 // account instead of a password the learner never had (an account created
 // with Google). Like changePassword, other sessions end and this one gets

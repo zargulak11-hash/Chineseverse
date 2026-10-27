@@ -18,6 +18,7 @@ const OAUTH_ERRORS = new Set([
   "github_unreachable",
   "github_not_configured",
   "github_other_account",
+  "github_email_unconfirmed",
   "deactivated",
 ]);
 

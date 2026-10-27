@@ -25,7 +25,9 @@ from google.auth import crypt
 from google.auth import exceptions as google_exceptions
 from google.auth import jwt as google_jwt
 
+from app import models
 from app.config import settings
+from app.database import SessionLocal
 from app.routers import auth as auth_router
 from helpers import bearer, expect, register_raw
 
@@ -120,23 +122,26 @@ def test_website_token_without_azp_is_accepted_too(client, google_key):
     assert sign_in(client, token(google_key, body), 200)["user"]["email"] == "web.user@example.com"
 
 
+# Each case builds its claims when the test RUNS: built at collection, the
+# "issued in the future" token stopped being in the future once the suite
+# had been running for over an hour, and the case failed.
 @pytest.mark.parametrize(
-    "case, body",
+    "case, make_body",
     [
-        ("expired", claims(iat=int(time.time()) - 7200, exp=int(time.time()) - 3600)),
-        ("issued in the future", claims(iat=int(time.time()) + 3600, exp=int(time.time()) + 7200)),
-        ("another app's audience", claims(aud="9999-other.apps.googleusercontent.com")),
+        ("expired", lambda: claims(iat=int(time.time()) - 7200, exp=int(time.time()) - 3600)),
+        ("issued in the future", lambda: claims(iat=int(time.time()) + 3600, exp=int(time.time()) + 7200)),
+        ("another app's audience", lambda: claims(aud="9999-other.apps.googleusercontent.com")),
         # The Android client id is the token's azp, never its audience:
         # accepting it as one would widen what this server trusts.
-        ("android client as audience", claims(aud=ANDROID_CLIENT_ID)),
-        ("not issued by Google", claims(iss="https://evil.example.com")),
-        ("unverified email", claims(email_verified=False)),
-        ("no email", claims(email=None)),
-        ("no account id", claims(sub=None)),
+        ("android client as audience", lambda: claims(aud=ANDROID_CLIENT_ID)),
+        ("not issued by Google", lambda: claims(iss="https://evil.example.com")),
+        ("unverified email", lambda: claims(email_verified=False)),
+        ("no email", lambda: claims(email=None)),
+        ("no account id", lambda: claims(sub=None)),
     ],
 )
-def test_rejected_tokens_are_a_401_with_a_stable_message(client, google_key, case, body):
-    r = sign_in(client, token(google_key, body), 401)
+def test_rejected_tokens_are_a_401_with_a_stable_message(client, google_key, case, make_body):
+    r = sign_in(client, token(google_key, make_body()), 401)
     assert r["detail"] in {
         "Google sign-in could not be verified",
         "Google account has no verified email",
@@ -167,6 +172,12 @@ def test_google_unreachable_is_a_503_not_a_401(client, google_key, monkeypatch):
 def test_existing_password_account_is_linked_by_verified_email(client, google_key):
     existing = register_raw(client, "token_linked", password="password1")["user"]
     body = claims(sub="google-sub-linked", email="Token_Linked@example.com")
+    # Only once the account's own address is proven (the emailed reset link;
+    # test_email_linking.py) -- a registration alone never proves it.
+    assert sign_in(client, token(google_key, body), 409)["detail"] == auth_router.UNCONFIRMED_EMAIL_DETAIL
+    with SessionLocal() as db:
+        db.get(models.User, existing["id"]).email_verified_at = datetime.datetime.utcnow()
+        db.commit()
     assert sign_in(client, token(google_key, body), 200)["user"]["id"] == existing["id"]
     # Another Google account with the same address can't take the row over.
     intruder = claims(sub="google-sub-intruder", email="token_linked@example.com")

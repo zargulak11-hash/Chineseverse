@@ -38,6 +38,11 @@ class User(Base):
     # session -- JWTs are otherwise valid until they expire. Null: never
     # changed, nothing refused.
     password_changed_at = Column(DateTime, nullable=True)
+    # When the learner chose "sign out of all other devices" (POST
+    # /api/me/sessions/revoke), in whole UTC seconds: tokens issued before
+    # it are refused just like after a password change, without having to
+    # change the password. Null: never used.
+    sessions_revoked_at = Column(DateTime, nullable=True)
     # Google's permanent account id (the ID token's `sub` claim). Set on the
     # first Google sign-in and used before email for every later one, so a
     # Google identity always resolves to the same row (see routers/auth.py).
@@ -46,6 +51,14 @@ class User(Base):
     # counterpart of google_sub: a GitHub login or email can change, the id
     # never does.
     github_id = Column(String(64), unique=True, nullable=True, index=True)
+    # When control of `email` was proven: the account came from (or is
+    # linked to) Google/GitHub, which verify it, or its owner completed an
+    # emailed reset link. A password registration alone never sets it, so
+    # Google/GitHub sign-in may only join an account by email when this is
+    # set (routers/auth.py _sign_in_external) -- otherwise anyone could
+    # register a victim's address and be waiting inside the victim's first
+    # Google sign-in. Cleared when an admin changes the address.
+    email_verified_at = Column(DateTime, nullable=True)
     animal_id = Column(Integer, ForeignKey("animals.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     # Grants access to /api/admin/*. Never set from a request payload — the

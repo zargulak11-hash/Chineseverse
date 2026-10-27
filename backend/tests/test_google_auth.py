@@ -9,13 +9,25 @@ token" case is NOT mocked: it calls the real verifier with a garbage
 string, so that failure path is genuinely exercised end to end.
 """
 
+from datetime import datetime
+
 import pytest
 
+from app import models
 from app.config import settings
+from app.database import SessionLocal
 from app.routers import auth as auth_router
 from helpers import bearer, expect, register_raw
 
 CREDENTIAL = {"credential": "fake-but-long-enough"}
+
+
+def confirm_email(user_id):
+    """What the emailed reset link does to a password account's address
+    (exercised end to end in test_email_linking.py)."""
+    with SessionLocal() as db:
+        db.get(models.User, user_id).email_verified_at = datetime.utcnow()
+        db.commit()
 
 
 @pytest.fixture(autouse=True)
@@ -73,11 +85,14 @@ def test_unverified_email_or_missing_identity_is_rejected(client, google_as, cla
     sign_in(client, 401)
 
 
-def test_existing_password_account_is_linked_not_duplicated(client, google_as):
+def test_existing_password_account_is_linked_once_its_email_is_confirmed(client, google_as):
     existing = register_raw(client, "priorpassworduser", password="password1")["user"]
     # Same address, different letter case: still the same person.
     google_as({"email": "PriorPasswordUser@Example.com", "email_verified": True,
                "name": "Shared Account", "sub": "sub-shared"})
+    # The registration never proved the address, so not yet.
+    assert sign_in(client, 409)["detail"] == auth_router.UNCONFIRMED_EMAIL_DETAIL
+    confirm_email(existing["id"])
     linked = sign_in(client)["user"]
     assert linked["id"] == existing["id"] and linked["username"] == "priorpassworduser"
     assert linked["is_admin"] is False
@@ -100,6 +115,12 @@ def test_admin_only_via_google_verified_allowlisted_email(client, google_as, mon
     assert reg_owner.status_code == 201 and reg_owner.json()["user"]["is_admin"] is False
 
     google_as({"email": "owner@example.com", "email_verified": True, "sub": "sub-owner"})
+    # Nor does Google join it -- and so grant admin -- before the account's
+    # own address is proven.
+    sign_in(client, 409)
+    me = expect(client, "get", "/api/me", 200, headers=bearer(reg_owner.json()["access_token"]))
+    assert me["user"]["is_admin"] is False
+    confirm_email(reg_owner.json()["user"]["id"])
     r = sign_in(client)
     assert r["user"]["id"] == reg_owner.json()["user"]["id"] and r["user"]["is_admin"] is True, r
     me = expect(client, "get", "/api/me", 200, headers=bearer(r["access_token"]))
