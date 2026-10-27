@@ -47,7 +47,11 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   const [miss, setMiss] = useState(null);
   // A writing surface as large as the screen allows (strokes are matched in
   // character space, so the drawing size changes nothing in the checking).
-  const [size] = useState(() => Math.min(340, Math.max(220, (typeof window !== "undefined" ? window.innerWidth : 400) - 96)));
+  const [size] = useState(() => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 400;
+    const h = typeof window !== "undefined" ? window.innerHeight : 800;
+    return Math.max(180, Math.min(340, w - 96, h - 400));
+  });
   const [done, setDone] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -160,7 +164,7 @@ export default function HanziTrace({ hanzi, onClose, onSaved, mode = "trace" }) 
   // uses a transform, a fixed overlay inside it would be positioned (and
   // clipped) relative to that panel instead of the screen.
   return createPortal(
-    <div className={`modal modal-backdrop${memory ? " trace-memory-backdrop" : ""}`} {...backdrop}>
+    <div className={`modal modal-backdrop hz-write-backdrop${memory ? " trace-memory-backdrop" : ""}`} {...backdrop}>
       <div className="card hz-write" onClick={(e) => e.stopPropagation()}>
         {/* watch -> write -> save, lit by where the attempt really is. From
             memory there is nothing to watch. */}
