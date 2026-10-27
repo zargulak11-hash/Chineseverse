@@ -8,7 +8,10 @@ import { describe, expect, it } from "vitest";
 // There is no nginx here to run `nginx -t`; this checks the shape instead,
 // and that the report-only CSP really allows what the pages load -- so the
 // reports it produces are real ones, and enforcing it later is safe.
-const read = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
+// LF line endings, as git stores the files and every Linux build (CI, the
+// server's image) serves them: a Windows checkout's CRLF copy of index.html
+// hashes differently, and that hash once made it into the CSP by mistake.
+const read = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const nginx = read("../nginx.conf");
 const snippet = read("../security-headers.conf");
 const dockerfile = read("../Dockerfile");
