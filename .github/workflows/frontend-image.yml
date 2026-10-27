@@ -1,0 +1,37 @@
+name: Frontend image and headers
+
+# Builds the real frontend image (frontend/Dockerfile: the production build
+# served by nginx 1.30 with security-headers.conf), runs nginx -t inside it
+# and checks the headers it actually serves -- nothing else in CI builds the
+# image, so a broken Dockerfile or nginx.conf used to surface only on the
+# server during a deploy. Needs no secrets and never deploys: deploy.yml is
+# the only workflow that reaches the server.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  image-headers:
+    name: Build frontend image, nginx -t, served headers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the frontend image
+        run: docker build -t chineseverse-frontend-check frontend
+      # "backend" resolves to an address nothing listens on: the pages and
+      # assets are what is checked, /api answers 502.
+      - name: Start it
+        run: docker run -d --name chineseverse-frontend --add-host backend:127.0.0.1 -p 127.0.0.1:8080:80 chineseverse-frontend-check
+      - name: nginx -t inside the image
+        run: docker exec chineseverse-frontend nginx -t
+      - name: Check the served headers
+        run: python3 frontend/scripts/check_served_headers.py http://127.0.0.1:8080
+      - name: Container log
+        if: failure()
+        run: docker logs chineseverse-frontend || true
