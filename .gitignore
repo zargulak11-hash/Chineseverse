@@ -28,6 +28,21 @@ htmlcov/
 
 backend/static/uploads/
 
+# Backups and key material never belong in git -- the repository is public.
+# A pg_dump holds every learner's email and password hash; a git bundle can
+# hold anything ever committed, including files later removed. Keep them
+# outside the project folder. (Migrations are Alembic Python files, so no
+# source here is .sql; add one with `git add -f` if that ever changes.)
+*.dump
+*.bundle
+*.backup
+*.sql
+*.sql.gz
+*.jks
+*.keystore
+*.p12
+*.pem
+
 # Raw HSK 3.0 curriculum source dumps (elkmovie/hsk30, drkameleon, makemeahanzi,
 # krmanik grammar) + derived *_import_ready.json staging files -- provenance
 # only, not needed at runtime. ~58MB, deliberately untracked.
