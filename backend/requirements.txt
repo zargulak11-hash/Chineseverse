@@ -12,9 +12,14 @@ uvicorn[standard]==0.53.0
 python-dotenv==1.2.3
 email-validator==2.3.0
 httpx==0.28.1
-PyJWT==2.10.1
+# 2.10.1 had 16 advisories (OSV, 2026-10); none reach this app's use (one
+# static HS256 secret, explicit algorithms=[...], no PyJWK/JWKS), but this
+# library guards every session. Minor-version upgrade, full suite passes.
+PyJWT==2.15.1
 google-auth==2.58.0
 requests==2.34.2
 alembic==1.20.0
-python-multipart
+# Was unpinned, so each image build took whatever was newest. 0.0.32 is the
+# version the suite runs on, with no known advisories (OSV, 2026-10).
+python-multipart==0.0.32
 tzdata==2026.4
