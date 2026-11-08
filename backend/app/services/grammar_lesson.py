@@ -78,6 +78,12 @@ def authored() -> dict[str, dict]:
             with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             out[data["topic"]] = data
+            # The same point can be two topics: a core one ("会/能 — ability")
+            # and the HSK syllabus entry for exactly those words ("能愿动词：
+            # 会、能"), which otherwise had only an AI lesson. "also" names
+            # such equivalents; only exact equivalents belong there.
+            for alias in data.get("also") or []:
+                out[alias] = data
         _AUTHORED = out
     return _AUTHORED
 

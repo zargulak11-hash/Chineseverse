@@ -177,6 +177,22 @@ def test_authored_topics_never_call_a_model(client, learner, model):
     assert r["lesson_source"] == "authored" and not seen
 
 
+def test_an_equivalent_syllabus_point_serves_the_same_authored_lesson(client, learner, model):
+    """会/能 is both a core topic and the syllabus entry 能愿动词：会、能;
+    the syllabus one used to wait for an AI lesson."""
+    _, h = learner
+    seen = model(lambda messages: (_ for _ in ()).throw(AssertionError("must not call a model")))
+    core = expect(client, "get", f"/api/grammar/{topic_id('会/能 — ability, possibility')}", 200,
+                  headers={**h, "X-Locale": "tg"})
+    syllabus = expect(client, "get", f"/api/grammar/{topic_id('能愿动词：会、能')}", 200,
+                      headers={**h, "X-Locale": "tg"})
+    for page in (core, syllabus):
+        assert page["lesson_source"] == "authored" and page["can_generate"] is False
+        assert page["lesson"]["examples"][0]["zh"] == "我会说汉语。"
+        assert page["lesson"]["examples"][0]["tr"] == "Ман бо забони чинӣ гап зада метавонам."
+    assert not seen
+
+
 def test_without_a_model_a_missing_lesson_is_an_honest_503(client, learner):
     _, h = learner
     other = topic_id(BORROWED)
