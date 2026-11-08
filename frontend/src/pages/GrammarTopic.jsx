@@ -172,13 +172,10 @@ export default function GrammarTopic() {
   const asked = useRef("");
   const data = generated?.key === key ? generated.page : fetched?.id === Number(topicId) ? fetched : null;
 
-  // No authored or cached lesson yet: ask for the AI one once per topic and
-  // language. The curriculum part of the page is already on screen.
-  useEffect(() => {
-    // No cleanup flag: StrictMode's second effect run would drop the only
-    // request. A stale answer is harmless -- `data` only shows a generated
-    // page whose key matches the current topic and language.
-    if (!data?.can_generate || asked.current === key) return;
+  // No cleanup flag: StrictMode's second effect run would drop the only
+  // request. A stale answer is harmless -- `data` only shows a generated
+  // page whose key matches the current topic and language.
+  function generate() {
     asked.current = key;
     setGenerating(true);
     setGenError("");
@@ -186,6 +183,15 @@ export default function GrammarTopic() {
       .then((page) => setGenerated({ key, page }))
       .catch((e) => setGenError(e.message))
       .finally(() => setGenerating(false));
+  }
+
+  // No authored or cached lesson yet: ask for the AI one once per topic and
+  // language. The curriculum part of the page is already on screen. When the
+  // AI is busy the learner can ask again from the message (it used to take a
+  // page reload).
+  useEffect(() => {
+    if (!data?.can_generate || asked.current === key) return;
+    generate();
   }, [data?.can_generate, key, topicId]);
 
   if (error) return <Layout><Empty>{error}</Empty></Layout>;
@@ -238,6 +244,11 @@ export default function GrammarTopic() {
           {!lesson && !generating && (
             <div className="card gt-section">
               <p className="sub">{genError || t("grammarPage.noLesson")}</p>
+              {genError && data.can_generate && (
+                <button type="button" className="btn small" style={{ marginTop: 12 }} onClick={generate} disabled={generating}>
+                  {t("grammarPage.retry")}
+                </button>
+              )}
             </div>
           )}
 

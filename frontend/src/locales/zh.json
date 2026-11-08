@@ -3327,6 +3327,7 @@
     "openGrammar": "打开语法页面：{{title}}"
   },
   "grammarPage": {
+    "retry": "再试一次",
     "back": "全部语法",
     "mastery": "掌握度",
     "practiced": "练习次数",

@@ -3411,6 +3411,7 @@
     "openGrammar": "Open the grammar page: {{title}}"
   },
   "grammarPage": {
+    "retry": "Try again",
     "back": "All grammar",
     "mastery": "Mastery",
     "practiced": "Times practised",
