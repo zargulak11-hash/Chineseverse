@@ -164,10 +164,18 @@ def test_a_wrong_tone_in_the_tones_round_names_both_tones(client):
         k = keys[q["index"]]
         if q["type"] != "char_to_pinyin":
             continue
-        wrong = next(o for o in q["options"] if o["id"] != k["item_id"])
+        # Pick a distractor of the same syllable when there is one. Options
+        # are padded with other syllables when a syllable has too few tones,
+        # and taking just the first wrong one made this test fail whenever
+        # the shuffle put a padded one first.
+        right = next(o for o in q["options"] if o["id"] == k["item_id"])["label"]
+        wrongs = [o for o in q["options"] if o["id"] != k["item_id"]]
+        same = [o for o in wrongs if " " not in o["label"] + right and pc.split(o["label"]) == pc.split(right)]
+        wrong = (same or wrongs)[0]
         r = expect(client, "post", f"/api/practice/sessions/{s['id']}/answer", 200, headers=h,
                    json={"index": q["index"], "choice_id": wrong["id"], "response_ms": 2000})
         c = r["check"]
+        assert ("picked_tone" in c) == bool(same), (wrong, right, c)
         if "picked_tone" in c:
             seen += 1
             assert c["picked_tone"] == pc.tone_of(c["picked"]) and c["answer_tone"] == pc.tone_of(c["answer"])

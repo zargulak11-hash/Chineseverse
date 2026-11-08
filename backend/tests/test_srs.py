@@ -123,7 +123,18 @@ def test_same_day_reviews_do_not_inflate_stability():
     assert gap_days(rec) >= 1
 
 
-def test_the_snakes_memory_bonus_is_flat_and_never_compounds():
+def test_the_snakes_memory_bonus_is_flat_and_never_compounds(monkeypatch):
+    # One fixed "now" (age() stands in for time passing): the two records
+    # are compared to 1e-9, and on a busy machine the microseconds between
+    # their two updates were enough to fail that.
+    fixed = datetime.utcnow()
+
+    class FrozenDatetime(datetime):
+        @classmethod
+        def utcnow(cls):
+            return fixed
+
+    monkeypatch.setattr(srs, "datetime", FrozenDatetime)
     plain, snake = record(), record()
     for _ in range(4):
         apply_srs(plain, True, PLAIN)
