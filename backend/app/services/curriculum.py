@@ -10,7 +10,7 @@ reach the same curriculum as the one it was exported from.
 Insert-only by design: existing content rows and translations are never
 overwritten or deleted (an admin may have edited them), and user progress
 tables are never touched. The one exception is filling a vocabulary
-example that is still empty.
+example that is still empty (sentence, pinyin and translation together).
 """
 
 from __future__ import annotations
@@ -88,10 +88,12 @@ def import_curriculum(db: Session, path: str = SNAPSHOT_PATH) -> dict[str, int]:
                 hsk_level_id=level_id, simplified=v["simplified"], traditional=v["traditional"],
                 pinyin=v["pinyin"], meanings=v["meanings"], word_type=v["word_type"],
                 example=v["example"], example_pinyin=v["example_pinyin"],
+                example_translation=v.get("example_translation"),
             ))
             counts["vocab"] += 1
         elif not existing.example and v["example"]:
             existing.example, existing.example_pinyin = v["example"], v["example_pinyin"]
+            existing.example_translation = v.get("example_translation")
             counts["examples"] += 1
 
     topics = {(g.hsk_level_id, g.title) for g in db.query(models.GrammarTopic.hsk_level_id, models.GrammarTopic.title)}

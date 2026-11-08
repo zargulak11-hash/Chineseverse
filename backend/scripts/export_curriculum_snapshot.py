@@ -39,6 +39,7 @@ def main() -> None:
             "level": level_of[w.hsk_level_id], "simplified": w.simplified,
             "traditional": w.traditional, "pinyin": w.pinyin, "meanings": w.meanings,
             "word_type": w.word_type, "example": w.example, "example_pinyin": w.example_pinyin,
+            "example_translation": w.example_translation,
         }
         for w in db.query(models.VocabularyWord).order_by(models.VocabularyWord.id)
     ]

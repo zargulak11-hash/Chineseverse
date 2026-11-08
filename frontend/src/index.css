@@ -1394,6 +1394,7 @@ select.input.lang-select {
 .dict-example { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--surface-2); border-left: 3px solid var(--accent-border); }
 .dict-ex-zh { margin: 0; font-size: var(--text-md); font-weight: 700; overflow-wrap: anywhere; }
 .dict-ex-py { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--text-dim); }
+.dict-ex-tr { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--text); overflow-wrap: anywhere; }
 .icon-btn.dict-ex-say { flex: 0 0 auto; border-radius: 50%; color: var(--accent); border-color: var(--border-strong); }
 .icon-btn.dict-ex-say.is-playing { background: var(--accent-dim); border-color: var(--accent); }
 .dict-chars { display: flex; flex-wrap: wrap; gap: var(--space-2); }

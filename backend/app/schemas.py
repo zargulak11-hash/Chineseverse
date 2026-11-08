@@ -430,6 +430,8 @@ class WordResponse(BaseModel):
     word_type: str
     example: Optional[str]
     example_pinyin: Optional[str]
+    # In the learner's language (English, Russian, Tajik); none for Chinese.
+    example_translation: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

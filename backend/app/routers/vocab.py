@@ -36,8 +36,10 @@ def list_words(
             query = query.filter(models.VocabularyWord.id.in_(id_subset or [0]))
     words = query.order_by(models.VocabularyWord.id).all()
 
-    # Only `meanings` is localized -- simplified/traditional/pinyin/example
-    # are the actual Chinese being taught and stay Chinese in every locale.
+    # Only `meanings` and the example's translation are localized --
+    # simplified/traditional/pinyin/example are the actual Chinese being
+    # taught and stay Chinese in every locale. A Chinese UI gets no
+    # translation of a Chinese sentence.
     translations = load_translations(db, "vocab_word", [str(w.id) for w in words], locale)
     user_map = {w.word_id: w for w in user.user_vocabulary}
     now = datetime.utcnow()
@@ -45,6 +47,9 @@ def list_words(
     for word in words:
         item = schemas.WordWithStatus.model_validate(word)
         item.meanings = tr(translations, word.id, "meanings", item.meanings)
+        item.example_translation = (
+            None if locale == "zh" else tr(translations, word.id, "example_translation", item.example_translation)
+        )
         rec = user_map.get(word.id)
         item.status = rec.status if rec else "new"
         item.mastery = rec.mastery if rec else 0.0

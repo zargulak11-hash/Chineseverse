@@ -69,6 +69,8 @@ class VocabularyWord(Base):
     word_type = Column(String(30), default="word")
     example = Column(Text, nullable=True)
     example_pinyin = Column(String(200), nullable=True)
+    # The example in English; ru/tg are content translations of this field.
+    example_translation = Column(Text, nullable=True)
 
     level = relationship("HSKLevel", back_populates="vocabulary")
     user_records = relationship("UserVocabulary", back_populates="word")

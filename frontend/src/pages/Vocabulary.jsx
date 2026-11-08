@@ -222,6 +222,7 @@ export default function Vocabulary() {
                       <div>
                         <p className="dict-ex-zh" lang="zh-CN">{sel.example}</p>
                         {sel.example_pinyin && <p className="dict-ex-py">{sel.example_pinyin}</p>}
+                        {sel.example_translation && <p className="dict-ex-tr">{sel.example_translation}</p>}
                       </div>
                       <button type="button" className={`icon-btn dict-ex-say${playing === `ex${sel.id}` ? " is-playing" : ""}`}
                               onClick={() => hear(sel.example, `ex${sel.id}`)} aria-label={t("pages.mistakes.listen")}>
