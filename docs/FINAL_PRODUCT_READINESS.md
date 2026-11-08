@@ -31,7 +31,9 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
    First confirm that fingerprint in the Hetzner console
    (`ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`). Needs your GitHub
    and Hetzner accounts.
-2. **Back up production before deploying** — this batch has a migration:
+2. **Back up production before deploying** — this batch has two migrations
+   (`b5e1d7a3c962` word fix, `c8a2f4e6b913` example translations; both
+   additive or guarded):
    on the server, `bash ops/backup_db.sh` (needs SSH to the server).
 3. **Merge and deploy** — a PR to `main`; you asked that this not be done
    without your permission.
@@ -43,11 +45,13 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 
 ## Known limitations (not defects)
 
-- Most grammar points (572 of 602) get their explanation from the AI on first
-  visit, cached afterwards; when Gemini is down the learner sees the
-  syllabus examples and can retry. Pre-generating and reviewing them is
-  content work.
-- Most words (10,904 of 11,334) have no example sentence of their own.
+- 12 of 602 grammar points have a hand-written lesson (会/能 and 几/多少
+  added in phase 3); the rest get an AI lesson on first visit, cached for
+  everyone afterwards; when Gemini is down the learner sees the syllabus
+  examples and can retry. Writing and reviewing more lessons is content work.
+- 925 of 11,334 words have an example sentence (495 of them translated,
+  added in phase 3 from the stories and case files). The remaining words
+  need new sentences written or reviewed by a person.
 - The Content-Security-Policy is report-only until checked on the live site.
 - React Router 6 has two moderate advisories that don't apply to this app;
   the fix needs a v7 migration.
@@ -67,6 +71,12 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 | Deployment | 82 |
 
 ## Test results
+
+End of phase 3: backend **1138 passed, 1 failed** on the full run; the one
+failure was a test that indexed a word's translations without their field
+(a word now also has an example translation) — fixed to compare meanings
+only, its module then 13 passed. Vitest 116 passed, build and i18n pass,
+PostgreSQL migrations to head with 0 drift.
 
 End of phase 2, on the committed branch:
 

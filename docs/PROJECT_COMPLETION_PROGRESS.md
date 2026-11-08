@@ -71,6 +71,20 @@ Files changed: `backend/app/config.py`, `backend/app/security.py`,
 `backend/tests/test_pinyin_course.py`, `backend/tests/test_srs.py`,
 `frontend/src/mistakes.js`, `frontend/src/mistakes.test.js` (new), this file.
 
+## Phase 3 (2026-11-08): learning content
+
+| Item | Result | Commit |
+|---|---|---|
+| Word example sentences | 430 of 11,334 words had one, none translated. `scripts/seed_vocab_story_examples.py` takes real sentences from the 119 stories and 10 detective cases (written for learners, with en/ru/tg translations): source and every other word at or below the word's level, whole-word match (forward and backward split agree), no polyphonic word or character anywhere (so the curriculum pinyin cannot be wrong), pinyin written word by word with apostrophes (bǎo'ān). **495 words gained a translated example** (189 HSK 1, 118 HSK 2, 68 HSK 3, 49 HSK 4, 28 HSK 5, 13 HSK 6, 30 HSK 7–9). New column `example_translation` (migration `c8a2f4e6b913`), ru/tg as content translations, served by `/api/vocab`, shown on the Vocabulary page. Snapshot diff: exactly 495 examples + 990 translations | `6ad753d` |
+| Grammar: 会/能 | hand-written lesson (4 languages, HSK 1–2 words); `"also"` lets it serve the identical syllabus entry 能愿动词：会、能, which had only an AI lesson | `c3b41c0` |
+| Grammar: 几/多少 | hand-written lesson (4 languages) | `bd0b0c2` |
+| Checks | `test_vocab_story_examples.py` (word present, one pinyin syllable per character, ru/tg present, real source sentence, HSK 1 examples use HSK 1 words, API per language); authored lessons pass `test_authored_content`; browser: Vocabulary and the two lessons in ru/tg/zh on a phone, no AI calls, no overflow; both migrations on PostgreSQL 18, 0 drift | — |
+
+Still missing (content work, not code): examples for ~10,400 words — the
+existing corpus is used up (1,201 plain story sentences; more need new
+human-written or human-reviewed sentences); hand-written lessons for the
+other ~570 syllabus grammar points (12 of 602 now authored).
+
 Phase 2 files: `backend/app/models/users.py`, `backend/app/models/localization.py`,
 `backend/tests/test_schema_drift.py` (new), `.github/workflows/deploy.yml`,
 `ops/backup_db.sh` (new), `docs/DATABASE_BACKUP.md` (new),
