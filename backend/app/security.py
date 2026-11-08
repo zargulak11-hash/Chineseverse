@@ -8,15 +8,29 @@ import jwt
 
 from app.config import settings
 
-PBKDF2_ITERATIONS = 100_000
-
-
 def hash_password(password: str) -> str:
+    # Read per call, not at import: the test suite lowers it after import.
+    iterations = settings.password_hash_iterations
     salt = os.urandom(16).hex()
     digest = hashlib.pbkdf2_hmac(
-        "sha256", password.encode("utf-8"), bytes.fromhex(salt), PBKDF2_ITERATIONS
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt), iterations
     ).hex()
-    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt}${digest}"
+    return f"pbkdf2_sha256${iterations}${salt}${digest}"
+
+
+def _stored_iterations(stored: str) -> int | None:
+    try:
+        return int(stored.split("$")[1])
+    except (IndexError, ValueError, AttributeError):
+        return None
+
+
+def needs_rehash(stored: str) -> bool:
+    """True for a hash made with fewer rounds than new hashes get (one from
+    before the count was raised). Login re-hashes it with the password it
+    has just verified -- the only moment the plain password is known."""
+    iterations = _stored_iterations(stored)
+    return iterations is not None and iterations < settings.password_hash_iterations
 
 
 def verify_password(password: str, stored: str) -> bool:
@@ -34,14 +48,18 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
-# Verified against when a login names no existing account, so an unknown
-# username costs the same PBKDF2 work as a wrong password -- otherwise the
-# response time alone says which usernames exist.
-_DUMMY_HASH = hash_password(os.urandom(16).hex())
-
-
-def burn_password_check(password: str) -> None:
-    verify_password(password, _DUMMY_HASH)
+def burn_password_check(password: str, already_spent: str | None = None) -> None:
+    """PBKDF2 work at the current cost, so an unknown username costs the
+    same as a wrong password -- otherwise the response time alone says which
+    usernames exist. `already_spent` is the stored hash a wrong password was
+    just checked against: an older, cheaper hash is topped up to the
+    current cost, or a not-yet-upgraded account would answer faster than a
+    missing one. The result is never used."""
+    target = settings.password_hash_iterations
+    spent = _stored_iterations(already_spent) if already_spent is not None else 0
+    remaining = target - (spent or 0)
+    if remaining > 0:
+        hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), os.urandom(16), remaining)
 
 
 def create_access_token(user_id: int) -> str:

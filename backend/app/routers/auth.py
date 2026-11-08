@@ -23,6 +23,7 @@ from app.security import (
     create_sign_in_ticket,
     decode_sign_in_ticket,
     hash_password,
+    needs_rehash,
     verify_password,
 )
 from app.services import github_oauth, login_throttle, password_reset, signup_throttle
@@ -272,11 +273,19 @@ def login(
     user = _find_by_username(db, payload.username)
     if user is None:
         burn_password_check(payload.password)
-    if user is None or not verify_password(payload.password, user.password_hash):
+    elif not verify_password(payload.password, user.password_hash):
+        burn_password_check(payload.password, already_spent=user.password_hash)
+        user = None
+    if user is None:
         login_throttle.record_failure(payload.username, ip)
         raise HTTPException(status_code=401, detail="Invalid username or password")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="This account has been deactivated")
+    if needs_rehash(user.password_hash):
+        # Same password, stronger hash. Not a password change: the
+        # password_changed_at stamp (which ends every other session) stays.
+        user.password_hash = hash_password(payload.password)
+        db.commit()
     login_throttle.record_success(payload.username, ip)
     token = create_access_token(user.id)
     return schemas.TokenResponse(access_token=token, user=user)

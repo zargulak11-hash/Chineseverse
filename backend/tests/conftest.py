@@ -37,7 +37,12 @@ def sqlite_url(path: Path) -> str:
 os.environ.update(
     {
         "DATABASE_URL": sqlite_url(TEMPLATE_DB),
-        "JWT_SECRET": "test-only-jwt-secret",
+        # 32+ bytes: HS256 with a shorter key makes PyJWT warn on every
+        # decode, a thousand warnings burying any real one.
+        "JWT_SECRET": "test-only-jwt-secret-padded-to-32-bytes",
+        # Production cost is 600,000 rounds; thousands of test sign-ups
+        # don't need it. test_password_hashing.py checks the upgrade path.
+        "PASSWORD_HASH_ITERATIONS": "1000",
         "AI_PROVIDER": "offline",
         "GEMINI_API_KEY": "",
         "SMTP_HOST": "",

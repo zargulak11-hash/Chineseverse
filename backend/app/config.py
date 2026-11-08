@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
+    # PBKDF2-HMAC-SHA256 rounds for new password hashes; OWASP's Password
+    # Storage Cheat Sheet asks for at least 600,000 (it was 100,000 here,
+    # a sixth of the cost to every offline guess at a leaked hash). Hashes
+    # carry their own count, so older ones still verify and are upgraded at
+    # the next successful sign-in (security.needs_rehash). Only the test
+    # suite lowers it; a server never should.
+    password_hash_iterations: int = 600_000
     # How many reverse proxies stand between the learner and this API, each
     # appending to X-Forwarded-For (deps.get_client_ip reads the address
     # that many hops from the right, so a client-written header can't pick
