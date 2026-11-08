@@ -213,12 +213,17 @@ class ActivityEvent(Base):
 
     __tablename__ = "activity_events"
 
-    id = Column(Integer, primary_key=True, index=True)
+    # No index=True on id (nor on follows.id / content_translations.id): the
+    # primary key is already indexed and the migrations never made a second
+    # ix_*_id, so declaring one only made models and schema disagree.
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     section = Column(String(30), nullable=False)
     action_type = Column(String(40), nullable=False)
     minutes = Column(Float, nullable=False, default=0.0)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    # NOT NULL in every database already (its migration says so); the model
+    # now says it too.
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
 
 
 class Follow(Base):
@@ -227,7 +232,7 @@ class Follow(Base):
         UniqueConstraint("follower_id", "following_id", name="uq_follow_pair"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     follower_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     following_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)

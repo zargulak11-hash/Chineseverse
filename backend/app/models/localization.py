@@ -28,7 +28,7 @@ class ContentTranslation(Base):
         UniqueConstraint("content_type", "content_key", "field", "locale", name="uq_content_translation"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)  # the PK's own index; see ActivityEvent.id
     content_type = Column(String(40), nullable=False, index=True)  # "lesson", "vocab_word", "quest_template", ...
     content_key = Column(String(40), nullable=False, index=True)   # str(row.id) or a stable code
     field = Column(String(40), nullable=False)                     # "title", "description", "meanings", ...
