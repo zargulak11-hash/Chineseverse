@@ -294,8 +294,10 @@ def test_cross_reference_glosses_are_never_practiced(client):
 def test_reused_translations_match_reading_and_sense(client):
     # reused translations
     with SessionLocal() as db:
+        # Meanings only: a word also has an example_translation row now.
         tr_ = {(t.content_type, t.content_key, t.locale): t.text for t in db.query(models.ContentTranslation).filter(
-            models.ContentTranslation.content_type.in_(("vocab_word", "hanzi")))}
+            models.ContentTranslation.content_type.in_(("vocab_word", "hanzi")),
+            models.ContentTranslation.field.in_(("meanings", "meaning")))}
         assert tr_[("vocab_word", str(word(db, 1, "半").id), "ru")] == "половина"
         gou = db.query(models.Hanzi).filter_by(character="狗").first()
         assert tr_[("hanzi", str(gou.id), "ru")] == "собака"
