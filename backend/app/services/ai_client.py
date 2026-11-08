@@ -317,6 +317,26 @@ _RETRY_DELAY_S = 1.5
 # a restart simply tries every model again.
 _MODEL_COOLDOWN_S = {404: 6 * 3600, 429: 15 * 60}
 _cooling_until: dict[str, float] = {}
+# A model that timed out is skipped for a while too. Without this, while
+# GEMINI_MODEL hung (seen 2026-11-08: gemini-3.8-flash timed out on every
+# roleplay turn), each request waited the full timeout before the fallback
+# model answered in ~7 s -- ~53 s per message, every message. Shorter than
+# the quota cooldown: slowness tends to pass.
+_TIMEOUT_COOLDOWN_S = 10 * 60
+# The whole fallback chain of one non-streaming call must end inside
+# nginx's default 60 s proxy_read_timeout on /api/ (frontend/nginx.conf), or
+# the learner gets a 504 for an answer the backend is still fetching. Each
+# model gets what is left of this, up to its own timeout; too little left
+# and the call gives up, so the caller's offline fallback answers instead.
+# httpx applies a timeout to each phase (connect, then each wait for bytes),
+# not to the whole request -- a fallback given 9.5 s took 17 s in a live
+# test -- so connecting gets its own short cap and the budget leaves room
+# for it: at most about _CHAT_DEADLINE_S + _CONNECT_TIMEOUT_S in all.
+_CHAT_DEADLINE_S = 50
+# ~3x a normal gemini-3.x reply (7-14 s), leaving a fallback 10 s.
+_CHAT_ATTEMPT_TIMEOUT_S = 40
+_CONNECT_TIMEOUT_S = 5
+_MIN_ATTEMPT_S = 5
 
 
 def _parts(m: dict) -> list[dict]:
@@ -390,10 +410,15 @@ def _gemini_chat(
     # If every model is cooling down, try them all anyway rather than
     # giving up without asking.
     queue = [m for m in models if _cooling_until.get(m, 0) <= now] or models
+    deadline = now + _CHAT_DEADLINE_S
     retried = False
     last_exc: Exception | None = None
     while queue:
         model = queue[0]
+        left = deadline - time.monotonic()
+        if left < _MIN_ATTEMPT_S:
+            logger.warning("Gemini: no time left for %s; answering offline", model)
+            raise last_exc or httpx.TimeoutException("Gemini call deadline reached")
         try:
             resp = httpx.post(
                 f"{base}/models/{model}:generateContent",
@@ -403,7 +428,7 @@ def _gemini_chat(
                 json=payload,
                 # gemini-3.x replies took 7-14s in testing; 30s was too tight
                 # once thinking is included.
-                timeout=45,
+                timeout=httpx.Timeout(min(_CHAT_ATTEMPT_TIMEOUT_S, left), connect=_CONNECT_TIMEOUT_S),
             )
             resp.raise_for_status()
             _cooling_until.pop(model, None)
@@ -425,6 +450,7 @@ def _gemini_chat(
         except httpx.TimeoutException as exc:
             last_exc = exc
             logger.warning("Gemini %s timed out", model)
+            _cooling_until[model] = time.monotonic() + _TIMEOUT_COOLDOWN_S
             queue.pop(0)
         except httpx.HTTPError as exc:
             logger.warning("Gemini unreachable: %s", type(exc).__name__)
@@ -495,6 +521,8 @@ def _gemini_stream(messages: List[dict], max_tokens: int = 1500, temperature: fl
             logger.warning("Gemini %s stream failed: %s", model, type(exc).__name__)
             if started:
                 raise
+            if isinstance(exc, httpx.TimeoutException):
+                _cooling_until[model] = time.monotonic() + _TIMEOUT_COOLDOWN_S
         except httpx.HTTPError as exc:
             logger.warning("Gemini unreachable: %s", type(exc).__name__)
             raise

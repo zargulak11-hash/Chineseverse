@@ -453,6 +453,41 @@ def test_quota_exhausted_models_cool_down_but_overloads_do_not(gemini):
     assert "gemini-3.8-flash" not in ai_client._cooling_until  # success clears it
 
 
+def test_timed_out_models_cool_down_and_a_call_ends_before_nginx_gives_up(gemini, monkeypatch):
+    run = gemini.run
+    # A hanging model is skipped on the next messages, instead of every
+    # message waiting out its whole timeout before the fallback answers.
+    assert run("timeout")[1] == ["gemini-3.8-flash", "gemini-3.5-flash"]
+    assert run(keep_cooldowns=True)[1] == ["gemini-3.5-flash"]
+
+    # Each model gets what is left of the call's deadline; a timeout spends
+    # all it was given (a fake clock, advanced by the fake request).
+    clock = SimpleNamespace(t=1000.0)
+    monkeypatch.setattr(ai_client.time, "monotonic", lambda: clock.t)
+    scripted, timeouts = httpx.post, []
+
+    def timed_post(url, headers=None, json=None, timeout=None):
+        # httpx times each phase, so connecting has its own short cap.
+        assert timeout.connect == ai_client._CONNECT_TIMEOUT_S
+        timeouts.append(timeout.read)
+        try:
+            return scripted(url, headers=headers, json=json, timeout=timeout)
+        except httpx.TimeoutException:
+            clock.t += timeout.read
+            raise
+
+    monkeypatch.setattr(httpx, "post", timed_post)
+    assert run("timeout")[1] == ["gemini-3.8-flash", "gemini-3.5-flash"]
+    assert timeouts == [40, 10]
+    # Two timeouts leave no time for the third model: the call gives up
+    # inside nginx's 60 s, and the caller answers offline.
+    timeouts.clear()
+    with pytest.raises(httpx.TimeoutException):
+        run("timeout", "timeout")
+    assert timeouts == [40, 10] and len(gemini.calls) == 2
+    assert ai_client._CHAT_DEADLINE_S + ai_client._CONNECT_TIMEOUT_S < 60
+
+
 def test_json_graders_ask_for_json_and_blocked_or_empty_answers_fall_back(gemini):
     gemini.script[:] = [{"candidates": [{"content": {"parts": [{"text": '{"solved": true, "feedback": "对"}'}]}}]}]
     assert ai_client.evaluate_case_solution("案情", "是他", ["他"])["solved"] is True
