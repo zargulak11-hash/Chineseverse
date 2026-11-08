@@ -4,22 +4,35 @@ Session of 2026-11-08 on branch `fix/auth-unverified-email-linking`.
 Everything below was checked against the code and a running local stack,
 not taken from earlier reports.
 
-## State of the repository
+## State of the repository (updated after phase 2)
 
-- Branch `fix/auth-unverified-email-linking` = `origin/main`'s ancestor
-  `d473168` + 9 earlier commits (Android Google sign-in, verified-email
-  linking, security headers, CI checks) + 4 commits from this session.
-  Nothing is merged to `main`; nothing was deployed.
-- `origin/main` has one commit this branch lacks: `e409fa2`
-  (Hanzi writing dialog scrolls). Merge or rebase before opening a PR.
-- Left untouched on purpose (the owner's uncommitted work):
-  - `.github/workflows/deploy.yml` — pins the server's SSH host key
-    instead of `StrictHostKeyChecking=no`. Correct, but once on `main`
-    every deploy stops until the repository secret `SSH_KNOWN_HOSTS`
-    exists. Add the secret first, then commit it.
-  - `docs/DEMO_DAY_STUDY_GUIDE.md` (untracked).
-- Backups at the repo root (`*.bundle`, `*.dump`, `known_hosts.txt`) are
-  ignored by git and were not touched; neither was `stash@{0}`.
+- Branch `fix/auth-unverified-email-linking`: `main`'s `d473168` + 9 earlier
+  commits + phase 1 (5 commits) + phase 2 (see below). Nothing merged to
+  `main`, nothing deployed, production untouched.
+- `e409fa2` (Hanzi writing dialog scrolls) from `main` is now on the branch
+  (cherry-picked as `5afac92`), so the branch contains all of `main`.
+- `.github/workflows/deploy.yml` (SSH host-key pinning) is committed on the
+  branch (`7db7ce6`). **Before merging to `main`, add the repository secret
+  `SSH_KNOWN_HOSTS`** or every deploy stops (see "External steps").
+- `docs/DEMO_DAY_STUDY_GUIDE.md` stays untracked and untouched; backups at
+  the repo root and `stash@{0}` were not touched.
+
+## Phase 2 (2026-11-08)
+
+| Item | Result | Commit |
+|---|---|---|
+| Model ↔ schema drift (4 items) | All four were the models' mistake (DB already NOT NULL; PK indexes declared twice). Model-only fix, no migration. PostgreSQL scratch check now 0 differences; `test_schema_drift.py` fails on the old models and passes now | `f31893a` |
+| `e409fa2` from `main` | cherry-picked | `5afac92` |
+| deploy.yml / SSH_KNOWN_HOSTS | committed; scanned key `SHA256:yZipbmzi…FJN8` matches the key this PC has trusted since its first connection | `7db7ce6` |
+| Backup & restore | `ops/backup_db.sh` + `docs/DATABASE_BACKUP.md`; tested on local PG 18: good dump verified (50 tables, 60 users), truncated dump rejected (exit 1), scratch DB cleaned up | `965a56b` |
+| Android release build | `assembleRelease` OK; signer SHA-1 `0dc49b6f…59e4` = the SHA-1 registered for the Android OAuth client (created 2026-10-26); package `tj.qobus.chineseverse` v1.1 (2) | — |
+| Android on emulator (Android 16) | release APK installs and launches; login screen loads and shows Google sign-in (providers fetched from production); pressing it initializes the plugin with the release SHA-1 + web client id and opens Credential Manager. No crash | — |
+| iOS | no macOS here; `cap sync ios` clean; Info.plist has microphone + speech-recognition reasons; SPM lists the 5 plugins; Google sign-in hidden on iOS by design | — |
+| Curriculum audit (11,334 words, 3,000 Hanzi, 602 grammar points, 111 lessons) | translations complete for words, Hanzi, lessons in ru/tg/zh; no lesson empty. **3 HSK 7–9 words had one character's pinyin + meaning** (得意扬扬 "yáng / ocean", 火暴, 无可厚非) — fixed in the snapshot and by migration `b5e1d7a3c962`; whole-snapshot syllable check added | `fa04e4b` |
+| Grammar explanations | 572/602 points get an AI lesson on first visit (cached). When Gemini is busy the page said "not available" with no way to retry; a **Try again** button added (4 languages), browser-checked | `b6d4b80` |
+| Firefox | sweep over every route: no JS errors, failed API calls, overflow or untranslated text; only "network idle" waits under the dev server | — |
+| Tests at end of phase 2 | backend 1133 passed / 0 failed; vitest 116 / 0; build and i18n pass | — |
+| Dependencies | npm audit: 2 moderate React Router 6 advisories (SSR hydration; open redirect from user-supplied paths) — neither applies (client-only SPA; no navigation to user-supplied paths). Fix needs the breaking v7; not done | — |
 
 ## What was checked, and the result
 
@@ -58,48 +71,60 @@ Files changed: `backend/app/config.py`, `backend/app/security.py`,
 `backend/tests/test_pinyin_course.py`, `backend/tests/test_srs.py`,
 `frontend/src/mistakes.js`, `frontend/src/mistakes.test.js` (new), this file.
 
-## Known, not fixed (low impact, deliberate)
+Phase 2 files: `backend/app/models/users.py`, `backend/app/models/localization.py`,
+`backend/tests/test_schema_drift.py` (new), `.github/workflows/deploy.yml`,
+`ops/backup_db.sh` (new), `docs/DATABASE_BACKUP.md` (new),
+`backend/app/seed_content/curriculum.json.gz`,
+`backend/alembic/versions/b5e1d7a3c962_fix_three_band7_word_entries.py` (new),
+`backend/tests/test_band7_word_fix_migration.py` (new),
+`frontend/src/pages/GrammarTopic.jsx`, `frontend/src/locales/{en,ru,tg,zh}.json`
+(one key each), `frontend/src/components/HanziTrace.jsx` + `index.css`
+(cherry-pick), `docs/FINAL_PRODUCT_READINESS.md` (new), this file.
 
-- Model/schema drift: `activity_events.created_at` is nullable in the
-  database but not in the model; redundant indexes declared on three
-  primary keys (`activity_events`, `content_translations`, `follows`).
-  Harmless; not worth a production migration on its own.
-- Entry bundle could be split further (i18next + English strings); gain
-  is small.
-- Gemini itself was overloaded during testing (503s, timeouts). Roleplay
-  has no offline mode by design and asks the learner to resend.
+## Known, not fixed (deliberate)
+
+- **This batch carries a migration** (`b5e1d7a3c962`, three vocabulary
+  rows). Back up first: `bash ops/backup_db.sh` on the server.
+- 572 of 602 grammar points rely on an AI lesson generated on first visit
+  (then cached for everyone). Pre-generating them needs ~2,300 Gemini calls
+  (4 languages) and human review of the output; not done while Gemini was
+  overloaded, and generated teaching text should be reviewed before it is
+  stored for everyone.
+- 10,904 of 11,334 words have no example sentence of their own (lessons and
+  grammar carry examples). Writing them is content work, not a code fix.
+- React Router 6 → 7 for two moderate advisories that don't apply here.
+- Entry bundle 648 kB (216 kB gzip); small gain from further splitting.
+- Google Fonts answered in ~11 s from this network; the app loads fonts
+  without blocking, so users see system fonts first.
 
 ## Not verified (needs a person, a device or production)
 
-- A real Android phone (only a build; the emulator was not run this
-  session). Microphone, speech recognition and Chinese TTS on a device.
-- Native Google sign-in end to end (needs the Android OAuth client in
-  Google Cloud and a phone with a Google account).
-- iOS (no macOS here).
-- Offline behaviour of the app.
+- A real Android phone: microphone, speech recognition, Chinese TTS,
+  offline banner. (Emulator: install, launch, API, sign-in hand-off only.)
+- A complete Google sign-in in the app (needs a phone with a Google account).
+- iOS build and run (needs macOS + Xcode).
 - Production: no deploy, no production migration, no production data read.
 
-## Readiness (honest estimate)
+## Readiness (honest estimate, after phase 2)
 
 | Area | % | Why not higher |
 |---|---|---|
-| Backend / API | 95 | drift items; AI depends on Gemini's availability |
-| Security | 90 | CSP still report-only; SSH host pinning not committed |
-| Frontend web | 93 | not tested on real phones/browsers other than Chromium |
-| Localization | 95 | heuristic scans can't prove every backend string |
-| Learning features | 90 | verified by tests and page loads; microphone features not exercised |
-| Android | 70 | builds; not run on a device this session; Google sign-in blocked on Cloud setup |
-| iOS | 20 | project exists; never built |
-| Deployment | 80 | CI green path exists; no DB backup in the deploy script |
+| Backend / API | 96 | AI features depend on Gemini's availability |
+| Database | 95 | backup now scripted and tested; deploy script still doesn't call it |
+| Security | 92 | CSP still report-only; host-key secret still to be added |
+| Frontend web | 94 | Chromium + Firefox checked; Safari not available |
+| Localization | 96 | heuristic scans can't prove every backend string |
+| Learning content | 88 | 3 bad entries fixed; grammar explanations and word examples rely on AI / are missing for most items |
+| Android | 80 | release build verified incl. signing SHA-1; never run on a real phone |
+| iOS | 30 | config checked and synced; never built (no Mac) |
+| Deployment | 82 | backup procedure exists; secret and merge pending |
 
 ## How to continue
 
-1. Merge `origin/main` (`e409fa2`) into this branch, open a PR, let CI run.
-2. Add the `SSH_KNOWN_HOSTS` secret, then commit `deploy.yml`.
-3. Before deploying: back up the production DB (no migration in this
-   batch, but the deploy script never backs up).
-4. Install the debug or release APK on a real phone; test microphone,
-   TTS, sign-in, offline banner.
+1. Add the `SSH_KNOWN_HOSTS` repository secret (see `docs/FINAL_PRODUCT_READINESS.md`).
+2. Open a PR from this branch to `main`; let CI run.
+3. On the server before deploying: `bash ops/backup_db.sh` (this batch has a migration).
+4. Install the release APK on a real phone; test microphone, TTS, Google sign-in.
 5. Local stack used here: backend `uvicorn` on :8000 with `SMTP_HOST=" "`
    (the local `.env` sends real email), Vite on :5173, probe account
    `audit1c46a6` (local DB only).
