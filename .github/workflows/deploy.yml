@@ -132,10 +132,36 @@ jobs:
     needs: [backend-tests, postgres-migrations, frontend-build]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
+      # The server's host key is checked against SSH_KNOWN_HOSTS, a
+      # repository secret holding known_hosts line(s) for 37.27.245.216 whose
+      # fingerprint was compared with the one shown in the hosting
+      # provider's own console (not over SSH, which is the path being
+      # verified). It used to be StrictHostKeyChecking=no, which would have
+      # run the deploy against whatever machine answered at that address.
+      # Without the secret the deploy stops here instead of connecting
+      # unverified. Secrets reach the script through env, never pasted into
+      # its text; a value pasted from Windows may carry CR characters, which
+      # are stripped. The pinned fingerprint is printed (it is public) so a
+      # run can be checked against the console's value.
       - name: Deploy to server
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          # Stop at the first failure (a malformed secret must never reach
+          # the ssh line), whatever the runner's default shell options are.
+          set -euo pipefail
+          if [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "::error::SSH_KNOWN_HOSTS secret is missing -- refusing to deploy to an unverified host"
+            exit 1
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh -o StrictHostKeyChecking=no dev@37.27.245.216 "~/deploy_chineseverse.sh"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          # Fails on a malformed secret; prints only public fingerprints.
+          ssh-keygen -l -f ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=yes dev@37.27.245.216 "~/deploy_chineseverse.sh"
