@@ -62,6 +62,36 @@ def test_a_mistake_reads_in_the_language_the_learner_uses_now(client, locale):
     assert home["recent_mistakes"][0]["question_text"] == tr
 
 
+@pytest.mark.parametrize("locale", ["ru", "tg"])
+def test_a_missed_conversation_line_reads_in_the_learners_language(client, locale):
+    """A spoken answer that missed records the line's English instruction
+    ("Say: I'm not hungry, thank you.") as the mistake's question and key;
+    Mistakes showed it in English in every language, and so did the row a
+    retest request sent back."""
+    uid, h = register(client, unique_name("saylang"))
+    with SessionLocal() as db:
+        line = db.query(models.Dialogue).filter(models.Dialogue.prompt.like("Say:%")).order_by(models.Dialogue.id).first()
+        tr = (db.query(models.ContentTranslation)
+              .filter_by(content_type="dialogue", content_key=str(line.id), field="prompt", locale=locale).first().text)
+        m = models.LearningMistake(user_id=uid, mistake_type="tone", reference=line.prompt,
+                                   question_text=line.prompt, answer_given="我不")
+        db.add(m)
+        db.commit()
+        mid, english = m.id, line.prompt
+    assert tr and tr != english
+    headers = {**h, "X-Locale": locale}
+    row = expect(client, "get", "/api/mistakes", 200, headers=headers)[0]
+    assert row["question_text"] == tr
+    assert row["reference"] == english  # the key stays the one string
+    assert row["answer_given"] == "我不"  # what was said stays Chinese
+    retest = expect(client, "patch", f"/api/mistakes/{mid}", 200, headers=headers, json={"request_retest": True})
+    assert retest["question_text"] == tr
+    # Free text that merely contains a prompt is never rewritten.
+    from app.services.localization import localize_glosses
+    with SessionLocal() as db:
+        assert localize_glosses(db, {english + " (again)"}, locale) == {}
+
+
 def test_grammar_patterns_carry_no_english_words(client):
     # A pattern is the Chinese being taught and is not translated, so its
     # slots use a notation every language reads: V, Adj, A/B, 主语, 量词.

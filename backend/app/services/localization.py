@@ -90,6 +90,19 @@ def localize_glosses(db: Session, texts, locale: str) -> dict[str, str]:
                 for form in (en, _short(en)):
                     if form in wanted:
                         out.setdefault(form, text)
+    # A World conversation line's instruction ("Say: I'm not hungry, thank
+    # you."): a spoken answer that missed records it as the mistake's
+    # question, in English (it is also the mistake's key, so it must stay
+    # one string), and Mistakes showed it in English in every language. The
+    # conversation itself shows the translation; so does this, on an exact
+    # match of the whole prompt.
+    rows = db.query(models.Dialogue.id, models.Dialogue.prompt).filter(models.Dialogue.prompt.in_(wanted)).all()
+    if rows:
+        trs = load_translations(db, "dialogue", [str(i) for i, _ in rows], locale)
+        for i, en in rows:
+            text = tr(trs, i, "prompt", None)
+            if text:
+                out.setdefault(en, text)
     return out
 
 

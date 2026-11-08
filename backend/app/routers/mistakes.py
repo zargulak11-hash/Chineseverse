@@ -64,6 +64,7 @@ def patch_mistake(
     payload: schemas.MistakePatch,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
 ):
     mistake = (
         db.query(models.LearningMistake)
@@ -84,4 +85,7 @@ def patch_mistake(
     db.commit()
     db.refresh(mistake)
     check_achievements(db, user)
-    return _serialize(mistake)
+    # Localized like the list it replaces a row of, or a retest request
+    # turned the row back to the language it was recorded in.
+    texts = (mistake.question_text, mistake.answer_given, mistake.correct_answer)
+    return _serialize(mistake, localize_glosses(db, texts, locale))
