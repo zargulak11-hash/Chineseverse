@@ -24,7 +24,13 @@ def snapshot():
 
 @pytest.fixture(scope="module")
 def translated(snapshot):
-    return [v for v in snapshot["vocab"] if v.get("example_translation")]
+    """The examples taken from stories and cases -- not the hand-written
+    ones (test_vocab_authored_examples.py checks those)."""
+    from scripts import seed_vocab_authored_examples as authored
+
+    written = {(e["level"], e["word"]) for e in authored.entries()}
+    return [v for v in snapshot["vocab"]
+            if v.get("example_translation") and (v["level"], v["simplified"]) not in written]
 
 
 def test_hundreds_of_words_have_a_translated_example(translated):
