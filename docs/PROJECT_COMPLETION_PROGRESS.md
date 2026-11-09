@@ -71,6 +71,31 @@ Files changed: `backend/app/config.py`, `backend/app/security.py`,
 `backend/tests/test_pinyin_course.py`, `backend/tests/test_srs.py`,
 `frontend/src/mistakes.js`, `frontend/src/mistakes.test.js` (new), this file.
 
+## Phase 4 (2026-11-09): beginner content
+
+The session was interrupted once by a network error (`ENOTFOUND`); work
+resumed from the uncommitted files, nothing was lost or repeated.
+
+| Item | Result | Commit |
+|---|---|---|
+| Example checker | `scripts/seed_vocab_authored_examples.py`: an entry is refused unless the word has one row at its level and no example, is a whole word (forward and backward splits agree), every word of the sentence is at that level or below, the hand-written pinyin is exactly the curriculum readings of the sentence's words, apostrophes/punctuation are right, the sentence is unique and en/ru/tg exist. It caught real traps: 十分钟 (十分), 别说话 (别说), 一个儿子 (个儿), 不知道 (不知), 读一下课文 (下课), 请坐下 (请坐), and words that are HSK 2 here (得, 每天, 张, 离, 近, 做饭, 大家, 可以) | `e6985da` |
+| HSK 1 examples | **89 original sentences** (`seed_content/vocab_examples/hsk1.json`), en on the word, ru/tg as **draft** content translations (178 rows, awaiting native review). Snapshot diffs: exactly 47 + 42 word rows and 94 + 84 drafts | `e6985da`, `85d6c23` |
+| HSK 1 grammar | hand-written lessons for 这/那, 呢, 一点儿 (en/ru/tg/zh) | `797a763`, `8f59479` |
+| Checks | authored lessons pass `test_authored_content`; `test_vocab_authored_examples.py` (all entries pass on a fresh DB, drafts arrive flagged, the checker refuses a wrong tone / missing syllable / hidden word / above-level word); browser: the three lessons in ru/tg on a phone with no AI request, the 车站 example in ru | — |
+
+State after phase 4 (local database = snapshot): **1,014 of 11,334 words
+have an example** (HSK 1: 362/509, HSK 2: 184/854); **15 hand-written
+grammar lessons serve 16 topics, 14 of HSK 1's 60**.
+
+Not done in phase 4: HSK 2 grammar lessons and HSK 2 examples (next);
+147 HSK 1 words still without an example, mostly words used inside
+compounds (打, 东, 北) or that need a careful context.
+
+Native-speaker review still needed: all ru/tg text of the 6 lessons written
+in phases 3–4 and the 178 draft example translations
+(`python scripts/export_translation_review.py`); the English and Chinese
+were written and checked by the authoring process, not by a native editor.
+
 ## Phase 3 (2026-11-08): learning content
 
 | Item | Result | Commit |

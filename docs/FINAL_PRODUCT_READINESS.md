@@ -45,13 +45,15 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 
 ## Known limitations (not defects)
 
-- 12 of 602 grammar points have a hand-written lesson (会/能 and 几/多少
-  added in phase 3); the rest get an AI lesson on first visit, cached for
-  everyone afterwards; when Gemini is down the learner sees the syllabus
-  examples and can retry. Writing and reviewing more lessons is content work.
-- 925 of 11,334 words have an example sentence (495 of them translated,
-  added in phase 3 from the stories and case files). The remaining words
-  need new sentences written or reviewed by a person.
+- 15 hand-written grammar lessons serve 16 of 602 topics (14 of HSK 1's 60);
+  the rest get an AI lesson on first visit, cached for everyone afterwards;
+  when Gemini is down the learner sees the syllabus examples and can retry.
+- 1,014 of 11,334 words have an example sentence (HSK 1: 362 of 509).
+  584 of them are translated: 495 taken from the stories and case files,
+  89 written for HSK 1 and checked by `seed_vocab_authored_examples.py`.
+- Needs a native speaker: the Russian and Tajik of the 6 lessons written in
+  phases 3–4 and the 178 draft example translations
+  (`scripts/export_translation_review.py` lists the drafts).
 - The Content-Security-Policy is report-only until checked on the live site.
 - React Router 6 has two moderate advisories that don't apply to this app;
   the fix needs a v7 migration.
@@ -71,6 +73,9 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 | Deployment | 82 |
 
 ## Test results
+
+End of phase 4: backend **1142 passed, 0 failed** (full run); vitest 116
+passed; build and i18n (2,570 keys) pass.
 
 End of phase 3: backend **1138 passed, 1 failed** on the full run; the one
 failure was a test that indexed a word's translations without their field
