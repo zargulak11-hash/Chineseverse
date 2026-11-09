@@ -50,3 +50,12 @@ def test_the_checks_refuse_a_wrong_reading_a_hidden_word_and_a_hard_word(client)
                                    pinyin="wǒmen xiūxi shí fēnzhōng ba.")
         assert "above HSK 1" in why(zh="我们在这儿休息，很近。", pinyin="wǒmen zài zhèr xiūxi, hěn jìn.")
         assert "no tg" in why(tg="")
+        assert "pinyin" in why(pinyin="women zai nar xiuxi.")              # no tone marks at all
+        assert "not exactly one HSK 3 row" in why(level=3)                 # word is not HSK 3
+        assert "Cyrillic" in why(ru="where", tg="where")                   # ru/tg in the wrong script
+        # The same sentence twice in one batch, or reusing a word's example.
+        seen = set()
+        c.problems(good, seen)  # first use of the sentence
+        assert any("used twice" in p for p in c.problems(good, seen))
+        taken = next(iter(c.existing))
+        assert "used twice" in why(zh=taken)
