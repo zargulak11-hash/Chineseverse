@@ -39,7 +39,9 @@ def test_the_checks_refuse_a_wrong_reading_a_hidden_word_and_a_hard_word(client)
         c = authored.Checker(db)
 
         def why(**change):
-            return " ".join(c.problems({**good, **change}, set()))
+            # "Already has an example" is left out: later batches give these
+            # words their examples; every other refusal is still asserted.
+            return " ".join(p for p in c.problems({**good, **change}, set()) if "already has" not in p)
 
         assert why() == ""
         assert "pinyin" in why(pinyin="wǒmen zài nǎr xiūxi.")          # wrong tone (哪 for 那)
