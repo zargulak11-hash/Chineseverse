@@ -55,6 +55,12 @@ def test_the_checks_refuse_a_wrong_reading_a_hidden_word_and_a_hard_word(client)
         assert "Cyrillic" in why(ru="where", tg="where")                   # ru/tg in the wrong script
         assert "Chinese left" in why(ru="После 不 нужно")                   # a stray character
         assert "Cyrillic in the English" in why(en="не English")
+        # 可爱 is stored "kě ài": joined, it needs the apostrophe.
+        cute = next(w for w in c.rows["可爱"])
+        cute_level = c.level_of[cute.hsk_level_id]
+        apostrophe = {"level": cute_level, "word": "可爱", "zh": "她很可爱。"}
+        assert "apostrophe" in why(**apostrophe, pinyin="tā hěn kěài.")
+        assert "apostrophe" not in why(**apostrophe, pinyin="tā hěn kě'ài.")
         # The same sentence twice in one batch, or reusing a word's example.
         seen = set()
         c.problems(good, seen)  # first use of the sentence
