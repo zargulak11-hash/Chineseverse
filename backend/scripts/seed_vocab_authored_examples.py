@@ -150,6 +150,10 @@ class Checker:
                 out.append(f"{word}: no {loc}")
         if e.get("ru") and not CYR.search(e["ru"]) or e.get("tg") and not CYR.search(e["tg"]):
             out.append(f"{word}: ru/tg not in Cyrillic")
+        if any(CJK.search(e.get(loc) or "") for loc in ("en", "ru", "tg")):
+            out.append(f"{word}: Chinese left inside a translation")
+        if CYR.search(e.get("en") or ""):
+            out.append(f"{word}: Cyrillic in the English")
         return out
 
 

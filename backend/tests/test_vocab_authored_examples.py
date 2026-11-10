@@ -53,6 +53,8 @@ def test_the_checks_refuse_a_wrong_reading_a_hidden_word_and_a_hard_word(client)
         assert "pinyin" in why(pinyin="women zai nar xiuxi.")              # no tone marks at all
         assert "not exactly one HSK 3 row" in why(level=3)                 # word is not HSK 3
         assert "Cyrillic" in why(ru="where", tg="where")                   # ru/tg in the wrong script
+        assert "Chinese left" in why(ru="После 不 нужно")                   # a stray character
+        assert "Cyrillic in the English" in why(en="не English")
         # The same sentence twice in one batch, or reusing a word's example.
         seen = set()
         c.problems(good, seen)  # first use of the sentence
