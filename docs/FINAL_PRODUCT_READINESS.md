@@ -45,15 +45,17 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 
 ## Known limitations (not defects)
 
-- 15 hand-written grammar lessons serve 16 of 602 topics (14 of HSK 1's 60);
-  the rest get an AI lesson on first visit, cached for everyone afterwards;
-  when Gemini is down the learner sees the syllabus examples and can retry.
-- 1,014 of 11,334 words have an example sentence (HSK 1: 362 of 509).
-  584 of them are translated: 495 taken from the stories and case files,
-  89 written for HSK 1 and checked by `seed_vocab_authored_examples.py`.
-- Needs a native speaker: the Russian and Tajik of the 6 lessons written in
-  phases 3–4 and the 178 draft example translations
-  (`scripts/export_translation_review.py` lists the drafts).
+- 21 hand-written grammar lessons serve 22 of 602 topics (14 of HSK 1's 60,
+  8 of HSK 2's 89); the rest get an AI lesson on first visit, cached for
+  everyone afterwards; when Gemini is down the learner sees the syllabus
+  examples and can retry.
+- 1,229 of 11,334 words have an example sentence (HSK 1: 491 of 509; HSK 2:
+  270 of 854). 799 of them are translated: 495 from the stories and case
+  files, 304 hand-written and checked by `seed_vocab_authored_examples.py`.
+- Needs a native speaker: the Russian and Tajik of the 11 lessons written in
+  phases 3–5 and the 608 draft example translations
+  (`scripts/export_translation_review.py` lists the drafts). Automatic checks
+  verify pinyin, level, word boundaries and completeness, not naturalness.
 - The Content-Security-Policy is report-only until checked on the live site.
 - React Router 6 has two moderate advisories that don't apply to this app;
   the fix needs a v7 migration.
@@ -73,6 +75,13 @@ emulator). Details and history: `docs/PROJECT_COMPLETION_PROGRESS.md`.
 | Deployment | 82 |
 
 ## Test results
+
+End of phase 5: two full backend runs. Run 1: 1141 passed, 1 failed -- my
+lesson pattern '在 + place' broke the language-neutral pattern rule; fixed
+(ee1f348), its modules then 22 passed. Run 2 on the final code: 1141 passed,
+1 failed -- test_google_auth's real-verifier test got 503 because Google's
+certificate endpoint took 21 s to answer from this network; rerun alone it
+passed. Vitest 116 passed; build and i18n (2,570 keys) pass.
 
 End of phase 4: backend **1142 passed, 0 failed** (full run); vitest 116
 passed; build and i18n (2,570 keys) pass.

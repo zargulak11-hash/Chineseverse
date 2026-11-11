@@ -71,6 +71,59 @@ Files changed: `backend/app/config.py`, `backend/app/security.py`,
 `backend/tests/test_pinyin_course.py`, `backend/tests/test_srs.py`,
 `frontend/src/mistakes.js`, `frontend/src/mistakes.test.js` (new), this file.
 
+## Phase 5 (2026-11-09/10): HSK 1 vocabulary, HSK 2 grammar and vocabulary
+
+Interrupted once by an expired sign-in; resumed from the repository, nothing
+lost or repeated.
+
+| Measure (from the database) | Before | After |
+|---|---|---|
+| HSK 1 words with an example | 362 / 509 | **491 / 509** |
+| HSK 2 words with an example | 184 / 854 | **270 / 854** |
+| All words with an example | 1,014 / 11,334 | **1,229 / 11,334** |
+| Hand-written lesson files (topics served) | 15 (16) | **21 (22)** of 602 topics |
+| HSK 1 / HSK 2 topics with a lesson | 14 of 60 / 2 of 89 | 14 of 60 / **8 of 89** |
+| Draft ru/tg example translations | 178 | **608** |
+
+Lessons added, each matched to its existing topic, in en/ru/tg/zh: 比,
+因为……所以……, 正在/在, 得 (děi), 太……了, 一下. The curriculum's 得 topic is
+"must" (děi); the degree complement (说得很好) is not that record and has no
+hand-written lesson.
+
+Examples: 129 more HSK 1 (218 hand-written in all) and 86 HSK 2, all through
+`seed_vocab_authored_examples.py`. The checker now also refuses a Chinese
+character inside a translation and Cyrillic in the English; its tests cover
+wrong tone, no tone marks, missing syllable, hidden word, wrong level,
+above-level word, duplicate sentence, missing translation, wrong script and
+a missing apostrophe (可爱 kě'ài). Each snapshot diff was verified to add only
+examples and draft translations.
+
+Checked in the browser (phone width): the 6 HSK 2 lessons in en/ru/tg/zh with
+no AI request, overflow or error; HSK 1 and HSK 2 examples on the Vocabulary
+page.
+
+Automatic checks can't judge meaning: rereading the lessons by hand found an
+unnatural sentence and a stray character the validators had passed.
+
+**Not forced (18 HSK 1 words):** 北 东 南 西 左 右 中 前 外 子 间 国 日 毛 正 行 出 打.
+Mostly bound forms, or words that appear inside longer words at this level.
+They need a person to choose a natural sentence. **For review:** the
+curriculum gloss of 考 begins "to beat; to hit" (its example uses the HSK 1
+sense, to take an exam); the gloss was not changed.
+
+### Continuation plan
+
+1. HSK 2 examples: 584 words remain; continue in batches of about 40.
+2. HSK 1 grammar: 46 topics without a lesson, starting with those beginners
+   meet first (人称代词, 指示代词, 疑问代词, 名量词, 程度副词, 方位名词,
+   time and place expressions).
+3. HSK 2 grammar: 81 topics without a lesson, starting with 过, 着, 就/才,
+   虽然……但是……, 从……到……, 还是/或者, the degree complement 得 (de).
+4. The 18 HSK 1 words above, with a person's help.
+5. Native-speaker review (highest value for trust): the Russian and Tajik
+   of the 11 lessons written in phases 3–5 and the 608 draft translations
+   (`python scripts/export_translation_review.py`).
+
 ## Phase 4 (2026-11-09): beginner content
 
 The session was interrupted once by a network error (`ENOTFOUND`); work
@@ -91,7 +144,7 @@ Not done in phase 4: HSK 2 grammar lessons and HSK 2 examples (next);
 147 HSK 1 words still without an example, mostly words used inside
 compounds (打, 东, 北) or that need a careful context.
 
-Native-speaker review still needed: all ru/tg text of the 6 lessons written
+Native-speaker review still needed: all ru/tg text of the 5 lessons written
 in phases 3–4 and the 178 draft example translations
 (`python scripts/export_translation_review.py`); the English and Chinese
 were written and checked by the authoring process, not by a native editor.
