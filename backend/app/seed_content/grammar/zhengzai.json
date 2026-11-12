@@ -1,5 +1,6 @@
 {
   "topic": "正在/在 — progressive aspect",
+  "also": ["进行态"],
   "name": {"en": "正在 / 在: an action in progress", "ru": "正在 / 在: действие в процессе", "tg": "正在 / 在: амали идомадошта", "zh": "正在、在：动作进行"},
   "summary": {
     "en": "正在 or 在 before a verb says an action is going on at a given moment: 他正在吃饭 (he is eating right now). 呢 can be added at the end. The time can be now, or a moment in the past: 昨天八点我在上课 (at eight yesterday I was in class).",

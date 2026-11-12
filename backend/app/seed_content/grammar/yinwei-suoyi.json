@@ -1,5 +1,6 @@
 {
   "topic": "因为……所以…… — because/therefore",
+  "also": ["因果复句"],
   "name": {"en": "因为……所以……: \"because … so …\"", "ru": "因为……所以……: «потому что … поэтому …»", "tg": "因为……所以……: «азбаски … бинобар ин …»", "zh": "因果复句：因为……所以……"},
   "summary": {
     "en": "因为 introduces the reason and 所以 the result: 因为下雨了，所以我们没出去。 (Because it rained, we didn't go out.) Unlike English, Chinese happily uses both words together; either can also be used alone.",

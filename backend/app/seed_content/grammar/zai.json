@@ -1,5 +1,6 @@
 {
   "topic": "在 — location / progressive",
+  "also": ["在"],
   "name": {"en": "在 — \"at\" a place, and \"-ing\"", "ru": "在 — «находиться где-то» и «сейчас делаю»", "tg": "在 — «дар ҷое будан» ва «ҳоло кардан»", "zh": "“在”：处所与进行"},
   "summary": {
     "en": "在 says where someone or something is (我在家 — I'm at home), where an action happens (我在学校学习), or that an action is in progress (我在吃饭 — I'm eating).",

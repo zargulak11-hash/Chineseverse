@@ -1,5 +1,6 @@
 {
   "topic": "有 — to have / there is",
+  "also": ["“有”字句1"],
   "name": {"en": "有 — \"to have\" and \"there is\"", "ru": "有 — «иметь» и «есть / имеется»", "tg": "有 — «доштан» ва «ҳаст»", "zh": "“有”字句"},
   "summary": {
     "en": "有 means \"to have\" (我有一个哥哥) and \"there is / there are\" (桌子上有一本书). It is negated only with 没: 没有.",

@@ -1,5 +1,6 @@
 {
   "topic": "吗 — yes/no question",
+  "also": ["用“吗”提问"],
   "name": {"en": "吗 — yes/no questions", "ru": "吗 — вопросы «да/нет»", "tg": "吗 — саволҳои «ҳа/не»", "zh": "“吗”字是非问句"},
   "summary": {
     "en": "Put 吗 at the end of a statement and it becomes a yes/no question. The word order does not change.",

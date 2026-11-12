@@ -1,5 +1,6 @@
 {
   "topic": "比 — comparison",
+  "also": ["比", "比较句1"],
   "name": {"en": "比: comparing (A 比 B …)", "ru": "比: сравнение (A 比 B …)", "tg": "比: муқоиса (A 比 B …)", "zh": "比字句：A 比 B ……"},
   "summary": {
     "en": "To say A is more … than B, use A 比 B + adjective: 他比我高 (he is taller than me). The adjective stays plain — no 很. To say by how much, put the amount after the adjective: 他比我大三岁 (he is three years older than me).",

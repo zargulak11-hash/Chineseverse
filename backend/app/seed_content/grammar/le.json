@@ -1,5 +1,6 @@
 {
   "topic": "了 — completed action",
+  "also": ["动态助词：了", "完成态：用动态助词“了”表示"],
   "name": {"en": "了 — a completed action", "ru": "了 — завершённое действие", "tg": "了 — амали анҷомёфта", "zh": "动态助词“了”"},
   "summary": {
     "en": "了 after a verb shows the action is completed: 我买了一本书 (I bought a book). It is about completion, not simply \"past tense\".",
