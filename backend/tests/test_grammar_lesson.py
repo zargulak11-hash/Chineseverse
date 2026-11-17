@@ -85,6 +85,16 @@ def test_authored_content(client):
                 assert sc.check(e["answer"], e["answer"])["verdict"] == "correct"
 
 
+def test_pinyin_reads_verb_plus_zhe_and_erhua(client):
+    # 穿着 is also the HSK 7 noun chuānzhuó; 有点儿's 儿 has no word of its own.
+    with SessionLocal() as db:
+        out = gl.annotate(db, ["他穿着一件白衣服。", "他走得有点儿快。"], "en")
+    assert "chuān zhe" in out["他穿着一件白衣服。"]["pinyin"], out
+    assert "zhuó" not in out["他穿着一件白衣服。"]["pinyin"], out
+    erhua = out["他走得有点儿快。"]["pinyin"]
+    assert "diǎnr" in erhua and "ér" not in erhua, erhua
+
+
 def test_examples_parser():
     t = models.GrammarTopic(title="x", examples="（1）名量词：碗、脸\n一碗汤 一脸水\n我是学生。 / 他是老师。\n见【一37】\n书在桌子上。手机在书包里。")
     blocks = gl.example_blocks(t)

@@ -35,6 +35,12 @@ from app.services.localization import load_translations, tr
 _CJK = re.compile(r"[㐀-鿿]")
 MAX_CHARS = 40
 _SEGMENT_MAX = 4
+# Curriculum words a longest match must not take: in running text they are
+# almost always a verb + aspect particle, and the dictionary word reads
+# differently. 穿着 is the noun chuānzhuó ("attire", HSK 7), so
+# 他穿着一件白衣服 was annotated "chuān zhuó" instead of 穿 + 着 "chuān zhe".
+# The rare noun sense now splits too, which only costs the tone of 着.
+_NOT_IN_RUNNING_TEXT = {"穿着"}
 
 
 class SentenceError(Exception):
@@ -148,7 +154,7 @@ def segment(db: Session, text: str, known: dict[str, models.VocabularyWord] | No
             continue
         for size in range(min(_SEGMENT_MAX, len(text) - i), 0, -1):
             piece = text[i:i + size]
-            if all(_CJK.match(c) for c in piece) and piece in known:
+            if all(_CJK.match(c) for c in piece) and piece in known and piece not in _NOT_IN_RUNNING_TEXT:
                 out.append({"text": piece, "kind": "word", "word": known[piece]})
                 i += size
                 break

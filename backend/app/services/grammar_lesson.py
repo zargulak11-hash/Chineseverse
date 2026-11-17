@@ -158,6 +158,12 @@ def annotate(db: Session, texts: list[str], locale: str) -> dict[str, dict]:
                 w = tok["word"]
                 words.append({"text": tok["text"], "pinyin": w.pinyin, "meaning": meanings.get(w.id, ""), "word_id": w.id})
                 pinyin.append(w.pinyin)
+            elif tok["kind"] == "char" and tok["text"] == "儿" and words and pinyin:
+                # A 儿 no word covers (有点儿, 一会儿) is the erhua ending of
+                # the syllable before it: yǒudiǎnr, not "yǒu diǎn ér".
+                words[-1]["text"] += "儿"
+                words[-1]["pinyin"] += "r"
+                pinyin[-1] += "r"
             elif tok["kind"] == "char":
                 h = hz.get(tok["text"])
                 words.append({"text": tok["text"], "pinyin": h.pinyin if h else "",
